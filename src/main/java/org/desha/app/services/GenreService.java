@@ -1,0 +1,54 @@
+package org.desha.app.services;
+
+import io.quarkus.hibernate.reactive.panache.Panache;
+import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.desha.app.domain.Genre;
+import org.desha.app.domain.Movie;
+import org.desha.app.repository.GenreRepository;
+import org.hibernate.reactive.mutiny.Mutiny;
+
+import java.time.LocalDateTime;
+import java.util.Set;
+
+@ApplicationScoped
+public class GenreService {
+
+    private final GenreRepository genreRepository;
+
+    @Inject
+    public GenreService(GenreRepository genreRepository) {
+        this.genreRepository = genreRepository;
+    }
+
+    public Uni<Set<Movie>> getMovies(Genre genre) {
+        return Mutiny.fetch(genre.getMovies());
+    }
+
+    public Uni<Genre> removeMovie(Long genreId, Long movieId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                genreRepository.findById(genreId)
+                                        .onItem().ifNotNull()
+                                        .call(genre -> genre.removeMovie(movieId))
+                        )
+                ;
+    }
+
+    public Uni<Genre> updateGenre(Long id, Genre genre) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                genreRepository.findById(id)
+                                        .onItem().ifNotNull().invoke(
+                                                entity -> {
+                                                    entity.setName(genre.getName());
+                                                    entity.setLastUpdate(LocalDateTime.now());
+                                                }
+                                        )
+                        )
+                ;
+    }
+}

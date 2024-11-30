@@ -1,0 +1,741 @@
+package org.desha.app.webservices;
+
+import io.quarkus.hibernate.reactive.panache.Panache;
+import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.*;
+import org.desha.app.services.CountryService;
+import org.desha.app.services.GenreService;
+import org.desha.app.services.MovieService;
+import org.desha.app.services.PersonService;
+import org.jboss.resteasy.reactive.RestPath;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static jakarta.ws.rs.core.Response.Status.*;
+
+@Path("movies")
+@ApplicationScoped
+@Slf4j
+public class MovieResource {
+
+    private final MovieService movieService;
+    private final PersonService personService;
+    private final GenreService genreService;
+    private final CountryService countryService;
+
+    @Inject
+    public MovieResource(MovieService movieService, PersonService personService, GenreService genreService, CountryService countryService) {
+        this.movieService = movieService;
+        this.personService = personService;
+        this.genreService = genreService;
+        this.countryService = countryService;
+    }
+
+    @GET
+    @Path("count")
+    public Uni<Response> count() {
+        return Movie.count().onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
+    }
+
+    @GET
+    @Path("{id}")
+    public Uni<Response> getSingle(Long id) {
+        return
+                Movie.findById(id)
+                        .onItem().ifNotNull().transform(panacheEntityBase -> Response.ok(panacheEntityBase).build())
+                        .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
+                ;
+    }
+
+    @GET
+    public Uni<Response> get() {
+        return
+                Movie.listAll()
+                        .onItem().ifNotNull().transform(panacheEntityBases ->
+                                panacheEntityBases.isEmpty()
+                                        ?
+                                        Response.noContent().build()
+                                        :
+                                        Response.ok(panacheEntityBases).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("title/{title}")
+    public Uni<Response> getByTitle(@RestPath String title) {
+        return
+                Movie.getByTitle(title)
+                        .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("search/{pattern}")
+    public Uni<Response> searchByTitle(@RestPath String pattern) {
+        return
+                Movie.searchByTitle(pattern)
+                        .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("{id}/producers")
+    public Uni<Set<Person>> getProducers(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getProducersByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/directors")
+    public Uni<Set<Person>> getDirectors(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getDirectorsByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/screenwriters")
+    public Uni<Set<Person>> getScreenwriters(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getScreenwritersByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/musicians")
+    public Uni<Set<Person>> getMusicians(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getMusiciansByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/photographers")
+    public Uni<Set<Person>> getPhotographers(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getPhotographersByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/costumiers")
+    public Uni<Set<Person>> getCostumiers(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getCostumiersByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/decorators")
+    public Uni<Set<Person>> getDecorators(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getDecoratorsByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/editors")
+    public Uni<Set<Person>> getEditors(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getEditorsByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/actors")
+    public Uni<Response> getRoles(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getActorsByMovie)
+                        .onItem().transform(roles -> Response.ok(roles).build())
+                        .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
+                ;
+    }
+
+    @GET
+    @Path("{id}/genres")
+    public Uni<Set<Genre>> getGenres(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getGenresByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/countries")
+    public Uni<Set<Country>> getCountries(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getCountriesByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/awards")
+    public Uni<Response> getAwards(Long id) {
+        return
+                Movie.findById(id)
+                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .chain(movieService::getAwardsByMovie)
+                        .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
+                        .onItem().ifNull().continueWith(Response.status(404, "Ce film n'existe pas").build())
+                ;
+    }
+
+    @POST
+    public Uni<Response> createMovie(Movie movie) {
+        if (Objects.isNull(movie) || Objects.nonNull(movie.id)) {
+            throw new WebApplicationException("Id was invalidly set on request.", 422);
+        }
+
+        return
+                movieService.createMovie(movie)
+                        .replaceWith(Response.ok(movie).status(CREATED)::build);
+    }
+
+    @POST
+    @Path("full")
+    public Uni<Response> createFullMovie(Movie movie) {
+        if (Objects.isNull(movie) || Objects.nonNull(movie.id)) {
+            throw new WebApplicationException("Id was invalidly set on request.", 422);
+        }
+
+        return
+                movieService.createMovie(movie)
+                        .replaceWith(Response.ok(movie).status(CREATED)::build);
+    }
+
+    @PUT
+    @Path("{id}/producers")
+    public Uni<Response> addProducers(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addProducers(id, persons))
+                        .map(Movie::getProducers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/directors")
+    public Uni<Response> addDirectors(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(d -> Objects.isNull(d.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addDirectors(id, persons))
+                        .map(Movie::getDirectors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/screenwriters")
+    public Uni<Response> addScreenwriters(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(s -> Objects.isNull(s.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addScreenwriters(id, persons))
+                        .map(Movie::getScreenwriters)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+    }
+
+    @PUT
+    @Path("{id}/musicians")
+    public Uni<Response> addMusicians(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addMusicians(id, persons))
+                        .map(Movie::getMusicians)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/photographers")
+    public Uni<Response> addPhotographers(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addPhotographers(id, persons))
+                        .map(Movie::getPhotographers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/costumiers")
+    public Uni<Response> addCostumiers(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(c -> Person.findById(c.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addCostumiers(id, persons))
+                        .map(Movie::getCostumiers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/decorators")
+    public Uni<Response> addDecorators(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addDecorators(id, persons))
+                        .map(Movie::getDecorators)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/editors")
+    public Uni<Response> addEditors(Long id, Set<Person> personSet) {
+        return
+                Uni.join().all(
+                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        personSet
+                                                .stream()
+                                                .filter(p -> Objects.nonNull(p.id))
+                                                .map(p -> Person.findById(p.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+                        .map(HashSet::new)
+                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
+                        .chain(persons -> movieService.addEditors(id, persons))
+                        .map(Movie::getEditors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/actor")
+    public Uni<Response> addRole(Long id, Role role) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                Objects.nonNull(role.getActor().id)
+                                        ? Person.findById(role.getActor().id)
+                                        : role.getActor().persist()
+                        )
+                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .chain(() -> movieService.addRole(id, role))
+                        .map(
+                                movie ->
+                                        movie.getRoles()
+                                                .stream()
+                                                .map(role1 -> Role.build(null, role1.getActor(), role1.getName()))
+                                                .collect(Collectors.toSet())
+                        )
+                        .onItem().ifNotNull().transform(roles -> Response.ok(roles).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+//    @PUT
+//    @Path("{id}/actors")
+//    public Uni<Response> addActors(Long id, List<MovieActor> movieActors) {
+//        if (Objects.isNull(movieActors) || movieActors.isEmpty()) {
+//            throw new WebApplicationException("Movie title was not set on request.", 422);
+//        }
+//
+//        return
+//                Uni.join().all(
+//                                movieActors
+//                                        .stream()
+//                                        .filter(a -> Objects.nonNull(a.getActor().id))
+//                                        .map(a -> (Person) Person.findById(a.getActor().id))
+//                                        .toList()
+//                        )
+//                        .usingConcurrencyOf(1)
+//                        .andFailFast()
+//                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
+//                        .map(personList -> personList.stream().collect(Collectors.toCollection(() -> newMusicians)))
+//                        .map(personList -> musicians.stream().filter(m -> Objects.isNull(m.id)).collect(Collectors.toCollection(() -> newMusicians)))
+//        Panache
+//                .withTransaction(() -> Movie.<Movie>findById(id)
+//                        .onItem().ifNotNull()
+//                        .invoke(entity -> entity.setMovieActors(movieActors))
+//                        .chain(entity -> entity.persist())
+//
+//                )
+//                .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+//                .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+//
+//    }
+
+    @PUT
+    @Path("{id}/genres")
+    public Uni<Response> addGenres(Long id, Set<Genre> genreSet) {
+        return
+                Uni.join().all(
+                                genreSet.stream().filter(g -> Objects.nonNull(g.id)).toList().isEmpty()
+                                        ?
+                                        List.of(Uni.createFrom().nullItem())
+                                        :
+                                        genreSet
+                                                .stream()
+                                                .filter(g -> Objects.nonNull(g.id))
+                                                .map(g -> Genre.findById(g.id))
+                                                .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Genre) e).toList())
+                        .map(HashSet::new)
+                        .map(genres -> genreSet.stream().filter(g -> Objects.isNull(g.id)).collect(Collectors.toCollection(() -> genres)))
+                        .chain(genres -> movieService.addGenres(id, genres))
+                        .map(Movie::getGenres)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+    }
+
+    @PUT
+    @Path("{id}/countries")
+    public Uni<Response> addCountries(Long id, Set<Country> countrySet) {
+        return
+                Uni.join().all(
+                                countrySet
+                                        .stream()
+                                        .map(c -> Country.findById(c.id))
+                                        .toList()
+                        )
+                        .usingConcurrencyOf(1)
+                        .andFailFast()
+                        .map(entities -> entities.stream().map(e -> (Country) e).collect(Collectors.toSet()))
+                        .chain(countries -> movieService.addCountries(id, countries))
+                        .map(Movie::getCountries)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+    }
+
+    @PUT
+    @Path("{id}/awards")
+    public Uni<Response> addAwards(Long id, Set<Award> awardSet) {
+        return
+                movieService.addAwards(id, awardSet)
+                        .map(Movie::getAwards)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+    }
+
+    @PUT
+    @Path("{movieId}/producers/{personId}")
+    public Uni<Response> removeProducer(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsProducer(movieId, personId)
+                        .chain(() -> movieService.removeProducer(movieId, personId))
+                        .map(Movie::getProducers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/directors/{personId}")
+    public Uni<Response> removeDirector(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsDirector(personId, movieId)
+                        .chain(() -> movieService.removeDirector(movieId, personId))
+                        .map(Movie::getDirectors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/screenwriters/{personId}")
+    public Uni<Response> removeScreenwriter(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsScreenwriter(personId, movieId)
+                        .chain(() -> movieService.removeScreenwriter(movieId, personId))
+                        .map(Movie::getScreenwriters)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/musicians/{personId}")
+    public Uni<Response> removeMusician(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsMusician(personId, movieId)
+                        .chain(() -> movieService.removeMusician(movieId, personId))
+                        .map(Movie::getMusicians)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/photographers/{personId}")
+    public Uni<Response> removePhotographer(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsPhotographer(personId, movieId)
+                        .chain(() -> movieService.removePhotographer(movieId, personId))
+                        .map(Movie::getPhotographers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/costumiers/{personId}")
+    public Uni<Response> removeCostumier(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsCostumier(personId, movieId)
+                        .chain(() -> movieService.removeCostumier(movieId, personId))
+                        .map(Movie::getCostumiers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/decorators/{personId}")
+    public Uni<Response> removeDecorator(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsDecorator(personId, movieId)
+                        .chain(() -> movieService.removeDecorator(movieId, personId))
+                        .map(Movie::getDecorators)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/editors/{personId}")
+    public Uni<Response> removeEditor(Long movieId, Long personId) {
+        return
+                personService.removeMovieAsEditor(personId, movieId)
+                        .chain(() -> movieService.removeEditor(movieId, personId))
+                        .map(Movie::getEditors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/genres/{genreId}")
+    public Uni<Response> removeGenre(Long movieId, Long genreId) {
+        return
+                genreService.removeMovie(genreId, movieId)
+                        .chain(() -> movieService.removeGenre(movieId, genreId))
+                        .map(Movie::getGenres)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/countries/{countryId}")
+    public Uni<Response> removeCountry(Long movieId, Long countryId) {
+        return
+                countryService.removeMovie(countryId, movieId)
+                        .chain(() -> movieService.removeCountry(movieId, countryId))
+                        .map(Movie::getCountries)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/awards/{awardId}")
+    public Uni<Response> removeAward(Long movieId, Long awardId) {
+        return
+                movieService.removeAward(movieId, awardId)
+                        .map(Movie::getAwards)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/actor/{actorId}")
+    public Uni<Response> removeRole(Long movieId, Long actorId) {
+        return
+                Panache
+                        .withTransaction(() -> Movie.<Movie>findById(movieId)
+                                .onItem().ifNotNull()
+                                .invoke(
+                                        entity -> {
+                                            entity.removeRole(actorId);
+                                            entity.setLastUpdate(LocalDateTime.now());
+                                        }
+                                )
+                                .chain(entity -> entity.persist())
+                        )
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}")
+    public Uni<Response> update(Long id, Movie movie) {
+        if (Objects.isNull(movie) || Objects.isNull(movie.getTitle())) {
+            throw new WebApplicationException("Movie title was not set on request.", 422);
+        }
+
+        return
+                movieService.updateMovie(id, movie)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+    }
+
+    @DELETE
+    @Path("{id}")
+    public Uni<Response> delete(Long id) {
+        return
+                Panache.withTransaction(() -> Movie.deleteById(id))
+                        .map(deleted -> Response.ok().status(deleted ? NO_CONTENT : NOT_FOUND).build())
+                ;
+    }
+
+}
