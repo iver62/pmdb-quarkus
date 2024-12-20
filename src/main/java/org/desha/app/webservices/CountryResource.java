@@ -56,7 +56,7 @@ public class CountryResource {
     public Uni<Set<Person>> getPersons(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Country) panacheEntityBase)
+                        .map(Country.class::cast)
                         .chain(countryService::getPersons)
                 ;
     }

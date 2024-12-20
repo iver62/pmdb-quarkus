@@ -128,7 +128,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsProducer(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsProducer)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -140,7 +140,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsDirector(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsDirector)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -152,7 +152,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsScreenwriter(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsScreenwriter)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -164,7 +164,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsMusician(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsMusician)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -176,7 +176,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsPhotographer(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsPhotographer)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -188,7 +188,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsCostumier(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsCostumier)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -200,7 +200,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsDecorator(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsDecorator)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -213,7 +213,7 @@ public class PersonResource {
     public Uni<Response> getMoviesAsEditor(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getMoviesAsEditor)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -225,7 +225,7 @@ public class PersonResource {
     public Uni<Response> getRoles(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getRolesByActor)
                         .onItem().ifNotNull().transform(roles -> Response.ok(roles).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -237,7 +237,7 @@ public class PersonResource {
     public Uni<Response> getCountries(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -249,7 +249,7 @@ public class PersonResource {
     public Uni<Response> getAwards(Long id) {
         return
                 Person.findById(id)
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(personService::getAwards)
                         .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())

@@ -1,6 +1,7 @@
 package org.desha.app.webservices;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -97,7 +98,7 @@ public class MovieResource {
     public Uni<Set<Person>> getProducers(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getProducersByMovie)
                 ;
     }
@@ -107,7 +108,7 @@ public class MovieResource {
     public Uni<Set<Person>> getDirectors(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getDirectorsByMovie)
                 ;
     }
@@ -117,7 +118,7 @@ public class MovieResource {
     public Uni<Set<Person>> getScreenwriters(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getScreenwritersByMovie)
                 ;
     }
@@ -127,7 +128,7 @@ public class MovieResource {
     public Uni<Set<Person>> getMusicians(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getMusiciansByMovie)
                 ;
     }
@@ -137,7 +138,7 @@ public class MovieResource {
     public Uni<Set<Person>> getPhotographers(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getPhotographersByMovie)
                 ;
     }
@@ -147,7 +148,7 @@ public class MovieResource {
     public Uni<Set<Person>> getCostumiers(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getCostumiersByMovie)
                 ;
     }
@@ -157,7 +158,7 @@ public class MovieResource {
     public Uni<Set<Person>> getDecorators(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getDecoratorsByMovie)
                 ;
     }
@@ -167,7 +168,7 @@ public class MovieResource {
     public Uni<Set<Person>> getEditors(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getEditorsByMovie)
                 ;
     }
@@ -177,7 +178,7 @@ public class MovieResource {
     public Uni<Response> getRoles(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getActorsByMovie)
                         .onItem().transform(roles -> Response.ok(roles).build())
                         .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
@@ -189,7 +190,7 @@ public class MovieResource {
     public Uni<Set<Genre>> getGenres(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getGenresByMovie)
                 ;
     }
@@ -199,7 +200,7 @@ public class MovieResource {
     public Uni<Set<Country>> getCountries(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getCountriesByMovie)
                 ;
     }
@@ -209,7 +210,7 @@ public class MovieResource {
     public Uni<Response> getAwards(Long id) {
         return
                 Movie.findById(id)
-                        .map(panacheEntityBase -> (Movie) panacheEntityBase)
+                        .map(Movie.class::cast)
                         .chain(movieService::getAwardsByMovie)
                         .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
                         .onItem().ifNull().continueWith(Response.status(404, "Ce film n'existe pas").build())
