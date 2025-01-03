@@ -6,12 +6,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.*;
+import org.desha.app.repository.CountryRepository;
+import org.desha.app.repository.GenreRepository;
 import org.desha.app.repository.MovieRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -22,9 +23,17 @@ public class MovieService {
     Mutiny.SessionFactory msf;
 
     private final MovieRepository movieRepository;
+    private final CountryRepository countryRepository;
+    private final GenreRepository genreRepository;
 
     @Inject
-    public MovieService(MovieRepository movieRepository) {
+    public MovieService(
+            CountryRepository countryRepository,
+            GenreRepository genreRepository,
+            MovieRepository movieRepository
+    ) {
+        this.countryRepository = countryRepository;
+        this.genreRepository = genreRepository;
         this.movieRepository = movieRepository;
     }
 
@@ -97,15 +106,56 @@ public class MovieService {
         return Mutiny.fetch(movie.getAwards());
     }
 
-    public Uni<Movie> createMovie(Movie movie) {
+    public Uni<Movie> createMovie(MovieDTO movieDTO) {
+        final Movie movie = Movie.build(movieDTO);
+
+        List<Uni<Country>> countryUnis = Optional.ofNullable(movieDTO.getCountries())
+                .stream()
+                .flatMap(Collection::stream)
+                .map(
+                        c ->
+                                countryRepository
+                                        .findById(c.id)
+                                        .onFailure().recoverWithNull()
+                )
+                .toList();
+
+        List<Uni<Genre>> genreUnis = Optional.ofNullable(movieDTO.getGenres())
+                .stream()
+                .flatMap(Collection::stream)
+                .map(
+                        g ->
+                                genreRepository
+                                        .findById(g.id)
+                                        .onFailure().recoverWithNull()
+                )
+                .toList();
+
+        log.info("COUNTRIES -> " + countryUnis);
+
         return
-                Panache
-                        .withTransaction(() -> {
-                                    movie.setCreationDate(LocalDateTime.now());
-                                    return movie.persist();
-                                }
+                Uni.join()
+                        .all(countryUnis.isEmpty() ? List.of(Uni.createFrom().nullItem()) : countryUnis)
+                        .usingConcurrencyOf(1)
+                        .andCollectFailures()
+                        .onItem().ifNull().continueWith(Collections.emptyList())
+                        .onItem().transform(countries -> {
+                            movie.setCountries(new HashSet<>(countries));
+                            return movie;
+                        })
+                        .chain(() ->
+                                Uni.join()
+                                        .all(genreUnis.isEmpty() ? List.of(Uni.createFrom().nullItem()) : genreUnis)
+                                        .usingConcurrencyOf(1)
+                                        .andCollectFailures()
+                                        .onItem().ifNull().continueWith(Collections.emptyList())
+                                        .onItem().transform(genres -> {
+                                            movie.setGenres(new HashSet<>(genres));
+                                            return movie;
+                                        })
                         )
-                ;
+                        .onItem()
+                        .transformToUni(movie1 -> Panache.withTransaction(movie::persist));
     }
 
     /**
@@ -302,6 +352,30 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addEditors(personSet))
+                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .chain(entity -> entity.persist())
+                        )
+                ;
+    }
+
+    public Uni<Movie> saveCasting(Long id, Set<Person> personSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNotNull()
+                                        .call(
+                                                movie ->
+                                                        Uni.join().all(
+                                                                        personSet
+                                                                                .stream()
+                                                                                .map(person -> msf.openSession().chain(() -> person.saveMovieAsCaster(movie)))
+                                                                                .toList()
+                                                                )
+                                                                .usingConcurrencyOf(1)
+                                                                .andFailFast()
+                                        )
+                                        .call(entity -> entity.saveCasting(personSet))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )

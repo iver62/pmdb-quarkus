@@ -8,9 +8,7 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -26,7 +24,9 @@ import java.util.Set;
 @Cacheable
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "film", uniqueConstraints = {@UniqueConstraint(columnNames = {"titre", "titre_original"})})
 @Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -118,6 +118,12 @@ public class Movie extends PanacheEntity {
     private Set<Person> editors = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_casteurs", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_casteur"))
+    @Fetch(FetchMode.SELECT)
+    private Set<Person> casting = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
     private Set<Role> roles = new HashSet<>();
@@ -138,6 +144,22 @@ public class Movie extends PanacheEntity {
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
     private Set<Award> awards = new HashSet<>();
+
+    public static Movie build(MovieDTO movieDTO) {
+        return Movie.builder()
+                .title(movieDTO.getTitle())
+                .originalTitle(movieDTO.getOriginalTitle())
+                .releaseDate(movieDTO.getReleaseDate())
+                .synopsis(movieDTO.getSynopsis())
+                .runningTime(movieDTO.getRunningTime())
+                .budget(movieDTO.getBudget())
+                .boxOffice(movieDTO.getBoxOffice())
+                .posterPath(movieDTO.getPosterPath())
+                .countries(movieDTO.getCountries())
+                .genres(movieDTO.getGenres())
+                .creationDate(LocalDateTime.now())
+                .build();
+    }
 
     public static Uni<Set<PanacheEntityBase>> getByTitle(String title) {
         return
@@ -243,6 +265,19 @@ public class Movie extends PanacheEntity {
     public Uni<Set<Person>> addEditors(Set<Person> personSet) {
         return
                 Mutiny.fetch(editors)
+                        .map(
+                                people -> {
+                                    people.clear();
+                                    people.addAll(personSet);
+                                    return people;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<Person>> saveCasting(Set<Person> personSet) {
+        return
+                Mutiny.fetch(casting)
                         .map(
                                 people -> {
                                     people.clear();
