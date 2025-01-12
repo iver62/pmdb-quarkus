@@ -9,7 +9,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Award;
+import org.desha.app.domain.entity.Award;
 import org.hibernate.reactive.mutiny.Mutiny.SessionFactory;
 
 import java.util.List;

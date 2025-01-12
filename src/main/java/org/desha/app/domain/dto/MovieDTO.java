@@ -1,6 +1,10 @@
-package org.desha.app.domain;
+package org.desha.app.domain.dto;
 
 import lombok.Getter;
+import org.desha.app.domain.entity.Award;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Genre;
+import org.desha.app.domain.entity.Role;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

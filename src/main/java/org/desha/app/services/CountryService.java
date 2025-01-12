@@ -4,13 +4,16 @@ import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.desha.app.domain.Country;
-import org.desha.app.domain.Movie;
-import org.desha.app.domain.Person;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @ApplicationScoped
@@ -21,6 +24,16 @@ public class CountryService {
     @Inject
     public CountryService(CountryRepository countryRepository) {
         this.countryRepository = countryRepository;
+    }
+
+    public Uni<List<Country>> getByIds(Set<Country> countrySet) {
+        return
+                countryRepository.findByIds(
+                        Optional.ofNullable(countrySet).orElse(Collections.emptySet())
+                                .stream()
+                                .map(p -> p.id)
+                                .toList()
+                );
     }
 
     public Uni<Set<Movie>> getMovies(Country country) {

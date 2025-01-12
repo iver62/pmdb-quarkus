@@ -1,4 +1,4 @@
-package org.desha.app.domain;
+package org.desha.app.domain.entity;
 
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;

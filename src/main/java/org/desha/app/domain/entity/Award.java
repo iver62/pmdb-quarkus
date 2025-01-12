@@ -1,16 +1,13 @@
-package org.desha.app.domain;
+package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
-import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.time.LocalDateTime;
 import java.time.Year;
 
 @Entity

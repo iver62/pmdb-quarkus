@@ -4,6 +4,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreRemove;
 import jakarta.persistence.PreUpdate;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.entity.Genre;
 
 import java.util.Objects;
 

@@ -1,24 +1,27 @@
 package org.desha.app.webservices;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Country;
-import org.desha.app.domain.Person;
+import org.apache.commons.lang3.StringUtils;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Director;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.services.PersonService;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
-import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.*;
 
 @Path("persons")
 @ApplicationScoped
@@ -139,8 +142,8 @@ public class PersonResource {
     @Path("{id}/movies/director")
     public Uni<Response> getMoviesAsDirector(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
+                PanacheEntityBase.findById(id)
+                        .map(Director.class::cast)
                         .chain(personService::getMoviesAsDirector)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -256,6 +259,35 @@ public class PersonResource {
                 ;
     }
 
+    @POST
+    public Uni<Response> createPerson(Person person) {
+        return
+                Panache
+                        .withTransaction(() -> {
+                                    person.setCreationDate(LocalDateTime.now());
+                                    person.setName(StringUtils.trim(person.getName()));
+                                    return person.persist();
+                                }
+                        )
+                        .replaceWith(Response.ok(person).status(CREATED)::build)
+                ;
+    }
+
+    @POST
+    @Path("director")
+    public Uni<Response> saveDirector(Director director) {
+        return
+                Panache
+                        .withTransaction(() -> {
+                                    director.setCreationDate(LocalDateTime.now());
+                                    director.setName(StringUtils.trim(director.getName()));
+                                    return director.persist();
+                                }
+                        )
+                        .replaceWith(Response.ok(director).status(CREATED)::build)
+                ;
+    }
+
     @PUT
     @Path("{id}/countries")
     public Uni<Response> addCountries(Long id, Set<Country> countrySet) {
@@ -285,7 +317,7 @@ public class PersonResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, Person person) {
-        if (Objects.isNull(person) || Objects.isNull(person.getLastName())) {
+        if (Objects.isNull(person) || Objects.isNull(person.getName())) {
             throw new WebApplicationException("Person lastName was not set on request.", 422);
         }
 

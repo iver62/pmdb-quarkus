@@ -1,4 +1,4 @@
-package org.desha.app.domain;
+package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,25 +25,27 @@ import java.util.Set;
 @Table(name = "personne")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NamedQueries({
-        @NamedQuery(name = "Person.searchByName", query = "from Person where lower(lastName) LIKE lower(?1) or lower(firstName) LIKE lower(?1) or lower(pseudo) LIKE lower(?1)")
+        @NamedQuery(name = "Person.searchByName", query = "from Person where lower(name) LIKE lower(?1)")
 })
 public class Person extends PanacheEntity implements Comparable<Person> {
 
     @Column(name = "nom")
-    private String lastName;
+    private String name;
 
-    @Column(name = "prenom")
-
-    private String firstName;
-
-    @Column(name = "deuxieme_prenom")
-    private String secondName;
-
-    @Column(name = "troisieme_prenom")
-    private String thirdName;
-
-    @Column(name = "pseudo")
-    private String pseudo;
+//    @Column(name = "nom de famille")
+//    private String lastName;
+//
+//    @Column(name = "prenom")
+//    private String firstName;
+//
+//    @Column(name = "deuxieme_prenom")
+//    private String secondName;
+//
+//    @Column(name = "troisieme_prenom")
+//    private String thirdName;
+//
+//    @Column(name = "pseudo")
+//    private String pseudo;
 
     @Column(name = "chemin_photo", unique = true)
     private String photoPath;
@@ -75,10 +77,10 @@ public class Person extends PanacheEntity implements Comparable<Person> {
     @Fetch(FetchMode.SELECT)
     private Set<Movie> moviesAsProducer = new HashSet<>();
 
-    @JsonIgnore
+    /*@JsonIgnore
     @ManyToMany(mappedBy = "directors")
     @Fetch(FetchMode.SELECT)
-    private Set<Movie> moviesAsDirector = new HashSet<>();
+    private Set<Movie> moviesAsDirector = new HashSet<>();*/
 
     @JsonIgnore
     @ManyToMany(mappedBy = "screenwriters")
@@ -111,6 +113,11 @@ public class Person extends PanacheEntity implements Comparable<Person> {
     private Set<Movie> moviesAsEditor = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(mappedBy = "casters")
+    @Fetch(FetchMode.SELECT)
+    private Set<Movie> moviesAsCaster = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "actor", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @Fetch(FetchMode.SELECT)
     private Set<Role> roles = new HashSet<>();
@@ -131,7 +138,7 @@ public class Person extends PanacheEntity implements Comparable<Person> {
                 ;
     }
 
-    public Uni<Set<Movie>> addMovieAsDirector(Movie movie) {
+    /*public Uni<Set<Movie>> addMovieAsDirector(Movie movie) {
         return
                 Mutiny.fetch(moviesAsDirector)
                         .map(
@@ -141,7 +148,7 @@ public class Person extends PanacheEntity implements Comparable<Person> {
                                 }
                         )
                 ;
-    }
+    }*/
 
     public Uni<Set<Movie>> addMovieAsScreenwriter(Movie movie) {
         return
@@ -215,6 +222,18 @@ public class Person extends PanacheEntity implements Comparable<Person> {
                 ;
     }
 
+    public Uni<Set<Movie>> saveMovieAsCaster(Movie movie) {
+        return
+                Mutiny.fetch(moviesAsCaster)
+                        .map(
+                                movieSet -> {
+                                    movieSet.add(movie);
+                                    return movieSet;
+                                }
+                        )
+                ;
+    }
+
     public Uni<Set<Role>> addRole(Role role) {
         return
                 Mutiny.fetch(roles)
@@ -269,7 +288,7 @@ public class Person extends PanacheEntity implements Comparable<Person> {
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsDirector(Long id) {
+    /*public Uni<Set<Movie>> removeMovieAsDirector(Long id) {
         return
                 Mutiny.fetch(moviesAsDirector)
                         .map(
@@ -279,7 +298,7 @@ public class Person extends PanacheEntity implements Comparable<Person> {
                                 }
                         )
                 ;
-    }
+    }*/
 
     public Uni<Set<Movie>> removeMovieAsScreenwriter(Long id) {
         return
@@ -383,6 +402,6 @@ public class Person extends PanacheEntity implements Comparable<Person> {
 
     @Override
     public int compareTo(Person p) {
-        return lastName.toLowerCase().compareTo(p.getLastName().toLowerCase());
+        return name.toLowerCase().compareTo(p.getName().toLowerCase());
     }
 }

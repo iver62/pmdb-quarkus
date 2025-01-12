@@ -5,18 +5,20 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
-import org.desha.app.domain.*;
+import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.entity.*;
+import org.desha.app.repository.DirectorRepository;
 import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @ApplicationScoped
+@Slf4j
 public class PersonService {
 
     @Inject
@@ -24,10 +26,36 @@ public class PersonService {
 
     private final MovieService movieService;
     private final PersonRepository personRepository;
+    private final DirectorRepository directorRepository;
 
-    public PersonService(MovieService movieService, PersonRepository personRepository) {
+    public PersonService(
+            DirectorRepository directorRepository,
+            MovieService movieService,
+            PersonRepository personRepository
+    ) {
+        this.directorRepository = directorRepository;
         this.movieService = movieService;
         this.personRepository = personRepository;
+    }
+
+    public Uni<List<Person>> getByIds(Set<Person> personSet) {
+        return
+                personRepository.findByIds(
+                        Optional.ofNullable(personSet).orElse(Collections.emptySet())
+                                .stream()
+                                .map(p -> p.id)
+                                .toList()
+                );
+    }
+
+    public Uni<List<Director>> getDirectorByIds(Set<Director> directorSet) {
+        return
+                directorRepository.findByIds(
+                        Optional.ofNullable(directorSet).orElse(Collections.emptySet())
+                                .stream()
+                                .map(p -> p.id)
+                                .toList()
+                );
     }
 
     public Uni<Set<Person>> getProducers() {
@@ -58,7 +86,7 @@ public class PersonService {
                 ;
     }
 
-    public Uni<Set<Person>> getDirectors() {
+    public Uni<Set<Director>> getDirectors() {
         return
                 movieService.getAll()
                         .onItem().transformToUni(
@@ -77,11 +105,14 @@ public class PersonService {
                                                         .andFailFast()
                         )
                         .map(
-                                sets ->
-                                        sets
-                                                .stream()
-                                                .flatMap(Collection::stream)
-                                                .collect(Collectors.toSet())
+                                sets -> {
+                                    log.info("DIRECTORS -> " + sets);
+
+                                    return sets
+                                            .stream()
+                                            .flatMap(Collection::stream)
+                                            .collect(Collectors.toSet());
+                                }
                         )
                 ;
     }
@@ -264,8 +295,8 @@ public class PersonService {
         return Mutiny.fetch(person.getMoviesAsProducer());
     }
 
-    public Uni<Set<Movie>> getMoviesAsDirector(Person person) {
-        return Mutiny.fetch(person.getMoviesAsDirector());
+    public Uni<Set<Movie>> getMoviesAsDirector(Director director) {
+        return Mutiny.fetch(director.getMovies());
     }
 
     public Uni<Set<Movie>> getMoviesAsScreenwriter(Person person) {
@@ -365,9 +396,9 @@ public class PersonService {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                directorRepository.findById(personId)
                                         .onItem().ifNotNull()
-                                        .transformToUni(person -> person.removeMovieAsDirector(movieId))
+                                        .transformToUni(person -> person.removeMovie(movieId))
                         )
                 ;
     }
@@ -442,21 +473,22 @@ public class PersonService {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(id)
-                                        .onItem().ifNull().failWith(new WebApplicationException("Person missing from database.", NOT_FOUND))
-                                        .invoke(
-                                                entity -> {
-                                                    entity.setLastName(person.getLastName());
-                                                    entity.setFirstName(person.getFirstName());
-                                                    entity.setSecondName(person.getSecondName());
-                                                    entity.setThirdName(person.getThirdName());
-                                                    entity.setPseudo(person.getPseudo());
-                                                    entity.setDateOfBirth(person.getDateOfBirth());
-                                                    entity.setDateOfDeath(person.getDateOfDeath());
-                                                    entity.setPhotoPath(person.getPhotoPath());
-                                                    entity.setLastUpdate(LocalDateTime.now());
-                                                }
-                                        )
+                                        personRepository.findById(id)
+                                                .onItem().ifNull().failWith(new WebApplicationException("Person missing from database.", NOT_FOUND))
+                                                .invoke(
+                                                        entity -> {
+                                                            entity.setName(person.getName());
+//                                                    entity.setLastName(person.getLastName());
+//                                                    entity.setFirstName(person.getFirstName());
+//                                                    entity.setSecondName(person.getSecondName());
+//                                                    entity.setThirdName(person.getThirdName());
+//                                                    entity.setPseudo(person.getPseudo());
+                                                            entity.setDateOfBirth(person.getDateOfBirth());
+                                                            entity.setDateOfDeath(person.getDateOfDeath());
+                                                            entity.setPhotoPath(person.getPhotoPath());
+                                                            entity.setLastUpdate(LocalDateTime.now());
+                                                        }
+                                                )
                         )
                 ;
     }

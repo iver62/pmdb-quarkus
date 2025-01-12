@@ -6,7 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
-import org.desha.app.domain.Fruit;
+import org.desha.app.domain.entity.Fruit;
 import org.jboss.logging.Logger;
 
 import java.util.List;

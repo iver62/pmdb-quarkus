@@ -8,9 +8,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Country;
-import org.desha.app.domain.Movie;
-import org.desha.app.domain.Person;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.services.CountryService;
 
 import java.util.List;

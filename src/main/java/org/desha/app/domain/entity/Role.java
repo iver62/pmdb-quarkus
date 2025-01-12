@@ -1,6 +1,5 @@
-package org.desha.app.domain;
+package org.desha.app.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import jakarta.persistence.*;

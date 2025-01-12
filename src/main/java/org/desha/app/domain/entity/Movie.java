@@ -1,4 +1,4 @@
-package org.desha.app.domain;
+package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.MovieDTO;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -70,7 +71,7 @@ public class Movie extends PanacheEntity {
     private LocalDateTime lastUpdate;
 
     @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.ALL, CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_producteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_producteur"))
     @Fetch(FetchMode.SELECT)
     private Set<Person> producers = new HashSet<>();
@@ -79,7 +80,7 @@ public class Movie extends PanacheEntity {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_realisateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_realisateur"))
     @Fetch(FetchMode.SELECT)
-    private Set<Person> directors = new HashSet<>();
+    private Set<Director> directors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -121,7 +122,7 @@ public class Movie extends PanacheEntity {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_casteurs", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_casteur"))
     @Fetch(FetchMode.SELECT)
-    private Set<Person> casting = new HashSet<>();
+    private Set<Person> casters = new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
@@ -184,7 +185,7 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Person>> addDirectors(Set<Person> personSet) {
+    public Uni<Set<Director>> addDirectors(Set<Director> personSet) {
         return
                 Mutiny.fetch(directors)
                         .map(
@@ -277,7 +278,7 @@ public class Movie extends PanacheEntity {
 
     public Uni<Set<Person>> saveCasting(Set<Person> personSet) {
         return
-                Mutiny.fetch(casting)
+                Mutiny.fetch(casters)
                         .map(
                                 people -> {
                                     people.clear();
@@ -364,7 +365,7 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Person>> removeDirector(Long id) {
+    public Uni<Set<Director>> removeDirector(Long id) {
         return
                 Mutiny.fetch(directors)
                         .map(
