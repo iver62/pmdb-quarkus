@@ -21,18 +21,18 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 @Slf4j
 public class PersonService {
 
-    @Inject
-    Mutiny.SessionFactory msf;
-
+    private final Mutiny.SessionFactory msf;
     private final MovieService movieService;
     private final PersonRepository personRepository;
     private final DirectorRepository directorRepository;
 
     public PersonService(
+            Mutiny.SessionFactory msf,
             DirectorRepository directorRepository,
             MovieService movieService,
             PersonRepository personRepository
     ) {
+        this.msf = msf;
         this.directorRepository = directorRepository;
         this.movieService = movieService;
         this.personRepository = personRepository;
@@ -87,34 +87,7 @@ public class PersonService {
     }
 
     public Uni<Set<Director>> getDirectors() {
-        return
-                movieService.getAll()
-                        .onItem().transformToUni(
-                                movies ->
-                                        movies.isEmpty()
-                                                ?
-                                                Uni.createFrom().nullItem()
-                                                :
-                                                Uni.join().all(
-                                                                movies
-                                                                        .stream()
-                                                                        .map(movie -> msf.openSession().chain(() -> movieService.getDirectorsByMovie(movie)))
-                                                                        .toList()
-                                                        )
-                                                        .usingConcurrencyOf(1)
-                                                        .andFailFast()
-                        )
-                        .map(
-                                sets -> {
-                                    log.info("DIRECTORS -> " + sets);
-
-                                    return sets
-                                            .stream()
-                                            .flatMap(Collection::stream)
-                                            .collect(Collectors.toSet());
-                                }
-                        )
-                ;
+        return directorRepository.listAll().map(HashSet::new);
     }
 
     public Uni<Set<Person>> getScreenwriters() {
@@ -286,7 +259,7 @@ public class PersonService {
     }
 
     /**
-     * Retourne tous les films d'une personne en tant que producteur.
+     * Retourne tous les films produits par une personne.
      *
      * @param person les films de la personne à retourner
      * @return un ensemble de films
@@ -478,11 +451,6 @@ public class PersonService {
                                                 .invoke(
                                                         entity -> {
                                                             entity.setName(person.getName());
-//                                                    entity.setLastName(person.getLastName());
-//                                                    entity.setFirstName(person.getFirstName());
-//                                                    entity.setSecondName(person.getSecondName());
-//                                                    entity.setThirdName(person.getThirdName());
-//                                                    entity.setPseudo(person.getPseudo());
                                                             entity.setDateOfBirth(person.getDateOfBirth());
                                                             entity.setDateOfDeath(person.getDateOfDeath());
                                                             entity.setPhotoPath(person.getPhotoPath());
