@@ -25,6 +25,9 @@ public class MovieService {
     private final CountryService countryService;
     private final GenreService genreService;
     private final PersonService personService;
+    private final DirectorService directorService;
+    private final ProducerService producerService;
+    private final ScreenwriterService screenwriterService;
 
     @Inject
     public MovieService(
@@ -32,13 +35,19 @@ public class MovieService {
             CountryService countryService,
             GenreService genreService,
             MovieRepository movieRepository,
-            PersonService personService
+            PersonService personService,
+            DirectorService directorService,
+            ProducerService producerService,
+            ScreenwriterService screenwriterService
     ) {
         this.msf = msf;
         this.countryService = countryService;
         this.genreService = genreService;
         this.movieRepository = movieRepository;
         this.personService = personService;
+        this.directorService = directorService;
+        this.producerService = producerService;
+        this.screenwriterService = screenwriterService;
     }
 
     public Uni<Movie> getSingle(Long id) {
@@ -200,14 +209,14 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
                                         .call(
                                                 movie ->
-                                                        personService.getByIds(technicalSummary.getProducers())
-                                                                .invoke(people -> movie.setProducers(new HashSet<>(people)))
+                                                        producerService.getByIds(technicalSummary.getProducers())
+                                                                .invoke(people -> movie.setProducers(people))
                                                                 .chain(() ->
-                                                                        personService.getDirectorByIds(technicalSummary.getDirectors())
-                                                                                .invoke(directors -> movie.setDirectors(new HashSet<>(directors)))
+                                                                        directorService.getByIds(technicalSummary.getDirectors())
+                                                                                .invoke(movie::setDirectors)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getScreenwriters())
+                                                                        screenwriterService.getByIds(technicalSummary.getScreenwriters())
                                                                                 .invoke(people -> movie.setScreenwriters(new HashSet<>(people)))
                                                                 )
                                                                 .chain(() ->

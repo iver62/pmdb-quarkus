@@ -10,36 +10,36 @@ import java.util.Set;
 @Builder
 public class TechnicalSummaryDTO {
 
-    private Set<ProducerDTO> producers;
-    private Set<DirectorDTO> directors;
-    private Set<Person> screenwriters;
-    private Set<Person> musicians;
-    private Set<Person> photographers;
-    private Set<Person> costumiers;
-    private Set<Person> decorators;
-    private Set<Person> editors;
-    private Set<Person> casters;
-    private Set<Person> artDirectors;
-    private Set<Person> soundEditors;
-    private Set<Person> visualEffectsSupervisor;
-    private Set<Person> makeupArtists;
-    private Set<Person> barbers;
+    private Set<PersonDTO> producers;
+    private Set<PersonDTO> directors;
+    private Set<PersonDTO> screenwriters;
+    private Set<PersonDTO> musicians;
+    private Set<PersonDTO> photographers;
+    private Set<PersonDTO> costumiers;
+    private Set<PersonDTO> decorators;
+    private Set<PersonDTO> editors;
+    private Set<PersonDTO> casters;
+    private Set<PersonDTO> artDirectors;
+    private Set<PersonDTO> soundEditors;
+    private Set<PersonDTO> visualEffectsSupervisor;
+    private Set<PersonDTO> makeupArtists;
+    private Set<PersonDTO> barbers;
 
     public static TechnicalSummaryDTO build(
-            final Set<ProducerDTO> producers,
-            final Set<DirectorDTO> directors,
-            final Set<Person> screenwriters,
-            final Set<Person> musicians,
-            final Set<Person> photographers,
-            final Set<Person> costumiers,
-            final Set<Person> decorators,
-            final Set<Person> editors,
-            final Set<Person> casting,
-            final Set<Person> artDirectors,
-            final Set<Person> soundEditors,
-            final Set<Person> visualEffectsSupervisor,
-            final Set<Person> makeupArtists,
-            final Set<Person> barbers
+            final Set<PersonDTO> producers,
+            final Set<PersonDTO> directors,
+            final Set<PersonDTO> screenwriters,
+            final Set<PersonDTO> musicians,
+            final Set<PersonDTO> photographers,
+            final Set<PersonDTO> costumiers,
+            final Set<PersonDTO> decorators,
+            final Set<PersonDTO> editors,
+            final Set<PersonDTO> casting,
+            final Set<PersonDTO> artDirectors,
+            final Set<PersonDTO> soundEditors,
+            final Set<PersonDTO> visualEffectsSupervisor,
+            final Set<PersonDTO> makeupArtists,
+            final Set<PersonDTO> barbers
     ) {
         return TechnicalSummaryDTO.builder()
                 .producers(producers)

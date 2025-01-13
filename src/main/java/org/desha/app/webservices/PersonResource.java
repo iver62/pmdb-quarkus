@@ -1,7 +1,6 @@
 package org.desha.app.webservices;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -9,10 +8,11 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Director;
-import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.entity.*;
+import org.desha.app.services.DirectorService;
 import org.desha.app.services.PersonService;
+import org.desha.app.services.ProducerService;
+import org.desha.app.services.ScreenwriterService;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -29,29 +29,47 @@ import static jakarta.ws.rs.core.Response.Status.*;
 public class PersonResource {
 
     private final PersonService personService;
+    private final DirectorService directorService;
+    private final ProducerService producerService;
+    private final ScreenwriterService screenwriterService;
 
     @Inject
-    public PersonResource(PersonService personService) {
+    public PersonResource(
+            DirectorService directorService,
+            PersonService personService,
+            ProducerService producerService,
+            ScreenwriterService screenwriterService
+    ) {
+        this.directorService = directorService;
         this.personService = personService;
+        this.producerService = producerService;
+        this.screenwriterService = screenwriterService;
     }
 
     @GET
-    @Path("{id}")
-    public Uni<Person> getSingle(Long id) {
-        return Person.findById(id);
+    @Path("producers/{id}")
+    public Uni<Producer> getProducer(Long id) {
+        return producerService.getOne(id);
     }
 
     @GET
-    public Uni<List<Person>> get() {
-        return Person.listAll();
+    @Path("directors/{id}")
+    public Uni<Director> getDirector(Long id) {
+        return directorService.getOne(id);
+    }
+
+    @GET
+    @Path("screenwriters/{id}")
+    public Uni<Screenwriter> getScreenwriter(Long id) {
+        return screenwriterService.getOne(id);
     }
 
     @GET
     @Path("producers")
     public Uni<Response> getProducers() {
         return
-                personService.getProducers()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                producerService.getAll()
+                        .onItem().ifNotNull().transform(producers -> Response.ok(producers).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
@@ -60,8 +78,8 @@ public class PersonResource {
     @Path("directors")
     public Uni<Response> getDirectors() {
         return
-                personService.getDirectors()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                directorService.getAll()
+                        .onItem().ifNotNull().transform(directors -> Response.ok(directors).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
@@ -70,8 +88,8 @@ public class PersonResource {
     @Path("screenwriters")
     public Uni<Response> getScreenwriters() {
         return
-                personService.getScreenwriters()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                screenwriterService.getAll()
+                        .onItem().ifNotNull().transform(screenwriters -> Response.ok(screenwriters).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
@@ -127,35 +145,32 @@ public class PersonResource {
     }
 
     @GET
-    @Path("{id}/movies/producer")
+    @Path("producers/{id}/movies")
     public Uni<Response> getMoviesAsProducer(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsProducer)
+                personService.getProducer(id)
+                        .chain(producerService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @GET
-    @Path("{id}/movies/director")
+    @Path("directors/{id}/movies")
     public Uni<Response> getMoviesAsDirector(Long id) {
         return
-                PanacheEntityBase.findById(id)
-                        .map(Director.class::cast)
-                        .chain(personService::getMoviesAsDirector)
+                directorService.getOne(id)
+                        .chain(directorService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @GET
-    @Path("{id}/movies/screenwriter")
+    @Path("screenwriters/{id}/movies")
     public Uni<Response> getMoviesAsScreenwriter(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
+                screenwriterService.getOne(id)
                         .chain(personService::getMoviesAsScreenwriter)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())

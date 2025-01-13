@@ -3,12 +3,11 @@ package org.desha.app.services;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.entity.*;
-import org.desha.app.repository.DirectorRepository;
 import org.desha.app.repository.PersonRepository;
+import org.desha.app.repository.ProducerRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
@@ -24,17 +23,17 @@ public class PersonService {
     private final Mutiny.SessionFactory msf;
     private final MovieService movieService;
     private final PersonRepository personRepository;
-    private final DirectorRepository directorRepository;
+    private final ProducerRepository producerRepository;
 
     public PersonService(
             Mutiny.SessionFactory msf,
-            DirectorRepository directorRepository,
+            ProducerRepository producerRepository,
             MovieService movieService,
             PersonRepository personRepository
     ) {
         this.msf = msf;
-        this.directorRepository = directorRepository;
         this.movieService = movieService;
+        this.producerRepository = producerRepository;
         this.personRepository = personRepository;
     }
 
@@ -48,46 +47,37 @@ public class PersonService {
                 );
     }
 
-    public Uni<List<Director>> getDirectorByIds(Set<Director> directorSet) {
-        return
-                directorRepository.findByIds(
-                        Optional.ofNullable(directorSet).orElse(Collections.emptySet())
-                                .stream()
-                                .map(p -> p.id)
-                                .toList()
-                );
+    public Uni<Producer> getProducer(Long id) {
+        return producerRepository.findById(id);
     }
 
     public Uni<Set<Person>> getProducers() {
-        return
-                movieService.getAll()
-                        .onItem().transformToUni(
-                                movies ->
-                                        movies.isEmpty()
-                                                ?
-                                                Uni.createFrom().nullItem()
-                                                :
-                                                Uni.join().all(
-                                                                movies
-                                                                        .stream()
-                                                                        .map(movie -> msf.openSession().chain(() -> movieService.getProducersByMovie(movie)))
-                                                                        .toList()
-                                                        )
-                                                        .usingConcurrencyOf(1)
-                                                        .andFailFast()
-                                                        .map(
-                                                                sets ->
-                                                                        sets
-                                                                                .stream()
-                                                                                .flatMap(Collection::stream)
-                                                                                .collect(Collectors.toSet())
-                                                        )
-                        )
-                ;
-    }
-
-    public Uni<Set<Director>> getDirectors() {
-        return directorRepository.listAll().map(HashSet::new);
+        return producerRepository.listAll().map(HashSet::new);
+//        return
+//                movieService.getAll()
+//                        .onItem().transformToUni(
+//                                movies ->
+//                                        movies.isEmpty()
+//                                                ?
+//                                                Uni.createFrom().nullItem()
+//                                                :
+//                                                Uni.join().all(
+//                                                                movies
+//                                                                        .stream()
+//                                                                        .map(movie -> msf.openSession().chain(() -> movieService.getProducersByMovie(movie)))
+//                                                                        .toList()
+//                                                        )
+//                                                        .usingConcurrencyOf(1)
+//                                                        .andFailFast()
+//                                                        .map(
+//                                                                sets ->
+//                                                                        sets
+//                                                                                .stream()
+//                                                                                .flatMap(Collection::stream)
+//                                                                                .collect(Collectors.toSet())
+//                                                        )
+//                        )
+//                ;
     }
 
     public Uni<Set<Person>> getScreenwriters() {
@@ -261,14 +251,14 @@ public class PersonService {
     /**
      * Retourne tous les films produits par une personne.
      *
-     * @param person les films de la personne à retourner
+     * @param producer les films de la personne à retourner
      * @return un ensemble de films
      */
-    public Uni<Set<Movie>> getMoviesAsProducer(Person person) {
-        return Mutiny.fetch(person.getMoviesAsProducer());
+    public Uni<Set<Movie>> getMovies(Producer producer) {
+        return Mutiny.fetch(producer.getMovies());
     }
 
-    public Uni<Set<Movie>> getMoviesAsDirector(Director director) {
+    public Uni<Set<Movie>> getMovies(Director director) {
         return Mutiny.fetch(director.getMovies());
     }
 

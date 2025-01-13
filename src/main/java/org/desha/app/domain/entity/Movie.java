@@ -74,7 +74,7 @@ public class Movie extends PanacheEntity {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_producteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_producteur"))
     @Fetch(FetchMode.SELECT)
-    private Set<Person> producers = new HashSet<>();
+    private Set<Producer> producers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -86,7 +86,7 @@ public class Movie extends PanacheEntity {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_scenariste", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_scenariste"))
     @Fetch(FetchMode.SELECT)
-    private Set<Person> screenwriters = new HashSet<>();
+    private Set<Screenwriter> screenwriters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -172,39 +172,39 @@ public class Movie extends PanacheEntity {
                 Panache.withTransaction(() -> list("#Movie.searchByTitle", "%" + title + "%").map(HashSet::new));
     }
 
-    public Uni<Set<Person>> addProducers(Set<Person> personSet) {
+    public Uni<Set<Producer>> addProducers(Set<Producer> producerSet) {
         return
                 Mutiny.fetch(producers)
                         .map(
                                 people -> {
                                     people.clear();
-                                    people.addAll(personSet);
+                                    people.addAll(producerSet);
                                     return people;
                                 }
                         )
                 ;
     }
 
-    public Uni<Set<Director>> addDirectors(Set<Director> personSet) {
+    public Uni<Set<Director>> addDirectors(Set<Director> directorSet) {
         return
                 Mutiny.fetch(directors)
                         .map(
                                 people -> {
                                     people.clear();
-                                    people.addAll(personSet);
+                                    people.addAll(directorSet);
                                     return people;
                                 }
                         )
                 ;
     }
 
-    public Uni<Set<Person>> addScreenwriters(Set<Person> personSet) {
+    public Uni<Set<Screenwriter>> addScreenwriters(Set<Screenwriter> screenwriterSet) {
         return
                 Mutiny.fetch(screenwriters)
                         .map(
                                 people -> {
                                     people.clear();
-                                    people.addAll(personSet);
+                                    people.addAll(screenwriterSet);
                                     return people;
                                 }
                         )
@@ -353,7 +353,7 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Person>> removeProducer(Long id) {
+    public Uni<Set<Producer>> removeProducer(Long id) {
         return
                 Mutiny.fetch(producers)
                         .map(
@@ -377,7 +377,7 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Person>> removeScreenwriter(Long id) {
+    public Uni<Set<Screenwriter>> removeScreenwriter(Long id) {
         return
                 Mutiny.fetch(screenwriters)
                         .map(

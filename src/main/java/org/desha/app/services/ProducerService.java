@@ -1,13 +1,11 @@
 package org.desha.app.services;
 
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.dto.ProducerDTO;
-import org.desha.app.domain.entity.Director;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Producer;
-import org.desha.app.repository.DirectorRepository;
 import org.desha.app.repository.ProducerRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
@@ -16,7 +14,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class ProducerService implements PersonServiceInterface<Producer, ProducerDTO> {
+@ApplicationScoped
+public class ProducerService implements PersonServiceInterface<Producer> {
 
     private final ProducerRepository producerRepository;
 
@@ -31,7 +30,7 @@ public class ProducerService implements PersonServiceInterface<Producer, Produce
     }
 
     @Override
-    public Uni<Set<Producer>> getByIds(Set<ProducerDTO> producers) {
+    public Uni<Set<Producer>> getByIds(Set<PersonDTO> producers) {
         return
                 producerRepository.findByIds(
                         Optional.ofNullable(producers).orElse(Collections.emptySet())
