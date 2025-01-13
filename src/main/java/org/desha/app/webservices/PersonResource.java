@@ -9,10 +9,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.entity.*;
-import org.desha.app.services.DirectorService;
-import org.desha.app.services.PersonService;
-import org.desha.app.services.ProducerService;
-import org.desha.app.services.ScreenwriterService;
+import org.desha.app.services.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -30,17 +27,20 @@ public class PersonResource {
 
     private final PersonService personService;
     private final DirectorService directorService;
+    private final MusicianService musicianService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
 
     @Inject
     public PersonResource(
             DirectorService directorService,
+            MusicianService musicianService,
             PersonService personService,
             ProducerService producerService,
             ScreenwriterService screenwriterService
     ) {
         this.directorService = directorService;
+        this.musicianService = musicianService;
         this.personService = personService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
@@ -62,6 +62,12 @@ public class PersonResource {
     @Path("screenwriters/{id}")
     public Uni<Screenwriter> getScreenwriter(Long id) {
         return screenwriterService.getOne(id);
+    }
+
+    @GET
+    @Path("musicians/{id}")
+    public Uni<Musician> getMusicians(Long id) {
+        return musicianService.getOne(id);
     }
 
     @GET
@@ -98,8 +104,8 @@ public class PersonResource {
     @Path("musicians")
     public Uni<Response> getMusicians() {
         return
-                personService.getMusicians()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                musicianService.getAll()
+                        .onItem().ifNotNull().transform(musicians -> Response.ok(musicians).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
@@ -171,19 +177,18 @@ public class PersonResource {
     public Uni<Response> getMoviesAsScreenwriter(Long id) {
         return
                 screenwriterService.getOne(id)
-                        .chain(personService::getMoviesAsScreenwriter)
+                        .chain(screenwriterService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @GET
-    @Path("{id}/movies/musician")
+    @Path("musicians/{id}/movies")
     public Uni<Response> getMoviesAsMusician(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsMusician)
+                musicianService.getOne(id)
+                        .chain(musicianService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;

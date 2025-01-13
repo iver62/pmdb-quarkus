@@ -4,9 +4,9 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.entity.Director;
 import org.desha.app.domain.entity.Movie;
-import org.desha.app.repository.DirectorRepository;
+import org.desha.app.domain.entity.Musician;
+import org.desha.app.repository.MusicianRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.Collections;
@@ -15,24 +15,24 @@ import java.util.Optional;
 import java.util.Set;
 
 @ApplicationScoped
-public class DirectorService implements PersonServiceInterface<Director> {
+public class MusicianService implements PersonServiceInterface<Musician> {
 
-    private final DirectorRepository directorRepository;
+    private final MusicianRepository musicianRepository;
 
     @Inject
-    public DirectorService(DirectorRepository directorRepository) {
-        this.directorRepository = directorRepository;
+    public MusicianService(MusicianRepository musicianRepository) {
+        this.musicianRepository = musicianRepository;
     }
 
     @Override
-    public Uni<Director> getOne(Long id) {
-        return directorRepository.findById(id);
+    public Uni<Musician> getOne(Long id) {
+        return musicianRepository.findById(id);
     }
 
     @Override
-    public Uni<Set<Director>> getByIds(Set<PersonDTO> persons) {
+    public Uni<Set<Musician>> getByIds(Set<PersonDTO> persons) {
         return
-                directorRepository.findByIds(
+                musicianRepository.findByIds(
                         Optional.ofNullable(persons).orElse(Collections.emptySet())
                                 .stream()
                                 .map(PersonDTO::getId)
@@ -41,16 +41,16 @@ public class DirectorService implements PersonServiceInterface<Director> {
     }
 
     @Override
-    public Uni<Set<Director>> getAll() {
+    public Uni<Set<Musician>> getAll() {
         return
-                directorRepository
+                musicianRepository
                         .listAll()
                         .map(HashSet::new)
                 ;
     }
 
     @Override
-    public Uni<Set<Movie>> getMovies(Director director) {
-        return Mutiny.fetch(director.getMovies());
+    public Uni<Set<Movie>> getMovies(Musician musician) {
+        return Mutiny.fetch(musician.getMovies());
     }
 }

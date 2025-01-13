@@ -248,28 +248,6 @@ public class PersonService {
                 ;
     }
 
-    /**
-     * Retourne tous les films produits par une personne.
-     *
-     * @param producer les films de la personne à retourner
-     * @return un ensemble de films
-     */
-    public Uni<Set<Movie>> getMovies(Producer producer) {
-        return Mutiny.fetch(producer.getMovies());
-    }
-
-    public Uni<Set<Movie>> getMovies(Director director) {
-        return Mutiny.fetch(director.getMovies());
-    }
-
-    public Uni<Set<Movie>> getMoviesAsScreenwriter(Person person) {
-        return Mutiny.fetch(person.getMoviesAsScreenWriter());
-    }
-
-    public Uni<Set<Movie>> getMoviesAsMusician(Person person) {
-        return Mutiny.fetch(person.getMoviesAsMusician());
-    }
-
     public Uni<Set<Movie>> getMoviesAsPhotographer(Person person) {
         return Mutiny.fetch(person.getMoviesAsPhotographer());
     }

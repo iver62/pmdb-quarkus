@@ -24,6 +24,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final CountryService countryService;
     private final GenreService genreService;
+    private final MusicianService musicianService;
     private final PersonService personService;
     private final DirectorService directorService;
     private final ProducerService producerService;
@@ -35,6 +36,7 @@ public class MovieService {
             CountryService countryService,
             GenreService genreService,
             MovieRepository movieRepository,
+            MusicianService musicianService,
             PersonService personService,
             DirectorService directorService,
             ProducerService producerService,
@@ -44,6 +46,7 @@ public class MovieService {
         this.countryService = countryService;
         this.genreService = genreService;
         this.movieRepository = movieRepository;
+        this.musicianService = musicianService;
         this.personService = personService;
         this.directorService = directorService;
         this.producerService = producerService;
@@ -62,7 +65,7 @@ public class MovieService {
         return movieRepository.findByTitle(pattern).map(HashSet::new);
     }
 
-    public Uni<Set<Person>> getProducersByMovie(Movie movie) {
+    public Uni<Set<Producer>> getProducersByMovie(Movie movie) {
         return Mutiny.fetch(movie.getProducers());
     }
 
@@ -70,11 +73,11 @@ public class MovieService {
         return Mutiny.fetch(movie.getDirectors());
     }
 
-    public Uni<Set<Person>> getScreenwritersByMovie(Movie movie) {
+    public Uni<Set<Screenwriter>> getScreenwritersByMovie(Movie movie) {
         return Mutiny.fetch(movie.getScreenwriters());
     }
 
-    public Uni<Set<Person>> getMusiciansByMovie(Movie movie) {
+    public Uni<Set<Musician>> getMusiciansByMovie(Movie movie) {
         return Mutiny.fetch(movie.getMusicians());
     }
 
@@ -210,18 +213,18 @@ public class MovieService {
                                         .call(
                                                 movie ->
                                                         producerService.getByIds(technicalSummary.getProducers())
-                                                                .invoke(people -> movie.setProducers(people))
+                                                                .invoke(movie::setProducers)
                                                                 .chain(() ->
                                                                         directorService.getByIds(technicalSummary.getDirectors())
                                                                                 .invoke(movie::setDirectors)
                                                                 )
                                                                 .chain(() ->
                                                                         screenwriterService.getByIds(technicalSummary.getScreenwriters())
-                                                                                .invoke(people -> movie.setScreenwriters(new HashSet<>(people)))
+                                                                                .invoke(movie::setScreenwriters)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getMusicians())
-                                                                                .invoke(people -> movie.setMusicians(new HashSet<>(people)))
+                                                                        musicianService.getByIds(technicalSummary.getMusicians())
+                                                                                .invoke(movie::setMusicians)
                                                                 )
                                                                 .chain(() ->
                                                                         personService.getByIds(technicalSummary.getPhotographers())

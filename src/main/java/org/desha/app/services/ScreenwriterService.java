@@ -30,10 +30,10 @@ public class ScreenwriterService implements PersonServiceInterface<Screenwriter>
     }
 
     @Override
-    public Uni<Set<Screenwriter>> getByIds(Set<PersonDTO> screenwriters) {
+    public Uni<Set<Screenwriter>> getByIds(Set<PersonDTO> persons) {
         return
                 screenwriterRepository.findByIds(
-                        Optional.ofNullable(screenwriters).orElse(Collections.emptySet())
+                        Optional.ofNullable(persons).orElse(Collections.emptySet())
                                 .stream()
                                 .map(PersonDTO::getId)
                                 .toList()

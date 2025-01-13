@@ -30,10 +30,10 @@ public class ProducerService implements PersonServiceInterface<Producer> {
     }
 
     @Override
-    public Uni<Set<Producer>> getByIds(Set<PersonDTO> producers) {
+    public Uni<Set<Producer>> getByIds(Set<PersonDTO> persons) {
         return
                 producerRepository.findByIds(
-                        Optional.ofNullable(producers).orElse(Collections.emptySet())
+                        Optional.ofNullable(persons).orElse(Collections.emptySet())
                                 .stream()
                                 .map(PersonDTO::getId)
                                 .toList()
