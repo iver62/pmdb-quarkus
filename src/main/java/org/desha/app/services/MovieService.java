@@ -27,6 +27,7 @@ public class MovieService {
     private final MusicianService musicianService;
     private final PersonService personService;
     private final DirectorService directorService;
+    private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
 
@@ -39,6 +40,7 @@ public class MovieService {
             MusicianService musicianService,
             PersonService personService,
             DirectorService directorService,
+            PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService
     ) {
@@ -49,6 +51,7 @@ public class MovieService {
         this.musicianService = musicianService;
         this.personService = personService;
         this.directorService = directorService;
+        this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
     }
@@ -81,7 +84,7 @@ public class MovieService {
         return Mutiny.fetch(movie.getMusicians());
     }
 
-    public Uni<Set<Person>> getPhotographersByMovie(Movie movie) {
+    public Uni<Set<Photographer>> getPhotographersByMovie(Movie movie) {
         return Mutiny.fetch(movie.getPhotographers());
     }
 
@@ -227,8 +230,8 @@ public class MovieService {
                                                                                 .invoke(movie::setMusicians)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getPhotographers())
-                                                                                .invoke(people -> movie.setPhotographers(new HashSet<>(people)))
+                                                                        photographerService.getByIds(technicalSummary.getPhotographers())
+                                                                                .invoke(movie::setPhotographers)
                                                                 )
                                                                 .chain(() ->
                                                                         personService.getByIds(technicalSummary.getCostumiers())

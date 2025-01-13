@@ -97,7 +97,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/producers")
-    public Uni<Set<Person>> getProducers(Long id) {
+    public Uni<Set<Producer>> getProducers(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)
@@ -117,7 +117,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/screenwriters")
-    public Uni<Set<Person>> getScreenwriters(Long id) {
+    public Uni<Set<Screenwriter>> getScreenwriters(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)
@@ -127,7 +127,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/musicians")
-    public Uni<Set<Person>> getMusicians(Long id) {
+    public Uni<Set<Musician>> getMusicians(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)
@@ -137,7 +137,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/photographers")
-    public Uni<Set<Person>> getPhotographers(Long id) {
+    public Uni<Set<Photographer>> getPhotographers(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)

@@ -28,6 +28,7 @@ public class PersonResource {
     private final PersonService personService;
     private final DirectorService directorService;
     private final MusicianService musicianService;
+    private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
 
@@ -36,12 +37,14 @@ public class PersonResource {
             DirectorService directorService,
             MusicianService musicianService,
             PersonService personService,
+            PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService
     ) {
         this.directorService = directorService;
         this.musicianService = musicianService;
         this.personService = personService;
+        this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
     }
@@ -66,8 +69,14 @@ public class PersonResource {
 
     @GET
     @Path("musicians/{id}")
-    public Uni<Musician> getMusicians(Long id) {
+    public Uni<Musician> getMusician(Long id) {
         return musicianService.getOne(id);
+    }
+
+    @GET
+    @Path("photographers/{id}")
+    public Uni<Photographer> getPhotographer(Long id) {
+        return photographerService.getOne(id);
     }
 
     @GET
@@ -114,8 +123,8 @@ public class PersonResource {
     @Path("photographers")
     public Uni<Response> getPhotographers() {
         return
-                personService.getPhotographers()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                photographerService.getAll()
+                        .onItem().ifNotNull().transform(photographers -> Response.ok(photographers).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
@@ -195,12 +204,11 @@ public class PersonResource {
     }
 
     @GET
-    @Path("{id}/movies/photographer")
+    @Path("photographers/{id}/movies")
     public Uni<Response> getMoviesAsPhotographer(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsPhotographer)
+                photographerService.getOne(id)
+                        .chain(photographerService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
