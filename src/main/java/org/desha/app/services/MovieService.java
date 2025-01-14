@@ -27,6 +27,7 @@ public class MovieService {
     private final MusicianService musicianService;
     private final PersonService personService;
     private final CostumierService costumierService;
+    private final DecoratorService decoratorService;
     private final DirectorService directorService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
@@ -41,6 +42,7 @@ public class MovieService {
             MusicianService musicianService,
             PersonService personService,
             CostumierService costumierService,
+            DecoratorService decoratorService,
             DirectorService directorService,
             PhotographerService photographerService,
             ProducerService producerService,
@@ -53,6 +55,7 @@ public class MovieService {
         this.musicianService = musicianService;
         this.personService = personService;
         this.costumierService = costumierService;
+        this.decoratorService = decoratorService;
         this.directorService = directorService;
         this.photographerService = photographerService;
         this.producerService = producerService;
@@ -95,7 +98,7 @@ public class MovieService {
         return Mutiny.fetch(movie.getCostumiers());
     }
 
-    public Uni<Set<Person>> getDecoratorsByMovie(Movie movie) {
+    public Uni<Set<Decorator>> getDecoratorsByMovie(Movie movie) {
         return Mutiny.fetch(movie.getDecorators());
     }
 
@@ -241,8 +244,8 @@ public class MovieService {
                                                                                 .invoke(movie::setCostumiers)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getDecorators())
-                                                                                .invoke(people -> movie.setDecorators(new HashSet<>(people)))
+                                                                        decoratorService.getByIds(technicalSummary.getDecorators())
+                                                                                .invoke(movie::setDecorators)
                                                                 )
                                                                 .chain(() ->
                                                                         personService.getByIds(technicalSummary.getEditors())

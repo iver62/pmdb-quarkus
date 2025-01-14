@@ -110,7 +110,7 @@ public class Movie extends PanacheEntity {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_decorateurs", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_decorateur"))
     @Fetch(FetchMode.SELECT)
-    private Set<Person> decorators = new HashSet<>();
+    private Set<Decorator> decorators = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -250,13 +250,13 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Person>> addDecorators(Set<Person> personSet) {
+    public Uni<Set<Decorator>> addDecorators(Set<Decorator> decoratorSet) {
         return
                 Mutiny.fetch(decorators)
                         .map(
                                 people -> {
                                     people.clear();
-                                    people.addAll(personSet);
+                                    people.addAll(decoratorSet);
                                     return people;
                                 }
                         )
@@ -425,7 +425,7 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Person>> removeDecorator(Long id) {
+    public Uni<Set<Decorator>> removeDecorator(Long id) {
         return
                 Mutiny.fetch(decorators)
                         .map(

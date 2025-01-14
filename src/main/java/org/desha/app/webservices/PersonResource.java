@@ -27,6 +27,7 @@ public class PersonResource {
 
     private final PersonService personService;
     private final CostumierService costumierService;
+    private final DecoratorService decoratorService;
     private final DirectorService directorService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
@@ -36,6 +37,7 @@ public class PersonResource {
     @Inject
     public PersonResource(
             CostumierService costumierService,
+            DecoratorService decoratorService,
             DirectorService directorService,
             MusicianService musicianService,
             PersonService personService,
@@ -44,6 +46,7 @@ public class PersonResource {
             ScreenwriterService screenwriterService
     ) {
         this.costumierService = costumierService;
+        this.decoratorService = decoratorService;
         this.directorService = directorService;
         this.musicianService = musicianService;
         this.personService = personService;
@@ -86,6 +89,12 @@ public class PersonResource {
     @Path("costumiers/{id}")
     public Uni<Costumier> getCostumiers(Long id) {
         return costumierService.getOne(id);
+    }
+
+    @GET
+    @Path("decorators/{id}")
+    public Uni<Decorator> getDecorators(Long id) {
+        return decoratorService.getOne(id);
     }
 
     @GET
@@ -152,8 +161,8 @@ public class PersonResource {
     @Path("decorators")
     public Uni<Response> getDecorators() {
         return
-                personService.getDecorators()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                decoratorService.getAll()
+                        .onItem().ifNotNull().transform(decorators -> Response.ok(decorators).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }

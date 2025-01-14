@@ -1,7 +1,6 @@
 package org.desha.app.webservices;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -157,7 +156,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/decorators")
-    public Uni<Set<Person>> getDecorators(Long id) {
+    public Uni<Set<Decorator>> getDecorators(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)
