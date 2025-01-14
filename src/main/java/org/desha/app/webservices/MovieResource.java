@@ -147,7 +147,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/costumiers")
-    public Uni<Set<Person>> getCostumiers(Long id) {
+    public Uni<Set<Costumier>> getCostumiers(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)

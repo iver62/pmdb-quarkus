@@ -26,6 +26,7 @@ public class MovieService {
     private final GenreService genreService;
     private final MusicianService musicianService;
     private final PersonService personService;
+    private final CostumierService costumierService;
     private final DirectorService directorService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
@@ -39,6 +40,7 @@ public class MovieService {
             MovieRepository movieRepository,
             MusicianService musicianService,
             PersonService personService,
+            CostumierService costumierService,
             DirectorService directorService,
             PhotographerService photographerService,
             ProducerService producerService,
@@ -50,6 +52,7 @@ public class MovieService {
         this.movieRepository = movieRepository;
         this.musicianService = musicianService;
         this.personService = personService;
+        this.costumierService = costumierService;
         this.directorService = directorService;
         this.photographerService = photographerService;
         this.producerService = producerService;
@@ -88,7 +91,7 @@ public class MovieService {
         return Mutiny.fetch(movie.getPhotographers());
     }
 
-    public Uni<Set<Person>> getCostumiersByMovie(Movie movie) {
+    public Uni<Set<Costumier>> getCostumiersByMovie(Movie movie) {
         return Mutiny.fetch(movie.getCostumiers());
     }
 
@@ -234,8 +237,8 @@ public class MovieService {
                                                                                 .invoke(movie::setPhotographers)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getCostumiers())
-                                                                                .invoke(people -> movie.setCostumiers(new HashSet<>(people)))
+                                                                        costumierService.getByIds(technicalSummary.getCostumiers())
+                                                                                .invoke(movie::setCostumiers)
                                                                 )
                                                                 .chain(() ->
                                                                         personService.getByIds(technicalSummary.getDecorators())

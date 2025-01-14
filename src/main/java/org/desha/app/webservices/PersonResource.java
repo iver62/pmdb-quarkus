@@ -26,6 +26,7 @@ import static jakarta.ws.rs.core.Response.Status.*;
 public class PersonResource {
 
     private final PersonService personService;
+    private final CostumierService costumierService;
     private final DirectorService directorService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
@@ -34,6 +35,7 @@ public class PersonResource {
 
     @Inject
     public PersonResource(
+            CostumierService costumierService,
             DirectorService directorService,
             MusicianService musicianService,
             PersonService personService,
@@ -41,6 +43,7 @@ public class PersonResource {
             ProducerService producerService,
             ScreenwriterService screenwriterService
     ) {
+        this.costumierService = costumierService;
         this.directorService = directorService;
         this.musicianService = musicianService;
         this.personService = personService;
@@ -77,6 +80,12 @@ public class PersonResource {
     @Path("photographers/{id}")
     public Uni<Photographer> getPhotographer(Long id) {
         return photographerService.getOne(id);
+    }
+
+    @GET
+    @Path("costumiers/{id}")
+    public Uni<Costumier> getCostumiers(Long id) {
+        return costumierService.getOne(id);
     }
 
     @GET
@@ -133,8 +142,8 @@ public class PersonResource {
     @Path("costumiers")
     public Uni<Response> getCostumiers() {
         return
-                personService.getCostumiers()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                costumierService.getAll()
+                        .onItem().ifNotNull().transform(costumiers -> Response.ok(costumiers).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
