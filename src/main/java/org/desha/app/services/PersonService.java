@@ -264,6 +264,14 @@ public class PersonService {
         return Mutiny.fetch(person.getMoviesAsEditor());
     }
 
+    public Uni<Set<Movie>> getMoviesAsArtDirector(Person person) {
+        return Mutiny.fetch(person.getMoviesAsEditor());
+    }
+
+    public Uni<Set<Movie>> getMoviesAsSoundEditor(Person person) {
+        return Mutiny.fetch(person.getMoviesAsEditor());
+    }
+
     public Uni<Set<Role>> getRolesByActor(Person person) {
         return
                 Mutiny.fetch(person.getRoles())
@@ -415,6 +423,28 @@ public class PersonService {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(casterId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.removeMovieAsEditor(movieId))
+                        )
+                ;
+    }
+
+    public Uni<Set<Movie>> removeMovieAsArtDirector(Long artDirectorId, Long movieId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(artDirectorId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.removeMovieAsEditor(movieId))
+                        )
+                ;
+    }
+
+    public Uni<Set<Movie>> removeMovieAsSoundEditor(Long soundEditorId, Long movieId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(soundEditorId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsEditor(movieId))
                         )

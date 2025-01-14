@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalSummaryDTO;
 import org.desha.app.domain.entity.*;
-import org.desha.app.services.CountryService;
-import org.desha.app.services.GenreService;
-import org.desha.app.services.MovieService;
-import org.desha.app.services.PersonService;
+import org.desha.app.services.*;
 import org.jboss.resteasy.reactive.RestPath;
 
 import java.time.LocalDateTime;
@@ -35,13 +32,15 @@ public class MovieResource {
     private final GenreService genreService;
     private final MovieService movieService;
     private final PersonService personService;
+    private final ProducerService producerService;
 
     @Inject
-    public MovieResource(CountryService countryService, GenreService genreService, MovieService movieService, PersonService personService) {
+    public MovieResource(CountryService countryService, GenreService genreService, MovieService movieService, PersonService personService, ProducerService producerService) {
         this.countryService = countryService;
         this.genreService = genreService;
         this.movieService = movieService;
         this.personService = personService;
+        this.producerService = producerService;
     }
 
     @GET
@@ -193,6 +192,16 @@ public class MovieResource {
                 Movie.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getArtDirectorsByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/sound-editors")
+    public Uni<Set<SoundEditor>> getSoundEditors(Long id) {
+        return
+                Movie.findById(id)
+                        .map(Movie.class::cast)
+                        .chain(movieService::getSoundEditorsByMovie)
                 ;
     }
 
@@ -784,7 +793,7 @@ public class MovieResource {
     @Path("{movieId}/producers/{producerId}")
     public Uni<Response> removeProducer(Long movieId, Long producerId) {
         return
-                personService.removeMovieAsProducer(movieId, producerId)
+                producerService.removeMovie(movieId, producerId)
                         .chain(() -> movieService.removeProducer(movieId, producerId))
                         .map(Movie::getProducers)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
@@ -880,9 +889,33 @@ public class MovieResource {
     @Path("{movieId}/casters/{casterId}")
     public Uni<Response> removeCaster(Long movieId, Long casterId) {
         return
-                personService.removeMovieAs(casterId, movieId)
+                personService.removeMovieAsCaster(casterId, movieId)
                         .chain(() -> movieService.removeEditor(movieId, casterId))
-                        .map(Movie::getEditors)
+                        .map(Movie::getCasters)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/art-directors/{artDirectorId}")
+    public Uni<Response> removeArtDirectors(Long movieId, Long artDirectorId) {
+        return
+                personService.removeMovieAsArtDirector(artDirectorId, movieId)
+                        .chain(() -> movieService.removeArtDirector(movieId, artDirectorId))
+                        .map(Movie::getArtDirectors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/sound-editors/{soundDirectorId}")
+    public Uni<Response> removeSoundEditors(Long movieId, Long soundDirectorId) {
+        return
+                personService.removeMovieAsSoundEditor(soundDirectorId, movieId)
+                        .chain(() -> movieService.removeArtDirector(movieId, soundDirectorId))
+                        .map(Movie::getSoundEditors)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;

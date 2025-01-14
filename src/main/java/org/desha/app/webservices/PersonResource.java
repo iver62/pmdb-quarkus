@@ -36,6 +36,7 @@ public class PersonResource {
     private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
+    private final SoundEditorService soundEditorService;
 
     @Inject
     public PersonResource(
@@ -49,7 +50,8 @@ public class PersonResource {
             PersonService personService,
             PhotographerService photographerService,
             ProducerService producerService,
-            ScreenwriterService screenwriterService
+            ScreenwriterService screenwriterService,
+            SoundEditorService soundEditorService
     ) {
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
@@ -62,6 +64,7 @@ public class PersonResource {
         this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
+        this.soundEditorService = soundEditorService;
     }
 
     @GET
@@ -122,6 +125,12 @@ public class PersonResource {
     @Path("art-directors/{id}")
     public Uni<ArtDirector> getArtDirector(Long id) {
         return artDirectorService.getOne(id);
+    }
+
+    @GET
+    @Path("sound-editors/{id}")
+    public Uni<SoundEditor> getSoundEditor(Long id) {
+        return soundEditorService.getOne(id);
     }
 
     @GET
@@ -225,6 +234,16 @@ public class PersonResource {
     }
 
     @GET
+    @Path("sound-editors")
+    public Uni<Response> getSoundEditors() {
+        return
+                soundEditorService.getAll()
+                        .onItem().ifNotNull().transform(soundEditors -> Response.ok(soundEditors).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
     @Path("producers/{id}/movies")
     public Uni<Response> getMoviesAsProducer(Long id) {
         return
@@ -321,6 +340,30 @@ public class PersonResource {
                 Person.findById(id)
                         .map(Person.class::cast)
                         .chain(personService::getMoviesAsEditor)
+                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("{id}/movies/art-directors")
+    public Uni<Response> getMoviesAsArtDirector(Long id) {
+        return
+                Person.findById(id)
+                        .map(Person.class::cast)
+                        .chain(personService::getMoviesAsArtDirector)
+                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("{id}/movies/sound-editors")
+    public Uni<Response> getMoviesAsSoundEditor(Long id) {
+        return
+                Person.findById(id)
+                        .map(Person.class::cast)
+                        .chain(personService::getMoviesAsSoundEditor)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;

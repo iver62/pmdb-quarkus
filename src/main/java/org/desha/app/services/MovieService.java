@@ -35,6 +35,7 @@ public class MovieService {
     private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
+    private final SoundEditorService soundEditorService;
 
     @Inject
     public MovieService(
@@ -52,7 +53,8 @@ public class MovieService {
             EditorService editorService,
             PhotographerService photographerService,
             ProducerService producerService,
-            ScreenwriterService screenwriterService
+            ScreenwriterService screenwriterService,
+            SoundEditorService soundEditorService
     ) {
         this.msf = msf;
         this.countryService = countryService;
@@ -69,6 +71,7 @@ public class MovieService {
         this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
+        this.soundEditorService = soundEditorService;
     }
 
     public Uni<Movie> getSingle(Long id) {
@@ -121,6 +124,10 @@ public class MovieService {
 
     public Uni<Set<ArtDirector>> getArtDirectorsByMovie(Movie movie) {
         return Mutiny.fetch(movie.getArtDirectors());
+    }
+
+    public Uni<Set<SoundEditor>> getSoundEditorsByMovie(Movie movie) {
+        return Mutiny.fetch(movie.getSoundEditors());
     }
 
     public Uni<Set<Role>> getActorsByMovie(Movie movie) {
@@ -272,6 +279,10 @@ public class MovieService {
                                                                         artDirectorService.getByIds(technicalSummary.getArtDirectors())
                                                                                 .invoke(movie::setArtDirectors)
                                                                 )
+                                                                .chain(() ->
+                                                                        soundEditorService.getByIds(technicalSummary.getSoundEditors())
+                                                                                .invoke(movie::setSoundEditors)
+                                                                )
                                         )
                                         /*.call(
                                                 movie ->
@@ -353,7 +364,8 @@ public class MovieService {
                                                                 movie.getDecorators(),
                                                                 movie.getEditors(),
                                                                 movie.getCasters(),
-                                                                movie.getArtDirectors()
+                                                                movie.getArtDirectors(),
+                                                                movie.getSoundEditors()
                                                         )
                                         )
                         )
@@ -786,6 +798,19 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeArtDirector(artDirectorId))
+                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .chain(entity -> entity.persist())
+                        )
+                ;
+    }
+
+    public Uni<Movie> removeSoundEditor(Long movieId, Long soundEditorId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNotNull()
+                                        .call(entity -> entity.removeSoundEditor(soundEditorId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )

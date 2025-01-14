@@ -1,5 +1,6 @@
 package org.desha.app.services;
 
+import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -52,5 +53,16 @@ public class ProducerService implements PersonServiceInterface<Producer> {
     @Override
     public Uni<Set<Movie>> getMovies(Producer producer) {
         return Mutiny.fetch(producer.getMovies());
+    }
+
+    public Uni<Set<Movie>> removeMovie(Long producerId, Long movieId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                producerRepository.findById(producerId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.removeMovie(movieId))
+                        )
+                ;
     }
 }

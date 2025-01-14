@@ -131,6 +131,12 @@ public class Movie extends PanacheEntity {
     private Set<ArtDirector> artDirectors = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_ingenieur_son", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_ingenieur_son"))
+    @Fetch(FetchMode.SELECT)
+    private Set<SoundEditor> soundEditors = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
     private Set<Role> roles = new HashSet<>();
@@ -302,6 +308,19 @@ public class Movie extends PanacheEntity {
                                 people -> {
                                     people.clear();
                                     people.addAll(artDirectorSet);
+                                    return people;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<SoundEditor>> saveSoundEditors(Set<SoundEditor> soundEditorSet) {
+        return
+                Mutiny.fetch(soundEditors)
+                        .map(
+                                people -> {
+                                    people.clear();
+                                    people.addAll(soundEditorSet);
                                     return people;
                                 }
                         )
@@ -483,6 +502,18 @@ public class Movie extends PanacheEntity {
     public Uni<Set<ArtDirector>> removeArtDirector(Long id) {
         return
                 Mutiny.fetch(artDirectors)
+                        .map(
+                                persons -> {
+                                    persons.removeIf(person -> Objects.equals(person.id, id));
+                                    return persons;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<SoundEditor>> removeSoundEditor(Long id) {
+        return
+                Mutiny.fetch(soundEditors)
                         .map(
                                 persons -> {
                                     persons.removeIf(person -> Objects.equals(person.id, id));
