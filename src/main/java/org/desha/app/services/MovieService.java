@@ -109,7 +109,7 @@ public class MovieService {
         return Mutiny.fetch(movie.getEditors());
     }
 
-    public Uni<Set<Person>> getCastersByMovie(Movie movie) {
+    public Uni<Set<Caster>> getCastersByMovie(Movie movie) {
         return Mutiny.fetch(movie.getCasters());
     }
 
@@ -647,104 +647,117 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Movie> removeProducer(Long movieId, Long personId) {
+    public Uni<Movie> removeProducer(Long movieId, Long producerId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeProducer(personId))
+                                        .call(entity -> entity.removeProducer(producerId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removeDirector(Long movieId, Long personId) {
+    public Uni<Movie> removeDirector(Long movieId, Long directorId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeDirector(personId))
+                                        .call(entity -> entity.removeDirector(directorId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removeScreenwriter(Long movieId, Long personId) {
+    public Uni<Movie> removeScreenwriter(Long movieId, Long screenwriterId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeScreenwriter(personId))
+                                        .call(entity -> entity.removeScreenwriter(screenwriterId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removeMusician(Long movieId, Long personId) {
+    public Uni<Movie> removeMusician(Long movieId, Long musicianId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeMusician(personId))
+                                        .call(entity -> entity.removeMusician(musicianId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removePhotographer(Long movieId, Long personId) {
+    public Uni<Movie> removePhotographer(Long movieId, Long photographerId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removePhotographer(personId))
+                                        .call(entity -> entity.removePhotographer(photographerId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removeCostumier(Long movieId, Long personId) {
+    public Uni<Movie> removeCostumier(Long movieId, Long costumierId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeCostumier(personId))
+                                        .call(entity -> entity.removeCostumier(costumierId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removeDecorator(Long movieId, Long personId) {
+    public Uni<Movie> removeDecorator(Long movieId, Long decoratorId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeDecorator(personId))
+                                        .call(entity -> entity.removeDecorator(decoratorId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
     }
 
-    public Uni<Movie> removeEditor(Long movieId, Long personId) {
+    public Uni<Movie> removeEditor(Long movieId, Long editorId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.removeEditor(personId))
+                                        .call(entity -> entity.removeEditor(editorId))
+                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .chain(entity -> entity.persist())
+                        )
+                ;
+    }
+
+    public Uni<Movie> removeCaster(Long movieId, Long casterId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNotNull()
+                                        .call(entity -> entity.removeCaster(casterId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )

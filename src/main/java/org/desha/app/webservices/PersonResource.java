@@ -26,6 +26,7 @@ import static jakarta.ws.rs.core.Response.Status.*;
 public class PersonResource {
 
     private final PersonService personService;
+    private final CasterService casterService;
     private final CostumierService costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
@@ -37,6 +38,7 @@ public class PersonResource {
 
     @Inject
     public PersonResource(
+            CasterService casterService,
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
@@ -47,6 +49,7 @@ public class PersonResource {
             ProducerService producerService,
             ScreenwriterService screenwriterService
     ) {
+        this.casterService = casterService;
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;
@@ -90,20 +93,26 @@ public class PersonResource {
 
     @GET
     @Path("costumiers/{id}")
-    public Uni<Costumier> getCostumiers(Long id) {
+    public Uni<Costumier> getCostumier(Long id) {
         return costumierService.getOne(id);
     }
 
     @GET
     @Path("decorators/{id}")
-    public Uni<Decorator> getDecorators(Long id) {
+    public Uni<Decorator> getDecorator(Long id) {
         return decoratorService.getOne(id);
     }
 
     @GET
     @Path("editors/{id}")
-    public Uni<Editor> getEditors(Long id) {
+    public Uni<Editor> getEditor(Long id) {
         return editorService.getOne(id);
+    }
+
+    @GET
+    @Path("casters/{id}")
+    public Uni<Caster> getCaster(Long id) {
+        return casterService.getOne(id);
     }
 
     @GET
@@ -187,6 +196,16 @@ public class PersonResource {
     }
 
     @GET
+    @Path("casters")
+    public Uni<Response> getCasters() {
+        return
+                casterService.getAll()
+                        .onItem().ifNotNull().transform(casters -> Response.ok(casters).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
     @Path("producers/{id}/movies")
     public Uni<Response> getMoviesAsProducer(Long id) {
         return
@@ -242,12 +261,22 @@ public class PersonResource {
     }
 
     @GET
-    @Path("{id}/movies/costumier")
+    @Path("costumiers/{id}/movies")
     public Uni<Response> getMoviesAsCostumier(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsCostumier)
+                costumierService.getOne(id)
+                        .chain(costumierService::getMovies)
+                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("casters/{id}/movies")
+    public Uni<Response> getMoviesAsCaster(Long id) {
+        return
+                casterService.getOne(id)
+                        .chain(casterService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;

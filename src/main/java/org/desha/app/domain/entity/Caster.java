@@ -21,12 +21,12 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
-@Table(name = "monteur")
+@Table(name = "casteur")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Editor extends Person {
+public class Caster extends Person {
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "editors")
+    @ManyToMany(mappedBy = "casters")
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
 

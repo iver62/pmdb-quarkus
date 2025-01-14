@@ -1,6 +1,7 @@
 package org.desha.app.webservices;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -46,7 +47,8 @@ public class MovieResource {
     @GET
     @Path("count")
     public Uni<Response> count() {
-        return Movie.count().onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
+        return PanacheEntityBase.count()
+                .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
     @GET
@@ -166,7 +168,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/editors")
-    public Uni<Set<Person>> getEditors(Long id) {
+    public Uni<Set<Editor>> getEditors(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)
@@ -176,7 +178,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/casters")
-    public Uni<Set<Person>> getCasters(Long id) {
+    public Uni<Set<Caster>> getCasters(Long id) {
         return
                 Movie.findById(id)
                         .map(Movie.class::cast)
