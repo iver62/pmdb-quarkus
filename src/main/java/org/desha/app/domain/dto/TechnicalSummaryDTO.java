@@ -2,7 +2,6 @@ package org.desha.app.domain.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Person;
 
 import java.util.Set;
 
@@ -23,7 +22,7 @@ public class TechnicalSummaryDTO {
     private Set<PersonDTO> soundEditors;
     private Set<PersonDTO> visualEffectsSupervisor;
     private Set<PersonDTO> makeupArtists;
-    private Set<PersonDTO> barbers;
+    private Set<PersonDTO> hairDressers;
 
     public static TechnicalSummaryDTO build(
             final Set<PersonDTO> producers,
@@ -39,7 +38,7 @@ public class TechnicalSummaryDTO {
             final Set<PersonDTO> soundEditors,
             final Set<PersonDTO> visualEffectsSupervisor,
             final Set<PersonDTO> makeupArtists,
-            final Set<PersonDTO> barbers
+            final Set<PersonDTO> hairDressers
     ) {
         return TechnicalSummaryDTO.builder()
                 .producers(producers)
@@ -55,7 +54,7 @@ public class TechnicalSummaryDTO {
                 .soundEditors(soundEditors)
                 .visualEffectsSupervisor(visualEffectsSupervisor)
                 .makeupArtists(makeupArtists)
-                .barbers(barbers)
+                .hairDressers(hairDressers)
                 .build();
     }
 }

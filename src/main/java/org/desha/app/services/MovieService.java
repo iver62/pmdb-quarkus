@@ -29,6 +29,7 @@ public class MovieService {
     private final CostumierService costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
+    private final EditorService editorService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
@@ -44,6 +45,7 @@ public class MovieService {
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
+            EditorService editorService,
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService
@@ -57,6 +59,7 @@ public class MovieService {
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;
+        this.editorService = editorService;
         this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
@@ -102,7 +105,7 @@ public class MovieService {
         return Mutiny.fetch(movie.getDecorators());
     }
 
-    public Uni<Set<Person>> getEditorsByMovie(Movie movie) {
+    public Uni<Set<Editor>> getEditorsByMovie(Movie movie) {
         return Mutiny.fetch(movie.getEditors());
     }
 
@@ -248,8 +251,8 @@ public class MovieService {
                                                                                 .invoke(movie::setDecorators)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getEditors())
-                                                                                .invoke(people -> movie.setEditors(new HashSet<>(people)))
+                                                                        editorService.getByIds(technicalSummary.getEditors())
+                                                                                .invoke(movie::setEditors)
                                                                 )
                                                                 .chain(() ->
                                                                         personService.getByIds(technicalSummary.getCasters())

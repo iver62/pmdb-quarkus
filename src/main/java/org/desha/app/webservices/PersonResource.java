@@ -29,6 +29,7 @@ public class PersonResource {
     private final CostumierService costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
+    private final EditorService editorService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
@@ -39,6 +40,7 @@ public class PersonResource {
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
+            EditorService editorService,
             MusicianService musicianService,
             PersonService personService,
             PhotographerService photographerService,
@@ -48,6 +50,7 @@ public class PersonResource {
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;
+        this.editorService = editorService;
         this.musicianService = musicianService;
         this.personService = personService;
         this.photographerService = photographerService;
@@ -95,6 +98,12 @@ public class PersonResource {
     @Path("decorators/{id}")
     public Uni<Decorator> getDecorators(Long id) {
         return decoratorService.getOne(id);
+    }
+
+    @GET
+    @Path("editors/{id}")
+    public Uni<Editor> getEditors(Long id) {
+        return editorService.getOne(id);
     }
 
     @GET
@@ -171,8 +180,8 @@ public class PersonResource {
     @Path("editors")
     public Uni<Response> getEditors() {
         return
-                personService.getEditors()
-                        .onItem().ifNotNull().transform(people -> Response.ok(people).build())
+                editorService.getAll()
+                        .onItem().ifNotNull().transform(editors -> Response.ok(editors).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
