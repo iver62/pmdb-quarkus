@@ -26,6 +26,8 @@ public class MovieService {
     private final GenreService genreService;
     private final MusicianService musicianService;
     private final PersonService personService;
+    private final ArtDirectorService artDirectorService;
+    private final CasterService casterService;
     private final CostumierService costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
@@ -42,6 +44,8 @@ public class MovieService {
             MovieRepository movieRepository,
             MusicianService musicianService,
             PersonService personService,
+            ArtDirectorService artDirectorService,
+            CasterService casterService,
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
@@ -56,6 +60,8 @@ public class MovieService {
         this.movieRepository = movieRepository;
         this.musicianService = musicianService;
         this.personService = personService;
+        this.artDirectorService = artDirectorService;
+        this.casterService = casterService;
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;
@@ -111,6 +117,10 @@ public class MovieService {
 
     public Uni<Set<Caster>> getCastersByMovie(Movie movie) {
         return Mutiny.fetch(movie.getCasters());
+    }
+
+    public Uni<Set<ArtDirector>> getArtDirectorsByMovie(Movie movie) {
+        return Mutiny.fetch(movie.getArtDirectors());
     }
 
     public Uni<Set<Role>> getActorsByMovie(Movie movie) {
@@ -255,8 +265,12 @@ public class MovieService {
                                                                                 .invoke(movie::setEditors)
                                                                 )
                                                                 .chain(() ->
-                                                                        personService.getByIds(technicalSummary.getCasters())
-                                                                                .invoke(people -> movie.setCasters(new HashSet<>(people)))
+                                                                        casterService.getByIds(technicalSummary.getCasters())
+                                                                                .invoke(movie::setCasters)
+                                                                )
+                                                                .chain(() ->
+                                                                        artDirectorService.getByIds(technicalSummary.getArtDirectors())
+                                                                                .invoke(movie::setArtDirectors)
                                                                 )
                                         )
                                         /*.call(
@@ -338,7 +352,8 @@ public class MovieService {
                                                                 movie.getCostumiers(),
                                                                 movie.getDecorators(),
                                                                 movie.getEditors(),
-                                                                movie.getCasters()
+                                                                movie.getCasters(),
+                                                                movie.getArtDirectors()
                                                         )
                                         )
                         )
@@ -758,6 +773,19 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeCaster(casterId))
+                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .chain(entity -> entity.persist())
+                        )
+                ;
+    }
+
+    public Uni<Movie> removeArtDirector(Long movieId, Long artDirectorId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNotNull()
+                                        .call(entity -> entity.removeArtDirector(artDirectorId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )

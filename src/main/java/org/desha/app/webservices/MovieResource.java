@@ -31,17 +31,17 @@ import static jakarta.ws.rs.core.Response.Status.*;
 @Slf4j
 public class MovieResource {
 
+    private final CountryService countryService;
+    private final GenreService genreService;
     private final MovieService movieService;
     private final PersonService personService;
-    private final GenreService genreService;
-    private final CountryService countryService;
 
     @Inject
-    public MovieResource(MovieService movieService, PersonService personService, GenreService genreService, CountryService countryService) {
+    public MovieResource(CountryService countryService, GenreService genreService, MovieService movieService, PersonService personService) {
+        this.countryService = countryService;
+        this.genreService = genreService;
         this.movieService = movieService;
         this.personService = personService;
-        this.genreService = genreService;
-        this.countryService = countryService;
     }
 
     @GET
@@ -183,6 +183,16 @@ public class MovieResource {
                 Movie.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getCastersByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/art-directors")
+    public Uni<Set<ArtDirector>> getArtDirectors(Long id) {
+        return
+                Movie.findById(id)
+                        .map(Movie.class::cast)
+                        .chain(movieService::getArtDirectorsByMovie)
                 ;
     }
 
@@ -771,11 +781,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/producers/{personId}")
-    public Uni<Response> removeProducer(Long movieId, Long personId) {
+    @Path("{movieId}/producers/{producerId}")
+    public Uni<Response> removeProducer(Long movieId, Long producerId) {
         return
-                personService.removeMovieAsProducer(movieId, personId)
-                        .chain(() -> movieService.removeProducer(movieId, personId))
+                personService.removeMovieAsProducer(movieId, producerId)
+                        .chain(() -> movieService.removeProducer(movieId, producerId))
                         .map(Movie::getProducers)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -783,11 +793,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/directors/{personId}")
-    public Uni<Response> removeDirector(Long movieId, Long personId) {
+    @Path("{movieId}/directors/{directorId}")
+    public Uni<Response> removeDirector(Long movieId, Long directorId) {
         return
-                personService.removeMovieAsDirector(personId, movieId)
-                        .chain(() -> movieService.removeDirector(movieId, personId))
+                personService.removeMovieAsDirector(directorId, movieId)
+                        .chain(() -> movieService.removeDirector(movieId, directorId))
                         .map(Movie::getDirectors)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -795,11 +805,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/screenwriters/{personId}")
-    public Uni<Response> removeScreenwriter(Long movieId, Long personId) {
+    @Path("{movieId}/screenwriters/{screenwriterId}")
+    public Uni<Response> removeScreenwriter(Long movieId, Long screenwriterId) {
         return
-                personService.removeMovieAsScreenwriter(personId, movieId)
-                        .chain(() -> movieService.removeScreenwriter(movieId, personId))
+                personService.removeMovieAsScreenwriter(screenwriterId, movieId)
+                        .chain(() -> movieService.removeScreenwriter(movieId, screenwriterId))
                         .map(Movie::getScreenwriters)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -807,11 +817,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/musicians/{personId}")
-    public Uni<Response> removeMusician(Long movieId, Long personId) {
+    @Path("{movieId}/musicians/{musicianId}")
+    public Uni<Response> removeMusician(Long movieId, Long musicianId) {
         return
-                personService.removeMovieAsMusician(personId, movieId)
-                        .chain(() -> movieService.removeMusician(movieId, personId))
+                personService.removeMovieAsMusician(musicianId, movieId)
+                        .chain(() -> movieService.removeMusician(movieId, musicianId))
                         .map(Movie::getMusicians)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -819,11 +829,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/photographers/{personId}")
-    public Uni<Response> removePhotographer(Long movieId, Long personId) {
+    @Path("{movieId}/photographers/{photographerId}")
+    public Uni<Response> removePhotographer(Long movieId, Long photographerId) {
         return
-                personService.removeMovieAsPhotographer(personId, movieId)
-                        .chain(() -> movieService.removePhotographer(movieId, personId))
+                personService.removeMovieAsPhotographer(photographerId, movieId)
+                        .chain(() -> movieService.removePhotographer(movieId, photographerId))
                         .map(Movie::getPhotographers)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -831,11 +841,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/costumiers/{personId}")
-    public Uni<Response> removeCostumier(Long movieId, Long personId) {
+    @Path("{movieId}/costumiers/{costumierId}")
+    public Uni<Response> removeCostumier(Long movieId, Long costumierId) {
         return
-                personService.removeMovieAsCostumier(personId, movieId)
-                        .chain(() -> movieService.removeCostumier(movieId, personId))
+                personService.removeMovieAsCostumier(costumierId, movieId)
+                        .chain(() -> movieService.removeCostumier(movieId, costumierId))
                         .map(Movie::getCostumiers)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -843,11 +853,11 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/decorators/{personId}")
-    public Uni<Response> removeDecorator(Long movieId, Long personId) {
+    @Path("{movieId}/decorators/{decoratorId}")
+    public Uni<Response> removeDecorator(Long movieId, Long decoratorId) {
         return
-                personService.removeMovieAsDecorator(personId, movieId)
-                        .chain(() -> movieService.removeDecorator(movieId, personId))
+                personService.removeMovieAsDecorator(decoratorId, movieId)
+                        .chain(() -> movieService.removeDecorator(movieId, decoratorId))
                         .map(Movie::getDecorators)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -855,11 +865,23 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/editors/{personId}")
-    public Uni<Response> removeEditor(Long movieId, Long personId) {
+    @Path("{movieId}/editors/{editorId}")
+    public Uni<Response> removeEditor(Long movieId, Long editorId) {
         return
-                personService.removeMovieAsEditor(personId, movieId)
-                        .chain(() -> movieService.removeEditor(movieId, personId))
+                personService.removeMovieAsEditor(editorId, movieId)
+                        .chain(() -> movieService.removeEditor(movieId, editorId))
+                        .map(Movie::getEditors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/casters/{casterId}")
+    public Uni<Response> removeCaster(Long movieId, Long casterId) {
+        return
+                personService.removeMovieAs(casterId, movieId)
+                        .chain(() -> movieService.removeEditor(movieId, casterId))
                         .map(Movie::getEditors)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)

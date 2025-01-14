@@ -125,6 +125,12 @@ public class Movie extends PanacheEntity {
     private Set<Caster> casters = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_directeurs_artistiques", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_directeur_artistique"))
+    @Fetch(FetchMode.SELECT)
+    private Set<ArtDirector> artDirectors = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
     private Set<Role> roles = new HashSet<>();
@@ -276,13 +282,26 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Caster>> saveCaster(Set<Caster> casterSet) {
+    public Uni<Set<Caster>> saveCasters(Set<Caster> casterSet) {
         return
                 Mutiny.fetch(casters)
                         .map(
                                 people -> {
                                     people.clear();
                                     people.addAll(casterSet);
+                                    return people;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<ArtDirector>> saveArtDirectors(Set<ArtDirector> artDirectorSet) {
+        return
+                Mutiny.fetch(artDirectors)
+                        .map(
+                                people -> {
+                                    people.clear();
+                                    people.addAll(artDirectorSet);
                                     return people;
                                 }
                         )
@@ -452,6 +471,18 @@ public class Movie extends PanacheEntity {
     public Uni<Set<Caster>> removeCaster(Long id) {
         return
                 Mutiny.fetch(casters)
+                        .map(
+                                persons -> {
+                                    persons.removeIf(person -> Objects.equals(person.id, id));
+                                    return persons;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<ArtDirector>> removeArtDirector(Long id) {
+        return
+                Mutiny.fetch(artDirectors)
                         .map(
                                 persons -> {
                                     persons.removeIf(person -> Objects.equals(person.id, id));

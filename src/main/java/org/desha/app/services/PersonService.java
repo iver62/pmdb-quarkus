@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.entity.*;
+import org.desha.app.repository.DirectorRepository;
 import org.desha.app.repository.PersonRepository;
 import org.desha.app.repository.ProducerRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -20,17 +21,20 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 @Slf4j
 public class PersonService {
 
+    private final DirectorService directorService;
     private final Mutiny.SessionFactory msf;
     private final MovieService movieService;
     private final PersonRepository personRepository;
     private final ProducerRepository producerRepository;
 
     public PersonService(
+            DirectorService directorService,
             Mutiny.SessionFactory msf,
             ProducerRepository producerRepository,
             MovieService movieService,
             PersonRepository personRepository
     ) {
+        this.directorService = directorService;
         this.msf = msf;
         this.movieService = movieService;
         this.producerRepository = producerRepository;
@@ -45,10 +49,6 @@ public class PersonService {
                                 .map(p -> p.id)
                                 .toList()
                 );
-    }
-
-    public Uni<Producer> getProducer(Long id) {
-        return producerRepository.findById(id);
     }
 
     public Uni<Set<Person>> getProducers() {
@@ -322,88 +322,99 @@ public class PersonService {
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsProducer(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsProducer(Long producerId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(producerId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsProducer(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsDirector(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsDirector(Long directorId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                directorRepository.findById(personId)
+                                directorService.getOne(directorId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovie(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsScreenwriter(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsScreenwriter(Long screenwriterId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(screenwriterId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsScreenwriter(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsMusician(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsMusician(Long musicianId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(musicianId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsMusician(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsPhotographer(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsPhotographer(Long photographerId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(photographerId)
                                         .onItem().ifNotNull()
-                                        .transformToUni(person -> person.removeMovieAsPhotographer(movieId))
+                                        .transformToUni(person -> person.removeMovie(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsCostumier(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsCostumier(Long costumierId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(costumierId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsCostumier(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsDecorator(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsDecorator(Long decoratorId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(decoratorId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsDecorator(movieId))
                         )
                 ;
     }
 
-    public Uni<Set<Movie>> removeMovieAsEditor(Long personId, Long movieId) {
+    public Uni<Set<Movie>> removeMovieAsEditor(Long editorId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(personId)
+                                personRepository.findById(editorId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.removeMovieAsEditor(movieId))
+                        )
+                ;
+    }
+
+    public Uni<Set<Movie>> removeMovieAsCaster(Long casterId, Long movieId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(casterId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovieAsEditor(movieId))
                         )
