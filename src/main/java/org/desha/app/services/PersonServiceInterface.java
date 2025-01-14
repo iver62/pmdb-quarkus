@@ -15,4 +15,8 @@ public interface PersonServiceInterface<T> {
     Uni<Set<T>> getAll();
 
     Uni<Set<Movie>> getMovies(T t);
+
+    Uni<Set<Movie>> addMovie(Long personId, Movie movie);
+
+    Uni<Set<Movie>> removeMovie(Long personId, Long movieId);
 }

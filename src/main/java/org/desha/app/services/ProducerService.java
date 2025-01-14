@@ -7,7 +7,7 @@ import jakarta.inject.Inject;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Producer;
-import org.desha.app.repository.ProducerRepository;
+import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.Collections;
@@ -18,22 +18,22 @@ import java.util.Set;
 @ApplicationScoped
 public class ProducerService implements PersonServiceInterface<Producer> {
 
-    private final ProducerRepository producerRepository;
+    private final PersonRepository<Producer> personRepository;
 
     @Inject
-    public ProducerService(ProducerRepository producerRepository) {
-        this.producerRepository = producerRepository;
+    public ProducerService(PersonRepository<Producer> personRepository) {
+        this.personRepository = personRepository;
     }
 
     @Override
     public Uni<Producer> getOne(Long id) {
-        return producerRepository.findById(id);
+        return personRepository.findById(id);
     }
 
     @Override
     public Uni<Set<Producer>> getByIds(Set<PersonDTO> persons) {
         return
-                producerRepository.findByIds(
+                personRepository.findByIds(
                         Optional.ofNullable(persons).orElse(Collections.emptySet())
                                 .stream()
                                 .map(PersonDTO::getId)
@@ -44,7 +44,7 @@ public class ProducerService implements PersonServiceInterface<Producer> {
     @Override
     public Uni<Set<Producer>> getAll() {
         return
-                producerRepository
+                personRepository
                         .listAll()
                         .map(HashSet::new)
                 ;
@@ -55,11 +55,24 @@ public class ProducerService implements PersonServiceInterface<Producer> {
         return Mutiny.fetch(producer.getMovies());
     }
 
+    @Override
+    public Uni<Set<Movie>> addMovie(Long producerId, Movie movie) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(producerId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.addMovie(movie))
+                        )
+                ;
+    }
+
+    @Override
     public Uni<Set<Movie>> removeMovie(Long producerId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                producerRepository.findById(producerId)
+                                personRepository.findById(producerId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovie(movieId))
                         )

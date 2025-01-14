@@ -1,14 +1,13 @@
 package org.desha.app.services;
 
+import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.entity.ArtDirector;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.SoundEditor;
-import org.desha.app.repository.ArtDirectorRepository;
-import org.desha.app.repository.SoundEditorRepository;
+import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.Collections;
@@ -19,22 +18,22 @@ import java.util.Set;
 @ApplicationScoped
 public class SoundEditorService implements PersonServiceInterface<SoundEditor> {
 
-    private final SoundEditorRepository soundEditorRepository;
+    private final PersonRepository<SoundEditor> personRepository;
 
     @Inject
-    public SoundEditorService(SoundEditorRepository soundEditorRepository) {
-        this.soundEditorRepository = soundEditorRepository;
+    public SoundEditorService(PersonRepository<SoundEditor> personRepository) {
+        this.personRepository = personRepository;
     }
 
     @Override
     public Uni<SoundEditor> getOne(Long id) {
-        return soundEditorRepository.findById(id);
+        return personRepository.findById(id);
     }
 
     @Override
     public Uni<Set<SoundEditor>> getByIds(Set<PersonDTO> persons) {
         return
-                soundEditorRepository.findByIds(
+                personRepository.findByIds(
                         Optional.ofNullable(persons).orElse(Collections.emptySet())
                                 .stream()
                                 .map(PersonDTO::getId)
@@ -45,7 +44,7 @@ public class SoundEditorService implements PersonServiceInterface<SoundEditor> {
     @Override
     public Uni<Set<SoundEditor>> getAll() {
         return
-                soundEditorRepository
+                personRepository
                         .listAll()
                         .map(HashSet::new)
                 ;
@@ -54,5 +53,29 @@ public class SoundEditorService implements PersonServiceInterface<SoundEditor> {
     @Override
     public Uni<Set<Movie>> getMovies(SoundEditor soundEditor) {
         return Mutiny.fetch(soundEditor.getMovies());
+    }
+
+    @Override
+    public Uni<Set<Movie>> addMovie(Long soundEditorId, Movie movie) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(soundEditorId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.addMovie(movie))
+                        )
+                ;
+    }
+
+    @Override
+    public Uni<Set<Movie>> removeMovie(Long soundEditorId, Long movieId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(soundEditorId)
+                                        .onItem().ifNotNull()
+                                        .transformToUni(person -> person.removeMovie(movieId))
+                        )
+                ;
     }
 }
