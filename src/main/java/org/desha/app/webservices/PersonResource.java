@@ -31,6 +31,7 @@ public class PersonResource {
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
     private final EditorService editorService;
+    private final MakeupArtistService makeupArtistService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
@@ -46,6 +47,7 @@ public class PersonResource {
             DecoratorService decoratorService,
             DirectorService directorService,
             EditorService editorService,
+            MakeupArtistService makeupArtistService,
             MusicianService musicianService,
             PersonService personService,
             PhotographerService photographerService,
@@ -60,6 +62,7 @@ public class PersonResource {
         this.decoratorService = decoratorService;
         this.directorService = directorService;
         this.editorService = editorService;
+        this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
         this.personService = personService;
         this.photographerService = photographerService;
@@ -140,6 +143,12 @@ public class PersonResource {
     @Path("visual-effects-supervisors/{id}")
     public Uni<VisualEffectsSupervisor> getVisualEffectsSupervisor(Long id) {
         return visualEffectsSupervisorService.getOne(id);
+    }
+
+    @GET
+    @Path("makeup-artists/{id}")
+    public Uni<MakeupArtist> getMakeupArtists(Long id) {
+        return makeupArtistService.getOne(id);
     }
 
     @GET
@@ -258,6 +267,16 @@ public class PersonResource {
         return
                 visualEffectsSupervisorService.getAll()
                         .onItem().ifNotNull().transform(visualEffectsSupervisors -> Response.ok(visualEffectsSupervisors).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("makeup-artists")
+    public Uni<Response> getMakeupArtists() {
+        return
+                makeupArtistService.getAll()
+                        .onItem().ifNotNull().transform(makeupArtists -> Response.ok(makeupArtists).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
@@ -395,6 +414,17 @@ public class PersonResource {
                 ;
     }
 
+    @GET
+    @Path("makeup-artists/{id}/movies")
+    public Uni<Response> getMoviesAsMakeupArtist(Long id) {
+        return
+                makeupArtistService.getOne(id)
+                        .chain(makeupArtistService::getMovies)
+                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
     /*@GET
     @Path("actors/{id}/roles")
     public Uni<Response> getRoles(Long id) {
@@ -468,6 +498,22 @@ public class PersonResource {
                 Panache
                         .withTransaction(() ->
                                 VisualEffectsSupervisor.builder()
+                                        .creationDate(LocalDateTime.now())
+                                        .name(StringUtils.trim(personDTO.getName()))
+                                        .build()
+                                        .persist()
+                        )
+                        .onItem().ifNotNull().transform(panacheEntityBase -> Response.ok(panacheEntityBase).status(CREATED).build())
+                ;
+    }
+
+    @POST
+    @Path("makeup-artist")
+    public Uni<Response> saveMakeupArtist(PersonDTO personDTO) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                MakeupArtist.builder()
                                         .creationDate(LocalDateTime.now())
                                         .name(StringUtils.trim(personDTO.getName()))
                                         .build()

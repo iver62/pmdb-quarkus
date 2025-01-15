@@ -143,6 +143,12 @@ public class Movie extends PanacheEntity {
     private Set<VisualEffectsSupervisor> visualEffectsSupervisors = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_maquilleur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_maquilleur"))
+    @Fetch(FetchMode.SELECT)
+    private Set<MakeupArtist> makeupArtists = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
     private Set<Role> roles = new HashSet<>();
@@ -333,13 +339,26 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<VisualEffectsSupervisor>> saveVisualEffectsSupervisor(Set<VisualEffectsSupervisor> visualEffectsSupervisorSet) {
+    public Uni<Set<VisualEffectsSupervisor>> saveVisualEffectsSupervisors(Set<VisualEffectsSupervisor> visualEffectsSupervisorSet) {
         return
                 Mutiny.fetch(visualEffectsSupervisors)
                         .map(
                                 people -> {
                                     people.clear();
                                     people.addAll(visualEffectsSupervisorSet);
+                                    return people;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<MakeupArtist>> saveMakeupArtists(Set<MakeupArtist> makeupArtistSet) {
+        return
+                Mutiny.fetch(makeupArtists)
+                        .map(
+                                people -> {
+                                    people.clear();
+                                    people.addAll(makeupArtistSet);
                                     return people;
                                 }
                         )
@@ -545,6 +564,18 @@ public class Movie extends PanacheEntity {
     public Uni<Set<VisualEffectsSupervisor>> removeVisualEffectsSupervisor(Long id) {
         return
                 Mutiny.fetch(visualEffectsSupervisors)
+                        .map(
+                                persons -> {
+                                    persons.removeIf(person -> Objects.equals(person.id, id));
+                                    return persons;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<MakeupArtist>> removeMakeupArtist(Long id) {
+        return
+                Mutiny.fetch(makeupArtists)
                         .map(
                                 persons -> {
                                     persons.removeIf(person -> Objects.equals(person.id, id));

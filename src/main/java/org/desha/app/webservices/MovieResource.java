@@ -36,9 +36,9 @@ public class MovieResource {
     private final DirectorService directorService;
     private final EditorService editorService;
     private final GenreService genreService;
+    private final MakeupArtistService makeupArtistService;
     private final MovieService movieService;
     private final MusicianService musicianService;
-    private final PersonService personService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
@@ -55,9 +55,9 @@ public class MovieResource {
             DirectorService directorService,
             EditorService editorService,
             GenreService genreService,
+            MakeupArtistService makeupArtistService,
             MovieService movieService,
             MusicianService musicianService,
-            PersonService personService,
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
@@ -72,9 +72,9 @@ public class MovieResource {
         this.directorService = directorService;
         this.editorService = editorService;
         this.genreService = genreService;
+        this.makeupArtistService = makeupArtistService;
         this.movieService = movieService;
         this.musicianService = musicianService;
-        this.personService = personService;
         this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
@@ -138,7 +138,7 @@ public class MovieResource {
     @Path("{id}/producers")
     public Uni<Set<Producer>> getProducers(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getProducersByMovie)
                 ;
@@ -148,7 +148,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Set<Director>> getDirectors(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getDirectorsByMovie)
                 ;
@@ -158,7 +158,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Set<Screenwriter>> getScreenwriters(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getScreenwritersByMovie)
                 ;
@@ -168,7 +168,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Set<Musician>> getMusicians(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getMusiciansByMovie)
                 ;
@@ -178,7 +178,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Set<Photographer>> getPhotographers(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getPhotographersByMovie)
                 ;
@@ -188,7 +188,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Set<Costumier>> getCostumiers(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getCostumiersByMovie)
                 ;
@@ -198,7 +198,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Set<Decorator>> getDecorators(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getDecoratorsByMovie)
                 ;
@@ -208,7 +208,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Set<Editor>> getEditors(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getEditorsByMovie)
                 ;
@@ -218,7 +218,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Set<Caster>> getCasters(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getCastersByMovie)
                 ;
@@ -228,7 +228,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Set<ArtDirector>> getArtDirectors(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getArtDirectorsByMovie)
                 ;
@@ -238,7 +238,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Set<SoundEditor>> getSoundEditors(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
                         .chain(movieService::getSoundEditorsByMovie)
                 ;
@@ -248,9 +248,19 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisors(Long id) {
         return
-                Movie.findById(id)
+                PanacheEntityBase.findById(id)
                         .map(Movie.class::cast)
-                        .chain(movieService::getVi)
+                        .chain(movieService::getVisualEffectsSupervisorsByMovie)
+                ;
+    }
+
+    @GET
+    @Path("{id}/makeup-artists")
+    public Uni<Set<MakeupArtist>> getMakeupArtists(Long id) {
+        return
+                PanacheEntityBase.findById(id)
+                        .map(Movie.class::cast)
+                        .chain(movieService::getMakeupArtists)
                 ;
     }
 
@@ -965,6 +975,30 @@ public class MovieResource {
                 soundEditorService.removeMovie(soundDirectorId, movieId)
                         .chain(() -> movieService.removeArtDirector(movieId, soundDirectorId))
                         .map(Movie::getSoundEditors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/visual-effects-supervisors/{visualEffectsSupervisorId}")
+    public Uni<Response> removeVisualEffectsSupervisor(Long movieId, Long visualEffectsSupervisorId) {
+        return
+                visualEffectsSupervisorService.removeMovie(visualEffectsSupervisorId, movieId)
+                        .chain(() -> movieService.removeVisualEffectsSupervisor(movieId, visualEffectsSupervisorId))
+                        .map(Movie::getVisualEffectsSupervisors)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/makeup-artists/{makeupArtistId}")
+    public Uni<Response> removeMakeupArtists(Long movieId, Long makeupArtistId) {
+        return
+                makeupArtistService.removeMovie(makeupArtistId, movieId)
+                        .chain(() -> movieService.removeMakeupArtist(movieId, makeupArtistId))
+                        .map(Movie::getMakeupArtists)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;

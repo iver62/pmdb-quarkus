@@ -25,13 +25,13 @@ public class MovieService {
     private final CountryService countryService;
     private final GenreService genreService;
     private final MusicianService musicianService;
-    private final PersonService personService;
     private final ArtDirectorService artDirectorService;
     private final CasterService casterService;
     private final CostumierService costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
     private final EditorService editorService;
+    private final MakeupArtistService makeupArtistService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
@@ -45,13 +45,13 @@ public class MovieService {
             GenreService genreService,
             MovieRepository movieRepository,
             MusicianService musicianService,
-            PersonService personService,
             ArtDirectorService artDirectorService,
             CasterService casterService,
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
             EditorService editorService,
+            MakeupArtistService makeupArtistService,
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
@@ -63,13 +63,13 @@ public class MovieService {
         this.genreService = genreService;
         this.movieRepository = movieRepository;
         this.musicianService = musicianService;
-        this.personService = personService;
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;
         this.editorService = editorService;
+        this.makeupArtistService = makeupArtistService;
         this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
@@ -135,6 +135,10 @@ public class MovieService {
 
     public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisorsByMovie(Movie movie) {
         return Mutiny.fetch(movie.getVisualEffectsSupervisors());
+    }
+
+    public Uni<Set<MakeupArtist>> getMakeupArtists(Movie movie) {
+        return Mutiny.fetch(movie.getMakeupArtists());
     }
 
     public Uni<Set<Role>> getActorsByMovie(Movie movie) {
@@ -291,8 +295,12 @@ public class MovieService {
                                                                                 .invoke(movie::setSoundEditors)
                                                                 )
                                                                 .chain(() ->
-                                                                        visualEffectsSupervisorService.getByIds(technicalSummary.getSoundEditors())
+                                                                        visualEffectsSupervisorService.getByIds(technicalSummary.getVisualEffectsSupervisors())
                                                                                 .invoke(movie::setVisualEffectsSupervisors)
+                                                                )
+                                                                .chain(() ->
+                                                                        makeupArtistService.getByIds(technicalSummary.getMakeupArtists())
+                                                                                .invoke(movie::setMakeupArtists)
                                                                 )
                                         )
                                         /*.call(
@@ -377,7 +385,8 @@ public class MovieService {
                                                                 movie.getCasters(),
                                                                 movie.getArtDirectors(),
                                                                 movie.getSoundEditors(),
-                                                                movie.getVisualEffectsSupervisors()
+                                                                movie.getVisualEffectsSupervisors(),
+                                                                movie.getMakeupArtists()
                                                         )
                                         )
                         )
@@ -836,6 +845,19 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeVisualEffectsSupervisor(visualEffectsSupervisorId))
+                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .chain(entity -> entity.persist())
+                        )
+                ;
+    }
+
+    public Uni<Movie> removeMakeupArtist(Long movieId, Long makeupArtistId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNotNull()
+                                        .call(entity -> entity.removeVisualEffectsSupervisor(makeupArtistId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
