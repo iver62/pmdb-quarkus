@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -23,12 +24,12 @@ import java.util.Set;
 @SuperBuilder
 @Getter
 @Setter
-@Table(name = "scenariste")
+@Table(name = "spécialiste_effets_speciaux")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Screenwriter extends Person {
+public class VisualEffectsSupervisor extends Person {
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "screenwriters")
+    @ManyToMany(mappedBy = "visualEffectsSupervisors")
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
 
@@ -61,6 +62,5 @@ public class Screenwriter extends Person {
                         )
                 ;
     }
-
 
 }

@@ -4,19 +4,18 @@ import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.*;
 import org.desha.app.services.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -37,6 +36,7 @@ public class PersonResource {
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
     private final SoundEditorService soundEditorService;
+    private final VisualEffectsSupervisorService visualEffectsSupervisorService;
 
     @Inject
     public PersonResource(
@@ -51,7 +51,8 @@ public class PersonResource {
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
-            SoundEditorService soundEditorService
+            SoundEditorService soundEditorService,
+            VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
@@ -65,6 +66,7 @@ public class PersonResource {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
+        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
     }
 
     @GET
@@ -131,6 +133,13 @@ public class PersonResource {
     @Path("sound-editors/{id}")
     public Uni<SoundEditor> getSoundEditor(Long id) {
         return soundEditorService.getOne(id);
+    }
+
+
+    @GET
+    @Path("visual-effects-supervisors/{id}")
+    public Uni<VisualEffectsSupervisor> getVisualEffectsSupervisor(Long id) {
+        return visualEffectsSupervisorService.getOne(id);
     }
 
     @GET
@@ -244,10 +253,20 @@ public class PersonResource {
     }
 
     @GET
+    @Path("visual-effects-supervisors")
+    public Uni<Response> getVisualEffectsSupervisors() {
+        return
+                visualEffectsSupervisorService.getAll()
+                        .onItem().ifNotNull().transform(visualEffectsSupervisors -> Response.ok(visualEffectsSupervisors).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
     @Path("producers/{id}/movies")
     public Uni<Response> getMoviesAsProducer(Long id) {
         return
-                personService.getProducer(id)
+                producerService.getOne(id)
                         .chain(producerService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
@@ -321,12 +340,11 @@ public class PersonResource {
     }
 
     @GET
-    @Path("{id}/movies/decorator")
+    @Path("decorators/{id}/movies")
     public Uni<Response> getMoviesAsDecorator(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsDecorator)
+                decoratorService.getOne(id)
+                        .chain(decoratorService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
@@ -334,43 +352,51 @@ public class PersonResource {
 
 
     @GET
-    @Path("{id}/movies/editor")
+    @Path("editors/{id}/movies")
     public Uni<Response> getMoviesAsEditor(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsEditor)
+                editorService.getOne(id)
+                        .chain(editorService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @GET
-    @Path("{id}/movies/art-directors")
+    @Path("art-directors/{id}/movies")
     public Uni<Response> getMoviesAsArtDirector(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsArtDirector)
+                artDirectorService.getOne(id)
+                        .chain(artDirectorService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @GET
-    @Path("{id}/movies/sound-editors")
+    @Path("sound-editors/{id}/movies")
     public Uni<Response> getMoviesAsSoundEditor(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getMoviesAsSoundEditor)
+                soundEditorService.getOne(id)
+                        .chain(soundEditorService::getMovies)
                         .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @GET
-    @Path("{id}/roles")
+    @Path("visual-effects-supervisors/{id}/movies")
+    public Uni<Response> getMoviesAsVisualEffectsSupervisor(Long id) {
+        return
+                visualEffectsSupervisorService.getOne(id)
+                        .chain(visualEffectsSupervisorService::getMovies)
+                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    /*@GET
+    @Path("actors/{id}/roles")
     public Uni<Response> getRoles(Long id) {
         return
                 Person.findById(id)
@@ -379,7 +405,7 @@ public class PersonResource {
                         .onItem().ifNotNull().transform(roles -> Response.ok(roles).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }
+    }*/
 
     @GET
     @Path("{id}/countries")
@@ -415,26 +441,43 @@ public class PersonResource {
                                     return person.persist();
                                 }
                         )
-                        .replaceWith(Response.ok(person).status(CREATED)::build)
+                        .replaceWith(Response.ok(person).status(CREATED).build())
                 ;
     }
 
     @POST
     @Path("director")
-    public Uni<Response> saveDirector(Director director) {
+    public Uni<Response> saveDirector(PersonDTO personDTO) {
         return
                 Panache
-                        .withTransaction(() -> {
-                                    director.setCreationDate(LocalDateTime.now());
-                                    director.setName(StringUtils.trim(director.getName()));
-                                    return director.persist();
-                                }
+                        .withTransaction(() ->
+                                Director.builder()
+                                        .name(StringUtils.trim(personDTO.getName()))
+                                        .creationDate(LocalDateTime.now())
+                                        .build()
+                                        .persist()
                         )
-                        .replaceWith(Response.ok(director).status(CREATED)::build)
+                        .onItem().ifNotNull().transform(panacheEntityBase -> Response.ok(panacheEntityBase).status(CREATED).build())
                 ;
     }
 
-    @PUT
+    @POST
+    @Path("visual-effects-supervisor")
+    public Uni<Response> saveVisualEffectsSupervisor(PersonDTO personDTO) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                VisualEffectsSupervisor.builder()
+                                        .creationDate(LocalDateTime.now())
+                                        .name(StringUtils.trim(personDTO.getName()))
+                                        .build()
+                                        .persist()
+                        )
+                        .onItem().ifNotNull().transform(panacheEntityBase -> Response.ok(panacheEntityBase).status(CREATED).build())
+                ;
+    }
+
+    /*@PUT
     @Path("{id}/countries")
     public Uni<Response> addCountries(Long id, Set<Country> countrySet) {
         Set<Country> countries = new HashSet<>();
@@ -458,9 +501,9 @@ public class PersonResource {
                         .chain(countryList -> personService.addCountries(id, countrySet))
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{id}")
     public Uni<Response> update(Long id, Person person) {
         if (Objects.isNull(person) || Objects.isNull(person.getName())) {
@@ -471,7 +514,7 @@ public class PersonResource {
                 personService.updatePerson(id, person)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }
+    }*/
 
     @DELETE
     @Path("{id}")

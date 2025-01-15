@@ -36,6 +36,7 @@ public class MovieService {
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
     private final SoundEditorService soundEditorService;
+    private final VisualEffectsSupervisorService visualEffectsSupervisorService;
 
     @Inject
     public MovieService(
@@ -54,7 +55,8 @@ public class MovieService {
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
-            SoundEditorService soundEditorService
+            SoundEditorService soundEditorService,
+            VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
         this.msf = msf;
         this.countryService = countryService;
@@ -72,6 +74,7 @@ public class MovieService {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
+        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
     }
 
     public Uni<Movie> getSingle(Long id) {
@@ -128,6 +131,10 @@ public class MovieService {
 
     public Uni<Set<SoundEditor>> getSoundEditorsByMovie(Movie movie) {
         return Mutiny.fetch(movie.getSoundEditors());
+    }
+
+    public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisorsByMovie(Movie movie) {
+        return Mutiny.fetch(movie.getVisualEffectsSupervisors());
     }
 
     public Uni<Set<Role>> getActorsByMovie(Movie movie) {
@@ -283,6 +290,10 @@ public class MovieService {
                                                                         soundEditorService.getByIds(technicalSummary.getSoundEditors())
                                                                                 .invoke(movie::setSoundEditors)
                                                                 )
+                                                                .chain(() ->
+                                                                        visualEffectsSupervisorService.getByIds(technicalSummary.getSoundEditors())
+                                                                                .invoke(movie::setVisualEffectsSupervisors)
+                                                                )
                                         )
                                         /*.call(
                                                 movie ->
@@ -365,7 +376,8 @@ public class MovieService {
                                                                 movie.getEditors(),
                                                                 movie.getCasters(),
                                                                 movie.getArtDirectors(),
-                                                                movie.getSoundEditors()
+                                                                movie.getSoundEditors(),
+                                                                movie.getVisualEffectsSupervisors()
                                                         )
                                         )
                         )
@@ -811,6 +823,19 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeSoundEditor(soundEditorId))
+                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .chain(entity -> entity.persist())
+                        )
+                ;
+    }
+
+    public Uni<Movie> removeVisualEffectsSupervisor(Long movieId, Long visualEffectsSupervisorId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNotNull()
+                                        .call(entity -> entity.removeVisualEffectsSupervisor(visualEffectsSupervisorId))
                                         .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )

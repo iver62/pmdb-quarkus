@@ -20,7 +20,7 @@ public class TechnicalSummaryDTO {
     private Set<PersonDTO> casters;
     private Set<PersonDTO> artDirectors;
     private Set<PersonDTO> soundEditors;
-    private Set<PersonDTO> visualEffectsSupervisor;
+    private Set<PersonDTO> visualEffectsSupervisors;
     private Set<PersonDTO> makeupArtists;
     private Set<PersonDTO> hairDressers;
 
@@ -33,10 +33,10 @@ public class TechnicalSummaryDTO {
             final Set<PersonDTO> costumiers,
             final Set<PersonDTO> decorators,
             final Set<PersonDTO> editors,
-            final Set<PersonDTO> casting,
+            final Set<PersonDTO> casters,
             final Set<PersonDTO> artDirectors,
             final Set<PersonDTO> soundEditors,
-            final Set<PersonDTO> visualEffectsSupervisor,
+            final Set<PersonDTO> visualEffectsSupervisors,
             final Set<PersonDTO> makeupArtists,
             final Set<PersonDTO> hairDressers
     ) {
@@ -49,10 +49,10 @@ public class TechnicalSummaryDTO {
                 .costumiers(costumiers)
                 .decorators(decorators)
                 .editors(editors)
-                .casters(casting)
+                .casters(casters)
                 .artDirectors(artDirectors)
                 .soundEditors(soundEditors)
-                .visualEffectsSupervisor(visualEffectsSupervisor)
+                .visualEffectsSupervisors(visualEffectsSupervisors)
                 .makeupArtists(makeupArtists)
                 .hairDressers(hairDressers)
                 .build();

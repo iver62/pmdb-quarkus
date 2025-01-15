@@ -7,6 +7,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
+@SuperBuilder
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @Getter
-@Builder
 public abstract class PersonDTO {
 
     private Long id;

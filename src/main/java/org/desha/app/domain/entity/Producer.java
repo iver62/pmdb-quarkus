@@ -8,6 +8,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -19,6 +20,7 @@ import java.util.Set;
 
 @Slf4j
 @Entity
+@SuperBuilder
 @Getter
 @Setter
 @Table(name = "producteur")
@@ -30,6 +32,12 @@ public class Producer extends Person {
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
 
+    /**
+     * Ajoute un film de la liste des films.
+     *
+     * @param movie le film à ajouter à la liste
+     * @return la liste des films mise à jour
+     */
     public Uni<Set<Movie>> addMovie(Movie movie) {
         return
                 Mutiny.fetch(movies)
@@ -43,10 +51,10 @@ public class Producer extends Person {
     }
 
     /**
-     * Retire un film de la liste des films
+     * Retire un film de la liste des films.
      *
-     * @param id l'identifiant du film
-     * @return la liste des films
+     * @param id l'identifiant du film à retirer
+     * @return la liste des films mise à jour
      */
     public Uni<Set<Movie>> removeMovie(Long id) {
         return

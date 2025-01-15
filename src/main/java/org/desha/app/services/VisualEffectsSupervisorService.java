@@ -8,6 +8,7 @@ import jakarta.ws.rs.WebApplicationException;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.ArtDirector;
 import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.VisualEffectsSupervisor;
 import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
@@ -20,22 +21,22 @@ import java.util.Set;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @ApplicationScoped
-public class ArtDirectorService implements PersonServiceInterface<ArtDirector> {
+public class VisualEffectsSupervisorService implements PersonServiceInterface<VisualEffectsSupervisor> {
 
-    private final PersonRepository<ArtDirector> personRepository;
+    private final PersonRepository<VisualEffectsSupervisor> personRepository;
 
     @Inject
-    public ArtDirectorService(PersonRepository<ArtDirector> personRepository) {
+    public VisualEffectsSupervisorService(PersonRepository<VisualEffectsSupervisor> personRepository) {
         this.personRepository = personRepository;
     }
 
     @Override
-    public Uni<ArtDirector> getOne(Long id) {
+    public Uni<VisualEffectsSupervisor> getOne(Long id) {
         return personRepository.findById(id);
     }
 
     @Override
-    public Uni<Set<ArtDirector>> getByIds(Set<PersonDTO> persons) {
+    public Uni<Set<VisualEffectsSupervisor>> getByIds(Set<PersonDTO> persons) {
         return
                 personRepository.findByIds(
                         Optional.ofNullable(persons).orElse(Collections.emptySet())
@@ -46,7 +47,7 @@ public class ArtDirectorService implements PersonServiceInterface<ArtDirector> {
     }
 
     @Override
-    public Uni<Set<ArtDirector>> getAll() {
+    public Uni<Set<VisualEffectsSupervisor>> getAll() {
         return
                 personRepository
                         .listAll()
@@ -55,16 +56,16 @@ public class ArtDirectorService implements PersonServiceInterface<ArtDirector> {
     }
 
     @Override
-    public Uni<Set<Movie>> getMovies(ArtDirector artDirector) {
-        return Mutiny.fetch(artDirector.getMovies());
+    public Uni<Set<Movie>> getMovies(VisualEffectsSupervisor visualEffectsSupervisor) {
+        return Mutiny.fetch(visualEffectsSupervisor.getMovies());
     }
 
     @Override
-    public Uni<Set<Movie>> addMovie(Long artDirectorId, Movie movie) {
+    public Uni<Set<Movie>> addMovie(Long visualEffectsSupervisorId, Movie movie) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(artDirectorId)
+                                personRepository.findById(visualEffectsSupervisorId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.addMovie(movie))
                         )
@@ -72,18 +73,18 @@ public class ArtDirectorService implements PersonServiceInterface<ArtDirector> {
     }
 
     @Override
-    public Uni<Set<Movie>> removeMovie(Long artDirectorId, Long movieId) {
+    public Uni<Set<Movie>> removeMovie(Long visualEffectsSupervisorId, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->
-                                personRepository.findById(artDirectorId)
+                                personRepository.findById(visualEffectsSupervisorId)
                                         .onItem().ifNotNull()
                                         .transformToUni(person -> person.removeMovie(movieId))
                         )
                 ;
     }
 
-    public Uni<ArtDirector> update(Long id, ArtDirector artDirector) {
+    public Uni<VisualEffectsSupervisor> update(Long id, VisualEffectsSupervisor visualEffectsSupervisor) {
         return
                 Panache
                         .withTransaction(() ->
@@ -91,10 +92,10 @@ public class ArtDirectorService implements PersonServiceInterface<ArtDirector> {
                                         .onItem().ifNull().failWith(new WebApplicationException("Person missing from database.", NOT_FOUND))
                                         .invoke(
                                                 entity -> {
-                                                    entity.setName(artDirector.getName());
-                                                    entity.setDateOfBirth(artDirector.getDateOfBirth());
-                                                    entity.setDateOfDeath(artDirector.getDateOfDeath());
-                                                    entity.setPhotoPath(artDirector.getPhotoPath());
+                                                    entity.setName(visualEffectsSupervisor.getName());
+                                                    entity.setDateOfBirth(visualEffectsSupervisor.getDateOfBirth());
+                                                    entity.setDateOfDeath(visualEffectsSupervisor.getDateOfDeath());
+                                                    entity.setPhotoPath(visualEffectsSupervisor.getPhotoPath());
                                                     entity.setLastUpdate(LocalDateTime.now());
                                                 }
                                         )
