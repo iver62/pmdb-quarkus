@@ -1,3 +1,4 @@
+/*
 package org.desha.app.services;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
@@ -102,3 +103,4 @@ public class ArtDirectorService implements PersonServiceInterface<ArtDirector> {
                 ;
     }
 }
+*/

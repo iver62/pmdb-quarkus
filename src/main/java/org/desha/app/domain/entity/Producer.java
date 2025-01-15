@@ -20,7 +20,7 @@ import java.util.Set;
 
 @Slf4j
 @Entity
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @Table(name = "producteur")

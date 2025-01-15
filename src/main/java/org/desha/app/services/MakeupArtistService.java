@@ -1,3 +1,4 @@
+/*
 package org.desha.app.services;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
@@ -103,3 +104,4 @@ public class MakeupArtistService implements PersonServiceInterface<MakeupArtist>
                 ;
     }
 }
+*/

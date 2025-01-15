@@ -1,3 +1,4 @@
+/*
 package org.desha.app.services;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
@@ -80,3 +81,4 @@ public class PhotographerService implements PersonServiceInterface<Photographer>
                 ;
     }
 }
+*/

@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -59,7 +59,7 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
     @Fetch(FetchMode.SELECT)
     private Set<Country> countries = new HashSet<>();
 
-        @JsonIgnore
+    @JsonIgnore
     @OneToMany(mappedBy = "person", orphanRemoval = true)
     private Set<Award> awards = new HashSet<>();
 
@@ -110,6 +110,14 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
                         )
                 ;
     }
+
+//    public abstract Person.PersonBuilder builder();
+
+    public abstract Set<Movie> getMovies();
+
+    public abstract Uni<Set<Movie>> addMovie(Movie movie);
+
+    public abstract Uni<Set<Movie>> removeMovie(Long id);
 
     @Override
     public int compareTo(Person p) {

@@ -1,22 +1,27 @@
+/*
 package org.desha.app.services;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Director;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+
 @ApplicationScoped
-public class DirectorService implements PersonServiceInterface<Director> {
+public class DirectorService extends PersonService<Director> implements PersonServiceInterface<Director> {
 
     private final PersonRepository<Director> personRepository;
 
@@ -78,4 +83,28 @@ public class DirectorService implements PersonServiceInterface<Director> {
                         )
                 ;
     }
+
+    public Uni<Director> update(Long id, Director director) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(id)
+                                        .onItem().ifNull().failWith(new WebApplicationException("Person missing from database.", NOT_FOUND))
+                                        .invoke(
+                                                entity -> {
+                                                    entity.setName(director.getName());
+                                                    entity.setDateOfBirth(director.getDateOfBirth());
+                                                    entity.setDateOfDeath(director.getDateOfDeath());
+                                                    entity.setPhotoPath(director.getPhotoPath());
+                                                    entity.setLastUpdate(LocalDateTime.now());
+                                                }
+                                        )
+                        )
+                ;
+    }
+
+    public Uni<Boolean> delete(Long id) {
+        return Panache.withTransaction(() -> personRepository.deleteById(id));
+    }
 }
+*/
