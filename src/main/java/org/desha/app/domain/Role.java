@@ -1,0 +1,18 @@
+package org.desha.app.domain;
+
+public enum Role {
+    PRODUCER,
+    DIRECTOR,
+    SCREENWRITER,
+    MUSICIAN,
+    PHOTOGRAPHER,
+    COSTUMIER,
+    DECORATOR,
+    EDITOR,
+    CASTER,
+    ART_DIRECTOR,
+    SOUND_EDITOR,
+    VISUAL_EFFECTS_SUPERVISOR,
+    MAKEUP_ARTIST,
+    HAIR_DRESSER
+}

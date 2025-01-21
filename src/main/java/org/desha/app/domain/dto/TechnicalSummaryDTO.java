@@ -1,12 +1,10 @@
 package org.desha.app.domain.dto;
 
-import lombok.Builder;
 import lombok.Getter;
 
 import java.util.Set;
 
 @Getter
-@Builder
 public class TechnicalSummaryDTO {
 
     private Set<PersonDTO> producers;
@@ -24,37 +22,4 @@ public class TechnicalSummaryDTO {
     private Set<PersonDTO> makeupArtists;
     private Set<PersonDTO> hairDressers;
 
-    public static TechnicalSummaryDTO build(
-            final Set<PersonDTO> producers,
-            final Set<PersonDTO> directors,
-            final Set<PersonDTO> screenwriters,
-            final Set<PersonDTO> musicians,
-            final Set<PersonDTO> photographers,
-            final Set<PersonDTO> costumiers,
-            final Set<PersonDTO> decorators,
-            final Set<PersonDTO> editors,
-            final Set<PersonDTO> casters,
-            final Set<PersonDTO> artDirectors,
-            final Set<PersonDTO> soundEditors,
-            final Set<PersonDTO> visualEffectsSupervisors,
-            final Set<PersonDTO> makeupArtists,
-            final Set<PersonDTO> hairDressers
-    ) {
-        return TechnicalSummaryDTO.builder()
-                .producers(producers)
-                .directors(directors)
-                .screenwriters(screenwriters)
-                .musicians(musicians)
-                .photographers(photographers)
-                .costumiers(costumiers)
-                .decorators(decorators)
-                .editors(editors)
-                .casters(casters)
-                .artDirectors(artDirectors)
-                .soundEditors(soundEditors)
-                .visualEffectsSupervisors(visualEffectsSupervisors)
-                .makeupArtists(makeupArtists)
-                .hairDressers(hairDressers)
-                .build();
-    }
 }

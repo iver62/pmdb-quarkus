@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Genre;
-import org.desha.app.domain.entity.Role;
+import org.desha.app.domain.entity.MovieActor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,7 +22,7 @@ public class MovieDTO {
     private Long boxOffice;
     private String posterPath;
     private TechnicalSummaryDTO technicalSummary;
-    private Set<Role> roles;
+    private Set<MovieActor> roles;
     private Set<Country> countries;
     private Set<Genre> genres;
     private Set<Award> awards;

@@ -96,37 +96,37 @@ public class Movie extends PanacheEntity {
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_photographes", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_photographe"))
+    @JoinTable(name = "lnk_film_photographe", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_photographe"))
     @Fetch(FetchMode.SELECT)
     private Set<Photographer> photographers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_costumiers", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_costumier"))
+    @JoinTable(name = "lnk_film_costumier", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_costumier"))
     @Fetch(FetchMode.SELECT)
     private Set<Costumier> costumiers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_decorateurs", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_decorateur"))
+    @JoinTable(name = "lnk_film_decorateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_decorateur"))
     @Fetch(FetchMode.SELECT)
     private Set<Decorator> decorators = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_monteurs", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_monteur"))
+    @JoinTable(name = "lnk_film_monteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_monteur"))
     @Fetch(FetchMode.SELECT)
     private Set<Editor> editors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_casteurs", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_casteur"))
+    @JoinTable(name = "lnk_film_casteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_casteur"))
     @Fetch(FetchMode.SELECT)
     private Set<Caster> casters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_directeurs_artistiques", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_directeur_artistique"))
+    @JoinTable(name = "lnk_film_directeur_artistique", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_directeur_artistique"))
     @Fetch(FetchMode.SELECT)
     private Set<ArtDirector> artDirectors = new HashSet<>();
 
@@ -149,9 +149,15 @@ public class Movie extends PanacheEntity {
     private Set<MakeupArtist> makeupArtists = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_coiffeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_coiffeur"))
+    @Fetch(FetchMode.SELECT)
+    private Set<HairDresser> hairDressers = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
-    private Set<Role> roles = new HashSet<>();
+    private Set<MovieActor> movieActors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -365,19 +371,32 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<Role>> addRole(Role role) {
+    public Uni<Set<HairDresser>> saveHairDressers(Set<HairDresser> hairDresserSet) {
         return
-                Mutiny.fetch(roles)
+                Mutiny.fetch(hairDressers)
+                        .map(
+                                people -> {
+                                    people.clear();
+                                    people.addAll(hairDresserSet);
+                                    return people;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<MovieActor>> addRole(MovieActor movieActor) {
+        return
+                Mutiny.fetch(movieActors)
                         .map(
                                 fetchRoles -> {
-                                    fetchRoles.add(role);
+                                    fetchRoles.add(movieActor);
                                     return fetchRoles;
                                 }
                         )
                 ;
     }
 
-    public Uni<Set<Role>> addRoles(Set<Role> roles) {
+    public Uni<Set<MovieActor>> addRoles(Set<MovieActor> roles) {
         return
                 Mutiny.fetch(roles)
                         .map(
@@ -585,8 +604,20 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
+    public Uni<Set<HairDresser>> removeHairDresser(Long id) {
+        return
+                Mutiny.fetch(hairDressers)
+                        .map(
+                                persons -> {
+                                    persons.removeIf(person -> Objects.equals(person.id, id));
+                                    return persons;
+                                }
+                        )
+                ;
+    }
+
     public void removeRole(Long id) {
-        this.roles.removeIf(role -> Objects.equals(role.id, id));
+        this.movieActors.removeIf(role -> Objects.equals(role.id, id));
     }
 
     public Uni<Set<Country>> removeCountry(Long id) {

@@ -7,7 +7,6 @@ import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -20,14 +19,13 @@ import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
-@SuperBuilder(toBuilder = true)
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @NamedQueries({
-        @NamedQuery(name = "AbstractPerson.searchByName", query = "from AbstractPerson where lower(name) LIKE lower(?1)")
+        @NamedQuery(name = "Person.searchByName", query = "from Person where lower(name) LIKE lower(?1)")
 })
 public abstract class Person extends PanacheEntity implements Comparable<Person> {
 
@@ -110,8 +108,6 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
                         )
                 ;
     }
-
-//    public abstract Person.PersonBuilder builder();
 
     public abstract Set<Movie> getMovies();
 
