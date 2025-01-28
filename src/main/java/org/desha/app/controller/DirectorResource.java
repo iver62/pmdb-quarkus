@@ -54,17 +54,16 @@ public class DirectorResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getCountries)
+                directorService.getOne(id)
+                        .chain(directorService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/awards")
@@ -117,12 +116,13 @@ public class DirectorResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
-            throw new WebApplicationException("Person name was not set on request.", 422);
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
+            throw new WebApplicationException("Director name was not set on request.", 422);
         }
 
         return
-                directorService.update(id, personDTO)
+                directorService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(director -> Response.ok(director).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

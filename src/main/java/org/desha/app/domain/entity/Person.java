@@ -5,9 +5,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.service.CountryService;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -51,39 +53,15 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime lastUpdate;
 
-    @JsonIgnore
+    /*@JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_personne_pays", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
+    @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
     @Fetch(FetchMode.SELECT)
-    private Set<Country> countries = new HashSet<>();
+    private Set<Country> countries = new HashSet<>();*/
 
     @JsonIgnore
     @OneToMany(mappedBy = "person", orphanRemoval = true)
     private Set<Award> awards = new HashSet<>();
-
-    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
-        return
-                Mutiny.fetch(countries)
-                        .map(
-                                fetchedCountries -> {
-                                    fetchedCountries.addAll(countrySet);
-                                    return fetchedCountries;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Country>> removeCountry(Long id) {
-        return
-                Mutiny.fetch(countries)
-                        .map(
-                                countrySet -> {
-                                    countrySet.removeIf(country -> Objects.equals(country.id, id));
-                                    return countrySet;
-                                }
-                        )
-                ;
-    }
 
     public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
         return
@@ -114,6 +92,14 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
     public abstract Uni<Set<Movie>> addMovie(Movie movie);
 
     public abstract Uni<Set<Movie>> removeMovie(Long id);
+
+    public abstract Set<Country> getCountries();
+
+//    public abstract Uni<Set<Country>> addCountries(Set<Country> countrySet);
+
+//    public abstract Uni<Set<Country>> removeCountry(Long id);
+
+    public abstract void setCountries(Set<Country> countrySet);
 
     @Override
     public int compareTo(Person p) {

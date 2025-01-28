@@ -11,7 +11,7 @@ import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,14 +25,14 @@ public class GenreService {
         this.genreRepository = genreRepository;
     }
 
-    public Uni<List<Genre>> getByIds(Set<Genre> genreSet) {
+    public Uni<Set<Genre>> getByIds(Set<Genre> genreSet) {
         return
                 genreRepository.findByIds(
                         Optional.ofNullable(genreSet).orElse(Collections.emptySet())
                                 .stream()
                                 .map(p -> p.id)
                                 .toList()
-                );
+                ).map(HashSet::new);
     }
 
     public Uni<Set<Movie>> getMovies(Genre genre) {

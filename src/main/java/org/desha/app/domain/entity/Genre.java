@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.AuditGenreListener;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -24,7 +23,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Table(name = "genre")
-@EntityListeners(AuditGenreListener.class)
+//@EntityListeners(AuditGenreListener.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Genre extends PanacheEntity {
 

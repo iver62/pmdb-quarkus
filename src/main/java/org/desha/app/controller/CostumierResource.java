@@ -54,17 +54,16 @@ public class CostumierResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getCountries)
+                costumierService.getOne(id)
+                        .chain(costumierService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/awards")
@@ -117,12 +116,13 @@ public class CostumierResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }
 
         return
-                costumierService.update(id, personDTO)
+                costumierService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(costumier -> Response.ok(costumier).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

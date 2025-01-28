@@ -199,10 +199,11 @@ public class MovieService {
                         .call(
                                 movie ->
                                         countryService.getByIds(movieDTO.getCountries())
-                                                .invoke(countryList -> movie.setCountries(new HashSet<>(countryList)))
+                                                .invoke(movie::setCountries)
                                                 .chain(() ->
                                                         genreService.getByIds(movieDTO.getGenres())
-                                                                .invoke(genreList -> movie.setGenres(new HashSet<>(genreList))))
+                                                                .invoke(movie::setGenres)
+                                                )
                         )
                         .chain(movie -> Panache.withTransaction(movie::persist));
 
@@ -254,7 +255,6 @@ public class MovieService {
     }
 
     public Uni<TechnicalSummary> saveTechnicalSummary(Long id, TechnicalSummaryDTO technicalSummary) {
-        log.info("SERVICE -> " + producerService);
         return
                 Panache
                         .withTransaction(() ->
@@ -940,12 +940,12 @@ public class MovieService {
                                                 .call(
                                                         movie ->
                                                                 countryService.getByIds(movieDTO.getCountries())
-                                                                        .invoke(countryList -> movie.setCountries(new HashSet<>(countryList)))
+                                                                        .invoke(movie::setCountries)
                                                 )
                                                 .call(
                                                         movie ->
                                                                 genreService.getByIds(movieDTO.getGenres())
-                                                                        .invoke(genreList -> movie.setGenres(new HashSet<>(genreList)))
+                                                                        .invoke(movie::setGenres)
                                                 )
                                                 .invoke(
                                                         movie -> {

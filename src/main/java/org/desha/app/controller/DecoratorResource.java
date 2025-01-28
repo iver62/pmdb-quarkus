@@ -54,17 +54,16 @@ public class DecoratorResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getCountries)
+                decoratorService.getOne(id)
+                        .chain(decoratorService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/awards")
@@ -117,12 +116,13 @@ public class DecoratorResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }
 
         return
-                decoratorService.update(id, personDTO)
+                decoratorService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(decorator -> Response.ok(decorator).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

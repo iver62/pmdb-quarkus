@@ -54,17 +54,16 @@ public class VisualEffectsSupervisorResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getCountries)
+                visualEffectsSupervisorService.getOne(id)
+                        .chain(visualEffectsSupervisorService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/awards")
@@ -117,12 +116,13 @@ public class VisualEffectsSupervisorResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }
 
         return
-                visualEffectsSupervisorService.update(id, personDTO)
+                visualEffectsSupervisorService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(visualEffectsSupervisor -> Response.ok(visualEffectsSupervisor).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

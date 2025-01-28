@@ -54,17 +54,16 @@ public class MakeupArtistResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getCountries)
+                makeupArtistService.getOne(id)
+                        .chain(makeupArtistService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/awards")
@@ -117,12 +116,13 @@ public class MakeupArtistResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }
 
         return
-                makeupArtistService.update(id, personDTO)
+                makeupArtistService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(makeupArtist -> Response.ok(makeupArtist).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

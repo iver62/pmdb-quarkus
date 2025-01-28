@@ -186,7 +186,6 @@ public class Movie extends PanacheEntity {
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
                 .posterPath(movieDTO.getPosterPath())
-                .countries(movieDTO.getCountries())
                 .genres(movieDTO.getGenres())
                 .creationDate(LocalDateTime.now())
                 .build();

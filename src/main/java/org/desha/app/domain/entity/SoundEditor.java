@@ -3,9 +3,7 @@ package org.desha.app.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.smallrye.mutiny.Uni;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Fetch;
@@ -31,6 +29,12 @@ public class SoundEditor extends Person {
     @ManyToMany(mappedBy = "soundEditors")
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
+
+    @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_pays_ingenieur_son", joinColumns = @JoinColumn(name = "fk_ingenieur_son"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
+    @Fetch(FetchMode.SELECT)
+    private Set<Country> countries = new HashSet<>();
 
     public Uni<Set<Movie>> addMovie(Movie movie) {
         return

@@ -54,16 +54,16 @@ public class ScreenwriterResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                personService.getOne(id)
-                        .chain(personService::getCountries)
+                screenwriterService.getOne(id)
+                        .chain(screenwriterService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/awards")
@@ -115,12 +115,13 @@ public class ScreenwriterResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }
 
         return
-                screenwriterService.update(id, personDTO)
+                screenwriterService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(screenwriter -> Response.ok(screenwriter).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

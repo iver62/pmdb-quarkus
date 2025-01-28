@@ -274,7 +274,7 @@ public class MovieResource {
     }
 
     @GET
-    @Path("{id}/hairdressers")
+    @Path("{id}/hair-dressers")
     public Uni<Set<HairDresser>> getHairDressers(Long id) {
         return
                 Movie.findById(id)

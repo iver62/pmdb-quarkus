@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.Role;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Producer;
-import org.desha.app.service.PersonService;
 import org.desha.app.qualifier.PersonType;
+import org.desha.app.service.PersonService;
 
 import java.util.Objects;
 
@@ -54,17 +54,16 @@ public class ProducerResource {
                 ;
     }
 
-    /*@GET
+    @GET
     @Path("{id}/countries")
     public Uni<Response> getCountries(Long id) {
         return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getCountries)
+                producerService.getOne(id)
+                        .chain(producerService::getCountries)
                         .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
-    }*/
+    }
 
    /* @GET
     @Path("{id}/awards")
@@ -117,12 +116,13 @@ public class ProducerResource {
     @PUT
     @Path("{id}")
     public Uni<Response> update(Long id, PersonDTO personDTO) {
-        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.name())) {
+        if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }
 
         return
-                producerService.update(id, personDTO)
+                producerService
+                        .update(id, personDTO)
                         .onItem().ifNotNull().transform(producer -> Response.ok(producer).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

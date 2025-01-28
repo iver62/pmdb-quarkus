@@ -2,7 +2,6 @@ package org.desha.app.domain.dto;
 
 import lombok.Getter;
 import org.desha.app.domain.entity.Award;
-import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Genre;
 import org.desha.app.domain.entity.MovieActor;
 
@@ -23,7 +22,7 @@ public class MovieDTO {
     private String posterPath;
     private TechnicalSummaryDTO technicalSummary;
     private Set<MovieActor> roles;
-    private Set<Country> countries;
+    private Set<CountryDTO> countries;
     private Set<Genre> genres;
     private Set<Award> awards;
     private LocalDateTime creationDate;

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.entity.Producer;
 import org.desha.app.service.CountryService;
 
 import java.util.List;
@@ -46,18 +47,18 @@ public class CountryResource {
     public Uni<Set<Movie>> getMovies(Long id) {
         return
                 Country.findById(id)
-                        .map(panacheEntityBase -> (Country) panacheEntityBase)
+                        .map(Country.class::cast)
                         .chain(countryService::getMovies)
                 ;
     }
 
     @GET
-    @Path("{id}/persons")
-    public Uni<Set<Person>> getPersons(Long id) {
+    @Path("{id}/producers")
+    public Uni<Set<Producer>> getProducers(Long id) {
         return
                 Person.findById(id)
                         .map(Country.class::cast)
-                        .chain(countryService::getPersons)
+                        .chain(countryService::getProducers)
                 ;
     }
 

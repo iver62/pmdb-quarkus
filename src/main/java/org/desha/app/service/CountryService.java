@@ -4,15 +4,16 @@ import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
-import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.entity.Producer;
 import org.desha.app.repository.CountryRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,22 +27,22 @@ public class CountryService {
         this.countryRepository = countryRepository;
     }
 
-    public Uni<List<Country>> getByIds(Set<Country> countrySet) {
+    public Uni<Set<Country>> getByIds(Set<CountryDTO> countries) {
         return
                 countryRepository.findByIds(
-                        Optional.ofNullable(countrySet).orElse(Collections.emptySet())
+                        Optional.ofNullable(countries).orElse(Collections.emptySet())
                                 .stream()
-                                .map(p -> p.id)
+                                .map(CountryDTO::getId)
                                 .toList()
-                );
+                ).map(HashSet::new);
     }
 
     public Uni<Set<Movie>> getMovies(Country country) {
         return Mutiny.fetch(country.getMovies());
     }
 
-    public Uni<Set<Person>> getPersons(Country country) {
-        return Mutiny.fetch(country.getPersons());
+    public Uni<Set<Producer>> getProducers(Country country) {
+        return Mutiny.fetch(country.getProducers());
     }
 
     public Uni<Country> removeMovie(Long countryId, Long movieId) {
