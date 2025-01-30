@@ -1,17 +1,23 @@
 package org.desha.app.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Genre;
+import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.MovieActor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+@Builder
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieDTO {
 
+    private Long id;
     private String title;
     private String originalTitle;
     private String synopsis;
@@ -27,5 +33,14 @@ public class MovieDTO {
     private Set<Award> awards;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
+
+    public static MovieDTO fromEntity(Movie movie) {
+        return MovieDTO.builder()
+                .id(movie.id)
+                .title(movie.getTitle())
+                .originalTitle(movie.getOriginalTitle())
+                .releaseDate(movie.getReleaseDate())
+                .build();
+    }
 
 }
