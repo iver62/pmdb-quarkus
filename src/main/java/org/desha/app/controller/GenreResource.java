@@ -3,18 +3,15 @@ package org.desha.app.controller;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.desha.app.domain.dto.GenreDTO;
 import org.desha.app.domain.entity.Genre;
-import org.desha.app.domain.entity.Movie;
 import org.desha.app.service.GenreService;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -25,42 +22,45 @@ public class GenreResource {
 
     private final GenreService genreService;
 
+    @Inject
     public GenreResource(GenreService genreService) {
         this.genreService = genreService;
     }
 
     @GET
-    public Uni<List<Genre>> get() {
-        return Genre.listAll();
+    @Path("{id}")
+    public Uni<Response> getSingle(Long id) {
+        return genreService.getOne(id)
+                .onItem().ifNotNull().transform(country -> Response.ok(country).build())
+                .onItem().ifNull().continueWith(Response.noContent().build());
     }
 
     @GET
-    @Path("{id}")
-    public Uni<Genre> getSingle(Long id) {
-        return Genre.findById(id);
+    public Uni<Response> get() {
+        return genreService.getAll()
+                .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
+                .onItem().ifNull().continueWith(Response.noContent().build());
     }
 
     @GET
     @Path("{id}/movies")
-    public Uni<Set<Movie>> getMovies(Long id) {
+    public Uni<Response> getMovies(Long id) {
         return
-                Genre.findById(id)
-                        .map(Genre.class::cast)
-                        .chain(genreService::getMovies)
+                genreService.getMovies(id)
+                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
     }
 
     @POST
-    public Uni<Response> createGenre(Genre genre) {
+    public Uni<Response> createGenre(GenreDTO genreDTO) {
+        if (Objects.isNull(genreDTO) || Objects.nonNull(genreDTO.getId())) {
+            throw new WebApplicationException("Id was invalidly set on request.", 422);
+        }
+
         return
-                Panache
-                        .withTransaction(() -> {
-                                    genre.setCreationDate(LocalDateTime.now());
-                                    genre.setName(StringUtils.capitalize(genre.getName()));
-                                    return genre.persist();
-                                }
-                        )
-                        .replaceWith(Response.ok(genre).status(CREATED)::build)
+                genreService.createGenre(genreDTO)
+                        .map(genre -> Response.status(CREATED).entity(genre).build())
                 ;
     }
 

@@ -6,24 +6,26 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.AuditGenreListener;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Getter
 @Setter
 @Table(name = "genre")
-//@EntityListeners(AuditGenreListener.class)
+@EntityListeners(AuditGenreListener.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Genre extends PanacheEntity {
 
@@ -42,7 +44,16 @@ public class Genre extends PanacheEntity {
     @JsonIgnore
     @ManyToMany(mappedBy = "genres")
     @Fetch(FetchMode.SELECT)
-    private Set<Movie> movies = new HashSet<>();
+    private Set<Movie> movies;
+
+    public static Genre build(String name, LocalDateTime creationDate) {
+        return
+                Genre.builder()
+                        .name(name)
+                        .creationDate(creationDate)
+                        .build()
+                ;
+    }
 
     public Uni<Set<Movie>> addMovie(Movie movie) {
         return
