@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.Role;
@@ -17,8 +18,13 @@ import org.desha.app.service.CountryService;
 import org.desha.app.service.GenreService;
 import org.desha.app.service.MovieService;
 import org.desha.app.service.PersonService;
+import org.jboss.resteasy.reactive.PartType;
+import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -328,14 +334,36 @@ public class MovieResource {
     }
 
     @POST
-    public Uni<Response> create(MovieDTO movieDTO) {
+    public Uni<Response> create(
+            @RestForm("file") FileUpload file,
+            @RestForm @PartType(MediaType.APPLICATION_JSON) MovieDTO movieDTO
+    ) {
         if (Objects.isNull(movieDTO)) {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
         }
 
         return
-                movieService.createMovie(movieDTO)
+                movieService.saveMovie(file, movieDTO)
                         .map(movie -> Response.status(CREATED).entity(movie).build());
+    }
+
+    @GET
+    @Path("poster/{fileName}")
+    @Produces({"image/jpg", "image/jpeg", "image/png"})
+    public Uni<Response> getPoster(String fileName) {
+        return
+                movieService.getPoster(fileName)
+                        .map(file -> {
+                            try {
+                                byte[] fileBytes = Files.readAllBytes(file.toPath());
+                                String mimeType = Files.probeContentType(file.toPath()); // Détecte automatiquement le type MIME
+                                return Response.ok(fileBytes).type(mimeType).build();
+                            } catch (IOException e) {
+                                return Response.serverError().entity("Erreur lors du chargement de l'affiche").build();
+                            }
+                        })
+                        .onItem().ifNull().continueWith(Response.status(404, "Affiche introuvable").build())
+                ;
     }
 
 //    @POST
@@ -1092,13 +1120,17 @@ public class MovieResource {
 
     @PUT
     @Path("{id}")
-    public Uni<Response> update(Long id, MovieDTO movieDTO) {
+    public Uni<Response> update(
+            Long id,
+            @RestForm("file") FileUpload file,
+            @RestForm @PartType(MediaType.APPLICATION_JSON) MovieDTO movieDTO
+    ) {
         if (Objects.isNull(movieDTO) || Objects.isNull(movieDTO.getTitle())) {
             throw new WebApplicationException("Movie title was not set on request.", 422);
         }
 
         return
-                movieService.updateMovie(id, movieDTO)
+                movieService.updateMovie(id, file, movieDTO)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }

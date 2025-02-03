@@ -59,8 +59,8 @@ public class Movie extends PanacheEntity {
     @Column(name = "box_office")
     private Long boxOffice;
 
-    @Column(name = "chemin_affiche", unique = true)
-    private String posterPath;
+    @Column(name = "chemin_affiche")
+    private String posterFileName;
 
     @Column(name = "date_creation")
     @Temporal(TemporalType.TIMESTAMP)
@@ -185,7 +185,7 @@ public class Movie extends PanacheEntity {
                 .runningTime(movieDTO.getRunningTime())
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
-                .posterPath(movieDTO.getPosterPath())
+                .posterFileName(movieDTO.getPosterFileName())
                 .genres(movieDTO.getGenres())
                 .creationDate(LocalDateTime.now())
                 .build();

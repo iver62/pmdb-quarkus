@@ -3,6 +3,7 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Genre;
 import org.desha.app.domain.entity.Movie;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 @Builder
 @Getter
+@Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieDTO {
 
@@ -25,7 +27,7 @@ public class MovieDTO {
     private Long runningTime;
     private Long budget;
     private Long boxOffice;
-    private String posterPath;
+    private String posterFileName;
     private TechnicalSummaryDTO technicalSummary;
     private Set<MovieActor> roles;
     private Set<CountryDTO> countries;
@@ -40,6 +42,7 @@ public class MovieDTO {
                 .title(movie.getTitle())
                 .originalTitle(movie.getOriginalTitle())
                 .releaseDate(movie.getReleaseDate())
+                .posterFileName(movie.getPosterFileName())
                 .build();
     }
 

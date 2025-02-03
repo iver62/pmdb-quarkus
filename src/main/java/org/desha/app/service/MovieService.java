@@ -12,10 +12,18 @@ import org.desha.app.domain.entity.*;
 import org.desha.app.qualifier.PersonType;
 import org.desha.app.repository.MovieRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +49,8 @@ public class MovieService {
     private final PersonService<Screenwriter> screenwriterService;
     private final PersonService<SoundEditor> soundEditorService;
     private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
+
+    private static final String UPLOAD_DIR = "posters/";
 
     @Inject
     public MovieService(
@@ -176,82 +186,57 @@ public class MovieService {
         return Mutiny.fetch(movie.getAwards());
     }
 
-    public Uni<Movie> createMovie(MovieDTO movieDTO) {
-/*        return
-                Uni.combine().all()
-                        .unis(
-                                countryService.getByIds(movieDTO.getCountries()),
-                                genreService.getByIds(movieDTO.getGenres())
-                        )
-                        .asTuple()
-                        .onItem().transformToUni(
-                                listTuple -> {
-                                    final Movie movie = Movie.build(movieDTO);
-                                    movie.setCountries(new HashSet<>(listTuple.getItem1()));
-                                    movie.setGenres(new HashSet<>(listTuple.getItem2()));
-                                    return Panache.withTransaction(movie::persist);
-                                }
-                        );*/
-
+    public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
         return
-                Uni.createFrom()
-                        .item(Movie.build(movieDTO))
-                        .call(
-                                movie ->
-                                        countryService.getByIds(movieDTO.getCountries())
-                                                .invoke(movie::setCountries)
-                                                .chain(() ->
-                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                .invoke(movie::setGenres)
-                                                )
+                uploadPoster(file)
+                        .chain(posterFileName ->
+                                Uni.createFrom()
+                                        .item(Movie.build(movieDTO))
+                                        .invoke(movie -> movie.setPosterFileName(posterFileName))
+                                        .call(
+                                                movie ->
+                                                        countryService.getByIds(movieDTO.getCountries())
+                                                                .invoke(movie::setCountries)
+                                                                .chain(() ->
+                                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                                .invoke(movie::setGenres)
+                                                                )
+                                        )
+                                        .chain(movie -> Panache.withTransaction(movie::persist))
                         )
-                        .chain(movie -> Panache.withTransaction(movie::persist));
+                ;
+    }
 
-        /*List<Uni<Country>> countryUnis = Optional.ofNullable(movieDTO.getCountries())
-                .stream()
-                .flatMap(Collection::stream)
-                .map(
-                        c ->
-                                countryRepository
-                                        .findById(c.id)
-                                        .onFailure().recoverWithNull()
-                )
-                .toList();
+    public Uni<File> getPoster(String fileName) {
+        Path filePath = Paths.get(UPLOAD_DIR, fileName);
 
-        List<Uni<Genre>> genreUnis = Optional.ofNullable(movieDTO.getGenres())
-                .stream()
-                .flatMap(Collection::stream)
-                .map(
-                        g ->
-                                genreRepository
-                                        .findById(g.id)
-                                        .onFailure().recoverWithNull()
-                )
-                .toList();
+        if (!Files.exists(filePath)) {
+            return Uni.createFrom().nullItem();
+        }
 
-        return
-                Uni.join()
-                        .all(countryUnis.isEmpty() ? List.of(Uni.createFrom().nullItem()) : countryUnis)
-                        .usingConcurrencyOf(1)
-                        .andCollectFailures()
-                        .onItem().ifNull().continueWith(Collections.emptyList())
-                        .onItem().transform(countries -> {
-                            movie.setCountries(new HashSet<>(countries));
-                            return movie;
-                        })
-                        .chain(() ->
-                                Uni.join()
-                                        .all(genreUnis.isEmpty() ? List.of(Uni.createFrom().nullItem()) : genreUnis)
-                                        .usingConcurrencyOf(1)
-                                        .andCollectFailures()
-                                        .onItem().ifNull().continueWith(Collections.emptyList())
-                                        .onItem().transform(genres -> {
-                                            movie.setGenres(new HashSet<>(genres));
-                                            return movie;
-                                        })
-                        )
-                        .onItem()
-                        .transformToUni(movie1 -> Panache.withTransaction(movie::persist));*/
+        return Uni.createFrom().item(filePath.toFile());
+    }
+
+    private Uni<String> uploadPoster(FileUpload file) {
+        String fileName = "default-poster.jpg";
+
+        if (Objects.nonNull(file) && Objects.nonNull(file.uploadedFile()) && !file.fileName().isEmpty()) {
+            // Sauvegarde du fichier
+            fileName = UUID.randomUUID() + "_" + file.fileName();
+            java.nio.file.Path destination = Paths.get(UPLOAD_DIR + fileName);
+
+            try {
+                File uploadDir = new File(UPLOAD_DIR);
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdirs();
+                }
+                Files.move(file.uploadedFile(), destination);
+            } catch (IOException e) {
+                return Uni.createFrom().item(null);
+            }
+        }
+
+        return Uni.createFrom().item(fileName);
     }
 
     public Uni<TechnicalSummary> saveTechnicalSummary(Long id, TechnicalSummaryDTO technicalSummary) {
@@ -317,74 +302,6 @@ public class MovieService {
                                                                                 .invoke(movie::setHairDressers)
                                                                 )
                                         )
-                                        /*.call(
-                                                movie ->
-                                                        personService.getDirectorByIds(technicalSummary.getDirectors())
-                                                                .invoke(directors -> movie.setDirectors(new HashSet<>(directors)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getScreenwriters())
-                                                                .invoke(people -> movie.setScreenwriters(new HashSet<>(people)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getMusicians())
-                                                                .invoke(people -> movie.setMusicians(new HashSet<>(people)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getPhotographers())
-                                                                .invoke(people -> movie.setPhotographers(new HashSet<>(people)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getCostumiers())
-                                                                .invoke(people -> movie.setCostumiers(new HashSet<>(people)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getDecorators())
-                                                                .invoke(people -> movie.setDecorators(new HashSet<>(people)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getEditors())
-                                                                .invoke(people -> movie.setEditors(new HashSet<>(people)))
-                                        )
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalSummary.getCasters())
-                                                                .invoke(people -> movie.setCasters(new HashSet<>(people)))
-                                        )*/
-                                        /*.chain(entity ->
-                                                Uni.combine().all().unis(
-                                                                personService.getByIds(technicalSummary.getProducers()),
-                                                                personService.getDirectorByIds(technicalSummary.getDirectors()),
-                                                                personService.getByIds(technicalSummary.getScreenwriters()),
-                                                                personService.getByIds(technicalSummary.getMusicians()),
-                                                                personService.getByIds(technicalSummary.getPhotographers()),
-                                                                personService.getByIds(technicalSummary.getCostumiers()),
-                                                                personService.getByIds(technicalSummary.getDecorators()),
-                                                                personService.getByIds(technicalSummary.getEditors()),
-                                                                personService.getByIds(technicalSummary.getCasters())
-                                                        )
-                                                        .asTuple()
-                                                        .chain(
-                                                                lists -> {
-                                                                    entity.setProducers(new HashSet<>(lists.getItem1()));
-                                                                    entity.setDirectors(new HashSet<>(lists.getItem2()));
-                                                                    entity.setScreenwriters(new HashSet<>(lists.getItem3()));
-                                                                    entity.setMusicians(new HashSet<>(lists.getItem4()));
-                                                                    entity.setPhotographers(new HashSet<>(lists.getItem5()));
-                                                                    entity.setCostumiers(new HashSet<>(lists.getItem6()));
-                                                                    entity.setDecorators(new HashSet<>(lists.getItem7()));
-                                                                    entity.setEditors(new HashSet<>(lists.getItem8()));
-                                                                    entity.setCasters(new HashSet<>(lists.getItem9()));
-                                                                    return movieRepository.persist(entity);
-                                                                }
-                                                        )
-                                        )*/
                                         .map(
                                                 movie ->
                                                         TechnicalSummary.build(
@@ -931,83 +848,41 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Movie> updateMovie(Long id, MovieDTO movieDTO) {
+    public Uni<Movie> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
         return
-                Panache
-                        .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNotNull()
-                                                .call(
-                                                        movie ->
-                                                                countryService.getByIds(movieDTO.getCountries())
-                                                                        .invoke(movie::setCountries)
-                                                )
-                                                .call(
-                                                        movie ->
-                                                                genreService.getByIds(movieDTO.getGenres())
-                                                                        .invoke(movie::setGenres)
-                                                )
-                                                .invoke(
-                                                        movie -> {
-                                                            movie.setTitle(movieDTO.getTitle());
-                                                            movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                            movie.setSynopsis(movieDTO.getSynopsis());
-                                                            movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                            movie.setRunningTime(movieDTO.getRunningTime());
-                                                            movie.setBudget(movieDTO.getBudget());
-                                                            movie.setPosterPath(movieDTO.getPosterPath());
-                                                            movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                            movie.setLastUpdate(LocalDateTime.now());
-                                                        }
-                                                )
-//                                        .chain(
-//                                                movie ->
-//                                                        Uni.combine().all().unis(getCountriesByMovie(movie), getGenresByMovie(movie)).asTuple()
-//                                                                .onItem().transform(
-//                                                                        tuple ->
-//                                                                                Movie.builder()
-//                                                                                        .title(movie.getTitle())
-//                                                                                        .originalTitle(movie.getOriginalTitle())
-//                                                                                        .synopsis(movie.getSynopsis())
-//                                                                                        .releaseDate(movie.getReleaseDate())
-//                                                                                        .runningTime(movie.getRunningTime())
-//                                                                                        .budget(movie.getBudget())
-//                                                                                        .posterPath(movie.getPosterPath())
-//                                                                                        .boxOffice(movie.getBoxOffice())
-//                                                                                        .creationDate(movie.getCreationDate())
-//                                                                                        .lastUpdate(LocalDateTime.now())
-//                                                                                        .countries(tuple.getItem1())
-//                                                                                        .genres(tuple.getItem2())
-//                                                                                        .build()
-//                                                                )
-//                                        )
+                uploadPoster(file)
+                        .chain(posterFileName ->
+                                Panache
+                                        .withTransaction(() ->
+                                                movieRepository.findById(id)
+                                                        .onItem().ifNotNull()
+                                                        .call(
+                                                                movie ->
+                                                                        countryService.getByIds(movieDTO.getCountries())
+                                                                                .invoke(movie::setCountries)
+                                                        )
+                                                        .call(
+                                                                movie ->
+                                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                                .invoke(movie::setGenres)
+                                                        )
+                                                        .invoke(
+                                                                movie -> {
+                                                                    movie.setTitle(movieDTO.getTitle());
+                                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                                                    movie.setSynopsis(movieDTO.getSynopsis());
+                                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
+                                                                    movie.setRunningTime(movieDTO.getRunningTime());
+                                                                    movie.setBudget(movieDTO.getBudget());
+                                                                    movie.setPosterFileName(posterFileName);
+                                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                                    movie.setLastUpdate(LocalDateTime.now());
+                                                                }
+                                                        )
+                                        )
                         )
-                ;
 
-/*        Uni.combine().all().unis(countryService.getByIds(movieDTO.getCountries()), genreService.getByIds(movieDTO.getGenres())).asTuple()
-                .chain(listTuple ->
-                        Panache
-                                .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNotNull()
-                                                .invoke(
-                                                        entity -> {
-                                                            entity.setTitle(movieDTO.getTitle());
-                                                            entity.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                            entity.setSynopsis(movieDTO.getSynopsis());
-                                                            entity.setReleaseDate(movieDTO.getReleaseDate());
-                                                            entity.setRunningTime(movieDTO.getRunningTime());
-                                                            entity.setBudget(movieDTO.getBudget());
-                                                            entity.setPosterPath(movieDTO.getPosterPath());
-                                                            entity.setBoxOffice(movieDTO.getBoxOffice());
-                                                            entity.setCountries(new HashSet<>(listTuple.getItem1()));
-                                                            entity.setGenres(new HashSet<>(listTuple.getItem2()));
-                                                            entity.setLastUpdate(LocalDateTime.now());
-                                                        }
-                                                )
-                                )
-                )
-        ;*/
+                ;
     }
 
     public Uni<Boolean> deleteMovie(Long id) {
