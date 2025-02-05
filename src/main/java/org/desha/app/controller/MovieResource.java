@@ -348,21 +348,35 @@ public class MovieResource {
     }
 
     @GET
-    @Path("poster/{fileName}")
+    @Path("posters/{fileName}")
     @Produces({"image/jpg", "image/jpeg", "image/png"})
     public Uni<Response> getPoster(String fileName) {
+        if (Objects.isNull(fileName) || fileName.isEmpty() || Objects.equals("undefined", fileName)) {
+            log.warn("Invalid file request: {}", fileName);
+            return Uni.createFrom().item(Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Invalid file name").build());
+        }
+
         return
                 movieService.getPoster(fileName)
-                        .map(file -> {
-                            try {
-                                byte[] fileBytes = Files.readAllBytes(file.toPath());
-                                String mimeType = Files.probeContentType(file.toPath()); // Détecte automatiquement le type MIME
-                                return Response.ok(fileBytes).type(mimeType).build();
-                            } catch (IOException e) {
-                                return Response.serverError().entity("Erreur lors du chargement de l'affiche").build();
-                            }
+                        .onItem().ifNotNull().transform(
+                                file -> {
+                                    try {
+                                        byte[] fileBytes = Files.readAllBytes(file.toPath());
+                                        String mimeType = Files.probeContentType(file.toPath()); // Détecte automatiquement le type MIME
+
+                                        log.info("Serving poster: {}", fileName);
+                                        return Response.ok(fileBytes).type(mimeType).build();
+                                    } catch (IOException e) {
+                                        log.error("Error loading poster {}: {}", fileName, e.getMessage());
+                                        return Response.serverError().entity("Erreur lors du chargement de l'affiche").build();
+                                    }
+                                }
+                        )
+                        .onItem().ifNull().continueWith(() -> {
+                            log.warn("Poster not found: {}", fileName);
+                            return Response.status(Response.Status.NOT_FOUND).entity("Affiche introuvable").build();
                         })
-                        .onItem().ifNull().continueWith(Response.status(404, "Affiche introuvable").build())
                 ;
     }
 

@@ -15,15 +15,12 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,6 +31,7 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final CountryService countryService;
     private final GenreService genreService;
+    private final FileService fileService;
 
     private final PersonService<ArtDirector> artDirectorService;
     private final PersonService<Caster> casterService;
@@ -50,12 +48,15 @@ public class MovieService {
     private final PersonService<SoundEditor> soundEditorService;
     private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
 
-    private static final String UPLOAD_DIR = "posters/";
+    private static final String POSTERS_DIR = "posters/";
+    private static final String DEFAULT_POSTER = "default-poster.jpg";
+
 
     @Inject
     public MovieService(
             Mutiny.SessionFactory msf,
             CountryService countryService,
+            FileService fileService,
             GenreService genreService,
             MovieRepository movieRepository,
             @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
@@ -75,6 +76,7 @@ public class MovieService {
     ) {
         this.msf = msf;
         this.countryService = countryService;
+        this.fileService = fileService;
         this.genreService = genreService;
         this.movieRepository = movieRepository;
         this.artDirectorService = artDirectorService;
@@ -202,41 +204,45 @@ public class MovieService {
                                                                                 .invoke(movie::setGenres)
                                                                 )
                                         )
+                                        .call(movie -> {
+                                                    if (Objects.nonNull(file)) {
+                                                        return uploadPoster(file)
+                                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
+                                                                .invoke(movie::setPosterFileName);
+                                                    }
+                                                    movie.setPosterFileName(DEFAULT_POSTER);
+                                                    return Uni.createFrom().item(movie);
+                                                }
+                                        )
                                         .chain(movie -> Panache.withTransaction(movie::persist))
                         )
                 ;
     }
 
     public Uni<File> getPoster(String fileName) {
-        Path filePath = Paths.get(UPLOAD_DIR, fileName);
-
-        if (!Files.exists(filePath)) {
-            return Uni.createFrom().nullItem();
+        if (Objects.isNull(fileName) || fileName.isBlank()) {
+            log.warn("Poster name is missing, returning default poster.");
+            return fileService.getFile(POSTERS_DIR, DEFAULT_POSTER);
         }
 
-        return Uni.createFrom().item(filePath.toFile());
+        return fileService.getFile(POSTERS_DIR, fileName)
+                .onFailure(FileNotFoundException.class).recoverWithUni(() -> {
+                    log.warn("Poster {} not found, returning default poster.", fileName);
+                    return fileService.getFile(POSTERS_DIR, DEFAULT_POSTER);
+                });
     }
 
     private Uni<String> uploadPoster(FileUpload file) {
-        String fileName = "default-poster.jpg";
-
-        if (Objects.nonNull(file) && Objects.nonNull(file.uploadedFile()) && !file.fileName().isEmpty()) {
-            // Sauvegarde du fichier
-            fileName = UUID.randomUUID() + "_" + file.fileName();
-            java.nio.file.Path destination = Paths.get(UPLOAD_DIR + fileName);
-
-            try {
-                File uploadDir = new File(UPLOAD_DIR);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
-                }
-                Files.move(file.uploadedFile(), destination);
-            } catch (IOException e) {
-                return Uni.createFrom().item(null);
-            }
+        if (Objects.isNull(file) || Objects.isNull(file.uploadedFile()) || file.fileName().isBlank()) {
+            log.warn("Invalid or missing file. Using default poster.");
+            return Uni.createFrom().item(DEFAULT_POSTER);
         }
 
-        return Uni.createFrom().item(fileName);
+        return fileService.uploadFile(POSTERS_DIR, file)
+                .onFailure().recoverWithItem(error -> {
+                    log.error("Poster upload failed: {}", error.getMessage());
+                    return DEFAULT_POSTER;
+                });
     }
 
     public Uni<TechnicalSummary> saveTechnicalSummary(Long id, TechnicalSummaryDTO technicalSummary) {
@@ -850,36 +856,41 @@ public class MovieService {
 
     public Uni<Movie> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
         return
-                uploadPoster(file)
-                        .chain(posterFileName ->
-                                Panache
-                                        .withTransaction(() ->
-                                                movieRepository.findById(id)
-                                                        .onItem().ifNotNull()
-                                                        .call(
-                                                                movie ->
-                                                                        countryService.getByIds(movieDTO.getCountries())
-                                                                                .invoke(movie::setCountries)
-                                                        )
-                                                        .call(
-                                                                movie ->
-                                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                                .invoke(movie::setGenres)
-                                                        )
-                                                        .invoke(
-                                                                movie -> {
-                                                                    movie.setTitle(movieDTO.getTitle());
-                                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                                    movie.setSynopsis(movieDTO.getSynopsis());
-                                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                                    movie.setRunningTime(movieDTO.getRunningTime());
-                                                                    movie.setBudget(movieDTO.getBudget());
-                                                                    movie.setPosterFileName(posterFileName);
-                                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                                    movie.setLastUpdate(LocalDateTime.now());
-                                                                }
-                                                        )
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNotNull()
+                                        .call(
+                                                movie ->
+                                                        countryService.getByIds(movieDTO.getCountries())
+                                                                .invoke(movie::setCountries)
                                         )
+                                        .call(
+                                                movie ->
+                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                .invoke(movie::setGenres)
+                                        )
+                                        .invoke(
+                                                movie -> {
+                                                    movie.setTitle(movieDTO.getTitle());
+                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                                    movie.setSynopsis(movieDTO.getSynopsis());
+                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
+                                                    movie.setRunningTime(movieDTO.getRunningTime());
+                                                    movie.setBudget(movieDTO.getBudget());
+                                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
+                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                    movie.setLastUpdate(LocalDateTime.now());
+                                                }
+                                        )
+                                        .call(entity -> {
+                                            if (Objects.nonNull(file)) {
+                                                return uploadPoster(file)
+                                                        .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                        .invoke(entity::setPosterFileName);
+                                            }
+                                            return Uni.createFrom().item(entity);
+                                        })
                         )
 
                 ;
