@@ -9,6 +9,7 @@ import org.desha.app.domain.entity.*;
 import org.desha.app.qualifier.PersonType;
 import org.desha.app.repository.*;
 import org.desha.app.service.CountryService;
+import org.desha.app.service.FileService;
 import org.desha.app.service.PersonService;
 
 @Slf4j
@@ -16,6 +17,7 @@ import org.desha.app.service.PersonService;
 public class PersonServiceProducer {
 
     private final CountryService countryService;
+    private final FileService fileService;
     private final ProducerRepository producerRepository;
     private final DirectorRepository directorRepository;
     private final ScreenwriterRepository screenwriterRepository;
@@ -34,6 +36,7 @@ public class PersonServiceProducer {
     @Inject
     public PersonServiceProducer(
             CountryService countryService,
+            FileService fileService,
             ProducerRepository producerRepository,
             DirectorRepository directorRepository,
             ScreenwriterRepository screenwriterRepository,
@@ -50,6 +53,7 @@ public class PersonServiceProducer {
             HairDresserRepository hairDresserRepository
     ) {
         this.countryService = countryService;
+        this.fileService = fileService;
         this.producerRepository = producerRepository;
         this.directorRepository = directorRepository;
         this.screenwriterRepository = screenwriterRepository;
@@ -69,85 +73,84 @@ public class PersonServiceProducer {
     @Produces
     @PersonType(Role.PRODUCER)
     public PersonService<Producer> createProducerService() {
-        return new PersonService<>(countryService, producerRepository);
+        return new PersonService<>(countryService, producerRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.DIRECTOR)
     public PersonService<Director> createDirectorService() {
-        return new PersonService<>(countryService, directorRepository);
+        return new PersonService<>(countryService, directorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.SCREENWRITER)
     public PersonService<Screenwriter> createScreenwriterService() {
-        return new PersonService<>(countryService, screenwriterRepository);
+        return new PersonService<>(countryService, screenwriterRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.MUSICIAN)
     public PersonService<Musician> createMusicianService() {
-        return new PersonService<>(countryService, musicianRepository);
+        return new PersonService<>(countryService, musicianRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.PHOTOGRAPHER)
     public PersonService<Photographer> createPhotographerService() {
-        return new PersonService<>(countryService, photographerRepository);
+        return new PersonService<>(countryService, photographerRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.COSTUMIER)
     public PersonService<Costumier> createCostumierService() {
-        return new PersonService<>(countryService, costumierRepository);
+        return new PersonService<>(countryService, costumierRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.DECORATOR)
     public PersonService<Decorator> createDecoratorService() {
-        return new PersonService<>(countryService, decoratorRepository);
+        return new PersonService<>(countryService, decoratorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.EDITOR)
     public PersonService<Editor> createEditorService() {
-        return new PersonService<>(countryService, editorRepository);
+        return new PersonService<>(countryService, editorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.CASTER)
     public PersonService<Caster> createCasterService() {
-        return new PersonService<>(countryService, casterRepository);
+        return new PersonService<>(countryService, casterRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.ART_DIRECTOR)
     public PersonService<ArtDirector> createArtDirectorService() {
-        return new PersonService<>(countryService, artDirectorRepository);
+        return new PersonService<>(countryService, artDirectorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.SOUND_EDITOR)
     public PersonService<SoundEditor> createSoundEditorService() {
-        return new PersonService<>(countryService, soundEditorRepository);
+        return new PersonService<>(countryService, soundEditorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR)
     public PersonService<VisualEffectsSupervisor> createVisualEffectsSupervisorService() {
-        return new PersonService<>(countryService, visualEffectsSupervisorRepository);
+        return new PersonService<>(countryService, visualEffectsSupervisorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.MAKEUP_ARTIST)
     public PersonService<MakeupArtist> createMakeupArtistService() {
-        return new PersonService<>(countryService, makeupArtistRepository);
+        return new PersonService<>(countryService, makeupArtistRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.HAIR_DRESSER)
     public PersonService<HairDresser> createHairDresserService() {
-        return new PersonService<>(countryService, hairDresserRepository);
+        return new PersonService<>(countryService, hairDresserRepository, fileService);
     }
-
 }

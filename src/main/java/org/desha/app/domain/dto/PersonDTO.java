@@ -17,7 +17,7 @@ public class PersonDTO {
 
     private Long id;
     private String name;
-    private String photoPath;
+    private String photoFileName;
     private LocalDate dateOfBirth;
     private LocalDate dateOfDeath;
     private LocalDateTime creationDate;
@@ -30,7 +30,7 @@ public class PersonDTO {
         return PersonDTO.builder()
                 .id(person.id)
                 .name(person.getName())
-                .photoPath(person.getPhotoPath())
+                .photoFileName(person.getPhotoFileName())
                 .build();
     }
 }

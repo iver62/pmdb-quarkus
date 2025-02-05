@@ -5,13 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.service.CountryService;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
@@ -34,8 +30,8 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
     @Column(name = "nom")
     private String name;
 
-    @Column(name = "chemin_photo", unique = true)
-    private String photoPath;
+    @Column(name = "photo")
+    private String photoFileName;
 
     @Column(name = "date_naissance")
     @Temporal(TemporalType.DATE)
