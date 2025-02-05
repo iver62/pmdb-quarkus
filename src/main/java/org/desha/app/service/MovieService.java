@@ -190,32 +190,28 @@ public class MovieService {
 
     public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
         return
-                uploadPoster(file)
-                        .chain(posterFileName ->
-                                Uni.createFrom()
-                                        .item(Movie.build(movieDTO))
-                                        .invoke(movie -> movie.setPosterFileName(posterFileName))
-                                        .call(
-                                                movie ->
-                                                        countryService.getByIds(movieDTO.getCountries())
-                                                                .invoke(movie::setCountries)
-                                                                .chain(() ->
-                                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                                .invoke(movie::setGenres)
-                                                                )
-                                        )
-                                        .call(movie -> {
-                                                    if (Objects.nonNull(file)) {
-                                                        return uploadPoster(file)
-                                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
-                                                                .invoke(movie::setPosterFileName);
-                                                    }
-                                                    movie.setPosterFileName(DEFAULT_POSTER);
-                                                    return Uni.createFrom().item(movie);
-                                                }
-                                        )
-                                        .chain(movie -> Panache.withTransaction(movie::persist))
+                Uni.createFrom()
+                        .item(Movie.build(movieDTO))
+                        .call(
+                                movie ->
+                                        countryService.getByIds(movieDTO.getCountries())
+                                                .invoke(movie::setCountries)
+                                                .chain(() ->
+                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                .invoke(movie::setGenres)
+                                                )
                         )
+                        .call(movie -> {
+                                    if (Objects.nonNull(file)) {
+                                        return uploadPoster(file)
+                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
+                                                .invoke(movie::setPosterFileName);
+                                    }
+                                    movie.setPosterFileName(DEFAULT_POSTER);
+                                    return Uni.createFrom().item(movie);
+                                }
+                        )
+                        .chain(movie -> Panache.withTransaction(movie::persist))
                 ;
     }
 
