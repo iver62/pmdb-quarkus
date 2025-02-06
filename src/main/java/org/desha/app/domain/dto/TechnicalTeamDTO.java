@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.Set;
 
 @Getter
-public class TechnicalSummaryDTO {
+public class TechnicalTeamDTO {
 
     private Set<PersonDTO> producers;
     private Set<PersonDTO> directors;
@@ -21,5 +21,6 @@ public class TechnicalSummaryDTO {
     private Set<PersonDTO> visualEffectsSupervisors;
     private Set<PersonDTO> makeupArtists;
     private Set<PersonDTO> hairDressers;
+    private Set<PersonDTO> stuntmen;
 
 }

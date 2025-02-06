@@ -28,7 +28,7 @@ public class MovieDTO {
     private Long budget;
     private Long boxOffice;
     private String posterFileName;
-    private TechnicalSummaryDTO technicalSummary;
+    private TechnicalTeamDTO technicalTeam;
     private Set<MovieActor> roles;
     private Set<CountryDTO> countries;
     private Set<Genre> genres;

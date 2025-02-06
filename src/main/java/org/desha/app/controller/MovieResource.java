@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.Role;
 import org.desha.app.domain.dto.MovieDTO;
-import org.desha.app.domain.dto.TechnicalSummaryDTO;
+import org.desha.app.domain.dto.TechnicalTeamDTO;
 import org.desha.app.domain.entity.*;
 import org.desha.app.qualifier.PersonType;
 import org.desha.app.service.CountryService;
@@ -57,6 +57,7 @@ public class MovieResource {
     private final PersonService<Screenwriter> screenwriterService;
     private final PersonService<SoundEditor> soundEditorService;
     private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
+    private final PersonService<Stuntman> stuntmanService;
 
     @Inject
     public MovieResource(
@@ -76,7 +77,8 @@ public class MovieResource {
             @PersonType(Role.PRODUCER) PersonService<Producer> producerService,
             @PersonType(Role.SCREENWRITER) PersonService<Screenwriter> screenwriterService,
             @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
-            @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService
+            @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
+            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
     ) {
         this.countryService = countryService;
         this.genreService = genreService;
@@ -95,6 +97,7 @@ public class MovieResource {
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
         this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+        this.stuntmanService = stuntmanService;
     }
 
     @GET
@@ -290,6 +293,16 @@ public class MovieResource {
     }
 
     @GET
+    @Path("{id}/stuntmen")
+    public Uni<Set<Stuntman>> getStuntmen(Long id) {
+        return
+                Movie.findById(id)
+                        .map(Movie.class::cast)
+                        .chain(movieService::getStuntmen)
+                ;
+    }
+
+    @GET
     @Path("{id}/actors")
     public Uni<Response> getRoles(Long id) {
         return
@@ -393,10 +406,10 @@ public class MovieResource {
 //    }
 
     @PUT
-    @Path("{id}/technical-summary")
-    public Uni<Response> addTechnicalSummary(Long id, TechnicalSummaryDTO technicalSummary) {
+    @Path("{id}/technical-team")
+    public Uni<Response> addTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
         return
-                movieService.saveTechnicalSummary(id, technicalSummary)
+                movieService.saveTechnicalTeam(id, technicalTeam)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
 
@@ -1066,12 +1079,24 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{movieId}/hairdressers/{hairDresserId}")
+    @Path("{movieId}/hair-dressers/{hairDresserId}")
     public Uni<Response> removeHairDressers(Long movieId, Long hairDresserId) {
         return
                 hairDresserService.removeMovie(hairDresserId, movieId)
                         .chain(() -> movieService.removeHairDresser(movieId, hairDresserId))
-                        .map(Movie::getMakeupArtists)
+                        .map(Movie::getHairDressers)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{movieId}/stuntmen/{stuntmanId}")
+    public Uni<Response> removeStuntman(Long movieId, Long stuntmanId) {
+        return
+                stuntmanService.removeMovie(stuntmanId, movieId)
+                        .chain(() -> movieService.removeStuntman(movieId, stuntmanId))
+                        .map(Movie::getStuntmen)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;

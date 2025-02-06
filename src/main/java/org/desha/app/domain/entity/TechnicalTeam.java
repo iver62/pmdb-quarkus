@@ -2,13 +2,12 @@ package org.desha.app.domain.entity;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.dto.PersonDTO;
 
 import java.util.Set;
 
 @Getter
 @Builder
-public class TechnicalSummary {
+public class TechnicalTeam {
 
     private Set<Producer> producers;
     private Set<Director> directors;
@@ -24,8 +23,9 @@ public class TechnicalSummary {
     private Set<VisualEffectsSupervisor> visualEffectsSupervisors;
     private Set<MakeupArtist> makeupArtists;
     private Set<HairDresser> hairDressers;
+    private Set<Stuntman> stuntmen;
 
-    public static TechnicalSummary build(
+    public static TechnicalTeam build(
             final Set<Producer> producers,
             final Set<Director> directors,
             final Set<Screenwriter> screenwriters,
@@ -39,9 +39,10 @@ public class TechnicalSummary {
             final Set<SoundEditor> soundEditors,
             final Set<VisualEffectsSupervisor> visualEffectsSupervisors,
             final Set<MakeupArtist> makeupArtists,
-            final Set<HairDresser> hairDressers
+            final Set<HairDresser> hairDressers,
+            final Set<Stuntman> stuntmen
     ) {
-        return TechnicalSummary.builder()
+        return TechnicalTeam.builder()
                 .producers(producers)
                 .directors(directors)
                 .screenwriters(screenwriters)
@@ -56,6 +57,7 @@ public class TechnicalSummary {
                 .visualEffectsSupervisors(visualEffectsSupervisors)
                 .makeupArtists(makeupArtists)
                 .hairDressers(hairDressers)
+                .stuntmen(stuntmen)
                 .build();
     }
 }

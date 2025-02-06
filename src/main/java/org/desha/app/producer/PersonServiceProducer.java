@@ -32,6 +32,7 @@ public class PersonServiceProducer {
     private final VisualEffectsSupervisorRepository visualEffectsSupervisorRepository;
     private final MakeupArtistRepository makeupArtistRepository;
     private final HairDresserRepository hairDresserRepository;
+    private final StuntmanRepository stuntmanRepository;
 
     @Inject
     public PersonServiceProducer(
@@ -50,7 +51,8 @@ public class PersonServiceProducer {
             SoundEditorRepository soundEditorRepository,
             VisualEffectsSupervisorRepository visualEffectsSupervisorRepository,
             MakeupArtistRepository makeupArtistRepository,
-            HairDresserRepository hairDresserRepository
+            HairDresserRepository hairDresserRepository,
+            StuntmanRepository stuntmanRepository
     ) {
         this.countryService = countryService;
         this.fileService = fileService;
@@ -68,6 +70,7 @@ public class PersonServiceProducer {
         this.visualEffectsSupervisorRepository = visualEffectsSupervisorRepository;
         this.makeupArtistRepository = makeupArtistRepository;
         this.hairDresserRepository = hairDresserRepository;
+        this.stuntmanRepository = stuntmanRepository;
     }
 
     @Produces
@@ -152,5 +155,11 @@ public class PersonServiceProducer {
     @PersonType(Role.HAIR_DRESSER)
     public PersonService<HairDresser> createHairDresserService() {
         return new PersonService<>(countryService, hairDresserRepository, fileService);
+    }
+
+    @Produces
+    @PersonType(Role.STUNT_MAN)
+    public PersonService<Stuntman> createStuntmanService() {
+        return new PersonService<>(countryService, stuntmanRepository, fileService);
     }
 }

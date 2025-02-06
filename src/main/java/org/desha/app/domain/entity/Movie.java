@@ -155,6 +155,12 @@ public class Movie extends PanacheEntity {
     private Set<HairDresser> hairDressers = new HashSet<>();
 
     @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_cascadeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_cascadeur"))
+    @Fetch(FetchMode.SELECT)
+    private Set<Stuntman> stuntmen = new HashSet<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     @Fetch(FetchMode.SELECT)
     private Set<MovieActor> movieActors = new HashSet<>();
@@ -606,6 +612,18 @@ public class Movie extends PanacheEntity {
     public Uni<Set<HairDresser>> removeHairDresser(Long id) {
         return
                 Mutiny.fetch(hairDressers)
+                        .map(
+                                persons -> {
+                                    persons.removeIf(person -> Objects.equals(person.id, id));
+                                    return persons;
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Set<Stuntman>> removeStuntman(Long id) {
+        return
+                Mutiny.fetch(stuntmen)
                         .map(
                                 persons -> {
                                     persons.removeIf(person -> Objects.equals(person.id, id));
