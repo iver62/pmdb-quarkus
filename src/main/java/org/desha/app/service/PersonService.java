@@ -17,7 +17,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -59,6 +58,10 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
                                 .map(PersonDTO::getId)
                                 .toList()
                 ).map(HashSet::new);
+    }
+
+    public Uni<List<T>> getByIds(List<Long> ids) {
+        return personRepository.findByIds(ids);
     }
 
     @Override
@@ -124,7 +127,6 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
                         .withTransaction(() -> {
                                     instance.setName(StringUtils.trim(personDTO.getName()));
                                     instance.setPhotoFileName(DEFAULT_PHOTO);
-                                    instance.setCreationDate(LocalDateTime.now());
                                     return instance.persist();
                                 }
                         )
@@ -179,7 +181,6 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
                                     entity.setDateOfBirth(personDTO.getDateOfBirth());
                                     entity.setDateOfDeath(personDTO.getDateOfDeath());
                                     entity.setPhotoFileName(Optional.ofNullable(personDTO.getPhotoFileName()).orElse(DEFAULT_PHOTO));
-                                    entity.setLastUpdate(LocalDateTime.now());
                                 }).call(entity -> {
                                     if (Objects.nonNull(file)) {
                                         return uploadPhoto(file)

@@ -1,6 +1,7 @@
 package org.desha.app.domain;
 
 public enum Role {
+    ACTOR,
     PRODUCER,
     DIRECTOR,
     SCREENWRITER,

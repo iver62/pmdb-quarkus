@@ -6,21 +6,19 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.Role;
+import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
 import org.desha.app.domain.entity.*;
 import org.desha.app.qualifier.PersonType;
+import org.desha.app.repository.MovieActorRepository;
 import org.desha.app.repository.MovieRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,10 +27,12 @@ public class MovieService {
 
     private final Mutiny.SessionFactory msf;
     private final MovieRepository movieRepository;
+    private final MovieActorRepository movieActorRepository;
     private final CountryService countryService;
     private final GenreService genreService;
     private final FileService fileService;
 
+    private final PersonService<Actor> actorService;
     private final PersonService<ArtDirector> artDirectorService;
     private final PersonService<Caster> casterService;
     private final PersonService<Costumier> costumierService;
@@ -59,6 +59,8 @@ public class MovieService {
             FileService fileService,
             GenreService genreService,
             MovieRepository movieRepository,
+            MovieActorRepository movieActorRepository,
+            @PersonType(Role.ACTOR) PersonService<Actor> actorService,
             @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
             @PersonType(Role.CASTER) PersonService<Caster> casterService,
             @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
@@ -80,6 +82,8 @@ public class MovieService {
         this.fileService = fileService;
         this.genreService = genreService;
         this.movieRepository = movieRepository;
+        this.movieActorRepository = movieActorRepository;
+        this.actorService = actorService;
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
         this.costumierService = costumierService;
@@ -109,77 +113,91 @@ public class MovieService {
         return movieRepository.findByTitle(pattern).map(HashSet::new);
     }
 
+    public Uni<List<MovieActor>> getActorsByMovie(Movie movie) {
+        return Mutiny.fetch(movie.getMovieActors())
+                .map(
+                        movieActors ->
+                                movieActors
+                                        .stream()
+                                        .sorted(Comparator.comparing(o -> o.id))
+                                        .toList()
+                )
+                .onItem().ifNull().continueWith(Collections.emptyList());
+    }
+
     public Uni<Set<Producer>> getProducersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getProducers());
+        return Mutiny.fetch(movie.getProducers())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Director>> getDirectorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getDirectors());
+        return Mutiny.fetch(movie.getDirectors())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Screenwriter>> getScreenwritersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getScreenwriters());
+        return Mutiny.fetch(movie.getScreenwriters())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Musician>> getMusiciansByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getMusicians());
+        return Mutiny.fetch(movie.getMusicians())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Photographer>> getPhotographersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getPhotographers());
+        return Mutiny.fetch(movie.getPhotographers())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Costumier>> getCostumiersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getCostumiers());
+        return Mutiny.fetch(movie.getCostumiers())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Decorator>> getDecoratorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getDecorators());
+        return Mutiny.fetch(movie.getDecorators())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Editor>> getEditorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getEditors());
+        return Mutiny.fetch(movie.getEditors())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Caster>> getCastersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getCasters());
+        return Mutiny.fetch(movie.getCasters())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<ArtDirector>> getArtDirectorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getArtDirectors());
+        return Mutiny.fetch(movie.getArtDirectors())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<SoundEditor>> getSoundEditorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getSoundEditors());
+        return Mutiny.fetch(movie.getSoundEditors())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getVisualEffectsSupervisors());
+        return Mutiny.fetch(movie.getVisualEffectsSupervisors())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<MakeupArtist>> getMakeupArtists(Movie movie) {
-        return Mutiny.fetch(movie.getMakeupArtists());
+        return Mutiny.fetch(movie.getMakeupArtists())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<HairDresser>> getHairDressers(Movie movie) {
-        return Mutiny.fetch(movie.getHairDressers());
+        return Mutiny.fetch(movie.getHairDressers())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Stuntman>> getStuntmen(Movie movie) {
-        return Mutiny.fetch(movie.getStuntmen());
-    }
-
-    public Uni<Set<MovieActor>> getActorsByMovie(Movie movie) {
-        return
-                Mutiny.fetch(movie.getMovieActors())
-                        .map(
-                                roles ->
-                                        roles
-                                                .stream()
-                                                .map(role -> MovieActor.build(null, role.getActor(), role.getName()))
-                                                .collect(Collectors.toSet())
-                        )
-                ;
+        return Mutiny.fetch(movie.getStuntmen())
+                .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
     public Uni<Set<Genre>> getGenresByMovie(Movie movie) {
@@ -192,33 +210,6 @@ public class MovieService {
 
     public Uni<Set<Award>> getAwardsByMovie(Movie movie) {
         return Mutiny.fetch(movie.getAwards());
-    }
-
-    public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
-        return
-                Uni.createFrom()
-                        .item(Movie.build(movieDTO))
-                        .call(
-                                movie ->
-                                        countryService.getByIds(movieDTO.getCountries())
-                                                .invoke(movie::setCountries)
-                                                .chain(() ->
-                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                .invoke(movie::setGenres)
-                                                )
-                        )
-                        .call(movie -> {
-                                    if (Objects.nonNull(file)) {
-                                        return uploadPoster(file)
-                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
-                                                .invoke(movie::setPosterFileName);
-                                    }
-                                    movie.setPosterFileName(DEFAULT_POSTER);
-                                    return Uni.createFrom().item(movie);
-                                }
-                        )
-                        .chain(movie -> Panache.withTransaction(movie::persist))
-                ;
     }
 
     public Uni<File> getPoster(String fileName) {
@@ -245,6 +236,33 @@ public class MovieService {
                     log.error("Poster upload failed: {}", error.getMessage());
                     return DEFAULT_POSTER;
                 });
+    }
+
+    public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
+        return
+                Uni.createFrom()
+                        .item(Movie.fromDTO(movieDTO))
+                        .call(
+                                movie ->
+                                        countryService.getByIds(movieDTO.getCountries())
+                                                .invoke(movie::setCountries)
+                                                .chain(() ->
+                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                .invoke(movie::setGenres)
+                                                )
+                        )
+                        .call(movie -> {
+                                    if (Objects.nonNull(file)) {
+                                        return uploadPoster(file)
+                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
+                                                .invoke(movie::setPosterFileName);
+                                    }
+                                    movie.setPosterFileName(DEFAULT_POSTER);
+                                    return Uni.createFrom().item(movie);
+                                }
+                        )
+                        .chain(movie -> Panache.withTransaction(movie::persist))
+                ;
     }
 
     public Uni<TechnicalTeam> saveTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
@@ -336,6 +354,78 @@ public class MovieService {
                                         )
                         )
                 ;
+    }
+
+    public Uni<List<MovieActor>> saveCasting(Long id, List<MovieActorDTO> movieActorsList) {
+        Map<Long, String> roleMap = movieActorsList
+                .stream()
+                .collect(Collectors.toMap(movieActorDTO -> movieActorDTO.getActor().getId(), MovieActorDTO::getRole));
+
+        return Panache.withTransaction(() ->
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie ->
+                                Mutiny.fetch(movie.getMovieActors())
+                                        .flatMap(existingMovieActors -> {
+                                            // Créer une liste modifiable
+                                            List<MovieActor> modifiableMovieActors = new ArrayList<>(existingMovieActors);
+
+                                            // Récupérer les ID des acteurs existants
+                                            Map<Long, MovieActor> existingActorMap = modifiableMovieActors.stream()
+                                                    .collect(Collectors.toMap(ma -> ma.getActor().id, ma -> ma));
+
+                                            // Identifier les acteurs à ajouter ou mettre à jour
+                                            List<Long> newActorIds = new ArrayList<>();
+                                            for (MovieActorDTO dto : movieActorsList) {
+                                                if (Objects.isNull(dto.getActor()) || Objects.isNull(dto.getActor().getId())) {
+                                                    continue; // Éviter les erreurs avec des données corrompues
+                                                }
+                                                if (existingActorMap.containsKey(dto.getActor().getId())) {
+                                                    // Modifier le rôle de l'acteur existant si nécessaire
+                                                    MovieActor existingMovieActor = existingActorMap.get(dto.getActor().getId());
+                                                    if (!Objects.equals(existingMovieActor.getRole(), dto.getRole())) {
+                                                        existingMovieActor.setRole(dto.getRole());
+                                                    }
+                                                } else {
+                                                    // Nouvel acteur à ajouter
+                                                    newActorIds.add(dto.getActor().getId());
+                                                }
+                                            }
+
+                                            // Identifier les acteurs à supprimer
+                                            List<MovieActor> actorsToRemove = modifiableMovieActors.stream()
+                                                    .filter(ma ->
+                                                            movieActorsList
+                                                                    .stream()
+                                                                    .noneMatch(dto -> dto.getActor().getId().equals(ma.getActor().id))
+                                                    )
+                                                    .toList();
+
+                                            // Supprimer les acteurs retirés
+                                            modifiableMovieActors.removeAll(actorsToRemove);
+
+                                            // Charger ces nouveaux acteurs et les ajouter au casting
+                                            return
+                                                    movieActorRepository.deleteByIds(actorsToRemove.stream().map(movieActor -> movieActor.id).toList())
+                                                            .chain(() ->
+                                                                    actorService.getByIds(newActorIds)
+                                                                            .map(newActors -> {
+                                                                                        modifiableMovieActors.addAll(
+                                                                                                newActors
+                                                                                                        .stream()
+                                                                                                        .map(actor -> MovieActor.build(
+                                                                                                                movie,
+                                                                                                                actor,
+                                                                                                                roleMap.getOrDefault(actor.id, "Inconnu")
+                                                                                                        )).toList()
+                                                                                        );
+                                                                                        return modifiableMovieActors;
+                                                                                    }
+                                                                            )
+                                                                            .invoke(movie::setMovieActors));
+                                        })
+                        )
+        );
     }
 
     /**
@@ -567,8 +657,7 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.addRole(MovieActor.build(entity, movieActor.getActor(), movieActor.getName())))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
+                                        .call(entity -> entity.addRole(MovieActor.build(entity, movieActor.getActor(), movieActor.getRole())))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -592,7 +681,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addGenres(genreSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -616,7 +704,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addCountries(countrySet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -629,12 +716,7 @@ public class MovieService {
                                 movieRepository.findById(id)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.addAwards(awardSet))
-                                        .invoke(
-                                                entity -> {
-                                                    awardSet.forEach(award -> award.setMovie(entity));
-                                                    entity.setLastUpdate(LocalDateTime.now());
-                                                }
-                                        )
+                                        .invoke(entity -> awardSet.forEach(award -> award.setMovie(entity)))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -647,7 +729,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeProducer(producerId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -660,7 +741,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeDirector(directorId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -673,7 +753,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeScreenwriter(screenwriterId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -686,7 +765,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeMusician(musicianId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -699,7 +777,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removePhotographer(photographerId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -712,7 +789,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeCostumier(costumierId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -725,7 +801,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeDecorator(decoratorId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -738,7 +813,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeEditor(editorId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -751,7 +825,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeCaster(casterId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -764,7 +837,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeArtDirector(artDirectorId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -777,7 +849,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeSoundEditor(soundEditorId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -790,7 +861,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeVisualEffectsSupervisor(visualEffectsSupervisorId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -803,7 +873,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeMakeupArtist(makeupArtistId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -816,7 +885,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeHairDresser(hairDresserId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -829,7 +897,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeStuntman(stuntmanId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -842,7 +909,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeGenre(genreId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -855,7 +921,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeCountry(countryId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -868,7 +933,6 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeAward(awardId))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -878,37 +942,38 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        countryService.getByIds(movieDTO.getCountries())
-                                                                .invoke(movie::setCountries)
-                                                                .chain(() ->
-                                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                                .invoke(movie::setGenres))
-                                        )
-                                        .invoke(
-                                                movie -> {
-                                                    movie.setTitle(movieDTO.getTitle());
-                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                    movie.setSynopsis(movieDTO.getSynopsis());
-                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                    movie.setRunningTime(movieDTO.getRunningTime());
-                                                    movie.setBudget(movieDTO.getBudget());
-                                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                    movie.setLastUpdate(LocalDateTime.now());
-                                                }
-                                        )
-                                        .call(entity -> {
-                                            if (Objects.nonNull(file)) {
-                                                return uploadPoster(file)
-                                                        .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                        .invoke(entity::setPosterFileName);
-                                            }
-                                            return Uni.createFrom().item(entity);
-                                        })
+                                        movieRepository.findById(id)
+                                                .onItem().ifNotNull()
+                                                .call(
+                                                        movie ->
+                                                                countryService.getByIds(movieDTO.getCountries())
+                                                                        .invoke(movie::setCountries)
+                                                                        .chain(() ->
+                                                                                genreService.getByIds(movieDTO.getGenres())
+                                                                                        .invoke(movie::setGenres))
+                                                )
+                                                .invoke(
+                                                        movie -> {
+                                                            movie.setTitle(movieDTO.getTitle());
+                                                            movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                                            movie.setSynopsis(movieDTO.getSynopsis());
+                                                            movie.setReleaseDate(movieDTO.getReleaseDate());
+                                                            movie.setRunningTime(movieDTO.getRunningTime());
+                                                            movie.setBudget(movieDTO.getBudget());
+                                                            movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
+                                                            movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                        }
+                                                )
+                                                .call(
+                                                        entity -> {
+                                                            if (Objects.nonNull(file)) {
+                                                                return uploadPoster(file)
+                                                                        .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                                        .invoke(entity::setPosterFileName);
+                                                            }
+                                                            return Uni.createFrom().item(entity);
+                                                        }
+                                                )
                         )
 
                 ;

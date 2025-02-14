@@ -18,6 +18,7 @@ public class PersonServiceProducer {
 
     private final CountryService countryService;
     private final FileService fileService;
+    private final ActorRepository actorRepository;
     private final ProducerRepository producerRepository;
     private final DirectorRepository directorRepository;
     private final ScreenwriterRepository screenwriterRepository;
@@ -38,6 +39,7 @@ public class PersonServiceProducer {
     public PersonServiceProducer(
             CountryService countryService,
             FileService fileService,
+            ActorRepository actorRepository,
             ProducerRepository producerRepository,
             DirectorRepository directorRepository,
             ScreenwriterRepository screenwriterRepository,
@@ -56,6 +58,7 @@ public class PersonServiceProducer {
     ) {
         this.countryService = countryService;
         this.fileService = fileService;
+        this.actorRepository = actorRepository;
         this.producerRepository = producerRepository;
         this.directorRepository = directorRepository;
         this.screenwriterRepository = screenwriterRepository;
@@ -71,6 +74,12 @@ public class PersonServiceProducer {
         this.makeupArtistRepository = makeupArtistRepository;
         this.hairDresserRepository = hairDresserRepository;
         this.stuntmanRepository = stuntmanRepository;
+    }
+
+    @Produces
+    @PersonType(Role.ACTOR)
+    public PersonService<Actor> createActorService() {
+        return new PersonService<>(countryService, actorRepository, fileService);
     }
 
     @Produces

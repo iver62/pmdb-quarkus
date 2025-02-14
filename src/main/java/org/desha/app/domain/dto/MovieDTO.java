@@ -5,12 +5,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.desha.app.domain.entity.Award;
-import org.desha.app.domain.entity.Genre;
 import org.desha.app.domain.entity.Movie;
-import org.desha.app.domain.entity.MovieActor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Builder
@@ -29,9 +28,9 @@ public class MovieDTO {
     private Long boxOffice;
     private String posterFileName;
     private TechnicalTeamDTO technicalTeam;
-    private Set<MovieActor> roles;
+    private List<MovieActorDTO> movieActors;
     private Set<CountryDTO> countries;
-    private Set<Genre> genres;
+    private Set<GenreDTO> genres;
     private Set<Award> awards;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;

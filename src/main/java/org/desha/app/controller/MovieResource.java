@@ -10,6 +10,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.Role;
+import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
 import org.desha.app.domain.entity.*;
@@ -25,7 +26,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -120,7 +120,7 @@ public class MovieResource {
     @GET
     public Uni<Response> get() {
         return
-                Movie.listAll()
+                movieService.getAll()
                         .onItem().ifNotNull().transform(panacheEntityBases ->
                                 panacheEntityBases.isEmpty()
                                         ?
@@ -153,193 +153,193 @@ public class MovieResource {
     }
 
     @GET
-    @Path("{id}/producers")
-    public Uni<Set<Producer>> getProducers(Long id) {
+    @Path("{id}/actors")
+    public Uni<Response> getActors(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
+                        .flatMap(movieService::getActorsByMovie)
+                        .map(movieActors -> Response.ok(movieActors).build())
+                        .onFailure().recoverWithItem(ex -> Response.serverError().entity(ex.getMessage()).build())
+                ;
+    }
+
+    @GET
+    @Path("{id}/producers")
+    public Uni<Set<Producer>> getProducers(@RestPath Long id) {
+        return
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getProducersByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/directors")
-    public Uni<Set<Director>> getDirectors(Long id) {
+    public Uni<Set<Director>> getDirectors(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getDirectorsByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/screenwriters")
-    public Uni<Set<Screenwriter>> getScreenwriters(Long id) {
+    public Uni<Set<Screenwriter>> getScreenwriters(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getScreenwritersByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/musicians")
-    public Uni<Set<Musician>> getMusicians(Long id) {
+    public Uni<Set<Musician>> getMusicians(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getMusiciansByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/photographers")
-    public Uni<Set<Photographer>> getPhotographers(Long id) {
+    public Uni<Set<Photographer>> getPhotographers(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getPhotographersByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/costumiers")
-    public Uni<Set<Costumier>> getCostumiers(Long id) {
+    public Uni<Set<Costumier>> getCostumiers(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCostumiersByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/decorators")
-    public Uni<Set<Decorator>> getDecorators(Long id) {
+    public Uni<Set<Decorator>> getDecorators(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getDecoratorsByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/editors")
-    public Uni<Set<Editor>> getEditors(Long id) {
+    public Uni<Set<Editor>> getEditors(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getEditorsByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/casters")
-    public Uni<Set<Caster>> getCasters(Long id) {
+    public Uni<Set<Caster>> getCasters(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCastersByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/art-directors")
-    public Uni<Set<ArtDirector>> getArtDirectors(Long id) {
+    public Uni<Set<ArtDirector>> getArtDirectors(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getArtDirectorsByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/sound-editors")
-    public Uni<Set<SoundEditor>> getSoundEditors(Long id) {
+    public Uni<Set<SoundEditor>> getSoundEditors(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getSoundEditorsByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/visual-effects-supervisors")
-    public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisors(Long id) {
+    public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getVisualEffectsSupervisorsByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/makeup-artists")
-    public Uni<Set<MakeupArtist>> getMakeupArtists(Long id) {
+    public Uni<Set<MakeupArtist>> getMakeupArtists(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getMakeupArtists)
                 ;
     }
 
     @GET
     @Path("{id}/hair-dressers")
-    public Uni<Set<HairDresser>> getHairDressers(Long id) {
+    public Uni<Set<HairDresser>> getHairDressers(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getHairDressers)
                 ;
     }
 
     @GET
     @Path("{id}/stuntmen")
-    public Uni<Set<Stuntman>> getStuntmen(Long id) {
+    public Uni<Set<Stuntman>> getStuntmen(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getStuntmen)
                 ;
     }
 
     @GET
-    @Path("{id}/actors")
-    public Uni<Response> getRoles(Long id) {
-        return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
-                        .chain(movieService::getActorsByMovie)
-                        .onItem().transform(roles -> Response.ok(roles).build())
-                        .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
-                ;
-    }
-
-    @GET
     @Path("{id}/genres")
-    public Uni<Set<Genre>> getGenres(Long id) {
+    public Uni<Set<Genre>> getGenres(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getGenresByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/countries")
-    public Uni<Set<Country>> getCountries(Long id) {
+    public Uni<Set<Country>> getCountries(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCountriesByMovie)
                 ;
     }
 
     @GET
     @Path("{id}/awards")
-    public Uni<Response> getAwards(Long id) {
+    public Uni<Response> getAwards(@RestPath Long id) {
         return
-                Movie.findById(id)
-                        .map(Movie.class::cast)
+                movieService.getSingle(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getAwardsByMovie)
                         .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
                         .onItem().ifNull().continueWith(Response.status(404, "Ce film n'existe pas").build())
@@ -407,7 +407,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/technical-team")
-    public Uni<Response> addTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
+    public Uni<Response> addTechnicalTeam(@RestPath Long id, TechnicalTeamDTO technicalTeam) {
         return
                 movieService.saveTechnicalTeam(id, technicalTeam)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
@@ -594,6 +594,27 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;*/
+    }
+
+    @PUT
+    @Path("{id}/casting")
+    public Uni<Response> addCasting(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
+        if (Objects.isNull(movieActorsList) || movieActorsList.isEmpty()) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des acteurs ne peut pas être vide.")
+                            .build()
+            );
+        }
+
+        return movieService.saveCasting(id, movieActorsList)
+                .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                .onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity("Erreur lors de la miseà jour du casting: " + e.getMessage())
+                        .build()
+                )
+                ;
     }
 
     /*@PUT
@@ -827,7 +848,7 @@ public class MovieResource {
                                 movie ->
                                         movie.getMovieActors()
                                                 .stream()
-                                                .map(movieActor1 -> MovieActor.build(null, movieActor1.getActor(), movieActor1.getName()))
+                                                .map(movieActor1 -> MovieActor.build(movie, movieActor1.getActor(), movieActor1.getRole()))
                                                 .collect(Collectors.toSet())
                         )
                         .onItem().ifNotNull().transform(roles -> Response.ok(roles).build())
@@ -1144,12 +1165,7 @@ public class MovieResource {
                 Panache
                         .withTransaction(() -> Movie.<Movie>findById(movieId)
                                 .onItem().ifNotNull()
-                                .invoke(
-                                        entity -> {
-                                            entity.removeRole(actorId);
-                                            entity.setLastUpdate(LocalDateTime.now());
-                                        }
-                                )
+                                .invoke(entity -> entity.removeRole(actorId))
                                 .chain(entity -> entity.persist())
                         )
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
