@@ -119,7 +119,7 @@ public class MovieService {
                         movieActors ->
                                 movieActors
                                         .stream()
-                                        .sorted(Comparator.comparing(o -> o.id))
+                                        .sorted(Comparator.comparing(MovieActor::getRank))
                                         .toList()
                 )
                 .onItem().ifNull().continueWith(Collections.emptyList());
@@ -361,6 +361,10 @@ public class MovieService {
                 .stream()
                 .collect(Collectors.toMap(movieActorDTO -> movieActorDTO.getActor().getId(), MovieActorDTO::getRole));
 
+        Map<Long, Integer> rankMap = movieActorsList
+                .stream()
+                .collect(Collectors.toMap(movieActorDTO -> movieActorDTO.getActor().getId(), MovieActorDTO::getRank));
+
         return Panache.withTransaction(() ->
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
@@ -385,6 +389,9 @@ public class MovieService {
                                                     MovieActor existingMovieActor = existingActorMap.get(dto.getActor().getId());
                                                     if (!Objects.equals(existingMovieActor.getRole(), dto.getRole())) {
                                                         existingMovieActor.setRole(dto.getRole());
+                                                    }
+                                                    if (!Objects.equals(existingMovieActor.getRank(), dto.getRank())) {
+                                                        existingMovieActor.setRank(dto.getRank());
                                                     }
                                                 } else {
                                                     // Nouvel acteur à ajouter
@@ -416,13 +423,20 @@ public class MovieService {
                                                                                                         .map(actor -> MovieActor.build(
                                                                                                                 movie,
                                                                                                                 actor,
-                                                                                                                roleMap.getOrDefault(actor.id, "Inconnu")
+                                                                                                                roleMap.getOrDefault(actor.id, "Inconnu"),
+                                                                                                                rankMap.getOrDefault(actor.id, 0)
                                                                                                         )).toList()
                                                                                         );
                                                                                         return modifiableMovieActors;
                                                                                     }
                                                                             )
-                                                                            .invoke(movie::setMovieActors));
+                                                                            .invoke(movie::setMovieActors))
+                                                            .map(movieActors ->
+                                                                    movieActors
+                                                                            .stream()
+                                                                            .sorted(Comparator.comparing(MovieActor::getRank))
+                                                                            .toList()
+                                                            );
                                         })
                         )
         );
@@ -648,7 +662,7 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNotNull()
-                                        .call(entity -> entity.addRole(MovieActor.build(entity, movieActor.getActor(), movieActor.getRole())))
+                                        .call(entity -> entity.addRole(MovieActor.build(entity, movieActor.getActor(), movieActor.getRole(), movieActor.getRank())))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -933,38 +947,38 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNotNull()
-                                                .call(
-                                                        movie ->
-                                                                countryService.getByIds(movieDTO.getCountries())
-                                                                        .invoke(movie::setCountries)
-                                                                        .chain(() ->
-                                                                                genreService.getByIds(movieDTO.getGenres())
-                                                                                        .invoke(movie::setGenres))
-                                                )
-                                                .invoke(
-                                                        movie -> {
-                                                            movie.setTitle(movieDTO.getTitle());
-                                                            movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                            movie.setSynopsis(movieDTO.getSynopsis());
-                                                            movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                            movie.setRunningTime(movieDTO.getRunningTime());
-                                                            movie.setBudget(movieDTO.getBudget());
-                                                            movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                                            movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                        }
-                                                )
-                                                .call(
-                                                        entity -> {
-                                                            if (Objects.nonNull(file)) {
-                                                                return uploadPoster(file)
-                                                                        .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                                        .invoke(entity::setPosterFileName);
-                                                            }
-                                                            return Uni.createFrom().item(entity);
-                                                        }
-                                                )
+                                movieRepository.findById(id)
+                                        .onItem().ifNotNull()
+                                        .call(
+                                                movie ->
+                                                        countryService.getByIds(movieDTO.getCountries())
+                                                                .invoke(movie::setCountries)
+                                                                .chain(() ->
+                                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                                .invoke(movie::setGenres))
+                                        )
+                                        .invoke(
+                                                movie -> {
+                                                    movie.setTitle(movieDTO.getTitle());
+                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                                    movie.setSynopsis(movieDTO.getSynopsis());
+                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
+                                                    movie.setRunningTime(movieDTO.getRunningTime());
+                                                    movie.setBudget(movieDTO.getBudget());
+                                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
+                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                }
+                                        )
+                                        .call(
+                                                entity -> {
+                                                    if (Objects.nonNull(file)) {
+                                                        return uploadPoster(file)
+                                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                                .invoke(entity::setPosterFileName);
+                                                    }
+                                                    return Uni.createFrom().item(entity);
+                                                }
+                                        )
                         )
 
                 ;

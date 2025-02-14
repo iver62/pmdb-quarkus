@@ -407,7 +407,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/technical-team")
-    public Uni<Response> addTechnicalTeam(@RestPath Long id, TechnicalTeamDTO technicalTeam) {
+    public Uni<Response> saveTechnicalTeam(@RestPath Long id, TechnicalTeamDTO technicalTeam) {
         return
                 movieService.saveTechnicalTeam(id, technicalTeam)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
@@ -598,7 +598,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/casting")
-    public Uni<Response> addCasting(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
+    public Uni<Response> saveCasting(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
         if (Objects.isNull(movieActorsList) || movieActorsList.isEmpty()) {
             return Uni.createFrom().item(
                     Response.status(Response.Status.BAD_REQUEST)
@@ -848,7 +848,7 @@ public class MovieResource {
                                 movie ->
                                         movie.getMovieActors()
                                                 .stream()
-                                                .map(movieActor1 -> MovieActor.build(movie, movieActor1.getActor(), movieActor1.getRole()))
+                                                .map(movieActor1 -> MovieActor.build(movie, movieActor1.getActor(), movieActor1.getRole(), movieActor1.getRank()))
                                                 .collect(Collectors.toSet())
                         )
                         .onItem().ifNotNull().transform(roles -> Response.ok(roles).build())

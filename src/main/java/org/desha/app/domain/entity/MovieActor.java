@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
@@ -27,34 +28,40 @@ public class MovieActor extends PanacheEntity {
     @Column(name = "role", nullable = false)
     private String role;
 
+    @NotNull(message = "Le rang ne peut pas être nul")
+    @Column(name = "rang", nullable = false)
+    private Integer rank;
+
     @Builder
-    public MovieActor(Long id, Movie movie, Actor actor, String role) {
+    public MovieActor(Long id, Movie movie, Actor actor, String role, Integer rank) {
         super();
         this.id = id;
         this.movie = movie;
         this.actor = actor;
         this.role = role;
+        this.rank = rank;
     }
 
-    public static MovieActor build(Long id, Movie movie, Actor actor, String role) {
+    public static MovieActor build(Long id, Movie movie, Actor actor, String role, Integer rank) {
         return
                 MovieActor.builder()
                         .id(id)
                         .movie(movie)
                         .actor(actor)
                         .role(role)
+                        .rank(rank)
                         .build()
                 ;
     }
 
-    public static MovieActor build(Movie movie, Actor actor, String role) {
+    public static MovieActor build(Movie movie, Actor actor, String role, Integer rank) {
         return
                 MovieActor.builder()
                         .movie(movie)
                         .actor(actor)
                         .role(role)
+                        .rank(rank)
                         .build()
                 ;
     }
-
 }

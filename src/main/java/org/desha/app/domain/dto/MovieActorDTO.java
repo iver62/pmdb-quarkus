@@ -14,5 +14,6 @@ public class MovieActorDTO {
     private Long id;
     private PersonDTO actor;
     private String role;
+    private Integer rank;
 
 }
