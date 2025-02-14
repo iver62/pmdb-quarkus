@@ -35,12 +35,12 @@ public class GenreService {
         return genreRepository.listAll().map(HashSet::new);
     }
 
-    public Uni<Set<Genre>> getByIds(Set<Genre> genreSet) {
+    public Uni<Set<Genre>> getByIds(Set<GenreDTO> genreSet) {
         return
                 genreRepository.findByIds(
                         Optional.ofNullable(genreSet).orElse(Collections.emptySet())
                                 .stream()
-                                .map(p -> p.id)
+                                .map(GenreDTO::getId)
                                 .toList()
                 ).map(HashSet::new);
     }
@@ -76,7 +76,6 @@ public class GenreService {
                                         .onItem().ifNotNull().invoke(
                                                 entity -> {
                                                     entity.setName(genre.getName());
-                                                    entity.setLastUpdate(LocalDateTime.now());
                                                 }
                                         )
                         )

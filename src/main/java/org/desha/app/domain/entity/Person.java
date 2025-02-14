@@ -28,36 +28,37 @@ import java.util.Set;
 public abstract class Person extends PanacheEntity implements Comparable<Person> {
 
     @Column(name = "nom")
-    private String name;
+    protected String name;
 
     @Column(name = "photo")
-    private String photoFileName;
+    protected String photoFileName;
 
     @Column(name = "date_naissance")
-    @Temporal(TemporalType.DATE)
-    private LocalDate dateOfBirth;
+    protected LocalDate dateOfBirth;
 
     @Column(name = "date_deces")
-    @Temporal(TemporalType.DATE)
-    private LocalDate dateOfDeath;
+    protected LocalDate dateOfDeath;
 
     @Column(name = "date_creation")
-    @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime creationDate;
+    protected LocalDateTime creationDate;
 
     @Column(name = "date_mise_a_jour")
-    @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime lastUpdate;
-
-    /*@JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
-    @Fetch(FetchMode.SELECT)
-    private Set<Country> countries = new HashSet<>();*/
+    protected LocalDateTime lastUpdate;
 
     @JsonIgnore
     @OneToMany(mappedBy = "person", orphanRemoval = true)
     private Set<Award> awards = new HashSet<>();
+
+    @PrePersist
+    protected void onCreate() {
+        this.creationDate = LocalDateTime.now();
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
 
     public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
         return

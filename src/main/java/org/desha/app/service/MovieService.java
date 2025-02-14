@@ -454,7 +454,6 @@ public class MovieService {
                                                                         .andFailFast()
                                                 )
                                                 .call(entity -> entity.addProducers(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -478,7 +477,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addDirectors(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -502,7 +500,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addScreenwriters(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -526,7 +523,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addMusicians(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -550,7 +546,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addPhotographers(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -574,7 +569,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addCostumiers(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -598,7 +592,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addDecorators(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -622,7 +615,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.addEditors(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;
@@ -646,7 +638,6 @@ public class MovieService {
                                                                 .andFailFast()
                                         )
                                         .call(entity -> entity.saveCasting(personSet))
-                                        .invoke(entity -> entity.setLastUpdate(LocalDateTime.now()))
                                         .chain(entity -> entity.persist())
                         )
                 ;

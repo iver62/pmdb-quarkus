@@ -9,7 +9,6 @@ import org.desha.app.domain.entity.*;
 import org.desha.app.repository.CountryRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -149,7 +148,6 @@ public class CountryService {
                                                     entity.setAlpha3(country.getAlpha3());
                                                     entity.setNomEnGb(country.getNomEnGb());
                                                     entity.setNomFrFr(country.getNomFrFr());
-                                                    entity.setLastUpdate(LocalDateTime.now());
                                                 }
                                         )
                         )

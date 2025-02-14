@@ -132,6 +132,16 @@ public class Country extends PanacheEntity {
                 ;
     }
 
+    @PrePersist
+    public void onCreate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
+
     /*public Uni<Set<Person>> addPerson(Person person) {
         return
                 Mutiny.fetch(persons)

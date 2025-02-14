@@ -34,11 +34,9 @@ public class Genre extends PanacheEntity {
     private String name;
 
     @Column(name = "date_creation")
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime creationDate;
 
     @Column(name = "date_mise_a_jour")
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime lastUpdate;
 
     @JsonIgnore
@@ -53,6 +51,17 @@ public class Genre extends PanacheEntity {
                         .creationDate(creationDate)
                         .build()
                 ;
+    }
+
+    @PrePersist
+    public void onCreate() {
+        this.creationDate = LocalDateTime.now();
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.lastUpdate = LocalDateTime.now();
     }
 
     public Uni<Set<Movie>> addMovie(Movie movie) {

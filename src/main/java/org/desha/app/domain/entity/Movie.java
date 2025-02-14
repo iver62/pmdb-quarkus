@@ -17,9 +17,7 @@ import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Cacheable
@@ -32,7 +30,7 @@ import java.util.Set;
 @Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NamedQueries({
-        @NamedQuery(name = "Movie.searchByTitle", query = "from Movie where lower(title) LIKE lower(?1)")
+        @NamedQuery(name = "Movie.searchByTitle", query = "from Movie where lower(title) LIKE lower(concat('%', ?1, '%'))")
 })
 public class Movie extends PanacheEntity {
 
@@ -62,12 +60,10 @@ public class Movie extends PanacheEntity {
     @Column(name = "chemin_affiche")
     private String posterFileName;
 
-    @Column(name = "date_creation")
-    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "date_creation", updatable = false)
     private LocalDateTime creationDate;
 
     @Column(name = "date_mise_a_jour")
-    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime lastUpdate;
 
     @JsonIgnore
@@ -161,9 +157,9 @@ public class Movie extends PanacheEntity {
     private Set<Stuntman> stuntmen = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "movie", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Fetch(FetchMode.SELECT)
-    private Set<MovieActor> movieActors = new HashSet<>();
+    private List<MovieActor> movieActors = new ArrayList<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -182,7 +178,18 @@ public class Movie extends PanacheEntity {
     @Fetch(FetchMode.SELECT)
     private Set<Award> awards = new HashSet<>();
 
-    public static Movie build(MovieDTO movieDTO) {
+    @PrePersist
+    protected void onCreate() {
+        this.creationDate = LocalDateTime.now();
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    public static Movie fromDTO(MovieDTO movieDTO) {
         return Movie.builder()
                 .title(movieDTO.getTitle())
                 .originalTitle(movieDTO.getOriginalTitle())
@@ -192,8 +199,6 @@ public class Movie extends PanacheEntity {
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
                 .posterFileName(movieDTO.getPosterFileName())
-                .genres(movieDTO.getGenres())
-                .creationDate(LocalDateTime.now())
                 .build();
     }
 
@@ -389,7 +394,7 @@ public class Movie extends PanacheEntity {
                 ;
     }
 
-    public Uni<Set<MovieActor>> addRole(MovieActor movieActor) {
+    public Uni<List<MovieActor>> addRole(MovieActor movieActor) {
         return
                 Mutiny.fetch(movieActors)
                         .map(
