@@ -24,6 +24,7 @@ public class CountryDTO {
     private String nomFrFr;
     private LocalDateTime lastUpdate;
     private Set<MovieDTO> movies;
+    private Set<PersonDTO> actors;
     private Set<PersonDTO> producers;
     private Set<PersonDTO> directors;
     private Set<PersonDTO> screenwriters;
@@ -38,6 +39,7 @@ public class CountryDTO {
     private Set<PersonDTO> visualEffectsSupervisors;
     private Set<PersonDTO> makeupArtists;
     private Set<PersonDTO> hairDressers;
+    private Set<PersonDTO> stuntMen;
 
     public static CountryDTO fromCountry(Country country) {
         return
@@ -49,6 +51,7 @@ public class CountryDTO {
                         .nomFrFr(country.getNomFrFr())
                         .nomEnGb(country.getNomEnGb())
                         .movies(Optional.ofNullable(country.getMovies()).orElse(Set.of()).stream().map(MovieDTO::fromEntity).collect(Collectors.toSet()))
+                        .actors(fromEntitySet(country.getActors()))
                         .producers(fromEntitySet(country.getProducers()))
                         .directors(fromEntitySet(country.getDirectors()))
                         .screenwriters(fromEntitySet(country.getScreenwriters()))
@@ -63,6 +66,7 @@ public class CountryDTO {
                         .visualEffectsSupervisors(fromEntitySet(country.getVisualEffectsSupervisors()))
                         .makeupArtists(fromEntitySet(country.getMakeupArtists()))
                         .hairDressers(fromEntitySet(country.getHairDressers()))
+                        .stuntMen(fromEntitySet(country.getStuntmen()))
                         .build();
     }
 

@@ -47,6 +47,7 @@ public class CountryService {
                 countryRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Pays non trouvé"))
                         .call(country -> Mutiny.fetch(country.getMovies()))
+                        .call(country -> Mutiny.fetch(country.getActors()))
                         .call(country -> Mutiny.fetch(country.getProducers()))
                         .call(country -> Mutiny.fetch(country.getDirectors()))
                         .call(country -> Mutiny.fetch(country.getScreenwriters()))
@@ -61,6 +62,7 @@ public class CountryService {
                         .call(country -> Mutiny.fetch(country.getVisualEffectsSupervisors()))
                         .call(country -> Mutiny.fetch(country.getMakeupArtists()))
                         .call(country -> Mutiny.fetch(country.getHairDressers()))
+                        .call(country -> Mutiny.fetch(country.getStuntmen()))
                         .map(CountryDTO::fromCountry)
                 ;
     }

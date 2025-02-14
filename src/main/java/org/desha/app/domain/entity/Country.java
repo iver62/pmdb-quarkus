@@ -47,6 +47,11 @@ public class Country extends PanacheEntity {
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
     @Fetch(FetchMode.SELECT)
+    private Set<Actor> actors;
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "countries")
+    @Fetch(FetchMode.SELECT)
     private Set<Producer> producers;
 
     @JsonIgnore
@@ -113,6 +118,11 @@ public class Country extends PanacheEntity {
     @ManyToMany(mappedBy = "countries")
     @Fetch(FetchMode.SELECT)
     private Set<HairDresser> hairDressers;
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "countries")
+    @Fetch(FetchMode.SELECT)
+    private Set<Stuntman> stuntmen;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
