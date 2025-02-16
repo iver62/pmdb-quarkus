@@ -2,18 +2,24 @@ package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.AuditGenreListener;
+import org.desha.app.domain.dto.GenreDTO;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -44,11 +50,10 @@ public class Genre extends PanacheEntity {
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies;
 
-    public static Genre build(String name, LocalDateTime creationDate) {
+    public static Genre fromDTO(GenreDTO genreDTO) {
         return
                 Genre.builder()
-                        .name(name)
-                        .creationDate(creationDate)
+                        .name(StringUtils.capitalize(genreDTO.getName()))
                         .build()
                 ;
     }
@@ -62,6 +67,46 @@ public class Genre extends PanacheEntity {
     @PreUpdate
     public void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
+    }
+
+    public static Uni<Long> count(String name) {
+        return count("LOWER(name) LIKE LOWER(?1)", "%" + name + "%");
+    }
+
+    public static Uni<Genre> getById(Long id) {
+        return findById(id);
+    }
+
+    public static Uni<List<Genre>> getAll() {
+        return listAll();
+    }
+
+    public static Uni<Long> countMovies(Long id, String title) {
+        return count(
+                "SELECT COUNT(m) FROM Movie m JOIN m.genres g WHERE g.id = ?1 AND LOWER(m.title) LIKE LOWER(?2)",
+                id, MessageFormat.format("%{0}%", title)
+        );
+    }
+
+    public static Uni<List<Movie>> getAllMovies(Long id, String sort, Sort.Direction direction, String title) {
+        return
+                Movie.find(
+                                "SELECT m FROM Movie m JOIN m.genres g WHERE g.id = ?1 AND LOWER(m.title) LIKE LOWER(?2)",
+                                Sort.by(sort, direction),
+                                id, MessageFormat.format("%{0}%", title)
+                        )
+                        .list();
+    }
+
+    public static Uni<List<Movie>> getMovies(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String title) {
+        return
+                Movie.find(
+                                "SELECT m FROM Movie m JOIN m.genres g WHERE g.id = ?1 AND LOWER(m.title) LIKE LOWER(?2)",
+                                Sort.by(sort, direction),
+                                id, MessageFormat.format("%{0}%", title)
+                        )
+                        .page(pageIndex, size)
+                        .list();
     }
 
     public Uni<Set<Movie>> addMovie(Movie movie) {
@@ -86,6 +131,25 @@ public class Genre extends PanacheEntity {
                                 }
                         )
                 ;
+    }
+
+    public static Uni<Genre> create(GenreDTO genreDTO) {
+        return Panache.withTransaction(() -> Genre.fromDTO(genreDTO).persist());
+    }
+
+    public static Uni<Genre> update(Long id, GenreDTO genreDTO) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                getById(id)
+                                        .onItem().ifNotNull()
+                                        .invoke(entity -> entity.setName(genreDTO.getName()))
+                        )
+                ;
+    }
+
+    public static Uni<Boolean> deleteGenre(Long id) {
+        return Panache.withTransaction(() -> deleteById(id));
     }
 
 }

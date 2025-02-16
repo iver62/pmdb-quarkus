@@ -10,6 +10,7 @@ import java.util.Objects;
 
 @Slf4j
 public class AuditGenreListener {
+
     @PrePersist
     @PreUpdate
     @PreRemove

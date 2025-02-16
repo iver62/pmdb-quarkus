@@ -1,15 +1,14 @@
 package org.desha.app.controller;
 
-import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.GenreDTO;
 import org.desha.app.domain.entity.Genre;
-import org.desha.app.service.GenreService;
+import org.jboss.resteasy.reactive.RestPath;
 
 import java.util.Objects;
 
@@ -20,35 +19,77 @@ import static jakarta.ws.rs.core.Response.Status.*;
 @Slf4j
 public class GenreResource {
 
-    private final GenreService genreService;
-
-    @Inject
-    public GenreResource(GenreService genreService) {
-        this.genreService = genreService;
+    @GET
+    @Path("count")
+    public Uni<Response> count(@QueryParam("name") @DefaultValue("") String name) {
+        return
+                Genre.count(name)
+                        .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build())
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
     }
 
     @GET
     @Path("{id}")
-    public Uni<Response> getSingle(Long id) {
-        return genreService.getOne(id)
-                .onItem().ifNotNull().transform(country -> Response.ok(country).build())
-                .onItem().ifNull().continueWith(Response.noContent().build());
+    public Uni<Response> getGenre(Long id) {
+        return
+                Genre.getById(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
+                        .onItem().ifNotNull().transform(genre -> Response.ok(genre).build())
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
     }
 
     @GET
-    public Uni<Response> get() {
-        return genreService.getAll()
-                .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
-                .onItem().ifNull().continueWith(Response.noContent().build());
+    public Uni<Response> getGenres() {
+        return
+                Genre.getAll()
+                        .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
     }
 
     @GET
     @Path("{id}/movies")
-    public Uni<Response> getMovies(Long id) {
+    public Uni<Response> getMoviesByGenre(
+            @RestPath Long id,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("20") int size,
+            @QueryParam("sort") @DefaultValue("title") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("title") @DefaultValue("") String title
+    ) {
+        // Vérifier si la direction est valide
+        Sort.Direction sortDirection;
+        try {
+            sortDirection = Sort.Direction.valueOf(direction);
+        } catch (IllegalArgumentException e) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
+                            .build()
+            );
+        }
+
         return
-                genreService.getMovies(id)
-                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
+                Genre.getMovies(id, page, size, sort, sortDirection, title)
+                        .flatMap(movieList ->
+                                Genre.countMovies(id, title).map(total ->
+                                        movieList.isEmpty()
+                                                ? Response.noContent().header("X-Total-Count", total).build()
+                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                )
+                        )
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
                 ;
     }
 
@@ -59,31 +100,43 @@ public class GenreResource {
         }
 
         return
-                genreService.createGenre(genreDTO)
+                Genre.create(genreDTO)
                         .map(genre -> Response.status(CREATED).entity(genre).build())
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
                 ;
     }
 
     @PUT
     @Path("{id}")
-    public Uni<Response> update(Long id, Genre genre) {
-        if (Objects.isNull(genre) || Objects.isNull(genre.getName())) {
+    public Uni<Response> updateGenre(Long id, GenreDTO genreDTO) {
+        if (Objects.isNull(genreDTO) || Objects.isNull(genreDTO.getName())) {
             throw new WebApplicationException("Genre name was not set on request.", 422);
         }
 
         return
-                genreService.updateGenre(id, genre)
+                Genre.update(id, genreDTO)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
     }
 
     @DELETE
     @Path("{id}")
-    public Uni<Response> delete(Long id) {
-        return Panache.withTransaction(() -> Genre.deleteById(id))
-                .map(deleted -> deleted
-                        ? Response.ok().status(NO_CONTENT).build()
-                        : Response.ok().status(NOT_FOUND).build());
+    public Uni<Response> deleteGenre(@RestPath Long id) {
+        return
+                Genre.deleteGenre(id)
+                        .map(deleted -> Boolean.TRUE.equals(deleted)
+                                ? Response.status(NO_CONTENT).build()
+                                : Response.status(NOT_FOUND).build())
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
     }
 
 }
