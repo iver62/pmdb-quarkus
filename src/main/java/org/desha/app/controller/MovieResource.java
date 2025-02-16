@@ -1,7 +1,7 @@
 package org.desha.app.controller;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -102,8 +102,8 @@ public class MovieResource {
 
     @GET
     @Path("count")
-    public Uni<Response> count() {
-        return PanacheEntityBase.count()
+    public Uni<Response> count(@QueryParam("title") @DefaultValue("") String title) {
+        return Movie.count(title)
                 .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
@@ -111,24 +111,78 @@ public class MovieResource {
     @Path("{id}")
     public Uni<Response> getSingle(Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNotNull().transform(movie -> Response.ok(movie).build())
                         .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
                 ;
     }
 
     @GET
-    public Uni<Response> get() {
+    public Uni<Response> getPaginatedMovies(
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("20") int size,
+            @QueryParam("sort") @DefaultValue("title") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("title") @DefaultValue("") String title
+    ) {
+        // Vérifier si la direction est valide
+        Sort.Direction sortDirection;
+        try {
+            sortDirection = Sort.Direction.valueOf(direction);
+        } catch (IllegalArgumentException e) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
+                            .build()
+            );
+        }
+
         return
-                movieService.getAll()
-                        .onItem().ifNotNull().transform(panacheEntityBases ->
-                                panacheEntityBases.isEmpty()
-                                        ?
-                                        Response.noContent().build()
-                                        :
-                                        Response.ok(panacheEntityBases).build()
+                Movie.getPaginatedMovies(page, size, sort, sortDirection, title)
+                        .flatMap(movieList ->
+                                Movie.count(title).map(total ->
+                                        movieList.isEmpty()
+                                                ? Response.noContent().header("X-Total-Count", total).build()
+                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                )
                         )
-                        .onItem().ifNull().continueWith(Response.noContent().build())
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
+    }
+
+    @GET
+    @Path("all")
+    public Uni<Response> getAll(
+            @QueryParam("sort") @DefaultValue("title") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("title") @DefaultValue("") String title
+    ) {
+        // Vérifier si la direction est valide
+        Sort.Direction sortDirection;
+        try {
+            sortDirection = Sort.Direction.valueOf(direction);
+        } catch (IllegalArgumentException e) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
+                            .build()
+            );
+        }
+
+        return
+                Movie.getMovies(sort, sortDirection, title)
+                        .flatMap(movieList ->
+                                Movie.count(title).map(total ->
+                                        movieList.isEmpty()
+                                                ? Response.noContent().header("X-Total-Count", total).build()
+                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                )
+                        )
+                        .onFailure().recoverWithItem(err ->
+                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
                 ;
     }
 
@@ -156,7 +210,7 @@ public class MovieResource {
     @Path("{id}/actors")
     public Uni<Response> getActors(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .flatMap(movieService::getActorsByMovie)
                         .map(movieActors -> Response.ok(movieActors).build())
@@ -168,7 +222,7 @@ public class MovieResource {
     @Path("{id}/producers")
     public Uni<Set<Producer>> getProducers(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getProducersByMovie)
                 ;
@@ -178,7 +232,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Set<Director>> getDirectors(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getDirectorsByMovie)
                 ;
@@ -188,7 +242,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Set<Screenwriter>> getScreenwriters(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getScreenwritersByMovie)
                 ;
@@ -198,7 +252,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Set<Musician>> getMusicians(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getMusiciansByMovie)
                 ;
@@ -208,7 +262,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Set<Photographer>> getPhotographers(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getPhotographersByMovie)
                 ;
@@ -218,7 +272,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Set<Costumier>> getCostumiers(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCostumiersByMovie)
                 ;
@@ -228,7 +282,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Set<Decorator>> getDecorators(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getDecoratorsByMovie)
                 ;
@@ -238,7 +292,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Set<Editor>> getEditors(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getEditorsByMovie)
                 ;
@@ -248,7 +302,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Set<Caster>> getCasters(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCastersByMovie)
                 ;
@@ -258,7 +312,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Set<ArtDirector>> getArtDirectors(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getArtDirectorsByMovie)
                 ;
@@ -268,7 +322,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Set<SoundEditor>> getSoundEditors(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getSoundEditorsByMovie)
                 ;
@@ -278,7 +332,7 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getVisualEffectsSupervisorsByMovie)
                 ;
@@ -288,7 +342,7 @@ public class MovieResource {
     @Path("{id}/makeup-artists")
     public Uni<Set<MakeupArtist>> getMakeupArtists(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getMakeupArtists)
                 ;
@@ -298,7 +352,7 @@ public class MovieResource {
     @Path("{id}/hair-dressers")
     public Uni<Set<HairDresser>> getHairDressers(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getHairDressers)
                 ;
@@ -308,7 +362,7 @@ public class MovieResource {
     @Path("{id}/stuntmen")
     public Uni<Set<Stuntman>> getStuntmen(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getStuntmen)
                 ;
@@ -318,7 +372,7 @@ public class MovieResource {
     @Path("{id}/genres")
     public Uni<Set<Genre>> getGenres(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getGenresByMovie)
                 ;
@@ -328,7 +382,7 @@ public class MovieResource {
     @Path("{id}/countries")
     public Uni<Set<Country>> getCountries(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCountriesByMovie)
                 ;
@@ -338,7 +392,7 @@ public class MovieResource {
     @Path("{id}/awards")
     public Uni<Response> getAwards(@RestPath Long id) {
         return
-                movieService.getSingle(id)
+                Movie.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getAwardsByMovie)
                         .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())

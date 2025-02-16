@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -157,7 +158,7 @@ public class Movie extends PanacheEntity {
     private Set<Stuntman> stuntmen = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "movie", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "movie", cascade = {CascadeType.ALL})
     @Fetch(FetchMode.SELECT)
     private List<MovieActor> movieActors = new ArrayList<>();
 
@@ -202,6 +203,10 @@ public class Movie extends PanacheEntity {
                 .build();
     }
 
+    public static Uni<Movie> getById(Long id) {
+        return findById(id);
+    }
+
     public static Uni<Set<PanacheEntityBase>> getByTitle(String title) {
         return
                 Panache.withTransaction(() -> list("title", title).map(HashSet::new));
@@ -210,6 +215,25 @@ public class Movie extends PanacheEntity {
     public static Uni<Set<PanacheEntityBase>> searchByTitle(String title) {
         return
                 Panache.withTransaction(() -> list("#Movie.searchByTitle", "%" + title + "%").map(HashSet::new));
+    }
+
+    public static Uni<Long> count(String title) {
+        return count("LOWER(title) LIKE LOWER(?1)", "%" + title + "%");
+    }
+
+    public static Uni<List<Movie>> getMovies(String sort, Sort.Direction direction, String title) {
+        return
+                find("LOWER(title) LIKE LOWER(?1)", Sort.by(sort, direction), "%" + title + "%")
+                        .list()
+                ;
+    }
+
+    public static Uni<List<Movie>> getPaginatedMovies(int pageIndex, int size, String sort, Sort.Direction direction, String title) {
+        return
+                find("LOWER(title) LIKE LOWER(?1)", Sort.by(sort, direction), "%" + title + "%")
+                        .page(pageIndex, size)
+                        .list()
+                ;
     }
 
     public Uni<Set<Producer>> addProducers(Set<Producer> producerSet) {

@@ -101,16 +101,24 @@ public class MovieService {
         this.stuntmanService = stuntmanService;
     }
 
-    public Uni<Movie> getSingle(Long id) {
-        return movieRepository.findById(id);
-    }
+    /*public Uni<Long> count() {
+        return Movie.count();
+    }*/
 
-    public Uni<Set<Movie>> getAll() {
-        return movieRepository.listAll().map(HashSet::new);
-    }
+    /*public Uni<Movie> getSingle(Long id) {
+        return movieRepository.findById(id);
+    }*/
+
+    /*public Uni<List<Movie>> getPaginatedMovies(int pageIndex, int size, String sort, Sort.Direction direction) {
+        return
+                Movie.findAll(Sort.by(sort, direction))
+                        .page(pageIndex, size)
+                        .list()
+                ;
+    }*/
 
     public Uni<Set<Movie>> getByTitle(String pattern) {
-        return movieRepository.findByTitle(pattern).map(HashSet::new);
+        return movieRepository.findByTitle(pattern);
     }
 
     public Uni<List<MovieActor>> getActorsByMovie(Movie movie) {
