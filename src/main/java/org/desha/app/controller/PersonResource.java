@@ -1,5 +1,6 @@
 package org.desha.app.controller;
 
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -8,42 +9,74 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Role;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.entity.Decorator;
+import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
-import org.desha.app.qualifier.PersonType;
 import org.desha.app.service.PersonService;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
 @ApplicationScoped
 @Slf4j
-@NoArgsConstructor // Lombok ajoute un constructeur sans argument
+@NoArgsConstructor
 public abstract class PersonResource<T extends Person> {
 
     private PersonService<T> personService;
+    private Class<T> personClass; // Ajout d'un attribut pour stocker le type
 
     @Inject
-    protected PersonResource(PersonService<T> personService) {
+    protected PersonResource(PersonService<T> personService, Class<T> personClass) {
         this.personService = personService;
+        this.personClass = personClass;
     }
 
     @GET
     @Path("{id}")
-    public Uni<T> getPerson(Long id) {
+    public Uni<T> getPersonById(Long id) {
         return personService.getOne(id);
     }
 
     @GET
-    public Uni<Response> getPersons() {
+    public Uni<Response> getPersons(
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("20") int size,
+            @QueryParam("sort") @DefaultValue("name") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("term") @DefaultValue("") String term
+    ) {
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
+        return
+                personService.get(page, size, sort, sortDirection, term)
+                        .flatMap(tList ->
+                                personService.count(term).map(total ->
+                                        tList.isEmpty()
+                                                ? Response.noContent().header("X-Total-Count", total).build()
+                                                : Response.ok(tList.stream().map(PersonDTO::fromEntity)).header("X-Total-Count", total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("all")
+    public Uni<Response> getAllPersons() {
         return
                 personService.getAll()
                         .onItem().ifNotNull().transform(persons -> Response.ok(persons).build())
@@ -53,23 +86,42 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}/movies")
-    public Uni<Response> getMovies(Long id) {
+    public Uni<Response> getMovies(
+            @RestPath Long id,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("20") int size,
+            @QueryParam("sort") @DefaultValue("title") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("term") @DefaultValue("") String term
+    ) {
+        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                personService.getOne(id)
-                        .chain(personService::getMovies)
-                        .onItem().ifNotNull().transform(movies -> Response.ok(movies).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
+                personService.getMovies(id, personClass, page, size, sort, sortDirection, term)
+                        .flatMap(movieList ->
+                                personService.countMovies(id, personClass, term).map(total ->
+                                        movieList.isEmpty()
+                                                ? Response.noContent().header("X-Total-Count", total).build()
+                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                )
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/countries")
-    public Uni<Response> getCountries(Long id) {
+    public Uni<Response> getCountriesByPerson(Long id) {
         return
-                personService.getOne(id)
-                        .chain(personService::getCountries)
-                        .onItem().ifNotNull().transform(countries -> Response.ok(countries).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
+                personService.getCountries(id)
+                        .onItem().transform(countries -> Objects.nonNull(countries) && !countries.isEmpty()
+                                ? Response.ok(countries).build()
+                                : Response.noContent().build()
+                        )
                 ;
     }
 
@@ -156,7 +208,7 @@ public abstract class PersonResource<T extends Person> {
     @PUT
     @Path("{id}")
     public Uni<Response> update(
-            Long id,
+            @RestPath Long id,
             @RestForm("file") FileUpload file,
             @RestForm @PartType(MediaType.APPLICATION_JSON) PersonDTO personDTO
     ) {
@@ -173,13 +225,31 @@ public abstract class PersonResource<T extends Person> {
 
     @DELETE
     @Path("{id}")
-    public Uni<Response> delete(Long id) {
+    public Uni<Response> delete(@RestPath Long id) {
         return
                 personService.delete(id)
                         .map(deleted -> deleted
                                 ? Response.ok().status(NO_CONTENT).build()
                                 : Response.ok().status(NOT_FOUND).build())
                 ;
+    }
+
+    protected Sort.Direction validateSortDirection(String direction) {
+        return Arrays.stream(Sort.Direction.values())
+                .filter(d -> d.name().equalsIgnoreCase(direction))
+                .findFirst()
+                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
+    }
+
+    protected Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
+        if (!allowedSortFields.contains(sort)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields))
+                            .build()
+            );
+        }
+        return null;
     }
 
     // Méthode abstraite pour permettre aux sous-classes de définir l'instance correcte de l'entité

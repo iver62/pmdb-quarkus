@@ -16,7 +16,7 @@ public class ArtDirectorResource extends PersonResource<ArtDirector> {
 
     @Inject
     public ArtDirectorResource(@PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService) {
-        super(artDirectorService);
+        super(artDirectorService, ArtDirector.class);
     }
 
     @Override

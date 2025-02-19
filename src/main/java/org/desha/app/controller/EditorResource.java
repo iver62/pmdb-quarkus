@@ -16,7 +16,7 @@ public class EditorResource extends PersonResource<Editor> {
 
     @Inject
     public EditorResource(@PersonType(Role.EDITOR) PersonService<Editor> editorService) {
-        super(editorService);
+        super(editorService, Editor.class);
     }
 
     @Override

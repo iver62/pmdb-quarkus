@@ -16,7 +16,7 @@ public class PhotographerResource extends PersonResource<Photographer> {
 
     @Inject
     public PhotographerResource(@PersonType(Role.PHOTOGRAPHER) PersonService<Photographer> photographerService) {
-        super(photographerService);
+        super(photographerService, Photographer.class);
     }
 
     @Override

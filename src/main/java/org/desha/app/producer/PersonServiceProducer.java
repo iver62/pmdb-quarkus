@@ -18,6 +18,7 @@ public class PersonServiceProducer {
 
     private final CountryService countryService;
     private final FileService fileService;
+    private final MovieRepository movieRepository;
     private final ActorRepository actorRepository;
     private final ProducerRepository producerRepository;
     private final DirectorRepository directorRepository;
@@ -39,6 +40,7 @@ public class PersonServiceProducer {
     public PersonServiceProducer(
             CountryService countryService,
             FileService fileService,
+            MovieRepository movieRepository,
             ActorRepository actorRepository,
             ProducerRepository producerRepository,
             DirectorRepository directorRepository,
@@ -58,6 +60,7 @@ public class PersonServiceProducer {
     ) {
         this.countryService = countryService;
         this.fileService = fileService;
+        this.movieRepository = movieRepository;
         this.actorRepository = actorRepository;
         this.producerRepository = producerRepository;
         this.directorRepository = directorRepository;
@@ -79,96 +82,96 @@ public class PersonServiceProducer {
     @Produces
     @PersonType(Role.ACTOR)
     public PersonService<Actor> createActorService() {
-        return new PersonService<>(countryService, actorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, actorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.PRODUCER)
     public PersonService<Producer> createProducerService() {
-        return new PersonService<>(countryService, producerRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, producerRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.DIRECTOR)
     public PersonService<Director> createDirectorService() {
-        return new PersonService<>(countryService, directorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, directorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.SCREENWRITER)
     public PersonService<Screenwriter> createScreenwriterService() {
-        return new PersonService<>(countryService, screenwriterRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, screenwriterRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.MUSICIAN)
     public PersonService<Musician> createMusicianService() {
-        return new PersonService<>(countryService, musicianRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, musicianRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.PHOTOGRAPHER)
     public PersonService<Photographer> createPhotographerService() {
-        return new PersonService<>(countryService, photographerRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, photographerRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.COSTUMIER)
     public PersonService<Costumier> createCostumierService() {
-        return new PersonService<>(countryService, costumierRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, costumierRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.DECORATOR)
     public PersonService<Decorator> createDecoratorService() {
-        return new PersonService<>(countryService, decoratorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, decoratorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.EDITOR)
     public PersonService<Editor> createEditorService() {
-        return new PersonService<>(countryService, editorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, editorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.CASTER)
     public PersonService<Caster> createCasterService() {
-        return new PersonService<>(countryService, casterRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, casterRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.ART_DIRECTOR)
     public PersonService<ArtDirector> createArtDirectorService() {
-        return new PersonService<>(countryService, artDirectorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, artDirectorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.SOUND_EDITOR)
     public PersonService<SoundEditor> createSoundEditorService() {
-        return new PersonService<>(countryService, soundEditorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, soundEditorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR)
     public PersonService<VisualEffectsSupervisor> createVisualEffectsSupervisorService() {
-        return new PersonService<>(countryService, visualEffectsSupervisorRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, visualEffectsSupervisorRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.MAKEUP_ARTIST)
     public PersonService<MakeupArtist> createMakeupArtistService() {
-        return new PersonService<>(countryService, makeupArtistRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, makeupArtistRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.HAIR_DRESSER)
     public PersonService<HairDresser> createHairDresserService() {
-        return new PersonService<>(countryService, hairDresserRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, hairDresserRepository, fileService);
     }
 
     @Produces
     @PersonType(Role.STUNT_MAN)
     public PersonService<Stuntman> createStuntmanService() {
-        return new PersonService<>(countryService, stuntmanRepository, fileService);
+        return new PersonService<>(countryService, movieRepository, stuntmanRepository, fileService);
     }
 }

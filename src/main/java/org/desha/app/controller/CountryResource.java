@@ -9,9 +9,14 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.service.CountryService;
 import org.jboss.resteasy.reactive.RestPath;
 
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
@@ -20,7 +25,7 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 @ApplicationScoped
 @Slf4j
 public class CountryResource {
-
+    
     private final CountryService countryService;
 
     @Inject
@@ -56,35 +61,27 @@ public class CountryResource {
 
     @GET
     @Path("{id}/movies/all")
-    public Uni<Response> getMoviesByCountry(
+    public Uni<Response> getAllMoviesByCountry(
             @RestPath Long id,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("title") @DefaultValue("") String title
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getMovies(id, sort, sortDirection, title)
+                Country.getMovies(id, sort, sortDirection, term)
                         .flatMap(movieList ->
-                                Country.countMovies(id, title).map(total ->
+                                Country.countMovies(id, term).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(movieList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -97,31 +94,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("title") @DefaultValue("") String title
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getMovies(id, page, size, sort, sortDirection, title)
+                Country.getMovies(id, page, size, sort, sortDirection, term)
                         .flatMap(movieList ->
-                                Country.countMovies(id, title).map(total ->
+                                Country.countMovies(id, term).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(movieList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -134,31 +123,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getActors(id, page, size, sort, sortDirection, name)
+                Country.getActors(id, page, size, sort, sortDirection, term)
                         .flatMap(actorList ->
-                                Country.countActors(id, name).map(total ->
+                                Country.countActors(id, term).map(total ->
                                         actorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(actorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -171,31 +152,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getProducers(id, page, size, sort, sortDirection, name)
+                Country.getProducers(id, page, size, sort, sortDirection, term)
                         .flatMap(producerList ->
-                                Country.countProducers(id, name).map(total ->
+                                Country.countProducers(id, term).map(total ->
                                         producerList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(producerList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -208,31 +181,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getDirectors(id, page, size, sort, sortDirection, name)
+                Country.getDirectors(id, page, size, sort, sortDirection, term)
                         .flatMap(directorList ->
-                                Country.countDirectors(id, name).map(total ->
+                                Country.countDirectors(id, term).map(total ->
                                         directorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(directorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -245,31 +210,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getScreenwriters(id, page, size, sort, sortDirection, name)
+                Country.getScreenwriters(id, page, size, sort, sortDirection, term)
                         .flatMap(screenwriterList ->
-                                Country.countScreenwriters(id, name).map(total ->
+                                Country.countScreenwriters(id, term).map(total ->
                                         screenwriterList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(screenwriterList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -282,31 +239,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getMusicians(id, page, size, sort, sortDirection, name)
+                Country.getMusicians(id, page, size, sort, sortDirection, term)
                         .flatMap(musicianList ->
-                                Country.countMusicians(id, name).map(total ->
+                                Country.countMusicians(id, term).map(total ->
                                         musicianList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(musicianList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -319,31 +268,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getDecorators(id, page, size, sort, sortDirection, name)
+                Country.getDecorators(id, page, size, sort, sortDirection, term)
                         .flatMap(decoratorList ->
-                                Country.countDecorators(id, name).map(total ->
+                                Country.countDecorators(id, term).map(total ->
                                         decoratorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(decoratorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -356,31 +297,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getCostumiers(id, page, size, sort, sortDirection, name)
+                Country.getCostumiers(id, page, size, sort, sortDirection, term)
                         .flatMap(costumierList ->
-                                Country.countCostumiers(id, name).map(total ->
+                                Country.countCostumiers(id, term).map(total ->
                                         costumierList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(costumierList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -393,31 +326,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getPhotographers(id, page, size, sort, sortDirection, name)
+                Country.getPhotographers(id, page, size, sort, sortDirection, term)
                         .flatMap(photographerList ->
-                                Country.countPhotographers(id, name).map(total ->
+                                Country.countPhotographers(id, term).map(total ->
                                         photographerList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(photographerList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -430,31 +355,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getEditors(id, page, size, sort, sortDirection, name)
+                Country.getEditors(id, page, size, sort, sortDirection, term)
                         .flatMap(editorList ->
-                                Country.countEditors(id, name).map(total ->
+                                Country.countEditors(id, term).map(total ->
                                         editorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(editorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -467,31 +384,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getCasters(id, page, size, sort, sortDirection, name)
+                Country.getCasters(id, page, size, sort, sortDirection, term)
                         .flatMap(casterList ->
-                                Country.countCasters(id, name).map(total ->
+                                Country.countCasters(id, term).map(total ->
                                         casterList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(casterList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -504,31 +413,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getArtDirectors(id, page, size, sort, sortDirection, name)
+                Country.getArtDirectors(id, page, size, sort, sortDirection, term)
                         .flatMap(artDirectorList ->
-                                Country.countArtDirectors(id, name).map(total ->
+                                Country.countArtDirectors(id, term).map(total ->
                                         artDirectorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(artDirectorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -541,31 +442,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getSoundEditors(id, page, size, sort, sortDirection, name)
+                Country.getSoundEditors(id, page, size, sort, sortDirection, term)
                         .flatMap(soundEditorList ->
-                                Country.countSoundEditors(id, name).map(total ->
+                                Country.countSoundEditors(id, term).map(total ->
                                         soundEditorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(soundEditorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -578,31 +471,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getVisualEffectsSupervisors(id, page, size, sort, sortDirection, name)
+                Country.getVisualEffectsSupervisors(id, page, size, sort, sortDirection, term)
                         .flatMap(visualEffectsSupervisorList ->
-                                Country.countVisualEffectsSupervisors(id, name).map(total ->
+                                Country.countVisualEffectsSupervisors(id, term).map(total ->
                                         visualEffectsSupervisorList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(visualEffectsSupervisorList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -615,31 +500,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getMakeupArtists(id, page, size, sort, sortDirection, name)
+                Country.getMakeupArtists(id, page, size, sort, sortDirection, term)
                         .flatMap(makeupArtistList ->
-                                Country.countMakeupArtists(id, name).map(total ->
+                                Country.countMakeupArtists(id, term).map(total ->
                                         makeupArtistList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(makeupArtistList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -652,31 +529,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getHairDressers(id, page, size, sort, sortDirection, name)
+                Country.getHairDressers(id, page, size, sort, sortDirection, term)
                         .flatMap(hairDresserList ->
-                                Country.countHairDressers(id, name).map(total ->
+                                Country.countHairDressers(id, term).map(total ->
                                         hairDresserList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(hairDresserList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -689,31 +558,23 @@ public class CountryResource {
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("name") @DefaultValue("") String name
+            @QueryParam("term") @DefaultValue("") String term
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Country.getStuntmen(id, page, size, sort, sortDirection, name)
+                Country.getStuntmen(id, page, size, sort, sortDirection, term)
                         .flatMap(stuntmanList ->
-                                Country.countStuntmen(id, name).map(total ->
+                                Country.countStuntmen(id, term).map(total ->
                                         stuntmanList.isEmpty()
                                                 ? Response.noContent().header("X-Total-Count", total).build()
                                                 : Response.ok(stuntmanList).header("X-Total-Count", total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
     }
@@ -733,6 +594,24 @@ public class CountryResource {
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
+    }
+
+    private Sort.Direction validateSortDirection(String direction) {
+        return Arrays.stream(Sort.Direction.values())
+                .filter(d -> d.name().equalsIgnoreCase(direction))
+                .findFirst()
+                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
+    }
+
+    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
+        if (!allowedSortFields.contains(sort)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields))
+                            .build()
+            );
+        }
+        return null;
     }
 
 }

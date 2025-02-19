@@ -16,7 +16,7 @@ public class CostumierResource extends PersonResource<Costumier> {
 
     @Inject
     public CostumierResource(@PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService) {
-        super(costumierService);
+        super(costumierService, Costumier.class);
     }
 
     @Override

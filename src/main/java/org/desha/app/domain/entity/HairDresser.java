@@ -66,5 +66,4 @@ public class HairDresser extends Person {
                 ;
     }
 
-
 }

@@ -16,7 +16,7 @@ public class StuntmanResource extends PersonResource<Stuntman> {
 
     @Inject
     public StuntmanResource(@PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService) {
-        super(stuntmanService);
+        super(stuntmanService, Stuntman.class);
     }
 
     @Override

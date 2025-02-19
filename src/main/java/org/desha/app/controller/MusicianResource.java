@@ -16,7 +16,7 @@ public class MusicianResource extends PersonResource<Musician> {
 
     @Inject
     public MusicianResource(@PersonType(Role.MUSICIAN) PersonService<Musician> musicianService) {
-        super(musicianService);
+        super(musicianService, Musician.class);
     }
 
     @Override

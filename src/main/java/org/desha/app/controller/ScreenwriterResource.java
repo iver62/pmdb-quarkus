@@ -16,7 +16,7 @@ public class ScreenwriterResource extends PersonResource<Screenwriter> {
 
     @Inject
     public ScreenwriterResource(@PersonType(Role.SCREENWRITER) PersonService<Screenwriter> screenwriterService) {
-        super(screenwriterService);
+        super(screenwriterService, Screenwriter.class);
     }
 
     @Override

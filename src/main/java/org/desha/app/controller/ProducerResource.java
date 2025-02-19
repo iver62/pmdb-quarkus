@@ -16,7 +16,7 @@ public class ProducerResource extends PersonResource<Producer> {
 
     @Inject
     public ProducerResource(@PersonType(Role.PRODUCER) PersonService<Producer> producerService) {
-        super(producerService);
+        super(producerService, Producer.class);
     }
 
     @Override

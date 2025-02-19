@@ -16,7 +16,7 @@ public class VisualEffectsSupervisorResource extends PersonResource<VisualEffect
 
     @Inject
     public VisualEffectsSupervisorResource(@PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService) {
-        super(visualEffectsSupervisorService);
+        super(visualEffectsSupervisorService, VisualEffectsSupervisor.class);
     }
 
     @Override

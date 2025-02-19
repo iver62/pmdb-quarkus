@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -11,6 +12,7 @@ import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -27,6 +29,7 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 public class PersonService<T extends Person> implements PersonServiceInterface<T> {
 
     private final CountryService countryService;
+    private final MovieRepository movieRepository;
     private final PersonRepository<T> personRepository;
     private final FileService fileService;
 
@@ -36,12 +39,41 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
     @Inject
     public PersonService(
             CountryService countryService,
+            MovieRepository movieRepository,
             PersonRepository<T> personRepository,
             FileService fileService
     ) {
         this.countryService = countryService;
+        this.movieRepository = movieRepository;
         this.personRepository = personRepository;
         this.fileService = fileService;
+    }
+
+    @Override
+    public Uni<Long> count(String name) {
+        return personRepository.count(name);
+    }
+
+    public Uni<Long> countMovies(Long personId, Class<T> personType, String term) {
+        return switch (personType.getSimpleName()) {
+            case "Actor" -> movieRepository.countMoviesByActor(personId, term);
+            case "Producer" -> movieRepository.countMoviesByProducer(personId, term);
+            case "Director" -> movieRepository.countMoviesByDirector(personId, term);
+            case "Screenwriter" -> movieRepository.countMoviesByScreenwriter(personId, term);
+            case "Musician" -> movieRepository.countMoviesByMusician(personId, term);
+            case "Decorator" -> movieRepository.countMoviesByDecorator(personId, term);
+            case "Costumier" -> movieRepository.countMoviesByCostumier(personId, term);
+            case "Photographer" -> movieRepository.countMoviesByPhotographer(personId, term);
+            case "Editor" -> movieRepository.countMoviesByEditor(personId, term);
+            case "Caster" -> movieRepository.countMoviesByCaster(personId, term);
+            case "ArtDirector" -> movieRepository.countMoviesByArtDirector(personId, term);
+            case "SoundEditor" -> movieRepository.countMoviesBySoundEditor(personId, term);
+            case "VisualEffectsSupervisor" -> movieRepository.countMoviesByVisualEffectsSupervisor(personId, term);
+            case "MakeupArtist" -> movieRepository.countMoviesByMakeupArtist(personId, term);
+            case "HairDresser" -> movieRepository.countMoviesByHairDresser(personId, term);
+            case "Stuntman" -> movieRepository.countMoviesByStuntman(personId, term);
+            default -> Uni.createFrom().failure(new IllegalArgumentException("Type inconnu"));
+        };
     }
 
     @Override
@@ -49,7 +81,6 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
         return personRepository.findById(id);
     }
 
-    @Override
     public Uni<Set<T>> getByIds(Set<PersonDTO> persons) {
         return
                 personRepository.findByIds(
@@ -60,23 +91,54 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
                 ).map(HashSet::new);
     }
 
+    @Override
     public Uni<List<T>> getByIds(List<Long> ids) {
         return personRepository.findByIds(ids);
     }
 
     @Override
-    public Uni<Set<T>> getAll() {
-        return personRepository.listAll().map(HashSet::new);
+    public Uni<List<T>> get(int pageIndex, int size, String sort, Sort.Direction direction, String name) {
+        return personRepository.find(pageIndex, size, sort, direction, name);
     }
 
-    public Uni<Set<Movie>> getMovies(T t) {
-        return Mutiny.fetch(t.getMovies());
+    @Override
+    public Uni<List<T>> getAll() {
+        return personRepository.listAll();
     }
 
-    public Uni<Set<Country>> getCountries(T t) {
-        return Mutiny.fetch(t.getCountries());
+    @Override
+    public Uni<List<Movie>> getMovies(Long personId, Class<T> personType, int page, int size, String sort, Sort.Direction direction, String term) {
+        return switch (personType.getSimpleName()) {
+            case "Actor" -> movieRepository.findMoviesByActor(personId, page, size, sort, direction, term);
+            case "Producer" -> movieRepository.findMoviesByProducer(personId, page, size, sort, direction, term);
+            case "Director" -> movieRepository.findMoviesByDirector(personId, page, size, sort, direction, term);
+            case "Screenwriter" ->
+                    movieRepository.findMoviesByScreenwriter(personId, page, size, sort, direction, term);
+            case "Musician" -> movieRepository.findMoviesByMusician(personId, page, size, sort, direction, term);
+            case "Decorator" -> movieRepository.findMoviesByDecorator(personId, page, size, sort, direction, term);
+            case "Costumier" -> movieRepository.findMoviesByCostumier(personId, page, size, sort, direction, term);
+            case "Photographer" ->
+                    movieRepository.findMoviesByPhotographer(personId, page, size, sort, direction, term);
+            case "Editor" -> movieRepository.findMoviesByEditor(personId, page, size, sort, direction, term);
+            case "Caster" -> movieRepository.findMoviesByCaster(personId, page, size, sort, direction, term);
+            case "ArtDirector" -> movieRepository.findMoviesByArtDirector(personId, page, size, sort, direction, term);
+            case "SoundEditor" -> movieRepository.findMoviesBySoundEditor(personId, page, size, sort, direction, term);
+            case "VisualEffectsSupervisor" ->
+                    movieRepository.findMoviesByVisualEffectsSupervisor(personId, page, size, sort, direction, term);
+            case "MakeupArtist" ->
+                    movieRepository.findMoviesByMakeupArtist(personId, page, size, sort, direction, term);
+            case "HairDresser" -> movieRepository.findMoviesByHairDresser(personId, page, size, sort, direction, term);
+            case "Stuntman" -> movieRepository.findMoviesByStuntman(personId, page, size, sort, direction, term);
+            default -> Uni.createFrom().failure(new IllegalArgumentException("Type inconnu"));
+        };
     }
 
+    @Override
+    public Uni<Set<Country>> getCountries(Long id) {
+        return personRepository.findById(id).flatMap(t -> Mutiny.fetch(t.getCountries()));
+    }
+
+    @Override
     public Uni<Set<Movie>> addMovie(Long id, Movie movie) {
         return
                 Panache
@@ -88,17 +150,7 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
                 ;
     }
 
-    /*public Uni<Set<Country>> addCountries(Long id, Set<Country> countrySet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                personRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .transformToUni(person -> person.addCountries(countrySet))
-                        )
-                ;
-    }*/
-
+    @Override
     public Uni<Set<Movie>> removeMovie(Long id, Long movieId) {
         return
                 Panache
@@ -109,17 +161,6 @@ public class PersonService<T extends Person> implements PersonServiceInterface<T
                         )
                 ;
     }
-
-    /*public Uni<Set<Country>> removeCountry(Long id, Long countryId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                personRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .transformToUni(person -> person.removeCountry(countryId))
-                        )
-                ;
-    }*/
 
     public Uni<T> save(PersonDTO personDTO, T instance) {
         return

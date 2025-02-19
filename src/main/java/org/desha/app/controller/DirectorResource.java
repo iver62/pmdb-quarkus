@@ -16,7 +16,7 @@ public class DirectorResource extends PersonResource<Director> {
 
     @Inject
     public DirectorResource(@PersonType(Role.DIRECTOR) PersonService<Director> directorService) {
-        super(directorService);
+        super(directorService, Director.class);
     }
 
     @Override

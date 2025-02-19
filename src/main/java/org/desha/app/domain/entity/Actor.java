@@ -6,14 +6,11 @@ import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.PersonDTO;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
@@ -57,12 +54,6 @@ public class Actor extends Person {
         return Uni.createFrom().item(Collections.emptySet());
     }
 
-    /**
-     * Retire un film de la liste des films
-     *
-     * @param id l'identifiant du film
-     * @return la liste des films
-     */
     public Uni<Set<Movie>> removeMovie(Long id) {
         return Uni.createFrom().item(Collections.emptySet());
     }

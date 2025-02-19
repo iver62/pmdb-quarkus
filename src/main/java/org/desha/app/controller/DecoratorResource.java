@@ -16,7 +16,7 @@ public class DecoratorResource extends PersonResource<Decorator> {
 
     @Inject
     public DecoratorResource(@PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService) {
-        super(decoratorService);
+        super(decoratorService, Decorator.class);
     }
 
     @Override

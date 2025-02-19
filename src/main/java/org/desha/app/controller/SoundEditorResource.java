@@ -16,7 +16,7 @@ public class SoundEditorResource extends PersonResource<SoundEditor> {
 
     @Inject
     public SoundEditorResource(@PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService) {
-        super(soundEditorService);
+        super(soundEditorService, SoundEditor.class);
     }
 
     @Override

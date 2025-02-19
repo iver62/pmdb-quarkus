@@ -16,7 +16,7 @@ public class HairDresserResource extends PersonResource<HairDresser> {
 
     @Inject
     public HairDresserResource(@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService) {
-        super(hairDresserService);
+        super(hairDresserService, HairDresser.class);
     }
 
     @Override

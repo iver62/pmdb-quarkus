@@ -13,6 +13,7 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -26,6 +27,8 @@ import java.util.Set;
         @NamedQuery(name = "Person.searchByName", query = "from Person where lower(name) LIKE lower(?1)")
 })
 public abstract class Person extends PanacheEntity implements Comparable<Person> {
+
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("name", "dateOfBirth", "dateOfDeath", "creationDate", "lastUpdate");
 
     @Column(name = "nom")
     protected String name;
@@ -91,10 +94,6 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
     public abstract Uni<Set<Movie>> removeMovie(Long id);
 
     public abstract Set<Country> getCountries();
-
-//    public abstract Uni<Set<Country>> addCountries(Set<Country> countrySet);
-
-//    public abstract Uni<Set<Country>> removeCountry(Long id);
 
     public abstract void setCountries(Set<Country> countrySet);
 

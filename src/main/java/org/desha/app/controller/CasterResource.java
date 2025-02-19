@@ -16,7 +16,7 @@ public class CasterResource extends PersonResource<Caster> {
 
     @Inject
     public CasterResource(@PersonType(Role.CASTER) PersonService<Caster> casterService) {
-        super(casterService);
+        super(casterService, Caster.class);
     }
 
     @Override

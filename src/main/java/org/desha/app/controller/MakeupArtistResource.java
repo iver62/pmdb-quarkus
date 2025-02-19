@@ -16,7 +16,7 @@ public class MakeupArtistResource extends PersonResource<MakeupArtist> {
 
     @Inject
     public MakeupArtistResource(@PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService) {
-        super(makeupArtistService);
+        super(makeupArtistService, MakeupArtist.class);
     }
 
     @Override
