@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
@@ -79,8 +80,8 @@ public class CountryResource {
                         .flatMap(movieList ->
                                 Country.countMovies(id, term).map(total ->
                                         movieList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -108,8 +109,8 @@ public class CountryResource {
                         .flatMap(movieList ->
                                 Country.countMovies(id, term).map(total ->
                                         movieList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -137,8 +138,8 @@ public class CountryResource {
                         .flatMap(actorList ->
                                 Country.countActors(id, term).map(total ->
                                         actorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(actorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(actorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -166,8 +167,8 @@ public class CountryResource {
                         .flatMap(producerList ->
                                 Country.countProducers(id, term).map(total ->
                                         producerList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(producerList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(producerList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -195,8 +196,8 @@ public class CountryResource {
                         .flatMap(directorList ->
                                 Country.countDirectors(id, term).map(total ->
                                         directorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(directorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(directorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -224,8 +225,8 @@ public class CountryResource {
                         .flatMap(screenwriterList ->
                                 Country.countScreenwriters(id, term).map(total ->
                                         screenwriterList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(screenwriterList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(screenwriterList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -253,8 +254,8 @@ public class CountryResource {
                         .flatMap(musicianList ->
                                 Country.countMusicians(id, term).map(total ->
                                         musicianList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(musicianList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(musicianList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -282,8 +283,8 @@ public class CountryResource {
                         .flatMap(decoratorList ->
                                 Country.countDecorators(id, term).map(total ->
                                         decoratorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(decoratorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(decoratorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -311,8 +312,8 @@ public class CountryResource {
                         .flatMap(costumierList ->
                                 Country.countCostumiers(id, term).map(total ->
                                         costumierList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(costumierList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(costumierList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -340,8 +341,8 @@ public class CountryResource {
                         .flatMap(photographerList ->
                                 Country.countPhotographers(id, term).map(total ->
                                         photographerList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(photographerList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(photographerList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -369,8 +370,8 @@ public class CountryResource {
                         .flatMap(editorList ->
                                 Country.countEditors(id, term).map(total ->
                                         editorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(editorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(editorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -398,8 +399,8 @@ public class CountryResource {
                         .flatMap(casterList ->
                                 Country.countCasters(id, term).map(total ->
                                         casterList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(casterList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(casterList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -427,8 +428,8 @@ public class CountryResource {
                         .flatMap(artDirectorList ->
                                 Country.countArtDirectors(id, term).map(total ->
                                         artDirectorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(artDirectorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(artDirectorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -456,8 +457,8 @@ public class CountryResource {
                         .flatMap(soundEditorList ->
                                 Country.countSoundEditors(id, term).map(total ->
                                         soundEditorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(soundEditorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(soundEditorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -485,8 +486,8 @@ public class CountryResource {
                         .flatMap(visualEffectsSupervisorList ->
                                 Country.countVisualEffectsSupervisors(id, term).map(total ->
                                         visualEffectsSupervisorList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(visualEffectsSupervisorList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(visualEffectsSupervisorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -514,8 +515,8 @@ public class CountryResource {
                         .flatMap(makeupArtistList ->
                                 Country.countMakeupArtists(id, term).map(total ->
                                         makeupArtistList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(makeupArtistList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(makeupArtistList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -543,8 +544,8 @@ public class CountryResource {
                         .flatMap(hairDresserList ->
                                 Country.countHairDressers(id, term).map(total ->
                                         hairDresserList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(hairDresserList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(hairDresserList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -572,8 +573,8 @@ public class CountryResource {
                         .flatMap(stuntmanList ->
                                 Country.countStuntmen(id, term).map(total ->
                                         stuntmanList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(stuntmanList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(stuntmanList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;

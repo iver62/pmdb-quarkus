@@ -9,6 +9,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.Role;
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
@@ -103,8 +104,9 @@ public class MovieResource {
     @GET
     @Path("count")
     public Uni<Response> count(@QueryParam("title") @DefaultValue("") String title) {
-        return Movie.count(title)
-                .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
+        return
+                Movie.count(title)
+                        .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
     @GET
@@ -138,12 +140,12 @@ public class MovieResource {
         }
 
         return
-                Movie.getPaginatedMovies(page, size, sort, sortDirection, title)
+                Movie.getMovies(page, size, sort, sortDirection, title)
                         .flatMap(movieList ->
                                 Movie.count(title).map(total ->
                                         movieList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                         .onFailure().recoverWithItem(err ->
@@ -172,12 +174,12 @@ public class MovieResource {
         }
 
         return
-                Movie.getMovies(sort, sortDirection, title)
+                Movie.getAllMovies(sort, sortDirection, title)
                         .flatMap(movieList ->
                                 Movie.count(title).map(total ->
                                         movieList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                         .onFailure().recoverWithItem(err ->
@@ -191,16 +193,6 @@ public class MovieResource {
     public Uni<Response> getByTitle(@RestPath String title) {
         return
                 Movie.getByTitle(title)
-                        .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
-                ;
-    }
-
-    @GET
-    @Path("search/{pattern}")
-    public Uni<Response> searchByTitle(@RestPath String pattern) {
-        return
-                Movie.searchByTitle(pattern)
                         .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
@@ -896,7 +888,7 @@ public class MovieResource {
                                         ? Person.findById(movieActor.getActor().id)
                                         : movieActor.getActor().persist()
                         )
-                        .map(panacheEntityBase -> (Person) panacheEntityBase)
+                        .map(Person.class::cast)
                         .chain(() -> movieService.addRole(id, movieActor))
                         .map(
                                 movie ->

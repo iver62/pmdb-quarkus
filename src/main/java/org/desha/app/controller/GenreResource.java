@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.GenreDTO;
 import org.desha.app.domain.entity.Genre;
 import org.jboss.resteasy.reactive.RestPath;
@@ -83,8 +84,8 @@ public class GenreResource {
                         .flatMap(movieList ->
                                 Genre.countMovies(id, title).map(total ->
                                         movieList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                         .onFailure().recoverWithItem(err ->

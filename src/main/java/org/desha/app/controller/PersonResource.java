@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -67,8 +68,8 @@ public abstract class PersonResource<T extends Person> {
                         .flatMap(tList ->
                                 personService.count(term).map(total ->
                                         tList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(tList.stream().map(PersonDTO::fromEntity)).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(tList.stream().map(PersonDTO::fromEntity)).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -106,8 +107,8 @@ public abstract class PersonResource<T extends Person> {
                         .flatMap(movieList ->
                                 personService.countMovies(id, personClass, term).map(total ->
                                         movieList.isEmpty()
-                                                ? Response.noContent().header("X-Total-Count", total).build()
-                                                : Response.ok(movieList).header("X-Total-Count", total).build()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
