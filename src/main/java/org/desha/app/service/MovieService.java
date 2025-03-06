@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.Role;
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
+import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
 import org.desha.app.domain.entity.*;
 import org.desha.app.qualifier.PersonType;
@@ -18,6 +20,8 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,13 +41,13 @@ public class MovieService {
     private final PersonService<Caster> casterService;
     private final PersonService<Costumier> costumierService;
     private final PersonService<Decorator> decoratorService;
-    private final PersonService<Director> directorService;
+    private final DirectorService directorService;
     private final PersonService<Editor> editorService;
     private final PersonService<HairDresser> hairDresserService;
     private final PersonService<MakeupArtist> makeupArtistService;
     private final PersonService<Musician> musicianService;
     private final PersonService<Photographer> photographerService;
-    private final PersonService<Producer> producerService;
+    private final ProducerService producerService;
     private final PersonService<Screenwriter> screenwriterService;
     private final PersonService<SoundEditor> soundEditorService;
     private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
@@ -65,13 +69,13 @@ public class MovieService {
             @PersonType(Role.CASTER) PersonService<Caster> casterService,
             @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
             @PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService,
-            @PersonType(Role.DIRECTOR) PersonService<Director> directorService,
+            DirectorService directorService,
             @PersonType(Role.EDITOR) PersonService<Editor> editorService,
             @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
             @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
             @PersonType(Role.MUSICIAN) PersonService<Musician> musicianService,
             @PersonType(Role.PHOTOGRAPHER) PersonService<Photographer> photographerService,
-            @PersonType(Role.PRODUCER) PersonService<Producer> producerService,
+            ProducerService producerService,
             @PersonType(Role.SCREENWRITER) PersonService<Screenwriter> screenwriterService,
             @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
             @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
@@ -101,36 +105,97 @@ public class MovieService {
         this.stuntmanService = stuntmanService;
     }
 
-    /*public Uni<Long> count() {
-        return Movie.count();
-    }*/
+    public Uni<Long> count(
+            String term,
+            List<Integer> countryIds,
+            List<Integer> genreIds,
+            LocalDate fromReleaseDate,
+            LocalDate toReleaseDate,
+            LocalDateTime fromCreationDate,
+            LocalDateTime toCreationDate,
+            LocalDateTime fromLastUpdate,
+            LocalDateTime toLastUpdate
+    ) {
+        return movieRepository.countMovies(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate);
+    }
 
-    /*public Uni<Movie> getSingle(Long id) {
-        return movieRepository.findById(id);
-    }*/
-
-    /*public Uni<List<Movie>> getPaginatedMovies(int pageIndex, int size, String sort, Sort.Direction direction) {
+    public Uni<Movie> getById(Long id) {
         return
-                Movie.findAll(Sort.by(sort, direction))
-                        .page(pageIndex, size)
-                        .list()
+                movieRepository.findByIdWithCountriesAndGenres(id)
+                        .onFailure().recoverWithNull()
                 ;
-    }*/
+    }
 
-    public Uni<Set<Movie>> getByTitle(String pattern) {
+    public Uni<List<MovieDTO>> getMovies(
+            int pageIndex,
+            int size,
+            String sort,
+            Sort.Direction direction,
+            String term,
+            List<Integer> countryIds,
+            List<Integer> genreIds,
+            LocalDate fromReleaseDate,
+            LocalDate toReleaseDate,
+            LocalDateTime fromCreationDate,
+            LocalDateTime toCreationDate,
+            LocalDateTime fromLastUpdate,
+            LocalDateTime toLastUpdate
+    ) {
+        return
+                movieRepository
+                        .findMovies(pageIndex, size, sort, direction, term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                        .map(
+                                movieList ->
+                                        movieList
+                                                .stream()
+                                                .map(MovieDTO::fromEntity)
+                                                .toList()
+                        )
+                ;
+    }
+
+    public Uni<List<Movie>> getByTitle(String pattern) {
         return movieRepository.findByTitle(pattern);
     }
 
-    public Uni<List<MovieActor>> getActorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getMovieActors())
-                .map(
-                        movieActors ->
-                                movieActors
-                                        .stream()
-                                        .sorted(Comparator.comparing(MovieActor::getRank))
-                                        .toList()
-                )
-                .onItem().ifNull().continueWith(Collections.emptyList());
+    public Uni<List<MovieActorDTO>> getActorsByMovie(Movie movie) {
+        return
+                Mutiny.fetch(movie.getMovieActors())
+                        .map(
+                                movieActors ->
+                                        movieActors
+                                                .stream()
+                                                .map(MovieActorDTO::fromEntity)
+                                                .sorted(Comparator.comparing(MovieActorDTO::getRank))
+                                                .toList()
+                        )
+                        .onItem().ifNull().continueWith(Collections.emptyList())
+                ;
+    }
+
+    public Uni<TechnicalTeamDTO> getTechnicalTeam(Long id) {
+        return
+                movieRepository.findByIdWithTechnicalTeam(id)
+                        .map(movie ->
+                                TechnicalTeamDTO.build(
+                                        movie.getProducers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getScreenwriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getMusicians().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getPhotographers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getCostumiers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getDecorators().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getCasters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getArtDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getVisualEffectsSupervisors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getMakeupArtists().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getHairDressers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                        movie.getStuntmen().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet())
+                                )
+                        )
+                ;
     }
 
     public Uni<Set<Producer>> getProducersByMovie(Movie movie) {
@@ -273,7 +338,7 @@ public class MovieService {
                 ;
     }
 
-    public Uni<TechnicalTeam> saveTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
+    public Uni<TechnicalTeamDTO> saveTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
         return
                 Panache
                         .withTransaction(() ->
@@ -281,90 +346,29 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
                                         .call(
                                                 movie ->
-                                                        producerService.getByIds(technicalTeam.getProducers())
-                                                                .invoke(movie::setProducers)
-                                                                .chain(() ->
-                                                                        directorService.getByIds(technicalTeam.getDirectors())
-                                                                                .invoke(movie::setDirectors)
-                                                                )
-                                                                .chain(() ->
-                                                                        screenwriterService.getByIds(technicalTeam.getScreenwriters())
-                                                                                .invoke(movie::setScreenwriters)
-                                                                )
-                                                                .chain(() ->
-                                                                        musicianService.getByIds(technicalTeam.getMusicians())
-                                                                                .invoke(movie::setMusicians)
-                                                                )
-                                                                .chain(() ->
-                                                                        photographerService.getByIds(technicalTeam.getPhotographers())
-                                                                                .invoke(movie::setPhotographers)
-                                                                )
-                                                                .chain(() ->
-                                                                        costumierService.getByIds(technicalTeam.getCostumiers())
-                                                                                .invoke(movie::setCostumiers)
-                                                                )
-                                                                .chain(() ->
-                                                                        decoratorService.getByIds(technicalTeam.getDecorators())
-                                                                                .invoke(movie::setDecorators)
-                                                                )
-                                                                .chain(() ->
-                                                                        editorService.getByIds(technicalTeam.getEditors())
-                                                                                .invoke(movie::setEditors)
-                                                                )
-                                                                .chain(() ->
-                                                                        casterService.getByIds(technicalTeam.getCasters())
-                                                                                .invoke(movie::setCasters)
-                                                                )
-                                                                .chain(() ->
-                                                                        artDirectorService.getByIds(technicalTeam.getArtDirectors())
-                                                                                .invoke(movie::setArtDirectors)
-                                                                )
-                                                                .chain(() ->
-                                                                        soundEditorService.getByIds(technicalTeam.getSoundEditors())
-                                                                                .invoke(movie::setSoundEditors)
-                                                                )
-                                                                .chain(() ->
-                                                                        visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors())
-                                                                                .invoke(movie::setVisualEffectsSupervisors)
-                                                                )
-                                                                .chain(() ->
-                                                                        makeupArtistService.getByIds(technicalTeam.getMakeupArtists())
-                                                                                .invoke(movie::setMakeupArtists)
-                                                                )
-                                                                .chain(() ->
-                                                                        hairDresserService.getByIds(technicalTeam.getHairDressers())
-                                                                                .invoke(movie::setHairDressers)
-                                                                )
-                                                                .chain(() ->
-                                                                        stuntmanService.getByIds(technicalTeam.getStuntmen())
-                                                                                .invoke(movie::setStuntmen)
-                                                                )
+                                                        producerService.getByIds(technicalTeam.getProducers()).invoke(movie::setProducers)
+                                                                .chain(() -> directorService.getByIds(technicalTeam.getDirectors()).invoke(movie::setDirectors))
+                                                                .chain(() -> screenwriterService.getByIds(technicalTeam.getScreenwriters()).invoke(movie::setScreenwriters))
+                                                                .chain(() -> musicianService.getByIds(technicalTeam.getMusicians()).invoke(movie::setMusicians))
+                                                                .chain(() -> photographerService.getByIds(technicalTeam.getPhotographers()).invoke(movie::setPhotographers))
+                                                                .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
+                                                                .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
+                                                                .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
+                                                                .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
+                                                                .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
+                                                                .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
+                                                                .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
+                                                                .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
+                                                                .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
+                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))
+                                                                .invoke(() -> movie.setLastUpdate(LocalDateTime.now()))
                                         )
-                                        .map(
-                                                movie ->
-                                                        TechnicalTeam.build(
-                                                                movie.getProducers(),
-                                                                movie.getDirectors(),
-                                                                movie.getScreenwriters(),
-                                                                movie.getMusicians(),
-                                                                movie.getPhotographers(),
-                                                                movie.getCostumiers(),
-                                                                movie.getDecorators(),
-                                                                movie.getEditors(),
-                                                                movie.getCasters(),
-                                                                movie.getArtDirectors(),
-                                                                movie.getSoundEditors(),
-                                                                movie.getVisualEffectsSupervisors(),
-                                                                movie.getMakeupArtists(),
-                                                                movie.getHairDressers(),
-                                                                movie.getStuntmen()
-                                                        )
-                                        )
+                                        .map(TechnicalTeamDTO::fromEntity)
                         )
                 ;
     }
 
-    public Uni<List<MovieActor>> saveCasting(Long id, List<MovieActorDTO> movieActorsList) {
+    public Uni<List<MovieActorDTO>> saveCasting(Long id, List<MovieActorDTO> movieActorsList) {
         Map<Long, String> roleMap = movieActorsList
                 .stream()
                 .collect(Collectors.toMap(movieActorDTO -> movieActorDTO.getActor().getId(), MovieActorDTO::getRole));
@@ -438,11 +442,16 @@ public class MovieService {
                                                                                         return modifiableMovieActors;
                                                                                     }
                                                                             )
-                                                                            .invoke(movie::setMovieActors))
+                                                                            .invoke(movieActors -> {
+                                                                                movie.setMovieActors(movieActors);
+                                                                                movie.setLastUpdate(LocalDateTime.now());
+                                                                            })
+                                                            )
                                                             .map(movieActors ->
                                                                     movieActors
                                                                             .stream()
                                                                             .sorted(Comparator.comparing(MovieActor::getRank))
+                                                                            .map(MovieActorDTO::fromEntity)
                                                                             .toList()
                                                             );
                                         })
@@ -988,7 +997,6 @@ public class MovieService {
                                                 }
                                         )
                         )
-
                 ;
     }
 
