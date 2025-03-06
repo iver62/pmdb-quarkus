@@ -233,9 +233,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec le nom des castings (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de castings correspondant aux critères de recherche.
      */
-    public Uni<Long> countCastersByCountry(Long id, String term) {
-        return casterRepository.countCastersByMovie(id, term);
-    }
+//    public Uni<Long> countCastersByCountry(Long id, String term) {
+//        return casterRepository.countCastersByMovie(id, term);
+//    }
 
     /**
      * Compte le nombre de directeurs artistiques associés à un pays donné, en fonction d'un terme de recherche sur leur nom.

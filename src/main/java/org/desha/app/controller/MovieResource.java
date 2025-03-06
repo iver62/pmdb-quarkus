@@ -41,7 +41,7 @@ public class MovieResource {
     private final MovieService movieService;
 
     //    private final PersonService<ArtDirector> artDirectorService;
-//    private final PersonService<Caster> casterService;
+    private final CasterService casterService;
     private final PersonService<Costumier> costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
@@ -61,6 +61,7 @@ public class MovieResource {
             CountryService countryService,
             GenreService genreService,
             MovieService movieService,
+            CasterService casterService,
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
@@ -70,7 +71,7 @@ public class MovieResource {
             ProducerService producerService,
             ScreenwriterService screenwriterService
             /*@PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
-            @PersonType(Role.CASTER) PersonService<Caster> casterService,
+
 
             @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
             @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
@@ -82,7 +83,7 @@ public class MovieResource {
         this.genreService = genreService;
         this.movieService = movieService;
 //        this.artDirectorService = artDirectorService;
-//        this.casterService = casterService;
+        this.casterService = casterService;
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;

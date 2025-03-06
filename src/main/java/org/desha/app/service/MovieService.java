@@ -36,7 +36,7 @@ public class MovieService {
 
     private final ActorService actorService;
     //    private final PersonService<ArtDirector> artDirectorService;
-//    private final PersonService<Caster> casterService;
+    private final CasterService casterService;
     private final CostumierService costumierService;
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
@@ -64,7 +64,7 @@ public class MovieService {
             MovieActorRepository movieActorRepository,
             ActorService actorService,
 //            @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
-//            @PersonType(Role.CASTER) PersonService<Caster> casterService,
+            CasterService casterService,
             CostumierService costumierService,
             DecoratorService decoratorService,
             DirectorService directorService,
@@ -87,7 +87,7 @@ public class MovieService {
         this.movieActorRepository = movieActorRepository;
         this.actorService = actorService;
 //        this.artDirectorService = artDirectorService;
-//        this.casterService = casterService;
+        this.casterService = casterService;
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
         this.directorService = directorService;
@@ -352,7 +352,7 @@ public class MovieService {
                                                                         .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
                                                                         .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
                                                                         .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
-//                                                                .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
+                                                                        .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
 //                                                                .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
 //                                                                .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
 //                                                                .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
