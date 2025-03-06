@@ -291,9 +291,9 @@ public class CountryService {
      * @param term Le terme de recherche appliqué au nom des coiffeurs (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre total de coiffeurs correspondant aux critères.
      */
-    public Uni<Long> countHairDressersByCountry(Long id, String term) {
+    /*public Uni<Long> countHairDressersByCountry(Long id, String term) {
         return hairDresserRepository.countHairDressersByCountry(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de cascadeurs associés à un pays spécifique correspondant à un terme de recherche donné.

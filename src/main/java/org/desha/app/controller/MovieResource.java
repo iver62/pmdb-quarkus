@@ -45,7 +45,7 @@ public class MovieResource {
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
     private final EditorService editorService;
-    //    private final PersonService<HairDresser> hairDresserService;
+    private final HairDresserService hairDresserService;
     private final MakeupArtistService makeupArtistService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
@@ -72,9 +72,9 @@ public class MovieResource {
             ProducerService producerService,
             ScreenwriterService screenwriterService,
             SoundEditorService soundEditorService,
-            VisualEffectsSupervisorService visualEffectsSupervisorService
-            /*@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService
-            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService*/
+            VisualEffectsSupervisorService visualEffectsSupervisorService,
+            HairDresserService hairDresserService
+//            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
     ) {
         this.countryService = countryService;
         this.genreService = genreService;
@@ -85,7 +85,7 @@ public class MovieResource {
         this.decoratorService = decoratorService;
         this.directorService = directorService;
         this.editorService = editorService;
-//        this.hairDresserService = hairDresserService;
+        this.hairDresserService = hairDresserService;
         this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
         this.photographerService = photographerService;
@@ -994,7 +994,7 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    @PUT
     @Path("{movieId}/hair-dressers/{hairDresserId}")
     public Uni<Response> removeHairDressers(Long movieId, Long hairDresserId) {
         return
@@ -1006,7 +1006,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/stuntmen/{stuntmanId}")
     public Uni<Response> removeStuntman(Long movieId, Long stuntmanId) {
         return

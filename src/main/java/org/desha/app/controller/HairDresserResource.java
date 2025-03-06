@@ -1,27 +1,20 @@
 package org.desha.app.controller;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Role;
 import org.desha.app.domain.entity.HairDresser;
-import org.desha.app.qualifier.PersonType;
-import org.desha.app.service.PersonService;
+import org.desha.app.service.HairDresserService;
 
 @Path("hair-dressers")
-@ApplicationScoped
+@Singleton
 @Slf4j
 public class HairDresserResource extends PersonResource<HairDresser> {
 
     @Inject
-    public HairDresserResource(@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService) {
-        super(hairDresserService, HairDresser.class);
-    }
-
-    @Override
-    protected HairDresser createEntityInstance() {
-        return HairDresser.builder().build();
+    public HairDresserResource(HairDresserService hairDresserService) {
+        super(hairDresserService);
     }
 
 }

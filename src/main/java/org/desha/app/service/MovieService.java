@@ -41,7 +41,7 @@ public class MovieService {
     private final DecoratorService decoratorService;
     private final DirectorService directorService;
     private final EditorService editorService;
-    //    private final PersonService<HairDresser> hairDresserService;
+    private final HairDresserService hairDresserService;
     private final MakeupArtistService makeupArtistService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
@@ -69,7 +69,7 @@ public class MovieService {
             DecoratorService decoratorService,
             DirectorService directorService,
             EditorService editorService,
-//            @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
+            HairDresserService hairDresserService,
             MakeupArtistService makeupArtistService,
             MusicianService musicianService,
             PhotographerService photographerService,
@@ -92,7 +92,7 @@ public class MovieService {
         this.decoratorService = decoratorService;
         this.directorService = directorService;
         this.editorService = editorService;
-//        this.hairDresserService = hairDresserService;
+        this.hairDresserService = hairDresserService;
         this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
         this.photographerService = photographerService;
@@ -357,7 +357,7 @@ public class MovieService {
                                                                         .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
                                                                         .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
                                                                         .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
-//                                                                .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
+                                                                        .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
 //                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))
                                                                         .invoke(() -> movie.setLastUpdate(LocalDateTime.now()))
                                                 )
