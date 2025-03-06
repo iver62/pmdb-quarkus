@@ -48,7 +48,7 @@ public class MovieService {
     private final PersonService<Musician> musicianService;
     private final PersonService<Photographer> photographerService;
     private final ProducerService producerService;
-    private final PersonService<Screenwriter> screenwriterService;
+    private final ScreenwriterService screenwriterService;
     private final PersonService<SoundEditor> soundEditorService;
     private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
     private final PersonService<Stuntman> stuntmanService;
@@ -76,7 +76,7 @@ public class MovieService {
             @PersonType(Role.MUSICIAN) PersonService<Musician> musicianService,
             @PersonType(Role.PHOTOGRAPHER) PersonService<Photographer> photographerService,
             ProducerService producerService,
-            @PersonType(Role.SCREENWRITER) PersonService<Screenwriter> screenwriterService,
+            ScreenwriterService screenwriterService,
             @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
             @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
             @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
