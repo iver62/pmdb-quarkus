@@ -1,12 +1,14 @@
 package org.desha.app.domain.entity;
 
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.Set;
 
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TechnicalTeam {
 
     private Set<Producer> producers;

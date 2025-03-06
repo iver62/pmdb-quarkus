@@ -49,9 +49,9 @@ public class MovieResource {
 //    private final PersonService<HairDresser> hairDresserService;
 //    private final PersonService<MakeupArtist> makeupArtistService;
     private final MusicianService musicianService;
-    //    private final PersonService<Photographer> photographerService;
+    private final PhotographerService photographerService;
     private final ProducerService producerService;
-//    private final ScreenwriterService screenwriterService;
+    private final ScreenwriterService screenwriterService;
 //    private final PersonService<SoundEditor> soundEditorService;
 //    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
 //    private final PersonService<Stuntman> stuntmanService;
@@ -65,18 +65,14 @@ public class MovieResource {
             DecoratorService decoratorService,
             DirectorService directorService,
             MusicianService musicianService,
-            ProducerService producerService
+            PhotographerService photographerService,
+            ProducerService producerService,
+            ScreenwriterService screenwriterService
             /*@PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
             @PersonType(Role.CASTER) PersonService<Caster> casterService,
-
-            @PersonType(Role.DIRECTOR) PersonService<Director> directorService,
             @PersonType(Role.EDITOR) PersonService<Editor> editorService,
             @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
             @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
-            @PersonType(Role.MUSICIAN) PersonService<Musician> musicianService,
-            @PersonType(Role.PHOTOGRAPHER) PersonService<Photographer> photographerService,
-            @PersonType(Role.PRODUCER) PersonService<Producer> producerService,
-            @PersonType(Role.SCREENWRITER) PersonService<Screenwriter> screenwriterService,
             @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
             @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
             @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService*/
@@ -93,9 +89,9 @@ public class MovieResource {
 //        this.hairDresserService = hairDresserService;
 //        this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
-//        this.photographerService = photographerService;
+        this.photographerService = photographerService;
         this.producerService = producerService;
-//        this.screenwriterService = screenwriterService;
+        this.screenwriterService = screenwriterService;
 //        this.soundEditorService = soundEditorService;
 //        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
 //        this.stuntmanService = stuntmanService;
@@ -867,7 +863,7 @@ public class MovieResource {
                 ;
     }
 
-   /* @PUT
+    @PUT
     @Path("{movieId}/screenwriters/{screenwriterId}")
     public Uni<Response> removeScreenwriter(Long movieId, Long screenwriterId) {
         return
@@ -927,7 +923,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/editors/{editorId}")
     public Uni<Response> removeEditor(Long movieId, Long editorId) {
         return

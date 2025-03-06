@@ -211,9 +211,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec le nom des photographes (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de photographes correspondant aux critères.
      */
-    public Uni<Long> countPhotographersByCountry(Long id, String term) {
+    /*public Uni<Long> countPhotographersByCountry(Long id, String term) {
         return photographerRepository.countPhotographersByCountry(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de monteurs associés à un pays donné, en fonction d'un terme de recherche sur leur nom.
