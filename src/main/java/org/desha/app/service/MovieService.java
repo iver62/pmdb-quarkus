@@ -48,7 +48,7 @@ public class MovieService {
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
     private final SoundEditorService soundEditorService;
-//    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
+    private final VisualEffectsSupervisorService visualEffectsSupervisorService;
 //    private final PersonService<Stuntman> stuntmanService;
 
     private static final String POSTERS_DIR = "posters/";
@@ -75,8 +75,8 @@ public class MovieService {
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
-            SoundEditorService soundEditorService
-//            @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
+            SoundEditorService soundEditorService,
+            VisualEffectsSupervisorService visualEffectsSupervisorService
 //            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
     ) {
         this.msf = msf;
@@ -99,7 +99,7 @@ public class MovieService {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
-//        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
 //        this.stuntmanService = stuntmanService;
     }
 
@@ -355,7 +355,7 @@ public class MovieService {
                                                                         .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
                                                                         .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
                                                                         .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
-//                                                                .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
+                                                                        .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
 //                                                                .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
 //                                                                .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
 //                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))

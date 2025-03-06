@@ -268,9 +268,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec les noms des superviseurs des effets spéciaux (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de superviseurs des effets spéciaux correspondant aux critères.
      */
-    public Uni<Long> countVisualEffectsSupervisorsByCountry(Long id, String term) {
+    /*public Uni<Long> countVisualEffectsSupervisorsByCountry(Long id, String term) {
         return visualEffectsSupervisorRepository.countVisualEffectsSupervisorsByCountry(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de maquilleurs associés à un pays spécifique, en filtrant les résultats avec un terme

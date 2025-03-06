@@ -39,7 +39,6 @@ public class MovieResource {
     private final CountryService countryService;
     private final GenreService genreService;
     private final MovieService movieService;
-
     private final ArtDirectorService artDirectorService;
     private final CasterService casterService;
     private final PersonService<Costumier> costumierService;
@@ -53,7 +52,7 @@ public class MovieResource {
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
     private final SoundEditorService soundEditorService;
-//    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
+    private final VisualEffectsSupervisorService visualEffectsSupervisorService;
 //    private final PersonService<Stuntman> stuntmanService;
 
     @Inject
@@ -71,13 +70,13 @@ public class MovieResource {
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
-            SoundEditorService soundEditorService
-
+            SoundEditorService soundEditorService,
+            VisualEffectsSupervisorService visualEffectsSupervisorService
 
             /*@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
             @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
 
-            @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
+
             @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService*/
     ) {
         this.countryService = countryService;
@@ -96,7 +95,7 @@ public class MovieResource {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
-//        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
 //        this.stuntmanService = stuntmanService;
     }
 
@@ -974,7 +973,7 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    @PUT
     @Path("{movieId}/visual-effects-supervisors/{visualEffectsSupervisorId}")
     public Uni<Response> removeVisualEffectsSupervisor(Long movieId, Long visualEffectsSupervisorId) {
         return
@@ -986,7 +985,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/makeup-artists/{makeupArtistId}")
     public Uni<Response> removeMakeupArtists(Long movieId, Long makeupArtistId) {
         return
