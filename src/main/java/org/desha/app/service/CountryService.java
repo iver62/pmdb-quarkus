@@ -280,9 +280,9 @@ public class CountryService {
      * @param term Le terme de recherche à appliquer sur les noms des maquilleurs (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de maquilleurs correspondant à la recherche.
      */
-    public Uni<Long> countMakeupArtistsByCountry(Long id, String term) {
+    /*public Uni<Long> countMakeupArtistsByCountry(Long id, String term) {
         return makeupArtistRepository.countMakeupArtistsByMovie(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de coiffeurs associés à un pays spécifique en fonction d'un terme de recherche appliqué à leur nom.

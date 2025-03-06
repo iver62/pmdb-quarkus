@@ -46,7 +46,7 @@ public class MovieResource {
     private final DirectorService directorService;
     private final EditorService editorService;
     //    private final PersonService<HairDresser> hairDresserService;
-//    private final PersonService<MakeupArtist> makeupArtistService;
+    private final MakeupArtistService makeupArtistService;
     private final MusicianService musicianService;
     private final PhotographerService photographerService;
     private final ProducerService producerService;
@@ -66,17 +66,14 @@ public class MovieResource {
             DecoratorService decoratorService,
             DirectorService directorService,
             EditorService editorService,
+            MakeupArtistService makeupArtistService,
             MusicianService musicianService,
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
             SoundEditorService soundEditorService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
-
-            /*@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
-            @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
-
-
+            /*@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService
             @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService*/
     ) {
         this.countryService = countryService;
@@ -89,7 +86,7 @@ public class MovieResource {
         this.directorService = directorService;
         this.editorService = editorService;
 //        this.hairDresserService = hairDresserService;
-//        this.makeupArtistService = makeupArtistService;
+        this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
         this.photographerService = photographerService;
         this.producerService = producerService;
@@ -985,7 +982,7 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    @PUT
     @Path("{movieId}/makeup-artists/{makeupArtistId}")
     public Uni<Response> removeMakeupArtists(Long movieId, Long makeupArtistId) {
         return
@@ -997,7 +994,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/hair-dressers/{hairDresserId}")
     public Uni<Response> removeHairDressers(Long movieId, Long hairDresserId) {
         return
