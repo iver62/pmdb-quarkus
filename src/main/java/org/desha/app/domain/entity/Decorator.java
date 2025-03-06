@@ -6,6 +6,8 @@ import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.PersonDTO;
+import org.desha.app.service.PersonServiceImpl;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -16,9 +18,7 @@ import java.util.Set;
 
 @Slf4j
 @Entity
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 @Table(name = "decorateur")
@@ -30,10 +30,8 @@ public class Decorator extends Person {
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
 
-    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_pays_decorateur", joinColumns = @JoinColumn(name = "fk_decorateur"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
-    @Fetch(FetchMode.SELECT)
     private Set<Country> countries = new HashSet<>();
 
     public Uni<Set<Movie>> addMovie(Movie movie) {
@@ -45,6 +43,23 @@ public class Decorator extends Person {
                                     return movieSet;
                                 }
                         )
+                ;
+    }
+
+    @Builder
+    public Decorator(Long id, String name, String photoFileName) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.photoFileName = photoFileName;
+    }
+
+    public static Decorator fromDTO(PersonDTO personDTO) {
+        return
+                Decorator.builder()
+                        .name(personDTO.getName())
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonServiceImpl.DEFAULT_PHOTO)
+                        .build()
                 ;
     }
 
@@ -65,6 +80,5 @@ public class Decorator extends Person {
                         )
                 ;
     }
-
 
 }

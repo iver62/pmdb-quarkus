@@ -40,7 +40,7 @@ public class MovieService {
 //    private final PersonService<ArtDirector> artDirectorService;
 //    private final PersonService<Caster> casterService;
 //    private final PersonService<Costumier> costumierService;
-//    private final PersonService<Decorator> decoratorService;
+    private final DecoratorService decoratorService;
     private final DirectorService directorService;
 //    private final PersonService<Editor> editorService;
 //    private final PersonService<HairDresser> hairDresserService;
@@ -68,7 +68,7 @@ public class MovieService {
 //            @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
 //            @PersonType(Role.CASTER) PersonService<Caster> casterService,
 //            @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
-//            @PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService,
+            DecoratorService decoratorService,
             DirectorService directorService,
 //            @PersonType(Role.EDITOR) PersonService<Editor> editorService,
 //            @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
@@ -91,7 +91,7 @@ public class MovieService {
 //        this.artDirectorService = artDirectorService;
 //        this.casterService = casterService;
 //        this.costumierService = costumierService;
-//        this.decoratorService = decoratorService;
+        this.decoratorService = decoratorService;
         this.directorService = directorService;
 //        this.editorService = editorService;
 //        this.hairDresserService = hairDresserService;
@@ -352,7 +352,7 @@ public class MovieService {
                                                                 .chain(() -> musicianService.getByIds(technicalTeam.getMusicians()).invoke(movie::setMusicians))
 //                                                                .chain(() -> photographerService.getByIds(technicalTeam.getPhotographers()).invoke(movie::setPhotographers))
 //                                                                .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
-//                                                                .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
+                                                                .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
 //                                                                .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
 //                                                                .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
 //                                                                .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))

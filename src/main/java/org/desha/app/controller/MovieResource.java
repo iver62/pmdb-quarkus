@@ -11,12 +11,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.Role;
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
 import org.desha.app.domain.entity.*;
-import org.desha.app.qualifier.PersonType;
 import org.desha.app.service.*;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
@@ -42,16 +40,16 @@ public class MovieResource {
     private final GenreService genreService;
     private final MovieService movieService;
 
-//    private final PersonService<ArtDirector> artDirectorService;
+    //    private final PersonService<ArtDirector> artDirectorService;
 //    private final PersonService<Caster> casterService;
 //    private final PersonService<Costumier> costumierService;
-//    private final PersonService<Decorator> decoratorService;
+    private final DecoratorService decoratorService;
     private final DirectorService directorService;
-//    private final PersonService<Editor> editorService;
+    //    private final PersonService<Editor> editorService;
 //    private final PersonService<HairDresser> hairDresserService;
 //    private final PersonService<MakeupArtist> makeupArtistService;
     private final MusicianService musicianService;
-//    private final PersonService<Photographer> photographerService;
+    //    private final PersonService<Photographer> photographerService;
     private final ProducerService producerService;
 //    private final ScreenwriterService screenwriterService;
 //    private final PersonService<SoundEditor> soundEditorService;
@@ -63,13 +61,14 @@ public class MovieResource {
             CountryService countryService,
             GenreService genreService,
             MovieService movieService,
+            DecoratorService decoratorService,
             DirectorService directorService,
             MusicianService musicianService,
             ProducerService producerService
             /*@PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
             @PersonType(Role.CASTER) PersonService<Caster> casterService,
             @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
-            @PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService,
+
             @PersonType(Role.DIRECTOR) PersonService<Director> directorService,
             @PersonType(Role.EDITOR) PersonService<Editor> editorService,
             @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
@@ -88,7 +87,7 @@ public class MovieResource {
 //        this.artDirectorService = artDirectorService;
 //        this.casterService = casterService;
 //        this.costumierService = costumierService;
-//        this.decoratorService = decoratorService;
+        this.decoratorService = decoratorService;
         this.directorService = directorService;
 //        this.editorService = editorService;
 //        this.hairDresserService = hairDresserService;
