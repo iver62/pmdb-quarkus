@@ -9,9 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Costumier;
-import org.desha.app.domain.entity.Decorator;
 import org.desha.app.repository.CostumierRepository;
-import org.desha.app.repository.DecoratorRepository;
 import org.desha.app.repository.MovieRepository;
 
 import java.util.List;

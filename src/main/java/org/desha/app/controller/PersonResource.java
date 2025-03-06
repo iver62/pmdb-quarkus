@@ -2,12 +2,10 @@ package org.desha.app.controller;
 
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.PersonDTO;
@@ -22,40 +20,61 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
-@ApplicationScoped
 @Slf4j
-@NoArgsConstructor
 public abstract class PersonResource<T extends Person> {
 
-    private PersonService<T> personService;
-    private Class<T> personClass; // Ajout d'un attribut pour stocker le type
+    private final PersonService<T> personService;
 
     @Inject
-    protected PersonResource(PersonService<T> personService, Class<T> personClass) {
+    protected PersonResource(PersonService<T> personService) {
         this.personService = personService;
-        this.personClass = personClass;
     }
 
     @GET
     @Path("{id}")
     public Uni<T> getPersonById(Long id) {
-        return personService.getOne(id);
+        return personService.getById(id);
     }
 
     @GET
     public Uni<Response> getPersons(
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("50") int size,
             @QueryParam("sort") @DefaultValue("name") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
+            @QueryParam("term") @DefaultValue("") String term,
+            @QueryParam("country") List<Integer> countryIds,
+            @QueryParam("from-birth-date") LocalDate fromBirthDate,
+            @QueryParam("to-birth-date") LocalDate toBirthDate,
+            @QueryParam("from-death-date") LocalDate fromDeathDate,
+            @QueryParam("to-death-date") LocalDate toDeathDate,
+            @QueryParam("from-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("to-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("from-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("to-last-update") LocalDateTime toLastUpdate
     ) {
+        // Vérification de la cohérence des dates
+        if (Objects.nonNull(fromBirthDate) && Objects.nonNull(toBirthDate) && fromBirthDate.isAfter(toBirthDate)
+                || Objects.nonNull(fromDeathDate) && Objects.nonNull(toDeathDate) && fromDeathDate.isAfter(toDeathDate)
+                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
+                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        ) {
+            return
+                    Uni.createFrom().item(
+                            Response.status(Response.Status.BAD_REQUEST)
+                                    .entity("La date de début ne peut pas être après la date de fin.")
+                                    .build()
+                    );
+        }
+
         Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
@@ -64,12 +83,12 @@ public abstract class PersonResource<T extends Person> {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                personService.get(page, size, sort, sortDirection, term)
-                        .flatMap(tList ->
-                                personService.count(term).map(total ->
-                                        tList.isEmpty()
+                personService.get(pageIndex, size, sort, sortDirection, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                        .flatMap(personDTOList ->
+                                personService.count(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate).map(total ->
+                                        personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(tList.stream().map(PersonDTO::fromEntity)).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -103,25 +122,13 @@ public abstract class PersonResource<T extends Person> {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                personService.getMovies(id, personClass, page, size, sort, sortDirection, term)
+                personService.getMovies(id, page, size, sort, sortDirection, term)
                         .flatMap(movieList ->
-                                personService.countMovies(id, personClass, term).map(total ->
+                                personService.countMovies(id, term).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
-                        )
-                ;
-    }
-
-    @GET
-    @Path("{id}/countries")
-    public Uni<Response> getCountriesByPerson(Long id) {
-        return
-                personService.getCountries(id)
-                        .onItem().transform(countries -> Objects.nonNull(countries) && !countries.isEmpty()
-                                ? Response.ok(countries).build()
-                                : Response.noContent().build()
                         )
                 ;
     }
@@ -174,7 +181,7 @@ public abstract class PersonResource<T extends Person> {
     public Uni<Response> save(PersonDTO personDTO) {
         return
                 personService
-                        .save(personDTO, createEntityInstance())
+                        .save(personDTO)
                         .onItem().ifNotNull()
                         .transform(decorator -> Response.ok(decorator).status(CREATED).build())
                 ;
@@ -221,7 +228,7 @@ public abstract class PersonResource<T extends Person> {
                 personService
                         .update(id, file, personDTO)
                         .onItem().ifNotNull().transform(person -> Response.ok(person).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+                        .onItem().ifNull().failWith(new NotFoundException("Person with ID " + id + " not found."));
     }
 
     @DELETE
@@ -236,10 +243,12 @@ public abstract class PersonResource<T extends Person> {
     }
 
     protected Sort.Direction validateSortDirection(String direction) {
-        return Arrays.stream(Sort.Direction.values())
-                .filter(d -> d.name().equalsIgnoreCase(direction))
-                .findFirst()
-                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
+        return
+                Arrays.stream(Sort.Direction.values())
+                        .filter(d -> d.name().equalsIgnoreCase(direction))
+                        .findFirst()
+                        .orElse(Sort.Direction.Ascending) // Valeur par défaut si invalide
+                ;
     }
 
     protected Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
@@ -252,8 +261,5 @@ public abstract class PersonResource<T extends Person> {
         }
         return null;
     }
-
-    // Méthode abstraite pour permettre aux sous-classes de définir l'instance correcte de l'entité
-    protected abstract T createEntityInstance();
 
 }

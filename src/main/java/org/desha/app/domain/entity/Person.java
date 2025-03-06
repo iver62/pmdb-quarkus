@@ -1,31 +1,22 @@
 package org.desha.app.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
 @Getter
 @Setter
+@MappedSuperclass
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Entity
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-@NamedQueries({
-        @NamedQuery(name = "Person.searchByName", query = "from Person where lower(name) LIKE lower(?1)")
-})
 public abstract class Person extends PanacheEntity implements Comparable<Person> {
 
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("name", "dateOfBirth", "dateOfDeath", "creationDate", "lastUpdate");
@@ -48,9 +39,9 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
     @Column(name = "date_mise_a_jour")
     protected LocalDateTime lastUpdate;
 
-    @JsonIgnore
+    /*@JsonIgnore
     @OneToMany(mappedBy = "person", orphanRemoval = true)
-    private Set<Award> awards = new HashSet<>();
+    private Set<Award> awards = new HashSet<>();*/
 
     @PrePersist
     protected void onCreate() {
@@ -63,7 +54,7 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
         this.lastUpdate = LocalDateTime.now();
     }
 
-    public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
+    /*public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
         return
                 Mutiny.fetch(awards)
                         .map(
@@ -73,9 +64,9 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
                                 }
                         )
                 ;
-    }
+    }*/
 
-    public Uni<Set<Award>> removeAward(Long id) {
+    /*public Uni<Set<Award>> removeAward(Long id) {
         return
                 Mutiny.fetch(awards)
                         .map(
@@ -85,7 +76,7 @@ public abstract class Person extends PanacheEntity implements Comparable<Person>
                                 }
                         )
                 ;
-    }
+    }*/
 
     public abstract Set<Movie> getMovies();
 

@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.service.PersonServiceImpl;
+import org.desha.app.service.PersonService;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -19,7 +19,6 @@ import java.util.Set;
 @Slf4j
 @Entity
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 @Table(name = "producteur")
@@ -47,7 +46,7 @@ public class Producer extends Person {
         return
                 Producer.builder()
                         .name(personDTO.getName())
-                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonServiceImpl.DEFAULT_PHOTO)
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()
                 ;
     }
@@ -87,29 +86,5 @@ public class Producer extends Person {
                         )
                 ;
     }
-
-    /*public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
-        return
-                Mutiny.fetch(countries)
-                        .map(
-                                fetchedCountries -> {
-                                    fetchedCountries.addAll(countrySet);
-                                    return fetchedCountries;
-                                }
-                        )
-                ;
-    }*/
-
-    /*public Uni<Set<Country>> removeCountry(Long id) {
-        return
-                Mutiny.fetch(countries)
-                        .map(
-                                countrySet -> {
-                                    countrySet.removeIf(country -> Objects.equals(country.id, id));
-                                    return countrySet;
-                                }
-                        )
-                ;
-    }*/
 
 }

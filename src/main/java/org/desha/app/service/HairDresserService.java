@@ -10,7 +10,6 @@ import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Costumier;
 import org.desha.app.domain.entity.HairDresser;
-import org.desha.app.repository.CostumierRepository;
 import org.desha.app.repository.HairDresserRepository;
 import org.desha.app.repository.MovieRepository;
 

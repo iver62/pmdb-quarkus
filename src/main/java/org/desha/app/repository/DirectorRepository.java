@@ -77,18 +77,6 @@ public class DirectorRepository extends PersonRepository<Director> {
         return count(query.toString(), params);
     }
 
-    /**
-     * Cette méthode permet de récupérer la liste des réalisateurs associés à un pays donné et dont le nom correspond à un terme de recherche.
-     * Le terme de recherche est insensible à la casse.
-     * Les résultats peuvent être paginés et triés en fonction des paramètres fournis.
-     *
-     * @param pageIndex L'indice de la page à récupérer pour la pagination.
-     * @param size      Le nombre d'éléments à récupérer par page.
-     * @param sort      Le nom du champ par lequel trier les résultats.
-     * @param direction La direction du tri (ascendant ou descendant).
-     * @param term      Le terme de recherche utilisé pour filtrer les réalisateurs par leur nom. La recherche est insensible à la casse.
-     * @return Un objet {@link Uni} contenant la liste paginée des réalisateurs correspondant aux critères de recherche.
-     */
     public Uni<List<Director>> find(
             int pageIndex,
             int size,

@@ -25,8 +25,6 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Slf4j
-//@Dependent
-//@ApplicationScoped
 public abstract class PersonService<T extends Person> implements PersonServiceInterface<T> {
 
     private final CountryService countryService;
@@ -35,7 +33,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     private final FileService fileService;
 
     private static final String PHOTOS_DIR = "photos/";
-    private static final String DEFAULT_PHOTO = "default-photo.jpg";
+    public static final String DEFAULT_PHOTO = "default-photo.jpg";
 
     @Inject
     public PersonService(
@@ -67,30 +65,10 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
             LocalDateTime fromLastUpdate,
             LocalDateTime toLastUpdate
     ) {
-        return personRepository.count(term);
+        return personRepository.count(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate);
     }
 
-    public Uni<Long> countMovies(Long personId, Class<T> personType, String term) {
-        return switch (personType.getSimpleName()) {
-//            case "Actor" -> movieRepository.countMoviesByActor(personId, term);
-//            case "Producer" -> movieRepository.countMoviesByProducer(personId, term);
-//            case "Director" -> movieRepository.countMoviesByDirector(personId, term);
-//            case "Screenwriter" -> movieRepository.countMoviesByScreenwriter(personId, term);
-//            case "Musician" -> movieRepository.countMoviesByMusician(personId, term);
-//            case "Decorator" -> movieRepository.countMoviesByDecorator(personId, term);
-//            case "Costumier" -> movieRepository.countMoviesByCostumier(personId, term);
-            case "Photographer" -> movieRepository.countMoviesByPhotographer(personId, term);
-            case "Editor" -> movieRepository.countMoviesByEditor(personId, term);
-            case "Caster" -> movieRepository.countMoviesByCaster(personId, term);
-            case "ArtDirector" -> movieRepository.countMoviesByArtDirector(personId, term);
-            case "SoundEditor" -> movieRepository.countMoviesBySoundEditor(personId, term);
-            case "VisualEffectsSupervisor" -> movieRepository.countMoviesByVisualEffectsSupervisor(personId, term);
-            case "MakeupArtist" -> movieRepository.countMoviesByMakeupArtist(personId, term);
-            case "HairDresser" -> movieRepository.countMoviesByHairDresser(personId, term);
-            case "Stuntman" -> movieRepository.countMoviesByStuntman(personId, term);
-            default -> Uni.createFrom().failure(new IllegalArgumentException("Type inconnu"));
-        };
-    }
+//    public abstract Uni<Long> countMovies(Long personId, String term);
 
     @Override
     public Uni<T> getById(Long id) {
@@ -160,156 +138,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 );
     }
 
-    @Override
-    public Uni<List<MovieDTO>> getMovies(Long personId, Class<T> personType, int page, int size, String sort, Sort.Direction direction, String term) {
-        return switch (personType.getSimpleName()) {
-            /*case "Actor" -> movieRepository
-                    .findMoviesByActor(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "Producer" -> movieRepository
-                    .findMoviesByProducer(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "Director" -> movieRepository
-                    .findMoviesByDirector(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "Screenwriter" -> movieRepository
-                    .findMoviesByScreenwriter(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;*/
-            /*case "Musician" -> movieRepository
-                    .findMoviesByMusician(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;*/
-            /*case "Decorator" -> movieRepository
-                    .findMoviesByDecorator(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;*/
-            /*case "Costumier" -> movieRepository
-                    .findMoviesByCostumier(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;*/
-            case "Photographer" -> movieRepository
-                    .findMoviesByPhotographer(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "Editor" -> movieRepository
-                    .findMoviesByEditor(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "Caster" -> movieRepository
-                    .findMoviesByCaster(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "ArtDirector" -> movieRepository
-                    .findMoviesByArtDirector(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "SoundEditor" -> movieRepository
-                    .findMoviesBySoundEditor(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "VisualEffectsSupervisor" -> movieRepository
-                    .findMoviesByVisualEffectsSupervisor(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "MakeupArtist" -> movieRepository
-                    .findMoviesByMakeupArtist(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "HairDresser" -> movieRepository
-                    .findMoviesByHairDresser(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            case "Stuntman" -> movieRepository
-                    .findMoviesByStuntman(personId, page, size, sort, direction, term)
-                    .map(movieList ->
-                            movieList
-                                    .stream()
-                                    .map(MovieDTO::fromEntity)
-                                    .toList()
-                    )
-            ;
-            default -> Uni.createFrom().failure(new IllegalArgumentException("Type inconnu"));
-        };
-    }
+//    public abstract Uni<List<MovieDTO>> getMovies(Long personId, int page, int size, String sort, Sort.Direction direction, String term);
 
     @Override
     public Uni<Set<Movie>> addMovie(Long id, Movie movie) {
