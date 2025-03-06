@@ -222,9 +222,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec le nom des monteurs (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de monteurs correspondant aux critères de recherche.
      */
-    public Uni<Long> countEditorsByCountry(Long id, String term) {
+   /* public Uni<Long> countEditorsByCountry(Long id, String term) {
         return editorRepository.countEditorsByCountry(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de castings associés à un pays donné, en fonction d'un terme de recherche sur leur nom.

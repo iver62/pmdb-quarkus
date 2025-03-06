@@ -4,8 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.PersonDTO;
+import org.desha.app.service.PersonServiceImpl;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -16,9 +21,7 @@ import java.util.Set;
 
 @Slf4j
 @Entity
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 @Table(name = "monteur")
@@ -30,11 +33,26 @@ public class Editor extends Person {
     @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
 
-    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_pays_monteur", joinColumns = @JoinColumn(name = "fk_monteur"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
-    @Fetch(FetchMode.SELECT)
     private Set<Country> countries = new HashSet<>();
+
+    @Builder
+    public Editor(Long id, String name, String photoFileName) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.photoFileName = photoFileName;
+    }
+
+    public static Editor fromDTO(PersonDTO personDTO) {
+        return
+                Editor.builder()
+                        .name(personDTO.getName())
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonServiceImpl.DEFAULT_PHOTO)
+                        .build()
+                ;
+    }
 
     public Uni<Set<Movie>> addMovie(Movie movie) {
         return

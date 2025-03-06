@@ -2,7 +2,8 @@ package org.desha.app.domain.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.*;
+import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
 
 import java.util.Collections;
 import java.util.Set;
@@ -74,7 +75,7 @@ public class TechnicalTeamDTO {
                         movie.getPhotographers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getCostumiers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getDecorators().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        Collections.emptySet(),
+                        movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         Collections.emptySet(),
                         Collections.emptySet(),
                         Collections.emptySet(),
@@ -82,7 +83,6 @@ public class TechnicalTeamDTO {
                         Collections.emptySet(),
                         Collections.emptySet(),
                         Collections.emptySet()
-//                        movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
 //                        movie.getCasters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
 //                        movie.getArtDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
 //                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),

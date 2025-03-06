@@ -2,26 +2,20 @@ package org.desha.app.controller;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Role;
 import org.desha.app.domain.entity.Editor;
-import org.desha.app.qualifier.PersonType;
-import org.desha.app.service.PersonService;
+import org.desha.app.service.EditorService;
 
 @Path("editors")
-@ApplicationScoped
+@Singleton
 @Slf4j
 public class EditorResource extends PersonResource<Editor> {
 
     @Inject
-    public EditorResource(@PersonType(Role.EDITOR) PersonService<Editor> editorService) {
-        super(editorService, Editor.class);
-    }
-
-    @Override
-    protected Editor createEntityInstance() {
-        return Editor.builder().build();
+    public EditorResource(EditorService editorService) {
+        super(editorService);
     }
 
 }
