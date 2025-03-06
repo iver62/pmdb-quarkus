@@ -36,22 +36,22 @@ public class MovieService {
     private final GenreService genreService;
     private final FileService fileService;
 
-    private final PersonService<Actor> actorService;
-    private final PersonService<ArtDirector> artDirectorService;
-    private final PersonService<Caster> casterService;
-    private final PersonService<Costumier> costumierService;
-    private final PersonService<Decorator> decoratorService;
+    private final ActorService actorService;
+//    private final PersonService<ArtDirector> artDirectorService;
+//    private final PersonService<Caster> casterService;
+//    private final PersonService<Costumier> costumierService;
+//    private final PersonService<Decorator> decoratorService;
     private final DirectorService directorService;
-    private final PersonService<Editor> editorService;
-    private final PersonService<HairDresser> hairDresserService;
-    private final PersonService<MakeupArtist> makeupArtistService;
-    private final PersonService<Musician> musicianService;
-    private final PersonService<Photographer> photographerService;
+//    private final PersonService<Editor> editorService;
+//    private final PersonService<HairDresser> hairDresserService;
+//    private final PersonService<MakeupArtist> makeupArtistService;
+    private final MusicianService musicianService;
+//    private final PersonService<Photographer> photographerService;
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
-    private final PersonService<SoundEditor> soundEditorService;
-    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
-    private final PersonService<Stuntman> stuntmanService;
+//    private final PersonService<SoundEditor> soundEditorService;
+//    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
+//    private final PersonService<Stuntman> stuntmanService;
 
     private static final String POSTERS_DIR = "posters/";
     private static final String DEFAULT_POSTER = "default-poster.jpg";
@@ -64,22 +64,22 @@ public class MovieService {
             GenreService genreService,
             MovieRepository movieRepository,
             MovieActorRepository movieActorRepository,
-            @PersonType(Role.ACTOR) PersonService<Actor> actorService,
-            @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
-            @PersonType(Role.CASTER) PersonService<Caster> casterService,
-            @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
-            @PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService,
+            ActorService actorService,
+//            @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
+//            @PersonType(Role.CASTER) PersonService<Caster> casterService,
+//            @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
+//            @PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService,
             DirectorService directorService,
-            @PersonType(Role.EDITOR) PersonService<Editor> editorService,
-            @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
-            @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
-            @PersonType(Role.MUSICIAN) PersonService<Musician> musicianService,
-            @PersonType(Role.PHOTOGRAPHER) PersonService<Photographer> photographerService,
+//            @PersonType(Role.EDITOR) PersonService<Editor> editorService,
+//            @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
+//            @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
+            MusicianService musicianService,
+//            @PersonType(Role.PHOTOGRAPHER) PersonService<Photographer> photographerService,
             ProducerService producerService,
-            ScreenwriterService screenwriterService,
-            @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
-            @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
-            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
+            ScreenwriterService screenwriterService
+//            @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
+//            @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
+//            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
     ) {
         this.msf = msf;
         this.countryService = countryService;
@@ -88,21 +88,21 @@ public class MovieService {
         this.movieRepository = movieRepository;
         this.movieActorRepository = movieActorRepository;
         this.actorService = actorService;
-        this.artDirectorService = artDirectorService;
-        this.casterService = casterService;
-        this.costumierService = costumierService;
-        this.decoratorService = decoratorService;
+//        this.artDirectorService = artDirectorService;
+//        this.casterService = casterService;
+//        this.costumierService = costumierService;
+//        this.decoratorService = decoratorService;
         this.directorService = directorService;
-        this.editorService = editorService;
-        this.hairDresserService = hairDresserService;
-        this.makeupArtistService = makeupArtistService;
+//        this.editorService = editorService;
+//        this.hairDresserService = hairDresserService;
+//        this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
-        this.photographerService = photographerService;
+//        this.photographerService = photographerService;
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
-        this.soundEditorService = soundEditorService;
-        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
-        this.stuntmanService = stuntmanService;
+//        this.soundEditorService = soundEditorService;
+//        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+//        this.stuntmanService = stuntmanService;
     }
 
     public Uni<Long> count(
@@ -350,17 +350,17 @@ public class MovieService {
                                                                 .chain(() -> directorService.getByIds(technicalTeam.getDirectors()).invoke(movie::setDirectors))
                                                                 .chain(() -> screenwriterService.getByIds(technicalTeam.getScreenwriters()).invoke(movie::setScreenwriters))
                                                                 .chain(() -> musicianService.getByIds(technicalTeam.getMusicians()).invoke(movie::setMusicians))
-                                                                .chain(() -> photographerService.getByIds(technicalTeam.getPhotographers()).invoke(movie::setPhotographers))
-                                                                .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
-                                                                .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
-                                                                .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
-                                                                .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
-                                                                .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
-                                                                .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
-                                                                .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
-                                                                .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
-                                                                .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
-                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))
+//                                                                .chain(() -> photographerService.getByIds(technicalTeam.getPhotographers()).invoke(movie::setPhotographers))
+//                                                                .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
+//                                                                .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
+//                                                                .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
+//                                                                .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
+//                                                                .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
+//                                                                .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
+//                                                                .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
+//                                                                .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
+//                                                                .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
+//                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))
                                                                 .invoke(() -> movie.setLastUpdate(LocalDateTime.now()))
                                         )
                                         .map(TechnicalTeamDTO::fromEntity)

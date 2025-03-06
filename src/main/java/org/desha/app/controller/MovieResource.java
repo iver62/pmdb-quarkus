@@ -5,6 +5,7 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -16,10 +17,7 @@ import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
 import org.desha.app.domain.entity.*;
 import org.desha.app.qualifier.PersonType;
-import org.desha.app.service.CountryService;
-import org.desha.app.service.GenreService;
-import org.desha.app.service.MovieService;
-import org.desha.app.service.PersonService;
+import org.desha.app.service.*;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
@@ -27,10 +25,10 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.*;
@@ -44,28 +42,31 @@ public class MovieResource {
     private final GenreService genreService;
     private final MovieService movieService;
 
-    private final PersonService<ArtDirector> artDirectorService;
-    private final PersonService<Caster> casterService;
-    private final PersonService<Costumier> costumierService;
-    private final PersonService<Decorator> decoratorService;
-    private final PersonService<Director> directorService;
-    private final PersonService<Editor> editorService;
-    private final PersonService<HairDresser> hairDresserService;
-    private final PersonService<MakeupArtist> makeupArtistService;
-    private final PersonService<Musician> musicianService;
-    private final PersonService<Photographer> photographerService;
-    private final PersonService<Producer> producerService;
-    private final PersonService<Screenwriter> screenwriterService;
-    private final PersonService<SoundEditor> soundEditorService;
-    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
-    private final PersonService<Stuntman> stuntmanService;
+//    private final PersonService<ArtDirector> artDirectorService;
+//    private final PersonService<Caster> casterService;
+//    private final PersonService<Costumier> costumierService;
+//    private final PersonService<Decorator> decoratorService;
+    private final DirectorService directorService;
+//    private final PersonService<Editor> editorService;
+//    private final PersonService<HairDresser> hairDresserService;
+//    private final PersonService<MakeupArtist> makeupArtistService;
+    private final MusicianService musicianService;
+//    private final PersonService<Photographer> photographerService;
+    private final ProducerService producerService;
+//    private final ScreenwriterService screenwriterService;
+//    private final PersonService<SoundEditor> soundEditorService;
+//    private final PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService;
+//    private final PersonService<Stuntman> stuntmanService;
 
     @Inject
     public MovieResource(
             CountryService countryService,
             GenreService genreService,
             MovieService movieService,
-            @PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
+            DirectorService directorService,
+            MusicianService musicianService,
+            ProducerService producerService
+            /*@PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
             @PersonType(Role.CASTER) PersonService<Caster> casterService,
             @PersonType(Role.COSTUMIER) PersonService<Costumier> costumierService,
             @PersonType(Role.DECORATOR) PersonService<Decorator> decoratorService,
@@ -79,77 +80,102 @@ public class MovieResource {
             @PersonType(Role.SCREENWRITER) PersonService<Screenwriter> screenwriterService,
             @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
             @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
-            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
+            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService*/
     ) {
         this.countryService = countryService;
         this.genreService = genreService;
         this.movieService = movieService;
-        this.artDirectorService = artDirectorService;
-        this.casterService = casterService;
-        this.costumierService = costumierService;
-        this.decoratorService = decoratorService;
+//        this.artDirectorService = artDirectorService;
+//        this.casterService = casterService;
+//        this.costumierService = costumierService;
+//        this.decoratorService = decoratorService;
         this.directorService = directorService;
-        this.editorService = editorService;
-        this.hairDresserService = hairDresserService;
-        this.makeupArtistService = makeupArtistService;
+//        this.editorService = editorService;
+//        this.hairDresserService = hairDresserService;
+//        this.makeupArtistService = makeupArtistService;
         this.musicianService = musicianService;
-        this.photographerService = photographerService;
+//        this.photographerService = photographerService;
         this.producerService = producerService;
-        this.screenwriterService = screenwriterService;
-        this.soundEditorService = soundEditorService;
-        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
-        this.stuntmanService = stuntmanService;
+//        this.screenwriterService = screenwriterService;
+//        this.soundEditorService = soundEditorService;
+//        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+//        this.stuntmanService = stuntmanService;
     }
 
     @GET
     @Path("count")
-    public Uni<Response> count(@QueryParam("title") @DefaultValue("") String title) {
+    public Uni<Response> count(
+            @QueryParam("term") @DefaultValue("") String term,
+            @QueryParam("country") List<Integer> countryIds,
+            @QueryParam("genre") List<Integer> genreIds,
+            @QueryParam("start-release-date") LocalDate fromReleaseDate,
+            @QueryParam("end-release-date") LocalDate toReleaseDate,
+            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("end-last-update") LocalDateTime toLastUpdate
+    ) {
         return
-                Movie.count(title)
+                movieService.count(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
     @GET
     @Path("{id}")
-    public Uni<Response> getSingle(Long id) {
+    public Uni<Response> getMovie(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNotNull().transform(movie -> Response.ok(movie).build())
                         .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
                 ;
     }
 
     @GET
-    public Uni<Response> getPaginatedMovies(
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
+    public Uni<Response> getMovies(
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("50") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("title") @DefaultValue("") String title
+            @QueryParam("term") @DefaultValue("") String term,
+            @QueryParam("country") List<Integer> countryIds,
+            @QueryParam("genre") List<Integer> genreIds,
+            @QueryParam("start-release-date") LocalDate fromReleaseDate,
+            @QueryParam("end-release-date") LocalDate toReleaseDate,
+            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("end-last-update") LocalDateTime toLastUpdate
     ) {
-        // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        // Vérification de la cohérence des dates
+        if (Objects.nonNull(fromReleaseDate) && Objects.nonNull(toReleaseDate) && fromReleaseDate.isAfter(toReleaseDate)
+                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
+                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        ) {
+            return
+                    Uni.createFrom().item(
+                            Response.status(Response.Status.BAD_REQUEST)
+                                    .entity("La date de début ne peut pas être après la date de fin.")
+                                    .build()
+                    );
         }
 
+        // Vérifier si la direction est valide
+        Uni<Response> sortValidation = validateSortField(sort);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
         return
-                Movie.getMovies(page, size, sort, sortDirection, title)
+                movieService.getMovies(pageIndex, size, sort, sortDirection, term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
                         .flatMap(movieList ->
-                                Movie.count(title).map(total ->
-                                        movieList.isEmpty()
-                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                )
-                        )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                                movieService.count(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                                        .map(total ->
+                                                movieList.isEmpty()
+                                                        ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                        : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                        )
                         )
                 ;
     }
@@ -202,7 +228,7 @@ public class MovieResource {
     @Path("{id}/actors")
     public Uni<Response> getActors(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .flatMap(movieService::getActorsByMovie)
                         .map(movieActors -> Response.ok(movieActors).build())
@@ -211,10 +237,20 @@ public class MovieResource {
     }
 
     @GET
+    @Path("{id}/technical-team")
+    public Uni<Response> getTechnicalTeam(@RestPath Long id) {
+        return
+                movieService.getTechnicalTeam(id)
+                        .map(movieActors -> Response.ok(movieActors).build())
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
+                ;
+    }
+
+    @GET
     @Path("{id}/producers")
     public Uni<Set<Producer>> getProducers(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getProducersByMovie)
                 ;
@@ -224,7 +260,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Set<Director>> getDirectors(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getDirectorsByMovie)
                 ;
@@ -234,7 +270,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Set<Screenwriter>> getScreenwriters(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getScreenwritersByMovie)
                 ;
@@ -244,7 +280,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Set<Musician>> getMusicians(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getMusiciansByMovie)
                 ;
@@ -254,7 +290,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Set<Photographer>> getPhotographers(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getPhotographersByMovie)
                 ;
@@ -264,7 +300,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Set<Costumier>> getCostumiers(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCostumiersByMovie)
                 ;
@@ -274,7 +310,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Set<Decorator>> getDecorators(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getDecoratorsByMovie)
                 ;
@@ -284,7 +320,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Set<Editor>> getEditors(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getEditorsByMovie)
                 ;
@@ -294,7 +330,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Set<Caster>> getCasters(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCastersByMovie)
                 ;
@@ -304,7 +340,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Set<ArtDirector>> getArtDirectors(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getArtDirectorsByMovie)
                 ;
@@ -314,7 +350,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Set<SoundEditor>> getSoundEditors(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getSoundEditorsByMovie)
                 ;
@@ -324,7 +360,7 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getVisualEffectsSupervisorsByMovie)
                 ;
@@ -334,7 +370,7 @@ public class MovieResource {
     @Path("{id}/makeup-artists")
     public Uni<Set<MakeupArtist>> getMakeupArtists(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getMakeupArtists)
                 ;
@@ -344,7 +380,7 @@ public class MovieResource {
     @Path("{id}/hair-dressers")
     public Uni<Set<HairDresser>> getHairDressers(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getHairDressers)
                 ;
@@ -354,13 +390,13 @@ public class MovieResource {
     @Path("{id}/stuntmen")
     public Uni<Set<Stuntman>> getStuntmen(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getStuntmen)
                 ;
     }
 
-    @GET
+    /*@GET
     @Path("{id}/genres")
     public Uni<Set<Genre>> getGenres(@RestPath Long id) {
         return
@@ -368,9 +404,9 @@ public class MovieResource {
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getGenresByMovie)
                 ;
-    }
+    }*/
 
-    @GET
+    /*@GET
     @Path("{id}/countries")
     public Uni<Set<Country>> getCountries(@RestPath Long id) {
         return
@@ -378,13 +414,13 @@ public class MovieResource {
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getCountriesByMovie)
                 ;
-    }
+    }*/
 
     @GET
     @Path("{id}/awards")
     public Uni<Response> getAwards(@RestPath Long id) {
         return
-                Movie.getById(id)
+                movieService.getById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                         .chain(movieService::getAwardsByMovie)
                         .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
@@ -395,7 +431,7 @@ public class MovieResource {
     @POST
     public Uni<Response> create(
             @RestForm("file") FileUpload file,
-            @RestForm @PartType(MediaType.APPLICATION_JSON) MovieDTO movieDTO
+            @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO
     ) {
         if (Objects.isNull(movieDTO)) {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
@@ -458,188 +494,6 @@ public class MovieResource {
                 movieService.saveTechnicalTeam(id, technicalTeam)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-
-        /*return
-                Uni.join().all(
-                                technicalSummary.getProducers()
-                                        .stream()
-                                        .map(p -> Person.findById(p.id))
-                                        .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .chain(persons -> movieService.addProducers(id, persons))
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getDirectors()) && !technicalSummary.getDirectors().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getDirectors()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addDirectors(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getScreenwriters()) && !technicalSummary.getScreenwriters().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getScreenwriters()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addScreenwriters(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getMusicians()) && !technicalSummary.getMusicians().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getMusicians()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addMusicians(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getPhotographers()) && !technicalSummary.getPhotographers().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getPhotographers()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addPhotographers(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getCostumiers()) && !technicalSummary.getCostumiers().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getCostumiers()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addCostumiers(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getDecorators()) && !technicalSummary.getDecorators().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getDecorators()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addDecorators(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getEditors()) && !technicalSummary.getEditors().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getEditors()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.addEditors(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .chain(() -> {
-                                    if (!Objects.isNull(technicalSummary.getCasting()) && !technicalSummary.getCasting().isEmpty()) {
-                                        return Uni.join().all(
-                                                        technicalSummary.getCasting()
-                                                                .stream()
-                                                                .filter(p -> Objects.nonNull(p.id))
-                                                                .map(p -> Person.findById(p.id))
-                                                                .toList()
-                                                )
-                                                .usingConcurrencyOf(1)
-                                                .andFailFast()
-                                                .map(entities -> entities.stream().map(e -> (Person) e).toList())
-                                                .map(HashSet::new)
-                                                .chain(persons -> movieService.saveCasting(id, persons));
-                                    } else {
-                                        return Uni.createFrom().nullItem();
-                                    }
-                                }
-                        )
-                        .map(
-                                movie ->
-                                        TechnicalSummaryDTO.build(
-                                                movie.getProducers(),
-                                                movie.getDirectors(),
-                                                movie.getScreenwriters(),
-                                                movie.getMusicians(),
-                                                movie.getPhotographers(),
-                                                movie.getCostumiers(),
-                                                movie.getDecorators(),
-                                                movie.getEditors(),
-                                                movie.getCasting()
-                                        )
-                        )
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;*/
     }
 
     @PUT
@@ -653,13 +507,14 @@ public class MovieResource {
             );
         }
 
-        return movieService.saveCasting(id, movieActorsList)
-                .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                .onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity("Erreur lors de la miseà jour du casting: " + e.getMessage())
-                        .build()
-                )
+        return
+                movieService.saveCasting(id, movieActorsList)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                        .onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity("Erreur lors de la mise à jour du casting: " + e.getMessage())
+                                .build()
+                        )
                 ;
     }
 
@@ -1013,7 +868,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+   /* @PUT
     @Path("{movieId}/screenwriters/{screenwriterId}")
     public Uni<Response> removeScreenwriter(Long movieId, Long screenwriterId) {
         return
@@ -1167,7 +1022,7 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
     @PUT
     @Path("{movieId}/genres/{genreId}")
@@ -1239,10 +1094,26 @@ public class MovieResource {
     @DELETE
     @Path("{id}")
     public Uni<Response> delete(Long id) {
-        return
-                Panache.withTransaction(() -> Movie.deleteById(id))
-                        .map(deleted -> Response.ok().status(deleted ? NO_CONTENT : NOT_FOUND).build())
-                ;
+        return movieService.deleteMovie(id)
+                .map(deleted -> Response.ok().status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND).build());
+    }
+
+    private Sort.Direction validateSortDirection(String direction) {
+        return Arrays.stream(Sort.Direction.values())
+                .filter(d -> d.name().equalsIgnoreCase(direction))
+                .findFirst()
+                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
+    }
+
+    private Uni<Response> validateSortField(String sort) {
+        if (!Movie.ALLOWED_SORT_FIELDS.contains(sort)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, Movie.ALLOWED_SORT_FIELDS))
+                            .build()
+            );
+        }
+        return null;
     }
 
 }
