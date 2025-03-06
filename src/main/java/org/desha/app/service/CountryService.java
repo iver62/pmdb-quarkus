@@ -256,9 +256,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec les noms des ingénieurs son (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre d'ingénieurs son correspondant aux critères.
      */
-    public Uni<Long> countSoundEditorsByCountry(Long id, String term) {
+    /*public Uni<Long> countSoundEditorsByCountry(Long id, String term) {
         return soundEditorRepository.countSoundEditorsByCountry(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de superviseurs des effets spéciaux associés à un pays donné, en fonction d'un terme de recherche pour le nom.

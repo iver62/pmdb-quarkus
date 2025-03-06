@@ -78,13 +78,13 @@ public class TechnicalTeamDTO {
                         movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getCasters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getArtDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        Collections.emptySet(),
+                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         Collections.emptySet(),
                         Collections.emptySet(),
                         Collections.emptySet(),
                         Collections.emptySet()
 
-//                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+
 //                        movie.getVisualEffectsSupervisors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
 //                        movie.getMakeupArtists().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
 //                        movie.getHairDressers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
