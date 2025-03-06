@@ -40,7 +40,7 @@ public class MovieResource {
     private final GenreService genreService;
     private final MovieService movieService;
 
-    //    private final PersonService<ArtDirector> artDirectorService;
+        private final ArtDirectorService artDirectorService;
     private final CasterService casterService;
     private final PersonService<Costumier> costumierService;
     private final DecoratorService decoratorService;
@@ -61,6 +61,7 @@ public class MovieResource {
             CountryService countryService,
             GenreService genreService,
             MovieService movieService,
+            ArtDirectorService artDirectorService,
             CasterService casterService,
             CostumierService costumierService,
             DecoratorService decoratorService,
@@ -70,10 +71,10 @@ public class MovieResource {
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService
-            /*@PersonType(Role.ART_DIRECTOR) PersonService<ArtDirector> artDirectorService,
 
 
-            @PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
+
+            /*@PersonType(Role.HAIR_DRESSER) PersonService<HairDresser> hairDresserService,
             @PersonType(Role.MAKEUP_ARTIST) PersonService<MakeupArtist> makeupArtistService,
             @PersonType(Role.SOUND_EDITOR) PersonService<SoundEditor> soundEditorService,
             @PersonType(Role.VISUAL_EFFECTS_SUPERVISOR) PersonService<VisualEffectsSupervisor> visualEffectsSupervisorService,
@@ -82,7 +83,7 @@ public class MovieResource {
         this.countryService = countryService;
         this.genreService = genreService;
         this.movieService = movieService;
-//        this.artDirectorService = artDirectorService;
+        this.artDirectorService = artDirectorService;
         this.casterService = casterService;
         this.costumierService = costumierService;
         this.decoratorService = decoratorService;
@@ -937,7 +938,7 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    @PUT
     @Path("{movieId}/casters/{casterId}")
     public Uni<Response> removeCaster(Long movieId, Long casterId) {
         return
@@ -961,7 +962,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/sound-editors/{soundDirectorId}")
     public Uni<Response> removeSoundEditors(Long movieId, Long soundDirectorId) {
         return

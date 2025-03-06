@@ -244,9 +244,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec le nom des directeurs artistiques (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de directeurs artistiques correspondant aux critères de recherche.
      */
-    public Uni<Long> countArtDirectorsByCountry(Long id, String term) {
+    /*public Uni<Long> countArtDirectorsByCountry(Long id, String term) {
         return artDirectorRepository.countArtDirectorsByMovie(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre d'ingénieurs son associés à un pays donné, en fonction d'un terme de recherche pour le nom.
