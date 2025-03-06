@@ -200,9 +200,9 @@ public class CountryService {
      * @param term Le terme de recherche à comparer avec le nom des costumiers (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre de costumiers correspondant aux critères.
      */
-    public Uni<Long> countCostumiersByCountry(Long id, String term) {
+   /* public Uni<Long> countCostumiersByCountry(Long id, String term) {
         return costumierRepository.countCostumiersByCountry(id, term);
-    }
+    }*/
 
     /**
      * Compte le nombre de photographes associés à un pays donné, en fonction d'un terme de recherche sur leur nom.

@@ -78,7 +78,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
 //            case "Screenwriter" -> movieRepository.countMoviesByScreenwriter(personId, term);
 //            case "Musician" -> movieRepository.countMoviesByMusician(personId, term);
 //            case "Decorator" -> movieRepository.countMoviesByDecorator(personId, term);
-            case "Costumier" -> movieRepository.countMoviesByCostumier(personId, term);
+//            case "Costumier" -> movieRepository.countMoviesByCostumier(personId, term);
             case "Photographer" -> movieRepository.countMoviesByPhotographer(personId, term);
             case "Editor" -> movieRepository.countMoviesByEditor(personId, term);
             case "Caster" -> movieRepository.countMoviesByCaster(personId, term);
@@ -217,7 +217,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                     .toList()
                     )
             ;*/
-            case "Costumier" -> movieRepository
+            /*case "Costumier" -> movieRepository
                     .findMoviesByCostumier(personId, page, size, sort, direction, term)
                     .map(movieList ->
                             movieList
@@ -225,7 +225,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                     .map(MovieDTO::fromEntity)
                                     .toList()
                     )
-            ;
+            ;*/
             case "Photographer" -> movieRepository
                     .findMoviesByPhotographer(personId, page, size, sort, direction, term)
                     .map(movieList ->
