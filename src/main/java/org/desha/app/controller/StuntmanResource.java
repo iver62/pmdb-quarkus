@@ -1,27 +1,20 @@
 package org.desha.app.controller;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.Role;
 import org.desha.app.domain.entity.Stuntman;
-import org.desha.app.qualifier.PersonType;
-import org.desha.app.service.PersonService;
+import org.desha.app.service.StuntmanService;
 
 @Path("stuntmen")
-@ApplicationScoped
+@Singleton
 @Slf4j
 public class StuntmanResource extends PersonResource<Stuntman> {
 
     @Inject
-    public StuntmanResource(@PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService) {
-        super(stuntmanService, Stuntman.class);
-    }
-
-    @Override
-    protected Stuntman createEntityInstance() {
-        return Stuntman.builder().build();
+    public StuntmanResource(StuntmanService stuntmanService) {
+        super(stuntmanService);
     }
 
 }

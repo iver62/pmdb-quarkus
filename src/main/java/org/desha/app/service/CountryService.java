@@ -302,9 +302,9 @@ public class CountryService {
      * @param term Le terme de recherche appliqué au nom des cascadeurs (insensible à la casse).
      * @return Un objet {@link Uni} contenant le nombre total de cascadeurs correspondant aux critères.
      */
-    public Uni<Long> countStuntmenByCountry(Long id, String term) {
+    /*public Uni<Long> countStuntmenByCountry(Long id, String term) {
         return stuntmanRepository.countStuntmenByCountry(id, term);
-    }
+    }*/
 
     public Uni<Set<Country>> getByIds(Set<CountryDTO> countries) {
         return

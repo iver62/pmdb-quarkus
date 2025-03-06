@@ -52,8 +52,8 @@ public class MovieResource {
     private final ProducerService producerService;
     private final ScreenwriterService screenwriterService;
     private final SoundEditorService soundEditorService;
+    private final StuntmanService stuntmanService;
     private final VisualEffectsSupervisorService visualEffectsSupervisorService;
-//    private final PersonService<Stuntman> stuntmanService;
 
     @Inject
     public MovieResource(
@@ -66,15 +66,15 @@ public class MovieResource {
             DecoratorService decoratorService,
             DirectorService directorService,
             EditorService editorService,
+            HairDresserService hairDresserService,
             MakeupArtistService makeupArtistService,
             MusicianService musicianService,
             PhotographerService photographerService,
             ProducerService producerService,
             ScreenwriterService screenwriterService,
             SoundEditorService soundEditorService,
-            VisualEffectsSupervisorService visualEffectsSupervisorService,
-            HairDresserService hairDresserService
-//            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
+            StuntmanService stuntmanService,
+            VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
         this.countryService = countryService;
         this.genreService = genreService;
@@ -92,8 +92,8 @@ public class MovieResource {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
+        this.stuntmanService = stuntmanService;
         this.visualEffectsSupervisorService = visualEffectsSupervisorService;
-//        this.stuntmanService = stuntmanService;
     }
 
     @GET
@@ -1006,7 +1006,7 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    @PUT
     @Path("{movieId}/stuntmen/{stuntmanId}")
     public Uni<Response> removeStuntman(Long movieId, Long stuntmanId) {
         return
@@ -1016,7 +1016,7 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }*/
+    }
 
     @PUT
     @Path("{movieId}/genres/{genreId}")

@@ -49,7 +49,7 @@ public class MovieService {
     private final ScreenwriterService screenwriterService;
     private final SoundEditorService soundEditorService;
     private final VisualEffectsSupervisorService visualEffectsSupervisorService;
-//    private final PersonService<Stuntman> stuntmanService;
+    private final StuntmanService stuntmanService;
 
     private static final String POSTERS_DIR = "posters/";
     private static final String DEFAULT_POSTER = "default-poster.jpg";
@@ -76,8 +76,8 @@ public class MovieService {
             ProducerService producerService,
             ScreenwriterService screenwriterService,
             SoundEditorService soundEditorService,
+            StuntmanService stuntmanService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
-//            @PersonType(Role.STUNT_MAN) PersonService<Stuntman> stuntmanService
     ) {
         this.msf = msf;
         this.countryService = countryService;
@@ -100,7 +100,7 @@ public class MovieService {
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
         this.visualEffectsSupervisorService = visualEffectsSupervisorService;
-//        this.stuntmanService = stuntmanService;
+        this.stuntmanService = stuntmanService;
     }
 
     public Uni<Long> count(
@@ -340,28 +340,28 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                                .call(
-                                                        movie ->
-                                                                producerService.getByIds(technicalTeam.getProducers()).invoke(movie::setProducers)
-                                                                        .chain(() -> directorService.getByIds(technicalTeam.getDirectors()).invoke(movie::setDirectors))
-                                                                        .chain(() -> screenwriterService.getByIds(technicalTeam.getScreenwriters()).invoke(movie::setScreenwriters))
-                                                                        .chain(() -> musicianService.getByIds(technicalTeam.getMusicians()).invoke(movie::setMusicians))
-                                                                        .chain(() -> photographerService.getByIds(technicalTeam.getPhotographers()).invoke(movie::setPhotographers))
-                                                                        .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
-                                                                        .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
-                                                                        .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
-                                                                        .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
-                                                                        .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
-                                                                        .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
-                                                                        .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
-                                                                        .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
-                                                                        .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
-//                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))
-                                                                        .invoke(() -> movie.setLastUpdate(LocalDateTime.now()))
-                                                )
-                                                .map(TechnicalTeamDTO::fromEntity)
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .call(
+                                                movie ->
+                                                        producerService.getByIds(technicalTeam.getProducers()).invoke(movie::setProducers)
+                                                                .chain(() -> directorService.getByIds(technicalTeam.getDirectors()).invoke(movie::setDirectors))
+                                                                .chain(() -> screenwriterService.getByIds(technicalTeam.getScreenwriters()).invoke(movie::setScreenwriters))
+                                                                .chain(() -> musicianService.getByIds(technicalTeam.getMusicians()).invoke(movie::setMusicians))
+                                                                .chain(() -> photographerService.getByIds(technicalTeam.getPhotographers()).invoke(movie::setPhotographers))
+                                                                .chain(() -> costumierService.getByIds(technicalTeam.getCostumiers()).invoke(movie::setCostumiers))
+                                                                .chain(() -> decoratorService.getByIds(technicalTeam.getDecorators()).invoke(movie::setDecorators))
+                                                                .chain(() -> editorService.getByIds(technicalTeam.getEditors()).invoke(movie::setEditors))
+                                                                .chain(() -> casterService.getByIds(technicalTeam.getCasters()).invoke(movie::setCasters))
+                                                                .chain(() -> artDirectorService.getByIds(technicalTeam.getArtDirectors()).invoke(movie::setArtDirectors))
+                                                                .chain(() -> soundEditorService.getByIds(technicalTeam.getSoundEditors()).invoke(movie::setSoundEditors))
+                                                                .chain(() -> visualEffectsSupervisorService.getByIds(technicalTeam.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
+                                                                .chain(() -> makeupArtistService.getByIds(technicalTeam.getMakeupArtists()).invoke(movie::setMakeupArtists))
+                                                                .chain(() -> hairDresserService.getByIds(technicalTeam.getHairDressers()).invoke(movie::setHairDressers))
+                                                                .chain(() -> stuntmanService.getByIds(technicalTeam.getStuntmen()).invoke(movie::setStuntmen))
+                                                                .invoke(() -> movie.setLastUpdate(LocalDateTime.now()))
+                                        )
+                                        .map(TechnicalTeamDTO::fromEntity)
                         )
                 ;
     }
