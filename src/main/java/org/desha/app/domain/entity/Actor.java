@@ -11,10 +11,7 @@ import org.desha.app.service.PersonService;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Entity
@@ -29,7 +26,7 @@ public class Actor extends Person {
     @JsonIgnore
     @OneToMany(mappedBy = "actor")
     @Fetch(FetchMode.SELECT)
-    private Set<MovieActor> movieActors = new HashSet<>();
+    private List<MovieActor> movieActors = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_pays_acteur", joinColumns = @JoinColumn(name = "fk_acteur"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
@@ -52,16 +49,20 @@ public class Actor extends Person {
                 ;
     }
 
-    public Set<Movie> getMovies() {
-        return Collections.emptySet();
+    public List<Movie> getMovies() {
+        return Collections.emptyList();
     }
 
-    public Uni<Set<Movie>> addMovie(Movie movie) {
-        return Uni.createFrom().item(Collections.emptySet());
+    public Uni<List<Movie>> addMovie(Movie movie) {
+        return Uni.createFrom().item(Collections.emptyList());
     }
 
-    public Uni<Set<Movie>> removeMovie(Long id) {
-        return Uni.createFrom().item(Collections.emptySet());
+    public Uni<List<Movie>> removeMovie(Long id) {
+        return Uni.createFrom().item(Collections.emptyList());
+    }
+
+    @Override
+    public void setMovies(List<Movie> movieList) {
     }
 
 }

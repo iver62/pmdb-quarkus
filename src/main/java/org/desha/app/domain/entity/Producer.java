@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.service.PersonService;
@@ -12,9 +15,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Entity
@@ -28,7 +29,7 @@ public class Producer extends Person {
     @JsonIgnore
     @ManyToMany(mappedBy = "producers")
     @Fetch(FetchMode.SELECT)
-    private Set<Movie> movies = new HashSet<>();
+    private List<Movie> movies = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_pays_producteur", joinColumns = @JoinColumn(name = "fk_producteur"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
@@ -57,13 +58,13 @@ public class Producer extends Person {
      * @param movie le film à ajouter à la liste
      * @return la liste des films mise à jour
      */
-    public Uni<Set<Movie>> addMovie(Movie movie) {
+    public Uni<List<Movie>> addMovie(Movie movie) {
         return
                 Mutiny.fetch(movies)
                         .map(
-                                movieSet -> {
-                                    movieSet.add(movie);
-                                    return movieSet;
+                                movieList -> {
+                                    movieList.add(movie);
+                                    return movieList;
                                 }
                         )
                 ;
@@ -75,13 +76,13 @@ public class Producer extends Person {
      * @param id l'identifiant du film à retirer
      * @return la liste des films mise à jour
      */
-    public Uni<Set<Movie>> removeMovie(Long id) {
+    public Uni<List<Movie>> removeMovie(Long id) {
         return
                 Mutiny.fetch(movies)
                         .map(
-                                movieSet -> {
-                                    movieSet.removeIf(movie -> Objects.equals(movie.id, id));
-                                    return movieSet;
+                                movieList -> {
+                                    movieList.removeIf(movie -> Objects.equals(movie.id, id));
+                                    return movieList;
                                 }
                         )
                 ;

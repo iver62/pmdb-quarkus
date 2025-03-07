@@ -15,9 +15,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Entity
@@ -31,7 +29,7 @@ public class ArtDirector extends Person {
     @JsonIgnore
     @ManyToMany(mappedBy = "artDirectors")
     @Fetch(FetchMode.SELECT)
-    private Set<Movie> movies = new HashSet<>();
+    private List<Movie> movies = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_pays_directeur_artistique", joinColumns = @JoinColumn(name = "fk_directeur_artistique"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
@@ -54,13 +52,13 @@ public class ArtDirector extends Person {
                 ;
     }
 
-    public Uni<Set<Movie>> addMovie(Movie movie) {
+    public Uni<List<Movie>> addMovie(Movie movie) {
         return
                 Mutiny.fetch(movies)
                         .map(
-                                movieSet -> {
-                                    movieSet.add(movie);
-                                    return movieSet;
+                                movieList -> {
+                                    movieList.add(movie);
+                                    return movieList;
                                 }
                         )
                 ;
@@ -72,13 +70,13 @@ public class ArtDirector extends Person {
      * @param id l'identifiant du film
      * @return la liste des films
      */
-    public Uni<Set<Movie>> removeMovie(Long id) {
+    public Uni<List<Movie>> removeMovie(Long id) {
         return
                 Mutiny.fetch(movies)
                         .map(
-                                movieSet -> {
-                                    movieSet.removeIf(movie -> Objects.equals(movie.id, id));
-                                    return movieSet;
+                                movieList -> {
+                                    movieList.removeIf(movie -> Objects.equals(movie.id, id));
+                                    return movieList;
                                 }
                         )
                 ;
