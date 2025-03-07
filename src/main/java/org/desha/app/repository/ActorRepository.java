@@ -5,6 +5,7 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.entity.Actor;
 
 import java.time.LocalDate;
@@ -77,6 +78,64 @@ public class ActorRepository extends PersonRepository<Actor> {
         }
 
         return count(query.toString(), params);
+    }
+
+    @Override
+    public Uni<Actor> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+        StringBuilder query = new StringBuilder(
+                "FROM Actor a " +
+                        "JOIN FETCH a.movieActors ma " +
+                        "JOIN FETCH ma.movie m " +
+                        "WHERE a.id = :id " +
+                        "AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))"
+        );
+        Parameters params = Parameters.with("id", id)
+                .and("term", "%" + filtersDTO.getTerm() + "%");
+
+        if (Objects.nonNull(filtersDTO.getFromReleaseDate())) {
+            query.append(" AND m.releaseDate >= :fromReleaseDate");
+            params.and("fromReleaseDate",filtersDTO.getFromReleaseDate());
+        }
+
+        if (Objects.nonNull(filtersDTO.getToReleaseDate())) {
+            query.append(" AND m.releaseDate <= :toReleaseDate");
+            params.and("toReleaseDate", filtersDTO.getToReleaseDate());
+        }
+
+        if (Objects.nonNull(filtersDTO.getFromCreationDate())) {
+            query.append(" AND m.creationDate >= :fromCreationDate");
+            params.and("fromCreationDate", filtersDTO.getFromCreationDate());
+        }
+
+        if (Objects.nonNull(filtersDTO.getToCreationDate())) {
+            query.append(" AND m.creationDate <= :toCreationDate");
+            params.and("toCreationDate",filtersDTO.getToCreationDate());
+        }
+
+        if (Objects.nonNull(filtersDTO.getFromLastUpdate())) {
+            query.append(" AND m.lastUpdate >= :fromLastUpdate");
+            params.and("fromLastUpdate", filtersDTO.getFromLastUpdate());
+        }
+
+        if (Objects.nonNull(filtersDTO.getToLastUpdate())) {
+            query.append(" AND m.lastUpdate <= :toLastUpdate");
+            params.and("toLastUpdate", filtersDTO.getToLastUpdate());
+        }
+
+        if (Objects.nonNull(filtersDTO.getGenreIds()) && !filtersDTO.getGenreIds().isEmpty()) {
+            query.append(" AND EXISTS (SELECT 1 FROM m.genres g WHERE g.id IN :genreIds)");
+            params.and("genreIds", filtersDTO.getGenreIds());
+        }
+
+        if (Objects.nonNull(filtersDTO.getCountryIds()) && !filtersDTO.getCountryIds().isEmpty()) {
+            query.append(" AND EXISTS (SELECT 1 FROM m.countries c WHERE c.id IN :countryIds)");
+            params.and("countryIds", filtersDTO.getCountryIds());
+        }
+
+        return
+                find(query.toString(), params)
+                        .firstResult()
+                ;
     }
 
     /**

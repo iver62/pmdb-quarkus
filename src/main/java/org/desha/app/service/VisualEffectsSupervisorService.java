@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Costumier;
@@ -29,14 +30,14 @@ public class VisualEffectsSupervisorService extends PersonService<VisualEffectsS
         super(countryService, movieRepository, visualEffectsSupervisorRepository, fileService);
     }
 
-    public Uni<Long> countMovies(Long visualEffectsSupervisorId, String term) {
-        return movieRepository.countMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, term);
+    public Uni<Long> countMovies(long visualEffectsSupervisorId, FiltersDTO filtersDTO) {
+        return movieRepository.countMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long visualEffectsSupervisorId, int page, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(long visualEffectsSupervisorId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, page, size, sort, direction, term)
+                        .findMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, page, size, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

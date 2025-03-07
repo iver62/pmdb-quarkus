@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
@@ -110,7 +111,7 @@ public class MovieResource {
             @QueryParam("end-last-update") LocalDateTime toLastUpdate
     ) {
         return
-                movieService.count(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                movieService.count(FiltersDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
@@ -161,10 +162,22 @@ public class MovieResource {
 
         Sort.Direction sortDirection = validateSortDirection(direction);
 
+        FiltersDTO filtersDTO = FiltersDTO.build(
+                term,
+                countryIds,
+                genreIds,
+                fromReleaseDate,
+                toReleaseDate,
+                fromCreationDate,
+                toCreationDate,
+                fromLastUpdate,
+                toLastUpdate
+        );
+
         return
-                movieService.getMovies(pageIndex, size, sort, sortDirection, term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                movieService.getMovies(pageIndex, size, sort, sortDirection, filtersDTO)
                         .flatMap(movieList ->
-                                movieService.count(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                                movieService.count(filtersDTO)
                                         .map(total ->
                                                 movieList.isEmpty()
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()

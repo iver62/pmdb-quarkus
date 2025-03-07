@@ -4,6 +4,7 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.entity.Musician;
 
 import java.time.LocalDate;
@@ -75,6 +76,11 @@ public class MusicianRepository extends PersonRepository<Musician> {
         }
 
         return count(query.toString(), params);
+    }
+
+    @Override
+    public Uni<Musician> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+        return null;
     }
 
     public Uni<List<Musician>> find(

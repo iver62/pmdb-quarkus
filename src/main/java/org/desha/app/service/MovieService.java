@@ -6,10 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.MovieActorDTO;
-import org.desha.app.domain.dto.MovieDTO;
-import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.dto.TechnicalTeamDTO;
+import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.repository.MovieActorRepository;
 import org.desha.app.repository.MovieRepository;
@@ -103,18 +100,8 @@ public class MovieService {
         this.stuntmanService = stuntmanService;
     }
 
-    public Uni<Long> count(
-            String term,
-            List<Integer> countryIds,
-            List<Integer> genreIds,
-            LocalDate fromReleaseDate,
-            LocalDate toReleaseDate,
-            LocalDateTime fromCreationDate,
-            LocalDateTime toCreationDate,
-            LocalDateTime fromLastUpdate,
-            LocalDateTime toLastUpdate
-    ) {
-        return movieRepository.countMovies(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate);
+    public Uni<Long> count(FiltersDTO filtersDTO) {
+        return movieRepository.countMovies(filtersDTO);
     }
 
     public Uni<Movie> getById(Long id) {
@@ -124,24 +111,10 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<MovieDTO>> getMovies(
-            int pageIndex,
-            int size,
-            String sort,
-            Sort.Direction direction,
-            String term,
-            List<Integer> countryIds,
-            List<Integer> genreIds,
-            LocalDate fromReleaseDate,
-            LocalDate toReleaseDate,
-            LocalDateTime fromCreationDate,
-            LocalDateTime toCreationDate,
-            LocalDateTime fromLastUpdate,
-            LocalDateTime toLastUpdate
-    ) {
+    public Uni<List<MovieDTO>> getMovies(int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMovies(pageIndex, size, sort, direction, term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                        .findMovies(pageIndex, size, sort, direction, filtersDTO)
                         .map(
                                 movieList ->
                                         movieList

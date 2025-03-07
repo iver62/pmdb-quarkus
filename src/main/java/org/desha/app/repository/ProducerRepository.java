@@ -4,6 +4,7 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.entity.Producer;
 
 import java.time.LocalDate;
@@ -90,6 +91,11 @@ public class ProducerRepository extends PersonRepository<Producer> {
         }
 
         return count(query.toString(), params);
+    }
+
+    @Override
+    public Uni<Producer> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+        return null;
     }
 
     /**

@@ -6,7 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.MovieDTO;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -68,17 +68,21 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
         return personRepository.count(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate);
     }
 
-//    public abstract Uni<Long> countMovies(Long personId, String term);
-
     @Override
     public Uni<T> getById(Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNotNull().call(t ->
-                                Mutiny.fetch(t.getCountries())
-                                        .invoke(t::setCountries)
-                        )
+                        .onItem().ifNotNull()
+                        .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
                         .onFailure().recoverWithNull()
+                ;
+    }
+
+    public Uni<PersonDTO> getByIdWithCountriesAndMovies(Long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+        return
+                personRepository.findByIdWithCountriesAndMovies(id, pageIndex, size, sort, direction, filtersDTO)
+                        .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
+                        .map(PersonDTO::fromEntityWithCountriesAndMovies)
                 ;
     }
 
@@ -141,7 +145,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
 //    public abstract Uni<List<MovieDTO>> getMovies(Long personId, int page, int size, String sort, Sort.Direction direction, String term);
 
     @Override
-    public Uni<Set<Movie>> addMovie(Long id, Movie movie) {
+    public Uni<List<Movie>> addMovie(Long id, Movie movie) {
         return
                 Panache
                         .withTransaction(() ->
@@ -153,7 +157,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     }
 
     @Override
-    public Uni<Set<Movie>> removeMovie(Long id, Long movieId) {
+    public Uni<List<Movie>> removeMovie(Long id, Long movieId) {
         return
                 Panache
                         .withTransaction(() ->

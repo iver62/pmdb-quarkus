@@ -2,6 +2,7 @@ package org.desha.app.service;
 
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
@@ -10,7 +11,6 @@ import org.desha.app.domain.entity.Person;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 public interface PersonServiceInterface<T extends Person> {
 
@@ -27,7 +27,7 @@ public interface PersonServiceInterface<T extends Person> {
             LocalDateTime toLastUpdate
     );
 
-    Uni<Long> countMovies(Long personId, String term);
+    Uni<Long> countMovies(long personId, FiltersDTO filtersDTO);
 
     Uni<T> getById(Long id);
 
@@ -52,9 +52,9 @@ public interface PersonServiceInterface<T extends Person> {
 
     Uni<List<PersonDTO>> getAll();
 
-    Uni<List<MovieDTO>> getMovies(Long id, int page, int size, String sort, Sort.Direction sortDirection, String title);
+    Uni<List<MovieDTO>> getMovies(long id, int page, int size, String sort, Sort.Direction sortDirection, FiltersDTO filtersDTO);
 
-    Uni<Set<Movie>> addMovie(Long personId, Movie movie);
+    Uni<List<Movie>> addMovie(Long personId, Movie movie);
 
-    Uni<Set<Movie>> removeMovie(Long personId, Long movieId);
+    Uni<List<Movie>> removeMovie(Long personId, Long movieId);
 }

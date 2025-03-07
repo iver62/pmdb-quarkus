@@ -6,12 +6,15 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Costumier;
 import org.desha.app.repository.CostumierRepository;
 import org.desha.app.repository.MovieRepository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -28,14 +31,14 @@ public class CostumierService extends PersonService<Costumier> {
         super(countryService, movieRepository, costumierRepository, fileService);
     }
 
-    public Uni<Long> countMovies(Long costumierId, String term) {
-        return movieRepository.countMoviesByCostumier(costumierId, term);
+    public Uni<Long> countMovies(long costumierId, FiltersDTO filtersDTO) {
+        return movieRepository.countMoviesByCostumier(costumierId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long costumierId, int page, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(long costumierId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByCostumier(costumierId, page, size, sort, direction, term)
+                        .findMoviesByCostumier(costumierId, page, size, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

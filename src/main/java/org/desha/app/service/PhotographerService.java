@@ -6,14 +6,15 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.entity.Costumier;
 import org.desha.app.domain.entity.Photographer;
-import org.desha.app.repository.CostumierRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PhotographerRepository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -30,14 +31,14 @@ public class PhotographerService extends PersonService<Photographer> {
         super(countryService, movieRepository, photographerRepository, fileService);
     }
 
-    public Uni<Long> countMovies(Long photographerId, String term) {
-        return movieRepository.countMoviesByCostumier(photographerId, term);
+    public Uni<Long> countMovies(long photographerId, FiltersDTO filtersDTO) {
+        return movieRepository.countMoviesByPhotographer(photographerId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long photographerId, int page, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(long photographerId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByPhotographer(photographerId, page, size, sort, direction, term)
+                        .findMoviesByPhotographer(photographerId, page, size, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

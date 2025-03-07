@@ -4,6 +4,7 @@ import io.quarkus.hibernate.reactive.panache.PanacheRepository;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.entity.Person;
 
 import java.time.LocalDate;
@@ -30,6 +31,8 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
             LocalDateTime fromLastUpdate,
             LocalDateTime toLastUpdate
     );
+
+    public abstract Uni<T> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO);
 
     public Uni<List<T>> findByIds(List<Long> ids) {
         if (Objects.isNull(ids) || ids.isEmpty()) {

@@ -6,12 +6,15 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Screenwriter;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.ScreenwriterRepository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -28,14 +31,14 @@ public class ScreenwriterService extends PersonService<Screenwriter> {
         super(countryService, movieRepository, screenwriterRepository, fileService);
     }
 
-    public Uni<Long> countMovies(Long screenwriterId, String term) {
-        return movieRepository.countMoviesByScreenwriter(screenwriterId, term);
+    public Uni<Long> countMovies(long screenwriterId, FiltersDTO filtersDTO) {
+        return movieRepository.countMoviesByScreenwriter(screenwriterId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long screenwriterId, int page, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(long screenwriterId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByScreenwriter(screenwriterId, page, size, sort, direction, term)
+                        .findMoviesByScreenwriter(screenwriterId, page, size, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

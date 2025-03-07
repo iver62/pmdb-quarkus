@@ -4,6 +4,7 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.entity.Photographer;
 import org.desha.app.domain.entity.Producer;
 
@@ -76,6 +77,11 @@ public class PhotographerRepository extends PersonRepository<Photographer> {
         }
 
         return count(query.toString(), params);
+    }
+
+    @Override
+    public Uni<Photographer> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+        return null;
     }
 
     /**

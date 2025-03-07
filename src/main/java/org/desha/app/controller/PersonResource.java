@@ -8,6 +8,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -42,6 +43,53 @@ public abstract class PersonResource<T extends Person> {
     @Path("{id}")
     public Uni<T> getPersonById(Long id) {
         return personService.getById(id);
+    }
+
+    @GET
+    @Path("{id}/full")
+    public Uni<Response> getPersonByIdWithCountriesAndMovies(
+            @RestPath Long id,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("50") int size,
+            @QueryParam("sort") @DefaultValue("title") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("term") @DefaultValue("") String term,
+            @QueryParam("country") List<Integer> countryIds,
+            @QueryParam("genre") List<Integer> genreIds,
+            @QueryParam("start-release-date") LocalDate fromReleaseDate,
+            @QueryParam("end-release-date") LocalDate toReleaseDate,
+            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("end-last-update") LocalDateTime toLastUpdate
+    ) {
+        // Vérification de la cohérence des dates
+        if (Objects.nonNull(fromReleaseDate) && Objects.nonNull(toReleaseDate) && fromReleaseDate.isAfter(toReleaseDate)
+                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
+                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        ) {
+            return
+                    Uni.createFrom().item(
+                            Response.status(Response.Status.BAD_REQUEST)
+                                    .entity("La date de début ne peut pas être après la date de fin.")
+                                    .build()
+                    );
+        }
+
+        // Vérifier si la direction est valide
+        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
+        return
+                personService.getByIdWithCountriesAndMovies(id, pageIndex, size, sort, sortDirection, FiltersDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                        .map(personDTO ->
+                                Response.ok(personDTO).build()
+                        )
+                ;
     }
 
     @GET
@@ -108,12 +156,33 @@ public abstract class PersonResource<T extends Person> {
     @Path("{id}/movies")
     public Uni<Response> getMovies(
             @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("20") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
+            @QueryParam("term") @DefaultValue("") String term,
+            @QueryParam("country") List<Integer> countryIds,
+            @QueryParam("genre") List<Integer> genreIds,
+            @QueryParam("start-release-date") LocalDate fromReleaseDate,
+            @QueryParam("end-release-date") LocalDate toReleaseDate,
+            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("end-last-update") LocalDateTime toLastUpdate
     ) {
+        // Vérification de la cohérence des dates
+        if (Objects.nonNull(fromReleaseDate) && Objects.nonNull(toReleaseDate) && fromReleaseDate.isAfter(toReleaseDate)
+                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
+                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        ) {
+            return
+                    Uni.createFrom().item(
+                            Response.status(Response.Status.BAD_REQUEST)
+                                    .entity("La date de début ne peut pas être après la date de fin.")
+                                    .build()
+                    );
+        }
+
         Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
@@ -121,14 +190,27 @@ public abstract class PersonResource<T extends Person> {
 
         Sort.Direction sortDirection = validateSortDirection(direction);
 
+        FiltersDTO filtersDTO = FiltersDTO.build(
+                term,
+                countryIds,
+                genreIds,
+                fromReleaseDate,
+                toReleaseDate,
+                fromCreationDate,
+                toCreationDate,
+                fromLastUpdate,
+                toLastUpdate
+        );
+
         return
-                personService.getMovies(id, page, size, sort, sortDirection, term)
+                personService.getMovies(id, pageIndex, size, sort, sortDirection, filtersDTO)
                         .flatMap(movieList ->
-                                personService.countMovies(id, term).map(total ->
-                                        movieList.isEmpty()
-                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                )
+                                personService.countMovies(id, filtersDTO)
+                                        .map(total ->
+                                                movieList.isEmpty()
+                                                        ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                        : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                        )
                         )
                 ;
     }

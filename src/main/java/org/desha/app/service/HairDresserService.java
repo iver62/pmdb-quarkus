@@ -6,6 +6,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.FiltersDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Costumier;
@@ -29,14 +30,14 @@ public class HairDresserService extends PersonService<HairDresser> {
         super(countryService, movieRepository, hairDresserRepository, fileService);
     }
 
-    public Uni<Long> countMovies(Long hairDresserId, String term) {
-        return movieRepository.countMoviesByHairDresser(hairDresserId, term);
+    public Uni<Long> countMovies(long hairDresserId, FiltersDTO filtersDTO) {
+        return movieRepository.countMoviesByHairDresser(hairDresserId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long hairDresserId, int page, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(long hairDresserId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByHairDresser(hairDresserId, page, size, sort, direction, term)
+                        .findMoviesByHairDresser(hairDresserId, page, size, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()
