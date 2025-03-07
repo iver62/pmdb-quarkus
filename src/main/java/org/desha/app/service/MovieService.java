@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -104,17 +105,17 @@ public class MovieService {
         return movieRepository.countMovies(filtersDTO);
     }
 
-    public Uni<Movie> getById(Long id) {
+    public Uni<Movie> getById(long id) {
         return
                 movieRepository.findByIdWithCountriesAndGenres(id)
                         .onFailure().recoverWithNull()
                 ;
     }
 
-    public Uni<List<MovieDTO>> getMovies(int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMovies(pageIndex, size, sort, direction, filtersDTO)
+                        .findMovies(page, sort, direction, filtersDTO)
                         .map(
                                 movieList ->
                                         movieList

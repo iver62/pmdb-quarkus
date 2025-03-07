@@ -1,6 +1,7 @@
 package org.desha.app.repository;
 
 import io.quarkus.hibernate.reactive.panache.PanacheRepository;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -32,7 +33,7 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
             LocalDateTime toLastUpdate
     );
 
-    public abstract Uni<T> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO);
+    public abstract Uni<T> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO);
 
     public Uni<List<T>> findByIds(List<Long> ids) {
         if (Objects.isNull(ids) || ids.isEmpty()) {
@@ -42,8 +43,7 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
     }
 
     public abstract Uni<List<T>> find(
-            int pageIndex,
-            int size,
+            Page page,
             String sort,
             Sort.Direction direction,
             String term,
@@ -58,13 +58,13 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
             LocalDateTime toLastUpdate
     );
 
-    public Uni<List<T>> find(int pageIndex, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<T>> find(Page page, String sort, Sort.Direction direction, String term) {
         return
                 find("lower(name) like lower(:term)",
                         Sort.by(sort, direction),
                         Parameters.with("term", "%" + term + "%")
                 )
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }

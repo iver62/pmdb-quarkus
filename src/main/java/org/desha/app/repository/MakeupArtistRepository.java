@@ -1,5 +1,6 @@
 package org.desha.app.repository;
 
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -79,13 +80,12 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
     }
 
     @Override
-    public Uni<MakeupArtist> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<MakeupArtist> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return null;
     }
 
     public Uni<List<MakeupArtist>> find(
-            int pageIndex,
-            int size,
+            Page page,
             String sort,
             Sort.Direction direction,
             String term,
@@ -149,7 +149,7 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
 
         return
                 find(query.toString(), Sort.by(sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }

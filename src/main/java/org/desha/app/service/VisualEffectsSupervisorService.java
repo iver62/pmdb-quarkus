@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -34,10 +35,10 @@ public class VisualEffectsSupervisorService extends PersonService<VisualEffectsS
         return movieRepository.countMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(long visualEffectsSupervisorId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(long visualEffectsSupervisorId, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, page, size, sort, direction, filtersDTO)
+                        .findMoviesByVisualEffectsSupervisor(visualEffectsSupervisorId, page, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

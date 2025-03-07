@@ -1,5 +1,6 @@
 package org.desha.app.service;
 
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import org.desha.app.domain.dto.FiltersDTO;
@@ -34,8 +35,7 @@ public interface PersonServiceInterface<T extends Person> {
     Uni<List<T>> getByIds(List<Long> ids);
 
     Uni<List<PersonDTO>> get(
-            int pageIndex,
-            int size,
+            Page page,
             String sort,
             Sort.Direction direction,
             String term,
@@ -52,7 +52,7 @@ public interface PersonServiceInterface<T extends Person> {
 
     Uni<List<PersonDTO>> getAll();
 
-    Uni<List<MovieDTO>> getMovies(long id, int page, int size, String sort, Sort.Direction sortDirection, FiltersDTO filtersDTO);
+    Uni<List<MovieDTO>> getMovies(long id, Page page, String sort, Sort.Direction sortDirection, FiltersDTO filtersDTO);
 
     Uni<List<Movie>> addMovie(Long personId, Movie movie);
 

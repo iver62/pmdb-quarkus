@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -13,8 +14,6 @@ import org.desha.app.domain.entity.Photographer;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PhotographerRepository;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -35,10 +34,10 @@ public class PhotographerService extends PersonService<Photographer> {
         return movieRepository.countMoviesByPhotographer(photographerId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(long photographerId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(long photographerId, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByPhotographer(photographerId, page, size, sort, direction, filtersDTO)
+                        .findMoviesByPhotographer(photographerId, page, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

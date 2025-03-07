@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -88,10 +89,10 @@ public class CountryService {
                 ;
     }
 
-    public Uni<List<CountryDTO>> getCountries(int pageIndex, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
         return
                 countryRepository
-                        .findCountries(pageIndex, size, sort, direction, term)
+                        .findCountries(page, sort, direction, term)
                         .map(
                                 countryList ->
                                         countryList
@@ -353,20 +354,9 @@ public class CountryService {
                 ;
     }
 
-    /**
-     * Récupère une liste de films associés à un pays donné, avec pagination, tri et filtrage sur le titre.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les films.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le titre des films (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de films sous forme de {@link MovieDTO}.
-     */
-    public Uni<List<MovieDTO>> getMovies(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
-                movieRepository.findMoviesByCountry(id, pageIndex, size, sort, direction, term)
+                movieRepository.findMoviesByCountry(id, page, sort, direction, term)
                         .map(movieList ->
                                 movieList
                                         .stream()

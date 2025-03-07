@@ -1,5 +1,6 @@
 package org.desha.app.repository;
 
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -81,7 +82,7 @@ public class ActorRepository extends PersonRepository<Actor> {
     }
 
     @Override
-    public Uni<Actor> findByIdWithCountriesAndMovies(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<Actor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         StringBuilder query = new StringBuilder(
                 "FROM Actor a " +
                         "JOIN FETCH a.movieActors ma " +
@@ -138,21 +139,8 @@ public class ActorRepository extends PersonRepository<Actor> {
                 ;
     }
 
-    /**
-     * Cette méthode permet de récupérer une liste d'acteurs appartenant à un pays donné et dont le nom correspond à un terme de recherche.
-     * Les résultats sont paginés et triés selon les paramètres fournis.
-     *
-     * @param pageIndex L'indice de la page pour la pagination des résultats.
-     * @param size      Le nombre d'acteurs à récupérer par page.
-     * @param sort      Le nom du champ par lequel trier les résultats.
-     * @param direction La direction du tri (ascendant ou descendant).
-     * @param term      Le terme de recherche utilisé pour filtrer les acteurs par leur nom. La recherche est insensible à la casse.
-     * @return Un objet {@link Uni} contenant une liste d'acteurs correspondant aux critères de recherche.
-     * Les résultats sont paginés et triés selon les paramètres fournis.
-     */
     public Uni<List<Actor>> find(
-            int pageIndex,
-            int size,
+            Page page,
             String sort,
             Sort.Direction direction,
             String term,
@@ -216,7 +204,7 @@ public class ActorRepository extends PersonRepository<Actor> {
 
         return
                 find(query.toString(), Sort.by(sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }

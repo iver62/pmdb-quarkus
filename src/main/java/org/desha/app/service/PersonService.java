@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -36,7 +37,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     public static final String DEFAULT_PHOTO = "default-photo.jpg";
 
     @Inject
-    public PersonService(
+    protected PersonService(
             CountryService countryService,
             MovieRepository movieRepository,
             PersonRepository<T> personRepository,
@@ -78,9 +79,9 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    public Uni<PersonDTO> getByIdWithCountriesAndMovies(Long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<PersonDTO> getByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
-                personRepository.findByIdWithCountriesAndMovies(id, pageIndex, size, sort, direction, filtersDTO)
+                personRepository.findByIdWithCountriesAndMovies(id, page, sort, direction, filtersDTO)
                         .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
                         .map(PersonDTO::fromEntityWithCountriesAndMovies)
                 ;
@@ -103,8 +104,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
 
     @Override
     public Uni<List<PersonDTO>> get(
-            int pageIndex,
-            int size,
+            Page page,
             String sort,
             Sort.Direction direction,
             String term,
@@ -120,7 +120,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     ) {
         return
                 personRepository
-                        .find(pageIndex, size, sort, direction, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                        .find(page, sort, direction, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
                         .map(
                                 tList ->
                                         tList
@@ -141,8 +141,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                 .toList()
                 );
     }
-
-//    public abstract Uni<List<MovieDTO>> getMovies(Long personId, int page, int size, String sort, Sort.Direction direction, String term);
 
     @Override
     public Uni<List<Movie>> addMovie(Long id, Movie movie) {

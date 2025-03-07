@@ -1,5 +1,6 @@
 package org.desha.app.controller;
 
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,7 +12,6 @@ import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
-import org.desha.app.domain.entity.Person;
 import org.desha.app.service.CountryService;
 import org.jboss.resteasy.reactive.RestPath;
 
@@ -45,7 +45,7 @@ public class CountryResource {
 
     @GET
     public Uni<Response> getCountries(
-            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("50") int size,
             @QueryParam("sort") @DefaultValue("nomFrFr") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
@@ -59,7 +59,7 @@ public class CountryResource {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                countryService.getCountries(page, size, sort, sortDirection, term)
+                countryService.getCountries(Page.of(pageIndex, size), sort, sortDirection, term)
                         .flatMap(countryList ->
                                 countryService.countCountries(term).map(total ->
                                         countryList.isEmpty()
@@ -137,7 +137,7 @@ public class CountryResource {
     @Path("{id}/movies")
     public Uni<Response> getMoviesByCountry(
             @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
             @QueryParam("size") @DefaultValue("50") int size,
             @QueryParam("sort") @DefaultValue("title") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
@@ -151,7 +151,7 @@ public class CountryResource {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                countryService.getMovies(id, page, size, sort, sortDirection, term)
+                countryService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, term)
                         .flatMap(movieList ->
                                 countryService.countMovies(id, term).map(total ->
                                         movieList.isEmpty()

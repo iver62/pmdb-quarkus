@@ -1,6 +1,7 @@
 package org.desha.app.controller;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -175,7 +176,7 @@ public class MovieResource {
         );
 
         return
-                movieService.getMovies(pageIndex, size, sort, sortDirection, filtersDTO)
+                movieService.getMovies(Page.of(pageIndex, size), sort, sortDirection, filtersDTO)
                         .flatMap(movieList ->
                                 movieService.count(filtersDTO)
                                         .map(total ->

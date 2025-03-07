@@ -1,5 +1,6 @@
 package org.desha.app.controller;
 
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -85,7 +86,7 @@ public abstract class PersonResource<T extends Person> {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                personService.getByIdWithCountriesAndMovies(id, pageIndex, size, sort, sortDirection, FiltersDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                personService.getByIdWithCountriesAndMovies(id, Page.of(pageIndex, size), sort, sortDirection, FiltersDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
                         .map(personDTO ->
                                 Response.ok(personDTO).build()
                         )
@@ -131,7 +132,7 @@ public abstract class PersonResource<T extends Person> {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                personService.get(pageIndex, size, sort, sortDirection, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                personService.get(Page.of(pageIndex, size), sort, sortDirection, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
                         .flatMap(personDTOList ->
                                 personService.count(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate).map(total ->
                                         personDTOList.isEmpty()
@@ -203,7 +204,7 @@ public abstract class PersonResource<T extends Person> {
         );
 
         return
-                personService.getMovies(id, pageIndex, size, sort, sortDirection, filtersDTO)
+                personService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, filtersDTO)
                         .flatMap(movieList ->
                                 personService.countMovies(id, filtersDTO)
                                         .map(total ->

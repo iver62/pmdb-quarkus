@@ -1,6 +1,7 @@
 package org.desha.app.repository;
 
 import io.quarkus.hibernate.reactive.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -289,7 +290,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMovies(int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(filtersDTO);
 
@@ -300,7 +301,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by(sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
@@ -309,7 +310,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return list("title", title);
     }
 
-    public Uni<List<Movie>> findMoviesByActor(Long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByActor(Long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.movieActors ma JOIN ma.actor a WHERE a.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -321,12 +322,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByProducer(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByProducer(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.producers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -338,12 +339,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByDirector(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByDirector(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.directors d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -355,12 +356,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByScreenwriter(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByScreenwriter(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -372,12 +373,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByMusician(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByMusician(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -389,12 +390,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByDecorator(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByDecorator(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -406,12 +407,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByCostumier(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByCostumier(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -423,12 +424,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByPhotographer(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByPhotographer(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -440,12 +441,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByEditor(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByEditor(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -457,12 +458,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByCaster(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByCaster(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -474,12 +475,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByArtDirector(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByArtDirector(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -491,12 +492,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesBySoundEditor(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesBySoundEditor(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -508,12 +509,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByVisualEffectsSupervisor(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByVisualEffectsSupervisor(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -525,12 +526,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByMakeupArtist(Long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByMakeupArtist(Long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -542,12 +543,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByHairDresser(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByHairDresser(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -559,12 +560,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByStuntman(long id, int pageIndex, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByStuntman(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
                 addClauses(filtersDTO);
 
@@ -576,7 +577,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         return
                 find(query, Sort.by("m." + sort, direction), params)
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }
@@ -591,7 +592,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ).list();
     }
 
-    public Uni<List<Movie>> findMoviesByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<Movie>> findMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
                         "SELECT m FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
@@ -599,11 +600,11 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
                 )
-                        .page(pageIndex, size)
+                        .page(page)
                         .list();
     }
 
-    public Uni<List<Movie>> findMoviesByGenre(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
+    public Uni<List<Movie>> findMoviesByGenre(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
                         "SELECT m FROM Movie m JOIN m.genres g WHERE g.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
@@ -611,7 +612,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
                 )
-                        .page(pageIndex, size)
+                        .page(page)
                         .list()
                 ;
     }

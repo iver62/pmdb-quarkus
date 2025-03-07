@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -33,10 +34,10 @@ public class ArtDirectorService extends PersonService<ArtDirector> {
         return movieRepository.countMoviesByArtDirector(artDirectorId, filtersDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(long artDirectorId, int page, int size, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(long artDirectorId, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
         return
                 movieRepository
-                        .findMoviesByArtDirector(artDirectorId, page, size, sort, direction, filtersDTO)
+                        .findMoviesByArtDirector(artDirectorId, page, sort, direction, filtersDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()
