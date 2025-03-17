@@ -16,7 +16,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -101,8 +100,8 @@ public class MovieService {
         this.stuntmanService = stuntmanService;
     }
 
-    public Uni<Long> count(FiltersDTO filtersDTO) {
-        return movieRepository.countMovies(filtersDTO);
+    public Uni<Long> count(CriteriasDTO criteriasDTO) {
+        return movieRepository.countMovies(criteriasDTO);
     }
 
     public Uni<Movie> getById(long id) {
@@ -112,10 +111,10 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<MovieDTO>> getMovies(Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 movieRepository
-                        .findMovies(page, sort, direction, filtersDTO)
+                        .findMovies(page, sort, direction, criteriasDTO)
                         .map(
                                 movieList ->
                                         movieList
@@ -245,6 +244,33 @@ public class MovieService {
                 .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
+    public Uni<List<CountDTO>> getMoviesGenresRepartition() {
+        return
+                movieRepository
+                        .find("SELECT g.name, COUNT(m) FROM Movie m JOIN m.genres g GROUP BY g.name ORDER BY COUNT(m) DESC")
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> getMoviesCountriesRepartition() {
+        return
+                movieRepository
+                        .find("SELECT c.nomFrFr, COUNT(m) FROM Movie m JOIN m.countries c GROUP BY c.nomFrFr ORDER BY COUNT(m) DESC")
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> getMoviesUsersRepartition() {
+        return
+                movieRepository
+                        .find("SELECT m.username, COUNT(m) FROM Movie m GROUP BY m.username ORDER BY COUNT(m) DESC")
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
     public Uni<Set<Genre>> getGenresByMovie(Movie movie) {
         return Mutiny.fetch(movie.getGenres());
     }
@@ -306,7 +332,10 @@ public class MovieService {
                                     return Uni.createFrom().item(movie);
                                 }
                         )
-                        .chain(movie -> Panache.withTransaction(movie::persist))
+                        .chain(movie -> {
+                            log.info("MOVIE -> " + movie.getUsername());
+                            return Panache.withTransaction(movie::persist);
+                        })
                 ;
     }
 

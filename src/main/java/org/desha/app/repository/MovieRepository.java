@@ -8,7 +8,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Movie;
 
 import java.util.List;
@@ -19,221 +19,221 @@ import java.util.Optional;
 @ApplicationScoped
 public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
-    public Uni<Long> countMovies(FiltersDTO filtersDTO) {
+    public Uni<Long> countMovies(CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByActor(Long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByActor(Long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.movieActors ma WHERE ma.actor.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByProducer(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByProducer(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.producers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByDirector(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByDirector(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.directors d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByScreenwriter(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByScreenwriter(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByMusician(Long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByMusician(Long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByDecorator(Long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByDecorator(Long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByCostumier(Long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByCostumier(Long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByPhotographer(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByPhotographer(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByEditor(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByEditor(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByCaster(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByCaster(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByArtDirector(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByArtDirector(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesBySoundEditor(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesBySoundEditor(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByVisualEffectsSupervisor(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByVisualEffectsSupervisor(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByMakeupArtist(long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByMakeupArtist(long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByHairDresser(Long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByHairDresser(Long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByStuntman(Long id, FiltersDTO filtersDTO) {
+    public Uni<Long> countMoviesByStuntman(Long id, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return count(query, params);
@@ -290,13 +290,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -310,14 +310,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return list("title", title);
     }
 
-    public Uni<List<Movie>> findMoviesByActor(Long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByActor(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.movieActors ma JOIN ma.actor a WHERE a.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -327,14 +327,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByProducer(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByProducer(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.producers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -344,14 +344,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByDirector(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByDirector(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.directors d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -361,14 +361,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByScreenwriter(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByScreenwriter(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -378,14 +378,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByMusician(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByMusician(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -395,14 +395,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByDecorator(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByDecorator(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -412,14 +412,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByCostumier(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByCostumier(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -429,14 +429,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByPhotographer(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByPhotographer(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -446,14 +446,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByEditor(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByEditor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -463,14 +463,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByCaster(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByCaster(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -480,14 +480,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByArtDirector(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByArtDirector(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -497,14 +497,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesBySoundEditor(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesBySoundEditor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -514,14 +514,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByVisualEffectsSupervisor(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByVisualEffectsSupervisor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -531,14 +531,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByMakeupArtist(Long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByMakeupArtist(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -548,14 +548,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByHairDresser(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByHairDresser(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -565,14 +565,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByStuntman(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<Movie>> findMoviesByStuntman(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
-                addClauses(filtersDTO);
+                addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + filtersDTO.getTerm() + "%"),
-                filtersDTO
+                        .and("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
         );
 
         return
@@ -617,52 +617,59 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    private String addClauses(FiltersDTO filtersDTO) {
+    private String addClauses(CriteriasDTO criteriasDTO) {
         StringBuilder query = new StringBuilder();
 
-        Optional.ofNullable(filtersDTO.getFromReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate >= :fromReleaseDate"));
-        Optional.ofNullable(filtersDTO.getToReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate <= :toReleaseDate"));
-        Optional.ofNullable(filtersDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND m.creationDate >= :fromCreationDate"));
-        Optional.ofNullable(filtersDTO.getToCreationDate()).ifPresent(date -> query.append(" AND m.creationDate <= :toCreationDate"));
-        Optional.ofNullable(filtersDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
-        Optional.ofNullable(filtersDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
+        Optional.ofNullable(criteriasDTO.getFromReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate >= :fromReleaseDate"));
+        Optional.ofNullable(criteriasDTO.getToReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate <= :toReleaseDate"));
+        Optional.ofNullable(criteriasDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND m.creationDate >= :fromCreationDate"));
+        Optional.ofNullable(criteriasDTO.getToCreationDate()).ifPresent(date -> query.append(" AND m.creationDate <= :toCreationDate"));
+        Optional.ofNullable(criteriasDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
+        Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
 
-        if (Objects.nonNull(filtersDTO.getGenreIds()) && !filtersDTO.getGenreIds().isEmpty()) {
+        if (Objects.nonNull(criteriasDTO.getGenreIds()) && !criteriasDTO.getGenreIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.genres g WHERE g.id IN :genreIds)");
         }
 
-        if (Objects.nonNull(filtersDTO.getCountryIds()) && !filtersDTO.getCountryIds().isEmpty()) {
+        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.countries c WHERE c.id IN :countryIds)");
+        }
+
+        if (Objects.nonNull(criteriasDTO.getUsernames()) && !criteriasDTO.getUsernames().isEmpty()) {
+            query.append(" AND m.username IN :usernames");
         }
 
         return query.toString();
     }
 
-    private Parameters addParameters(Parameters params, FiltersDTO filtersDTO) {
-        if (Objects.nonNull(filtersDTO.getFromReleaseDate())) {
-            params.and("fromReleaseDate", filtersDTO.getFromReleaseDate());
+    private Parameters addParameters(Parameters params, CriteriasDTO criteriasDTO) {
+        if (Objects.nonNull(criteriasDTO.getFromReleaseDate())) {
+            params.and("fromReleaseDate", criteriasDTO.getFromReleaseDate());
         }
-        if (Objects.nonNull(filtersDTO.getToReleaseDate())) {
-            params.and("toReleaseDate", filtersDTO.getToReleaseDate());
+        if (Objects.nonNull(criteriasDTO.getToReleaseDate())) {
+            params.and("toReleaseDate", criteriasDTO.getToReleaseDate());
         }
-        if (Objects.nonNull(filtersDTO.getFromCreationDate())) {
-            params.and("fromCreationDate", filtersDTO.getFromCreationDate());
+        if (Objects.nonNull(criteriasDTO.getFromCreationDate())) {
+            params.and("fromCreationDate", criteriasDTO.getFromCreationDate());
         }
-        if (Objects.nonNull(filtersDTO.getToCreationDate())) {
-            params.and("toCreationDate", filtersDTO.getToCreationDate());
+        if (Objects.nonNull(criteriasDTO.getToCreationDate())) {
+            params.and("toCreationDate", criteriasDTO.getToCreationDate());
         }
-        if (Objects.nonNull(filtersDTO.getFromLastUpdate())) {
-            params.and("fromLastUpdate", filtersDTO.getFromLastUpdate());
+        if (Objects.nonNull(criteriasDTO.getFromLastUpdate())) {
+            params.and("fromLastUpdate", criteriasDTO.getFromLastUpdate());
         }
-        if (Objects.nonNull(filtersDTO.getToLastUpdate())) {
-            params.and("toLastUpdate", filtersDTO.getToLastUpdate());
+        if (Objects.nonNull(criteriasDTO.getToLastUpdate())) {
+            params.and("toLastUpdate", criteriasDTO.getToLastUpdate());
         }
 
-        if (Objects.nonNull(filtersDTO.getGenreIds()) && !filtersDTO.getGenreIds().isEmpty()) {
-            params.and("genreIds", filtersDTO.getGenreIds());
+        if (Objects.nonNull(criteriasDTO.getGenreIds()) && !criteriasDTO.getGenreIds().isEmpty()) {
+            params.and("genreIds", criteriasDTO.getGenreIds());
         }
-        if (Objects.nonNull(filtersDTO.getCountryIds()) && !filtersDTO.getCountryIds().isEmpty()) {
-            params.and("countryIds", filtersDTO.getCountryIds());
+        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
+            params.and("countryIds", criteriasDTO.getCountryIds());
+        }
+        if (Objects.nonNull(criteriasDTO.getUsernames()) && !criteriasDTO.getUsernames().isEmpty()) {
+            params.and("usernames", criteriasDTO.getUsernames());
         }
 
         return params;

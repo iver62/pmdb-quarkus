@@ -25,6 +25,7 @@ public class MovieDTO {
     private Long budget;
     private Long boxOffice;
     private String posterFileName;
+    private String username;
     private TechnicalTeamDTO technicalTeam;
     private List<MovieActorDTO> movieActors;
     private Set<CountryDTO> countries;
@@ -45,6 +46,7 @@ public class MovieDTO {
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
+                .username(movie.getUsername())
                 .build();
     }
 

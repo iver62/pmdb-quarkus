@@ -2,9 +2,7 @@ package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
@@ -16,6 +14,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -30,10 +29,9 @@ import java.util.*;
 @Table(name = "film", uniqueConstraints = {@UniqueConstraint(columnNames = {"titre", "titre_original"})})
 @Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@NamedQueries({
-        @NamedQuery(name = "Movie.searchByTitle", query = "from Movie where lower(title) LIKE lower(concat('%', ?1, '%'))")
-})
 public class Movie extends PanacheEntity {
+
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("title", "releaseDate", "runningTime", "budget", "boxOffice", "creationDate", "lastUpdate");
 
     @NotEmpty(message = "Le titre ne peut pas être vide")
     @Column(name = "titre", nullable = false)
@@ -66,6 +64,9 @@ public class Movie extends PanacheEntity {
 
     @Column(name = "date_mise_a_jour")
     private LocalDateTime lastUpdate;
+
+    @Column(name = "utilisateur", nullable = false)
+    private String username;
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -162,16 +163,12 @@ public class Movie extends PanacheEntity {
     @Fetch(FetchMode.SELECT)
     private List<MovieActor> movieActors = new ArrayList<>();
 
-    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_pays", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
-    @Fetch(FetchMode.SELECT)
     private Set<Country> countries = new HashSet<>();
 
-    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_genre", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_genre"))
-    @Fetch(FetchMode.SELECT)
     private Set<Genre> genres = new HashSet<>();
 
     @JsonIgnore
@@ -200,38 +197,17 @@ public class Movie extends PanacheEntity {
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
                 .posterFileName(movieDTO.getPosterFileName())
+                .username(movieDTO.getUsername())
                 .build();
     }
 
-    public static Uni<Movie> getById(Long id) {
-        return findById(id);
+    public static Uni<List<Movie>> getByTitle(String title) {
+        return list("title", title);
     }
 
-    public static Uni<Set<PanacheEntityBase>> getByTitle(String title) {
+    public static Uni<List<Movie>> getAllMovies(String sort, Sort.Direction direction, String title) {
         return
-                Panache.withTransaction(() -> list("title", title).map(HashSet::new));
-    }
-
-    public static Uni<Set<PanacheEntityBase>> searchByTitle(String title) {
-        return
-                Panache.withTransaction(() -> list("#Movie.searchByTitle", "%" + title + "%").map(HashSet::new));
-    }
-
-    public static Uni<Long> count(String title) {
-        return count("LOWER(title) LIKE LOWER(?1)", "%" + title + "%");
-    }
-
-    public static Uni<List<Movie>> getMovies(String sort, Sort.Direction direction, String title) {
-        return
-                find("LOWER(title) LIKE LOWER(?1)", Sort.by(sort, direction), "%" + title + "%")
-                        .list()
-                ;
-    }
-
-    public static Uni<List<Movie>> getPaginatedMovies(int pageIndex, int size, String sort, Sort.Direction direction, String title) {
-        return
-                find("LOWER(title) LIKE LOWER(?1)", Sort.by(sort, direction), "%" + title + "%")
-                        .page(pageIndex, size)
+                find("lower(title) like lower(?1)", Sort.by(sort, direction), MessageFormat.format("%{0}%", title))
                         .list()
                 ;
     }

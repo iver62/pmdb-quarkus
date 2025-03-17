@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.TechnicalTeamDTO;
@@ -104,15 +104,16 @@ public class MovieResource {
             @QueryParam("term") @DefaultValue("") String term,
             @QueryParam("country") List<Integer> countryIds,
             @QueryParam("genre") List<Integer> genreIds,
-            @QueryParam("start-release-date") LocalDate fromReleaseDate,
-            @QueryParam("end-release-date") LocalDate toReleaseDate,
-            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("end-last-update") LocalDateTime toLastUpdate
+            @QueryParam("user") List<String> usernames,
+            @QueryParam("from-release-date") LocalDate fromReleaseDate,
+            @QueryParam("to-release-date") LocalDate toReleaseDate,
+            @QueryParam("from-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("to-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("from-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("to-last-update") LocalDateTime toLastUpdate
     ) {
         return
-                movieService.count(FiltersDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                movieService.count(CriteriasDTO.build(term, countryIds, genreIds, usernames, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
@@ -135,6 +136,7 @@ public class MovieResource {
             @QueryParam("term") @DefaultValue("") String term,
             @QueryParam("country") List<Integer> countryIds,
             @QueryParam("genre") List<Integer> genreIds,
+            @QueryParam("user") List<String> usernames,
             @QueryParam("start-release-date") LocalDate fromReleaseDate,
             @QueryParam("end-release-date") LocalDate toReleaseDate,
             @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
@@ -163,10 +165,11 @@ public class MovieResource {
 
         Sort.Direction sortDirection = validateSortDirection(direction);
 
-        FiltersDTO filtersDTO = FiltersDTO.build(
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(
                 term,
                 countryIds,
                 genreIds,
+                usernames,
                 fromReleaseDate,
                 toReleaseDate,
                 fromCreationDate,
@@ -176,9 +179,9 @@ public class MovieResource {
         );
 
         return
-                movieService.getMovies(Page.of(pageIndex, size), sort, sortDirection, filtersDTO)
+                movieService.getMovies(Page.of(pageIndex, size), sort, sortDirection, criteriasDTO)
                         .flatMap(movieList ->
-                                movieService.count(filtersDTO)
+                                movieService.count(criteriasDTO)
                                         .map(total ->
                                                 movieList.isEmpty()
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -436,6 +439,33 @@ public class MovieResource {
                 ;
     }
 
+    @GET
+    @Path("genre-repartition")
+    public Uni<Response> getMoviesRepartitionByGenre() {
+        return
+                movieService.getMoviesGenresRepartition()
+                        .map(repartitionDTOS -> Response.ok(repartitionDTOS).build())
+                ;
+    }
+
+    @GET
+    @Path("country-repartition")
+    public Uni<Response> getMoviesRepartitionByCountry() {
+        return
+                movieService.getMoviesCountriesRepartition()
+                        .map(repartitionDTOS -> Response.ok(repartitionDTOS).build())
+                ;
+    }
+
+    @GET
+    @Path("user-repartition")
+    public Uni<Response> getMoviesRepartitionByUser() {
+        return
+                movieService.getMoviesUsersRepartition()
+                        .map(repartitionDTOS -> Response.ok(repartitionDTOS).build())
+                ;
+    }
+
     @POST
     public Uni<Response> create(
             @RestForm("file") FileUpload file,
@@ -445,6 +475,7 @@ public class MovieResource {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
         }
 
+        log.info("USERNAME -> " + movieDTO.getUsername());
         return
                 movieService.saveMovie(file, movieDTO)
                         .map(movie -> Response.status(CREATED).entity(movie).build());
