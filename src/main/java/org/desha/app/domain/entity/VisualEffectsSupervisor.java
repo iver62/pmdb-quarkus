@@ -22,7 +22,7 @@ import java.util.*;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "spécialiste_effets_speciaux")
+@Table(name = "specialiste_effets_speciaux")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class VisualEffectsSupervisor extends Person {
 
@@ -32,7 +32,7 @@ public class VisualEffectsSupervisor extends Person {
     private List<Movie> movies = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_pays_spécialiste_effets_speciaux", joinColumns = @JoinColumn(name = "fk_spécialiste_effets_speciaux"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
+    @JoinTable(name = "lnk_pays_specialiste_effets_speciaux", joinColumns = @JoinColumn(name = "fk_specialiste_effets_speciaux"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
     private Set<Country> countries = new HashSet<>();
 
     @Builder

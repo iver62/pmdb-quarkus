@@ -7,7 +7,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.SoundEditor;
@@ -30,14 +30,14 @@ public class SoundEditorService extends PersonService<SoundEditor> {
         super(countryService, movieRepository, soundEditorRepository, fileService);
     }
 
-    public Uni<Long> countMovies(long soundEditorId, FiltersDTO filtersDTO) {
-        return movieRepository.countMoviesBySoundEditor(soundEditorId, filtersDTO);
+    public Uni<Long> countMovies(long soundEditorId, CriteriasDTO criteriasDTO) {
+        return movieRepository.countMoviesBySoundEditor(soundEditorId, criteriasDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(long costumierId, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(long costumierId, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 movieRepository
-                        .findMoviesBySoundEditor(costumierId, page, sort, direction, filtersDTO)
+                        .findMoviesBySoundEditor(costumierId, page, sort, direction, criteriasDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

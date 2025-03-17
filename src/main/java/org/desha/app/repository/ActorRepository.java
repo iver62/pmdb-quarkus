@@ -6,11 +6,9 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Actor;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,71 +16,20 @@ import java.util.Objects;
 @ApplicationScoped
 public class ActorRepository extends PersonRepository<Actor> {
 
-    public Uni<Long> count(
-            String term,
-            List<Integer> countryIds,
-            LocalDate fromBirthDate,
-            LocalDate toBirthDate,
-            LocalDate fromDeathDate,
-            LocalDate toDeathDate,
-            LocalDateTime fromCreationDate,
-            LocalDateTime toCreationDate,
-            LocalDateTime fromLastUpdate,
-            LocalDateTime toLastUpdate
-    ) {
-        StringBuilder query = new StringBuilder("FROM Actor a WHERE LOWER(FUNCTION('unaccent', a.name)) LIKE LOWER(FUNCTION('unaccent', :term))");
-        Parameters params = Parameters.with("term", "%" + term + "%");
+    public Uni<Long> count(CriteriasDTO criteriasDTO) {
+        String query = "FROM Actor p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+                addClauses(criteriasDTO);
 
-        if (Objects.nonNull(fromBirthDate)) {
-            query.append(" AND a.dateOfBirth >= :fromBirthDate");
-            params.and("fromBirthDate", fromBirthDate);
-        }
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
+        );
 
-        if (Objects.nonNull(toBirthDate)) {
-            query.append(" AND a.dateOfBirth <= :toBirthDate");
-            params.and("toBirthDate", toBirthDate);
-        }
-
-        if (Objects.nonNull(fromDeathDate)) {
-            query.append(" AND a.dateOfDeath >= :fromDeathDate");
-            params.and("fromDeathDate", fromDeathDate);
-        }
-
-        if (Objects.nonNull(toDeathDate)) {
-            query.append(" AND a.dateOfDeath <= :toDeathDate");
-            params.and("toDeathDate", toDeathDate);
-        }
-
-        if (Objects.nonNull(fromCreationDate)) {
-            query.append(" AND a.creationDate >= :fromCreationDate");
-            params.and("fromCreationDate", fromCreationDate);
-        }
-
-        if (Objects.nonNull(toCreationDate)) {
-            query.append(" AND a.creationDate <= :toCreationDate");
-            params.and("toCreationDate", toCreationDate);
-        }
-
-        if (Objects.nonNull(fromLastUpdate)) {
-            query.append(" AND a.lastUpdate >= :fromLastUpdate");
-            params.and("fromLastUpdate", fromLastUpdate);
-        }
-
-        if (Objects.nonNull(toLastUpdate)) {
-            query.append(" AND a.lastUpdate <= :toLastUpdate");
-            params.and("toLastUpdate", toLastUpdate);
-        }
-
-        if (Objects.nonNull(countryIds) && !countryIds.isEmpty()) {
-            query.append(" AND EXISTS (SELECT 1 FROM a.countries c WHERE c.id IN :countryIds)");
-            params.and("countryIds", countryIds);
-        }
-
-        return count(query.toString(), params);
+        return count(query, params);
     }
 
     @Override
-    public Uni<Actor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<Actor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         StringBuilder query = new StringBuilder(
                 "FROM Actor a " +
                         "JOIN FETCH a.movieActors ma " +
@@ -91,46 +38,46 @@ public class ActorRepository extends PersonRepository<Actor> {
                         "AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))"
         );
         Parameters params = Parameters.with("id", id)
-                .and("term", "%" + filtersDTO.getTerm() + "%");
+                .and("term", "%" + criteriasDTO.getTerm() + "%");
 
-        if (Objects.nonNull(filtersDTO.getFromReleaseDate())) {
+        if (Objects.nonNull(criteriasDTO.getFromReleaseDate())) {
             query.append(" AND m.releaseDate >= :fromReleaseDate");
-            params.and("fromReleaseDate",filtersDTO.getFromReleaseDate());
+            params.and("fromReleaseDate", criteriasDTO.getFromReleaseDate());
         }
 
-        if (Objects.nonNull(filtersDTO.getToReleaseDate())) {
+        if (Objects.nonNull(criteriasDTO.getToReleaseDate())) {
             query.append(" AND m.releaseDate <= :toReleaseDate");
-            params.and("toReleaseDate", filtersDTO.getToReleaseDate());
+            params.and("toReleaseDate", criteriasDTO.getToReleaseDate());
         }
 
-        if (Objects.nonNull(filtersDTO.getFromCreationDate())) {
+        if (Objects.nonNull(criteriasDTO.getFromCreationDate())) {
             query.append(" AND m.creationDate >= :fromCreationDate");
-            params.and("fromCreationDate", filtersDTO.getFromCreationDate());
+            params.and("fromCreationDate", criteriasDTO.getFromCreationDate());
         }
 
-        if (Objects.nonNull(filtersDTO.getToCreationDate())) {
+        if (Objects.nonNull(criteriasDTO.getToCreationDate())) {
             query.append(" AND m.creationDate <= :toCreationDate");
-            params.and("toCreationDate",filtersDTO.getToCreationDate());
+            params.and("toCreationDate", criteriasDTO.getToCreationDate());
         }
 
-        if (Objects.nonNull(filtersDTO.getFromLastUpdate())) {
+        if (Objects.nonNull(criteriasDTO.getFromLastUpdate())) {
             query.append(" AND m.lastUpdate >= :fromLastUpdate");
-            params.and("fromLastUpdate", filtersDTO.getFromLastUpdate());
+            params.and("fromLastUpdate", criteriasDTO.getFromLastUpdate());
         }
 
-        if (Objects.nonNull(filtersDTO.getToLastUpdate())) {
+        if (Objects.nonNull(criteriasDTO.getToLastUpdate())) {
             query.append(" AND m.lastUpdate <= :toLastUpdate");
-            params.and("toLastUpdate", filtersDTO.getToLastUpdate());
+            params.and("toLastUpdate", criteriasDTO.getToLastUpdate());
         }
 
-        if (Objects.nonNull(filtersDTO.getGenreIds()) && !filtersDTO.getGenreIds().isEmpty()) {
+        if (Objects.nonNull(criteriasDTO.getGenreIds()) && !criteriasDTO.getGenreIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.genres g WHERE g.id IN :genreIds)");
-            params.and("genreIds", filtersDTO.getGenreIds());
+            params.and("genreIds", criteriasDTO.getGenreIds());
         }
 
-        if (Objects.nonNull(filtersDTO.getCountryIds()) && !filtersDTO.getCountryIds().isEmpty()) {
+        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.countries c WHERE c.id IN :countryIds)");
-            params.and("countryIds", filtersDTO.getCountryIds());
+            params.and("countryIds", criteriasDTO.getCountryIds());
         }
 
         return
@@ -143,67 +90,18 @@ public class ActorRepository extends PersonRepository<Actor> {
             Page page,
             String sort,
             Sort.Direction direction,
-            String term,
-            List<Integer> countryIds,
-            LocalDate fromBirthDate,
-            LocalDate toBirthDate,
-            LocalDate fromDeathDate,
-            LocalDate toDeathDate,
-            LocalDateTime fromCreationDate,
-            LocalDateTime toCreationDate,
-            LocalDateTime fromLastUpdate,
-            LocalDateTime toLastUpdate
+            CriteriasDTO criteriasDTO
     ) {
-        StringBuilder query = new StringBuilder("FROM Actor a WHERE LOWER(FUNCTION('unaccent', a.name)) LIKE LOWER(FUNCTION('unaccent', :term))");
-        Parameters params = Parameters.with("term", "%" + term + "%");
+        String query = "FROM Actor p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+                addClauses(criteriasDTO);
 
-        if (Objects.nonNull(fromBirthDate)) {
-            query.append(" AND a.dateOfBirth >= :fromBirthDate");
-            params.and("fromBirthDate", fromBirthDate);
-        }
-
-        if (Objects.nonNull(toBirthDate)) {
-            query.append(" AND a.dateOfBirth <= :toBirthDate");
-            params.and("toBirthDate", toBirthDate);
-        }
-
-        if (Objects.nonNull(fromDeathDate)) {
-            query.append(" AND a.dateOfDeath >= :fromDeathDate");
-            params.and("fromDeathDate", fromDeathDate);
-        }
-
-        if (Objects.nonNull(toDeathDate)) {
-            query.append(" AND a.dateOfDeath <= :toDeathDate");
-            params.and("toDeathDate", toDeathDate);
-        }
-
-        if (Objects.nonNull(fromCreationDate)) {
-            query.append(" AND a.creationDate >= :fromCreationDate");
-            params.and("fromCreationDate", fromCreationDate);
-        }
-
-        if (Objects.nonNull(toCreationDate)) {
-            query.append(" AND a.creationDate <= :toCreationDate");
-            params.and("toCreationDate", toCreationDate);
-        }
-
-        if (Objects.nonNull(fromLastUpdate)) {
-            query.append(" AND a.lastUpdate >= :fromLastUpdate");
-            params.and("fromLastUpdate", fromLastUpdate);
-        }
-
-        if (Objects.nonNull(toLastUpdate)) {
-            query.append(" AND a.lastUpdate <= :toLastUpdate");
-            params.and("toLastUpdate", toLastUpdate);
-        }
-
-        if (Objects.nonNull(countryIds) && !countryIds.isEmpty()) {
-            query.append(" AND EXISTS (SELECT 1 FROM a.countries c WHERE c.id IN :countryIds)");
-            params.and("countryIds", countryIds);
-        }
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                criteriasDTO
+        );
 
         return
-                find(query.toString(), Sort.by(sort, direction), params)
+                find(query, Sort.by(sort, direction), params)
                         .page(page)
                         .list()
                 ;

@@ -7,7 +7,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Caster;
@@ -31,14 +31,14 @@ public class CasterService extends PersonService<Caster> {
         super(countryService, movieRepository, casterRepository, fileService);
     }
 
-    public Uni<Long> countMovies(long casterId, FiltersDTO filtersDTO) {
-        return movieRepository.countMoviesByCaster(casterId, filtersDTO);
+    public Uni<Long> countMovies(long casterId, CriteriasDTO criteriasDTO) {
+        return movieRepository.countMoviesByCaster(casterId, criteriasDTO);
     }
 
-    public Uni<List<MovieDTO>> getMovies(long casterId, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<List<MovieDTO>> getMovies(long casterId, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 movieRepository
-                        .findMoviesByCaster(casterId, page, sort, direction, filtersDTO)
+                        .findMoviesByCaster(casterId, page, sort, direction, criteriasDTO)
                         .map(movieList ->
                                 movieList
                                         .stream()

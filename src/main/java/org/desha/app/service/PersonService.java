@@ -7,7 +7,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -18,8 +18,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -54,19 +52,8 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     }
 
     @Override
-    public Uni<Long> count(
-            String term,
-            List<Integer> countryIds,
-            LocalDate fromBirthDate,
-            LocalDate toBirthDate,
-            LocalDate fromDeathDate,
-            LocalDate toDeathDate,
-            LocalDateTime fromCreationDate,
-            LocalDateTime toCreationDate,
-            LocalDateTime fromLastUpdate,
-            LocalDateTime toLastUpdate
-    ) {
-        return personRepository.count(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate);
+    public Uni<Long> count(CriteriasDTO criteriasDTO) {
+        return personRepository.count(criteriasDTO);
     }
 
     @Override
@@ -79,9 +66,9 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    public Uni<PersonDTO> getByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, FiltersDTO filtersDTO) {
+    public Uni<PersonDTO> getByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
-                personRepository.findByIdWithCountriesAndMovies(id, page, sort, direction, filtersDTO)
+                personRepository.findByIdWithCountriesAndMovies(id, page, sort, direction, criteriasDTO)
                         .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
                         .map(PersonDTO::fromEntityWithCountriesAndMovies)
                 ;
@@ -107,20 +94,11 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
             Page page,
             String sort,
             Sort.Direction direction,
-            String term,
-            List<Integer> countryIds,
-            LocalDate fromBirthDate,
-            LocalDate toBirthDate,
-            LocalDate fromDeathDate,
-            LocalDate toDeathDate,
-            LocalDateTime fromCreationDate,
-            LocalDateTime toCreationDate,
-            LocalDateTime fromLastUpdate,
-            LocalDateTime toLastUpdate
+            CriteriasDTO criteriasDTO
     ) {
         return
                 personRepository
-                        .find(page, sort, direction, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                        .find(page, sort, direction, criteriasDTO)
                         .map(
                                 tList ->
                                         tList

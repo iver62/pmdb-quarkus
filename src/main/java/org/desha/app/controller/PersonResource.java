@@ -9,7 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.dto.FiltersDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -38,6 +38,26 @@ public abstract class PersonResource<T extends Person> {
     @Inject
     protected PersonResource(PersonService<T> personService) {
         this.personService = personService;
+    }
+
+    @GET
+    @Path("count")
+    public Uni<Response> countPersons(
+            @QueryParam("term") @DefaultValue("") String term,
+            @QueryParam("country") List<Integer> countryIds,
+            @QueryParam("from-birth-date") LocalDate fromBirthDate,
+            @QueryParam("to-birth-date") LocalDate toBirthDate,
+            @QueryParam("from-death-date") LocalDate fromDeathDate,
+            @QueryParam("to-death-date") LocalDate toDeathDate,
+            @QueryParam("from-creation-date") LocalDateTime fromCreationDate,
+            @QueryParam("to-creation-date") LocalDateTime toCreationDate,
+            @QueryParam("from-last-update") LocalDateTime fromLastUpdate,
+            @QueryParam("to-last-update") LocalDateTime toLastUpdate
+    ) {
+        return
+                personService.count(CriteriasDTO.build(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                        .map(aLong -> Response.ok(aLong).build())
+                ;
     }
 
     @GET
@@ -86,7 +106,7 @@ public abstract class PersonResource<T extends Person> {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                personService.getByIdWithCountriesAndMovies(id, Page.of(pageIndex, size), sort, sortDirection, FiltersDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                personService.getByIdWithCountriesAndMovies(id, Page.of(pageIndex, size), sort, sortDirection, CriteriasDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
                         .map(personDTO ->
                                 Response.ok(personDTO).build()
                         )
@@ -132,9 +152,9 @@ public abstract class PersonResource<T extends Person> {
         Sort.Direction sortDirection = validateSortDirection(direction);
 
         return
-                personService.get(Page.of(pageIndex, size), sort, sortDirection, term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)
+                personService.get(Page.of(pageIndex, size), sort, sortDirection, CriteriasDTO.build(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
                         .flatMap(personDTOList ->
-                                personService.count(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate).map(total ->
+                                personService.count(CriteriasDTO.build(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -191,7 +211,7 @@ public abstract class PersonResource<T extends Person> {
 
         Sort.Direction sortDirection = validateSortDirection(direction);
 
-        FiltersDTO filtersDTO = FiltersDTO.build(
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(
                 term,
                 countryIds,
                 genreIds,
@@ -204,9 +224,9 @@ public abstract class PersonResource<T extends Person> {
         );
 
         return
-                personService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, filtersDTO)
+                personService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, criteriasDTO)
                         .flatMap(movieList ->
-                                personService.countMovies(id, filtersDTO)
+                                personService.countMovies(id, criteriasDTO)
                                         .map(total ->
                                                 movieList.isEmpty()
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
