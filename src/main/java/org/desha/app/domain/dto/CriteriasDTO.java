@@ -14,6 +14,7 @@ public class CriteriasDTO {
     private String term;
     private List<Integer> countryIds;
     private List<Integer> genreIds;
+    private List<String> usernames;
     private LocalDate fromBirthDate;
     private LocalDate toBirthDate;
     private LocalDate fromDeathDate;
@@ -25,12 +26,13 @@ public class CriteriasDTO {
     private LocalDateTime fromLastUpdate;
     private LocalDateTime toLastUpdate;
 
-    public static CriteriasDTO build(String term, List<Integer> countryIds, List<Integer> genreIds, LocalDate fromReleaseDate, LocalDate toReleaseDate, LocalDateTime fromCreationDate, LocalDateTime toCreationDate, LocalDateTime fromLastUpdate, LocalDateTime toLastUpdate) {
+    public static CriteriasDTO build(String term, List<Integer> countryIds, List<Integer> genreIds, List<String> usernames, LocalDate fromReleaseDate, LocalDate toReleaseDate, LocalDateTime fromCreationDate, LocalDateTime toCreationDate, LocalDateTime fromLastUpdate, LocalDateTime toLastUpdate) {
         return
                 CriteriasDTO.builder()
                         .term(term)
                         .countryIds(countryIds)
                         .genreIds(genreIds)
+                        .usernames(usernames)
                         .fromReleaseDate(fromReleaseDate)
                         .toReleaseDate(toReleaseDate)
                         .fromCreationDate(fromCreationDate)
