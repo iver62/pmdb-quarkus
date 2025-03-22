@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class CountDTO {
+public class RepartitionDTO {
 
     private String label;
     private Long total;

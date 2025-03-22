@@ -244,42 +244,42 @@ public class MovieService {
                 .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
-    public Uni<List<CountDTO>> getMoviesCreationDateEvolution() {
+    public Uni<List<RepartitionDTO>> getMoviesCreationDateEvolution() {
         return movieRepository.findMoviesCreationDateEvolution()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de l'évolution des films", failure)
                 );
     }
 
-    public Uni<List<CountDTO>> getMoviesCreationDateRepartition() {
+    public Uni<List<RepartitionDTO>> getMoviesCreationDateRepartition() {
         return movieRepository.findMoviesByCreationDateRepartition()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de la répartition des films par date de création", failure)
                 );
     }
 
-    public Uni<List<CountDTO>> getMoviesReleaseDateRepartition() {
+    public Uni<List<RepartitionDTO>> getMoviesReleaseDateRepartition() {
         return movieRepository.findMoviesByReleaseDateRepartition()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de la répartition des films par date de sortie", failure)
                 );
     }
 
-    public Uni<List<CountDTO>> getMoviesGenresRepartition() {
+    public Uni<List<RepartitionDTO>> getMoviesGenresRepartition() {
         return movieRepository.findMoviesByGenreRepartition()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de la répartition des films par genre", failure)
                 );
     }
 
-    public Uni<List<CountDTO>> getMoviesCountriesRepartition() {
+    public Uni<List<RepartitionDTO>> getMoviesCountriesRepartition() {
         return movieRepository.findMoviesByCountryRepartition()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de la répartition des films par pays", failure)
                 );
     }
 
-    public Uni<List<CountDTO>> getMoviesUsersRepartition() {
+    public Uni<List<RepartitionDTO>> getMoviesUsersRepartition() {
         return movieRepository.findMoviesByUserRepartition();
     }
 
