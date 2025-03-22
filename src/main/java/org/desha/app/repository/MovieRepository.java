@@ -8,6 +8,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CountDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Movie;
 
@@ -613,6 +614,71 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                                 .and("term", "%" + term + "%")
                 )
                         .page(page)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> findMoviesCreationDateEvolution() {
+        return
+                find(
+                        "SELECT CAST(FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY') AS string) AS mois_creation, " +
+                                "   SUM(COUNT(*)) OVER (ORDER BY FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY')) AS cumulative_count " +
+                                "FROM Movie m " +
+                                "GROUP BY mois_creation " +
+                                "ORDER BY mois_creation"
+                )
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> findMoviesByCreationDateRepartition() {
+        return
+                find(
+                        "SELECT CAST(FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY') AS string) AS mois_creation, COUNT(m) " +
+                                "FROM Movie m " +
+                                "GROUP BY mois_creation " +
+                                "ORDER BY mois_creation"
+                )
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> findMoviesByReleaseDateRepartition() {
+        return
+                find(
+                        "SELECT CAST((YEAR(m.releaseDate) - MOD(YEAR(m.releaseDate), 10)) AS string) AS decade, COUNT(m) " +
+                                "FROM Movie m " +
+                                "GROUP BY decade " +
+                                "ORDER BY decade"
+                )
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> findMoviesByGenreRepartition() {
+        return
+
+                find("SELECT g.name, COUNT(m) FROM Movie m JOIN m.genres g GROUP BY g.name ORDER BY COUNT(m) DESC")
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> findMoviesByCountryRepartition() {
+        return
+                find("SELECT c.nomFrFr, COUNT(m) FROM Movie m JOIN m.countries c GROUP BY c.nomFrFr ORDER BY COUNT(m) DESC")
+                        .project(CountDTO.class)
+                        .list()
+                ;
+    }
+
+    public Uni<List<CountDTO>> findMoviesByUserRepartition() {
+        return
+                find("SELECT m.username, COUNT(m) FROM Movie m GROUP BY m.username ORDER BY COUNT(m) DESC")
+                        .project(CountDTO.class)
                         .list()
                 ;
     }

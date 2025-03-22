@@ -7,7 +7,7 @@ import lombok.Getter;
 @Builder
 public class CountDTO {
 
-    private String name;
+    private String label;
     private Long total;
 
 }

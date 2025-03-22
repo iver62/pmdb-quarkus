@@ -244,31 +244,43 @@ public class MovieService {
                 .onItem().ifNull().continueWith(Collections.emptySet());
     }
 
+    public Uni<List<CountDTO>> getMoviesCreationDateEvolution() {
+        return movieRepository.findMoviesCreationDateEvolution()
+                .onFailure().invoke(failure ->
+                        log.error("Erreur lors de la récupération de l'évolution des films", failure)
+                );
+    }
+
+    public Uni<List<CountDTO>> getMoviesCreationDateRepartition() {
+        return movieRepository.findMoviesByCreationDateRepartition()
+                .onFailure().invoke(failure ->
+                        log.error("Erreur lors de la récupération de la répartition des films par date de création", failure)
+                );
+    }
+
+    public Uni<List<CountDTO>> getMoviesReleaseDateRepartition() {
+        return movieRepository.findMoviesByReleaseDateRepartition()
+                .onFailure().invoke(failure ->
+                        log.error("Erreur lors de la récupération de la répartition des films par date de sortie", failure)
+                );
+    }
+
     public Uni<List<CountDTO>> getMoviesGenresRepartition() {
-        return
-                movieRepository
-                        .find("SELECT g.name, COUNT(m) FROM Movie m JOIN m.genres g GROUP BY g.name ORDER BY COUNT(m) DESC")
-                        .project(CountDTO.class)
-                        .list()
-                ;
+        return movieRepository.findMoviesByGenreRepartition()
+                .onFailure().invoke(failure ->
+                        log.error("Erreur lors de la récupération de la répartition des films par genre", failure)
+                );
     }
 
     public Uni<List<CountDTO>> getMoviesCountriesRepartition() {
-        return
-                movieRepository
-                        .find("SELECT c.nomFrFr, COUNT(m) FROM Movie m JOIN m.countries c GROUP BY c.nomFrFr ORDER BY COUNT(m) DESC")
-                        .project(CountDTO.class)
-                        .list()
-                ;
+        return movieRepository.findMoviesByCountryRepartition()
+                .onFailure().invoke(failure ->
+                        log.error("Erreur lors de la récupération de la répartition des films par pays", failure)
+                );
     }
 
     public Uni<List<CountDTO>> getMoviesUsersRepartition() {
-        return
-                movieRepository
-                        .find("SELECT m.username, COUNT(m) FROM Movie m GROUP BY m.username ORDER BY COUNT(m) DESC")
-                        .project(CountDTO.class)
-                        .list()
-                ;
+        return movieRepository.findMoviesByUserRepartition();
     }
 
     public Uni<Set<Genre>> getGenresByMovie(Movie movie) {

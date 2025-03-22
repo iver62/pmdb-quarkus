@@ -440,11 +440,38 @@ public class MovieResource {
     }
 
     @GET
+    @Path("creation-date-evolution")
+    public Uni<Response> getMoviesCreationDateEvolution() {
+        return
+                movieService.getMoviesCreationDateEvolution()
+                        .map(countDTOS -> Response.ok(countDTOS).build())
+                ;
+    }
+
+    @GET
+    @Path("creation-date-repartition")
+    public Uni<Response> getMoviesRepartitionByCreationDate() {
+        return
+                movieService.getMoviesCreationDateRepartition()
+                        .map(countDTOS -> Response.ok(countDTOS).build())
+                ;
+    }
+
+    @GET
+    @Path("decade-repartition")
+    public Uni<Response> getMoviesRepartitionByDecade() {
+        return
+                movieService.getMoviesReleaseDateRepartition()
+                        .map(countDTOS -> Response.ok(countDTOS).build())
+                ;
+    }
+
+    @GET
     @Path("genre-repartition")
     public Uni<Response> getMoviesRepartitionByGenre() {
         return
                 movieService.getMoviesGenresRepartition()
-                        .map(repartitionDTOS -> Response.ok(repartitionDTOS).build())
+                        .map(countDTOS -> Response.ok(countDTOS).build())
                 ;
     }
 
@@ -453,7 +480,7 @@ public class MovieResource {
     public Uni<Response> getMoviesRepartitionByCountry() {
         return
                 movieService.getMoviesCountriesRepartition()
-                        .map(repartitionDTOS -> Response.ok(repartitionDTOS).build())
+                        .map(countDTOS -> Response.ok(countDTOS).build())
                 ;
     }
 
@@ -462,7 +489,7 @@ public class MovieResource {
     public Uni<Response> getMoviesRepartitionByUser() {
         return
                 movieService.getMoviesUsersRepartition()
-                        .map(repartitionDTOS -> Response.ok(repartitionDTOS).build())
+                        .map(countDTOS -> Response.ok(countDTOS).build())
                 ;
     }
 
