@@ -8,8 +8,6 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.service.PersonService;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import java.util.*;
 
@@ -25,10 +23,9 @@ public class Actor extends Person {
 
     @JsonIgnore
     @OneToMany(mappedBy = "actor")
-    @Fetch(FetchMode.SELECT)
     private List<MovieActor> movieActors = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany
     @JoinTable(name = "lnk_pays_acteur", joinColumns = @JoinColumn(name = "fk_acteur"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
     private Set<Country> countries = new HashSet<>();
 

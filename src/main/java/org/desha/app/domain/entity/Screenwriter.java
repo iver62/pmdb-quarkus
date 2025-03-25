@@ -4,12 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.service.PersonService;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
@@ -25,10 +26,9 @@ public class Screenwriter extends Person {
 
     @JsonIgnore
     @ManyToMany(mappedBy = "screenwriters")
-    @Fetch(FetchMode.SELECT)
     private List<Movie> movies = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany
     @JoinTable(name = "lnk_pays_scenariste", joinColumns = @JoinColumn(name = "fk_scenariste"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
     private Set<Country> countries = new HashSet<>();
 

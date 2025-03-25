@@ -11,8 +11,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.service.PersonService;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
@@ -28,10 +26,9 @@ public class HairDresser extends Person {
 
     @JsonIgnore
     @ManyToMany(mappedBy = "hairDressers")
-    @Fetch(FetchMode.SELECT)
     private List<Movie> movies = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany
     @JoinTable(name = "lnk_pays_coiffeur", joinColumns = @JoinColumn(name = "fk_coiffeur"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
     private Set<Country> countries = new HashSet<>();
 
