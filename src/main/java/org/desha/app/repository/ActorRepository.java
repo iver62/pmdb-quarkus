@@ -92,7 +92,10 @@ public class ActorRepository extends PersonRepository<Actor> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Actor p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM Actor p " +
+                "LEFT JOIN FETCH p.movieActors ma " +
+                "LEFT JOIN FETCH ma.movie m " +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(

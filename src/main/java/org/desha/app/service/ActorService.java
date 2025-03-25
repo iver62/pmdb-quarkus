@@ -20,6 +20,8 @@ import java.util.List;
 @Singleton
 public class ActorService extends PersonService<Actor> {
 
+    private final ActorRepository actorRepository;
+
     @Inject
     public ActorService(
             CountryService countryService,
@@ -28,6 +30,27 @@ public class ActorService extends PersonService<Actor> {
             FileService fileService
     ) {
         super(countryService, movieRepository, actorRepository, fileService);
+        this.actorRepository = actorRepository;
+    }
+
+    @Override
+    public Uni<List<PersonDTO>> get(
+            Page page,
+            String sort,
+            Sort.Direction direction,
+            CriteriasDTO criteriasDTO
+    ) {
+        return
+                actorRepository
+                        .find(page, sort, direction, criteriasDTO)
+                        .map(
+                                actorList ->
+                                        actorList
+                                                .stream()
+                                                .map(actor -> PersonDTO.fromEntity(actor, actor.getMovieActors().size()))
+                                                .toList()
+                        )
+                ;
     }
 
     public Uni<Long> countMovies(long actorId, CriteriasDTO criteriasDTO) {

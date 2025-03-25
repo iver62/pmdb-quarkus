@@ -36,7 +36,7 @@ public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEf
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM VisualEffectsSupervisor p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM VisualEffectsSupervisor LEFT JOIN FETCH p.movies p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(

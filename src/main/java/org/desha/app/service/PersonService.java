@@ -103,7 +103,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                 tList ->
                                         tList
                                                 .stream()
-                                                .map(PersonDTO::fromEntity)
+                                                .map(t -> PersonDTO.fromEntity(t, t.getMovies().size()))
                                                 .toList()
                         )
                 ;
