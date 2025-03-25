@@ -1,6 +1,7 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.common.WithTransaction;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,6 +25,19 @@ public class UserService {
     @WithTransaction
     public Uni<Long> countUsers() {
         return userRepository.count();
+    }
+
+    @WithTransaction
+    public Uni<List<UserDTO>> getUsers(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                userRepository.findUsers(page, sort, direction, term)
+                        .map(users ->
+                                users
+                                        .stream()
+                                        .map(user -> UserDTO.fromEntity(user, user.getMovies().size()))
+                                        .toList()
+                        )
+                ;
     }
 
     @WithTransaction

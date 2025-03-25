@@ -1,5 +1,6 @@
 package org.desha.app.controller;
 
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -10,6 +11,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.entity.User;
 import org.desha.app.service.UserService;
 
@@ -31,6 +33,35 @@ public class UserResource {
     }
 
     @GET
+    public Uni<Response> getUsers(
+            @QueryParam("page") @DefaultValue("0") int pageIndex,
+            @QueryParam("size") @DefaultValue("50") int size,
+            @QueryParam("sort") @DefaultValue("username") String sort,
+            @QueryParam("direction") @DefaultValue("Ascending") String direction,
+            @QueryParam("term") @DefaultValue("") String term
+    ) {
+        Uni<Response> sortValidation = validateSortField(sort, User.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(direction);
+
+        return
+                userService.getUsers(Page.of(pageIndex, size), sort, sortDirection, term)
+                        .flatMap(userList ->
+                                userService.countUsers()
+                                        .map(total ->
+                                                userList.isEmpty()
+                                                        ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                        : Response.ok(userList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                        )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("all")
     public Uni<Response> getAllUsers(
             @QueryParam("sort") @DefaultValue("username") String sort,
             @QueryParam("direction") @DefaultValue("Ascending") String direction,
