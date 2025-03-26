@@ -36,7 +36,9 @@ public class HairDresserRepository extends PersonRepository<HairDresser> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM HairDresser p LEFT JOIN FETCH p.movies WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM HairDresser p " +
+                "LEFT JOIN FETCH p.movies " +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -45,7 +47,7 @@ public class HairDresserRepository extends PersonRepository<HairDresser> {
         );
 
         return
-                find(query, Sort.by(sort, direction), params)
+                find(query, Sort.by("p." + sort, direction), params)
                         .page(page)
                         .list()
                 ;

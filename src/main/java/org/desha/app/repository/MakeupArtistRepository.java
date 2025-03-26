@@ -36,7 +36,9 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM MakeupArtist p LEFT JOIN FETCH p.movies WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM MakeupArtist p " +
+                "LEFT JOIN FETCH p.movies " +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -45,7 +47,7 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
         );
 
         return
-                find(query, Sort.by(sort, direction), params)
+                find(query, Sort.by("p." + sort, direction), params)
                         .page(page)
                         .list()
                 ;

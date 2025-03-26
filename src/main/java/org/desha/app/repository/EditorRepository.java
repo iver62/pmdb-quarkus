@@ -36,7 +36,9 @@ public class EditorRepository extends PersonRepository<Editor> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Editor p LEFT JOIN FETCH p.movies WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM Editor p " +
+                "LEFT JOIN FETCH p.movies " +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -45,7 +47,7 @@ public class EditorRepository extends PersonRepository<Editor> {
         );
 
         return
-                find(query, Sort.by(sort, direction), params)
+                find(query, Sort.by("p." + sort, direction), params)
                         .page(page)
                         .list()
                 ;

@@ -47,7 +47,7 @@ public class CasterRepository extends PersonRepository<Caster> {
         );
 
         return
-                find(query, Sort.by(sort, direction), params)
+                find(query, Sort.by("p." + sort, direction), params)
                         .page(page)
                         .list()
                 ;
