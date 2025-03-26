@@ -53,7 +53,7 @@ public class CountryRepository implements PanacheRepository<Country> {
     public Uni<List<Country>> findCountries(Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "lower(nomFrFr) like lower(:term)",
+                        "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Sort.by(sort, direction),
                         Parameters.with("term", "%" + term + "%")
                 )
