@@ -3,7 +3,7 @@ package org.desha.app.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
@@ -33,7 +33,13 @@ import java.util.Set;
 @Table(name = "genre")
 @EntityListeners(AuditGenreListener.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Genre extends PanacheEntity {
+public class Genre extends PanacheEntityBase {
+
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "name", "creationDate", "lastUpdate");
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    protected Long id;
 
     @NotEmpty(message = "Le nom ne peut pas être vide")
     @Column(name = "nom", nullable = false, unique = true)
@@ -81,13 +87,6 @@ public class Genre extends PanacheEntity {
         return listAll();
     }
 
-    public static Uni<Long> countMovies(Long id, String title) {
-        return count(
-                "SELECT COUNT(m) FROM Movie m JOIN m.genres g WHERE g.id = ?1 AND LOWER(m.title) LIKE LOWER(?2)",
-                id, MessageFormat.format("%{0}%", title)
-        );
-    }
-
     public static Uni<List<Movie>> getAllMovies(Long id, String sort, Sort.Direction direction, String title) {
         return
                 Movie.find(
@@ -95,17 +94,6 @@ public class Genre extends PanacheEntity {
                                 Sort.by(sort, direction),
                                 id, MessageFormat.format("%{0}%", title)
                         )
-                        .list();
-    }
-
-    public static Uni<List<Movie>> getMovies(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String title) {
-        return
-                Movie.find(
-                                "SELECT m FROM Movie m JOIN m.genres g WHERE g.id = ?1 AND LOWER(m.title) LIKE LOWER(?2)",
-                                Sort.by(sort, direction),
-                                id, MessageFormat.format("%{0}%", title)
-                        )
-                        .page(pageIndex, size)
                         .list();
     }
 

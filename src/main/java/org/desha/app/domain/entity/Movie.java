@@ -2,7 +2,7 @@ package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
@@ -29,9 +29,13 @@ import java.util.*;
 @Table(name = "film", uniqueConstraints = {@UniqueConstraint(columnNames = {"titre", "titre_original"})})
 @Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Movie extends PanacheEntity {
+public class Movie extends PanacheEntityBase {
 
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("title", "releaseDate", "runningTime", "budget", "boxOffice", "creationDate", "lastUpdate");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("title", "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "creationDate", "lastUpdate");
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    protected Long id;
 
     @NotEmpty(message = "Le titre ne peut pas être vide")
     @Column(name = "titre", nullable = false)
@@ -43,7 +47,7 @@ public class Movie extends PanacheEntity {
     @Column(columnDefinition = "TEXT")
     private String synopsis;
 
-    @Column(name = "date_sortie")
+    @Column(name = "date_sortie", nullable = false)
     @Temporal(TemporalType.DATE)
     private LocalDate releaseDate;
 
@@ -65,8 +69,9 @@ public class Movie extends PanacheEntity {
     @Column(name = "date_mise_a_jour")
     private LocalDateTime lastUpdate;
 
-    @Column(name = "utilisateur", nullable = false)
-    private String username;
+    @ManyToOne
+    @JoinColumn(name = "fk_utilisateur", nullable = false, foreignKey = @ForeignKey(name = "fk_film_utilisateur"), referencedColumnName = "id")
+    private User user;
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -197,7 +202,7 @@ public class Movie extends PanacheEntity {
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
                 .posterFileName(movieDTO.getPosterFileName())
-                .username(movieDTO.getUsername())
+                .user(User.fromDTO(movieDTO.getUser()))
                 .build();
     }
 

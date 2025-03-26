@@ -2,7 +2,7 @@ package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -15,7 +15,11 @@ import java.time.Year;
 @Setter
 @Table(name = "recompense")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Award extends PanacheEntity {
+public class Award extends PanacheEntityBase {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    protected Long id;
 
     @NotBlank(message = "Le nom ne peut pas être vide")
     @Column(name = "nom", nullable = false)
@@ -29,9 +33,9 @@ public class Award extends PanacheEntity {
     @JoinColumn(name = "fk_film")
     private Movie movie;
 
-    @JsonIgnore
+    /*@JsonIgnore
     @ManyToOne
     @JoinColumn(name = "fk_person")
-    private Person person;
+    private Person person;*/
 
 }

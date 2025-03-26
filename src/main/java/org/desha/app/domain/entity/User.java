@@ -9,7 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.desha.app.domain.dto.UserDTO;
 import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Subselect;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 @Builder
 @Immutable
 @Table(name = "utilisateurs")
+@Subselect("SELECT * FROM utilisateurs")
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends PanacheEntityBase {
@@ -41,7 +44,7 @@ public class User extends PanacheEntityBase {
 
     @JsonIgnore
     @OneToMany(mappedBy = "user")
-    private List<Movie> movies;
+    private List<Movie> movies = new ArrayList<>();
 
     public static User fromDTO(UserDTO userDTO) {
         return
