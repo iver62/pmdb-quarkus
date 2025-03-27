@@ -12,10 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.MovieActorDTO;
-import org.desha.app.domain.dto.MovieDTO;
-import org.desha.app.domain.dto.TechnicalTeamDTO;
+import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.service.*;
 import org.jboss.resteasy.reactive.PartType;
@@ -26,8 +23,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.MessageFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -100,20 +95,9 @@ public class MovieResource {
 
     @GET
     @Path("count")
-    public Uni<Response> count(
-            @QueryParam("term") @DefaultValue("") String term,
-            @QueryParam("country") List<Integer> countryIds,
-            @QueryParam("genre") List<Integer> genreIds,
-            @QueryParam("user") List<String> usernames,
-            @QueryParam("from-release-date") LocalDate fromReleaseDate,
-            @QueryParam("to-release-date") LocalDate toReleaseDate,
-            @QueryParam("from-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("to-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("from-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("to-last-update") LocalDateTime toLastUpdate
-    ) {
+    public Uni<Response> count(@BeanParam MovieFilterDTO movieFilter) {
         return
-                movieService.count(CriteriasDTO.build(term, countryIds, genreIds, usernames, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                movieService.count(CriteriasDTO.build(movieFilter))
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
@@ -128,26 +112,11 @@ public class MovieResource {
     }
 
     @GET
-    public Uni<Response> getMovies(
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term,
-            @QueryParam("country") List<Integer> countryIds,
-            @QueryParam("genre") List<Integer> genreIds,
-            @QueryParam("user") List<String> usernames,
-            @QueryParam("start-release-date") LocalDate fromReleaseDate,
-            @QueryParam("end-release-date") LocalDate toReleaseDate,
-            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("end-last-update") LocalDateTime toLastUpdate
-    ) {
+    public Uni<Response> getMovies(@BeanParam MovieFilterDTO movieFilter) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(fromReleaseDate) && Objects.nonNull(toReleaseDate) && fromReleaseDate.isAfter(toReleaseDate)
-                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
-                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
+                || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
+                || Objects.nonNull(movieFilter.getFromLastUpdate()) && Objects.nonNull(movieFilter.getToLastUpdate()) && movieFilter.getFromLastUpdate().isAfter(movieFilter.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -158,28 +127,17 @@ public class MovieResource {
         }
 
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(sort);
+        Uni<Response> sortValidation = validateSortField(movieFilter.getSort());
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(
-                term,
-                countryIds,
-                genreIds,
-                usernames,
-                fromReleaseDate,
-                toReleaseDate,
-                fromCreationDate,
-                toCreationDate,
-                fromLastUpdate,
-                toLastUpdate
-        );
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(movieFilter);
 
         return
-                movieService.getMovies(Page.of(pageIndex, size), sort, sortDirection, criteriasDTO)
+                movieService.getMovies(Page.of(movieFilter.getPageIndex(), movieFilter.getSize()), movieFilter.getSort(), sortDirection, criteriasDTO)
                         .flatMap(movieList ->
                                 movieService.count(criteriasDTO)
                                         .map(total ->
@@ -193,27 +151,19 @@ public class MovieResource {
 
     @GET
     @Path("all")
-    public Uni<Response> getAll(
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("title") @DefaultValue("") String title
-    ) {
+    public Uni<Response> getAllMovies(MovieFilterDTO movieFilter) {
         // Vérifier si la direction est valide
-        Sort.Direction sortDirection;
-        try {
-            sortDirection = Sort.Direction.valueOf(direction);
-        } catch (IllegalArgumentException e) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Valeur invalide pour 'direction'. Valeurs autorisées: Ascending, Descending")
-                            .build()
-            );
+        Uni<Response> sortValidation = validateSortField(movieFilter.getSort());
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
         }
 
+        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
+
         return
-                Movie.getAllMovies(sort, sortDirection, title)
+                Movie.getAllMovies(movieFilter.getSort(), sortDirection, movieFilter.getTerm())
                         .flatMap(movieList ->
-                                Movie.count(title).map(total ->
+                                Movie.count(movieFilter.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -502,7 +452,6 @@ public class MovieResource {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
         }
 
-        log.info("USERNAME -> " + movieDTO.getUsername());
         return
                 movieService.saveMovie(file, movieDTO)
                         .map(movie -> Response.status(CREATED).entity(movie).build());
@@ -577,10 +526,10 @@ public class MovieResource {
                 movieService.saveCasting(id, movieActorsList)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        /*.onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity("Erreur lors de la mise à jour du casting: " + e.getMessage())
                                 .build()
-                        )
+                        )*/
                 ;
     }
 
@@ -805,8 +754,8 @@ public class MovieResource {
         return
                 Panache
                         .withTransaction(() ->
-                                Objects.nonNull(movieActor.getActor().id)
-                                        ? Person.findById(movieActor.getActor().id)
+                                Objects.nonNull(movieActor.getActor().getId())
+                                        ? Person.findById(movieActor.getActor().getId())
                                         : movieActor.getActor().persist()
                         )
                         .map(Person.class::cast)
@@ -860,21 +809,21 @@ public class MovieResource {
     public Uni<Response> addGenres(Long id, Set<Genre> genreSet) {
         return
                 Uni.join().all(
-                                genreSet.stream().filter(g -> Objects.nonNull(g.id)).toList().isEmpty()
+                                genreSet.stream().filter(g -> Objects.nonNull(g.getId())).toList().isEmpty()
                                         ?
                                         List.of(Uni.createFrom().nullItem())
                                         :
                                         genreSet
                                                 .stream()
-                                                .filter(g -> Objects.nonNull(g.id))
-                                                .map(g -> Genre.findById(g.id))
+                                                .filter(g -> Objects.nonNull(g.getId()))
+                                                .map(g -> Genre.findById(g.getId()))
                                                 .toList()
                         )
                         .usingConcurrencyOf(1)
                         .andFailFast()
                         .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Genre) e).toList())
                         .map(HashSet::new)
-                        .map(genres -> genreSet.stream().filter(g -> Objects.isNull(g.id)).collect(Collectors.toCollection(() -> genres)))
+                        .map(genres -> genreSet.stream().filter(g -> Objects.isNull(g.getId())).collect(Collectors.toCollection(() -> genres)))
                         .chain(genres -> movieService.addGenres(id, genres))
                         .map(Movie::getGenres)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
@@ -888,7 +837,7 @@ public class MovieResource {
                 Uni.join().all(
                                 countrySet
                                         .stream()
-                                        .map(c -> Country.findById(c.id))
+                                        .map(c -> Country.findById(c.getId()))
                                         .toList()
                         )
                         .usingConcurrencyOf(1)

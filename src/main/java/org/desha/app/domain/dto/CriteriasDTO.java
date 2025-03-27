@@ -27,22 +27,6 @@ public class CriteriasDTO {
     private LocalDateTime fromLastUpdate;
     private LocalDateTime toLastUpdate;
 
-    public static CriteriasDTO build(String term, List<Integer> countryIds, List<Integer> genreIds, List<UUID> userIds, LocalDate fromReleaseDate, LocalDate toReleaseDate, LocalDateTime fromCreationDate, LocalDateTime toCreationDate, LocalDateTime fromLastUpdate, LocalDateTime toLastUpdate) {
-        return
-                CriteriasDTO.builder()
-                        .term(term)
-                        .countryIds(countryIds)
-                        .genreIds(genreIds)
-                        .userIds(userIds)
-                        .fromReleaseDate(fromReleaseDate)
-                        .toReleaseDate(toReleaseDate)
-                        .fromCreationDate(fromCreationDate)
-                        .toCreationDate(toCreationDate)
-                        .fromLastUpdate(fromLastUpdate)
-                        .toLastUpdate(toLastUpdate)
-                        .build();
-    }
-
     public static CriteriasDTO build(String term, List<Integer> countryIds, LocalDate fromBirthDate, LocalDate toBirthDate, LocalDate fromDeathDate, LocalDate toDeathDate, LocalDateTime fromCreationDate, LocalDateTime toCreationDate, LocalDateTime fromLastUpdate, LocalDateTime toLastUpdate) {
         return
                 CriteriasDTO.builder()
@@ -56,6 +40,22 @@ public class CriteriasDTO {
                         .toCreationDate(toCreationDate)
                         .fromLastUpdate(fromLastUpdate)
                         .toLastUpdate(toLastUpdate)
+                        .build();
+    }
+
+    public static CriteriasDTO build(MovieFilterDTO movieFilterDTO) {
+        return
+                CriteriasDTO.builder()
+                        .term(movieFilterDTO.getTerm())
+                        .countryIds(movieFilterDTO.getCountryIds())
+                        .genreIds(movieFilterDTO.getGenreIds())
+                        .userIds(movieFilterDTO.getUserIds())
+                        .fromReleaseDate(movieFilterDTO.getFromReleaseDate())
+                        .toReleaseDate(movieFilterDTO.getToReleaseDate())
+                        .fromCreationDate(movieFilterDTO.getFromCreationDate())
+                        .toCreationDate(movieFilterDTO.getToCreationDate())
+                        .fromLastUpdate(movieFilterDTO.getFromLastUpdate())
+                        .toLastUpdate(movieFilterDTO.getToLastUpdate())
                         .build();
     }
 

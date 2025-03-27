@@ -10,6 +10,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.MovieFilterDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -70,24 +71,12 @@ public abstract class PersonResource<T extends Person> {
     @Path("{id}/full")
     public Uni<Response> getPersonByIdWithCountriesAndMovies(
             @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term,
-            @QueryParam("country") List<Integer> countryIds,
-            @QueryParam("genre") List<Integer> genreIds,
-            @QueryParam("start-release-date") LocalDate fromReleaseDate,
-            @QueryParam("end-release-date") LocalDate toReleaseDate,
-            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("end-last-update") LocalDateTime toLastUpdate
+            @BeanParam MovieFilterDTO movieFilter
     ) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(fromReleaseDate) && Objects.nonNull(toReleaseDate) && fromReleaseDate.isAfter(toReleaseDate)
-                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
-                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
+                || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
+                || Objects.nonNull(movieFilter.getFromLastUpdate()) && Objects.nonNull(movieFilter.getToLastUpdate()) && movieFilter.getFromLastUpdate().isAfter(movieFilter.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -98,15 +87,15 @@ public abstract class PersonResource<T extends Person> {
         }
 
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+        Uni<Response> sortValidation = validateSortField(movieFilter.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
 
         return
-                personService.getByIdWithCountriesAndMovies(id, Page.of(pageIndex, size), sort, sortDirection, CriteriasDTO.build(term, countryIds, genreIds, fromReleaseDate, toReleaseDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                personService.getByIdWithCountriesAndMovies(id, Page.of(movieFilter.getPageIndex(), movieFilter.getSize()), movieFilter.getSort(), sortDirection, CriteriasDTO.build(movieFilter))
                         .map(personDTO ->
                                 Response.ok(personDTO).build()
                         )
@@ -177,24 +166,12 @@ public abstract class PersonResource<T extends Person> {
     @Path("{id}/movies")
     public Uni<Response> getMovies(
             @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term,
-            @QueryParam("country") List<Integer> countryIds,
-            @QueryParam("genre") List<Integer> genreIds,
-            @QueryParam("start-release-date") LocalDate fromReleaseDate,
-            @QueryParam("end-release-date") LocalDate toReleaseDate,
-            @QueryParam("start-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("end-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("start-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("end-last-update") LocalDateTime toLastUpdate
+            @BeanParam MovieFilterDTO movieFilter
     ) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(fromReleaseDate) && Objects.nonNull(toReleaseDate) && fromReleaseDate.isAfter(toReleaseDate)
-                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
-                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
+                || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
+                || Objects.nonNull(movieFilter.getFromLastUpdate()) && Objects.nonNull(movieFilter.getToLastUpdate()) && movieFilter.getFromLastUpdate().isAfter(movieFilter.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -204,27 +181,17 @@ public abstract class PersonResource<T extends Person> {
                     );
         }
 
-        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+        Uni<Response> sortValidation = validateSortField(movieFilter.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(
-                term,
-                countryIds,
-                genreIds,
-                fromReleaseDate,
-                toReleaseDate,
-                fromCreationDate,
-                toCreationDate,
-                fromLastUpdate,
-                toLastUpdate
-        );
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(movieFilter);
 
         return
-                personService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, criteriasDTO)
+                personService.getMovies(id, Page.of(movieFilter.getPageIndex(), movieFilter.getSize()), movieFilter.getSort(), sortDirection, criteriasDTO)
                         .flatMap(movieList ->
                                 personService.countMovies(id, criteriasDTO)
                                         .map(total ->
