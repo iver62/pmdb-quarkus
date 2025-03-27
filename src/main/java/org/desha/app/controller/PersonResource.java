@@ -12,6 +12,7 @@ import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieFilterDTO;
 import org.desha.app.domain.dto.PersonDTO;
+import org.desha.app.domain.dto.PersonFilterDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.service.PersonService;
@@ -23,8 +24,6 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.MessageFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -43,20 +42,9 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("count")
-    public Uni<Response> countPersons(
-            @QueryParam("term") @DefaultValue("") String term,
-            @QueryParam("country") List<Integer> countryIds,
-            @QueryParam("from-birth-date") LocalDate fromBirthDate,
-            @QueryParam("to-birth-date") LocalDate toBirthDate,
-            @QueryParam("from-death-date") LocalDate fromDeathDate,
-            @QueryParam("to-death-date") LocalDate toDeathDate,
-            @QueryParam("from-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("to-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("from-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("to-last-update") LocalDateTime toLastUpdate
-    ) {
+    public Uni<Response> countPersons(@BeanParam PersonFilterDTO personFilter) {
         return
-                personService.count(CriteriasDTO.build(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                personService.count(CriteriasDTO.build(personFilter))
                         .map(aLong -> Response.ok(aLong).build())
                 ;
     }
@@ -69,10 +57,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}/full")
-    public Uni<Response> getPersonByIdWithCountriesAndMovies(
-            @RestPath Long id,
-            @BeanParam MovieFilterDTO movieFilter
-    ) {
+    public Uni<Response> getPersonByIdWithCountriesAndMovies(@RestPath Long id, @BeanParam MovieFilterDTO movieFilter) {
         // Vérification de la cohérence des dates
         if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
                 || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
@@ -103,27 +88,12 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @GET
-    public Uni<Response> getPersons(
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("name") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term,
-            @QueryParam("country") List<Integer> countryIds,
-            @QueryParam("from-birth-date") LocalDate fromBirthDate,
-            @QueryParam("to-birth-date") LocalDate toBirthDate,
-            @QueryParam("from-death-date") LocalDate fromDeathDate,
-            @QueryParam("to-death-date") LocalDate toDeathDate,
-            @QueryParam("from-creation-date") LocalDateTime fromCreationDate,
-            @QueryParam("to-creation-date") LocalDateTime toCreationDate,
-            @QueryParam("from-last-update") LocalDateTime fromLastUpdate,
-            @QueryParam("to-last-update") LocalDateTime toLastUpdate
-    ) {
+    public Uni<Response> getPersons(@BeanParam PersonFilterDTO personFilter) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(fromBirthDate) && Objects.nonNull(toBirthDate) && fromBirthDate.isAfter(toBirthDate)
-                || Objects.nonNull(fromDeathDate) && Objects.nonNull(toDeathDate) && fromDeathDate.isAfter(toDeathDate)
-                || Objects.nonNull(fromCreationDate) && Objects.nonNull(toCreationDate) && fromCreationDate.isAfter(toCreationDate)
-                || Objects.nonNull(fromLastUpdate) && Objects.nonNull(toLastUpdate) && fromLastUpdate.isAfter(toLastUpdate)
+        if (Objects.nonNull(personFilter.getFromBirthDate()) && Objects.nonNull(personFilter.getToBirthDate()) && personFilter.getFromBirthDate().isAfter(personFilter.getToBirthDate())
+                || Objects.nonNull(personFilter.getFromDeathDate()) && Objects.nonNull(personFilter.getToDeathDate()) && personFilter.getFromDeathDate().isAfter(personFilter.getToDeathDate())
+                || Objects.nonNull(personFilter.getFromCreationDate()) && Objects.nonNull(personFilter.getToCreationDate()) && personFilter.getFromCreationDate().isAfter(personFilter.getToCreationDate())
+                || Objects.nonNull(personFilter.getFromLastUpdate()) && Objects.nonNull(personFilter.getToLastUpdate()) && personFilter.getFromLastUpdate().isAfter(personFilter.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -133,17 +103,19 @@ public abstract class PersonResource<T extends Person> {
                     );
         }
 
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
+        Uni<Response> sortValidation = validateSortField(personFilter.getSort(), Person.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(personFilter.getDirection());
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(personFilter);
 
         return
-                personService.get(Page.of(pageIndex, size), sort, sortDirection, CriteriasDTO.build(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate))
+                personService.get(Page.of(personFilter.getPageIndex(), personFilter.getSize()), personFilter.getSort(), sortDirection, criteriasDTO)
                         .flatMap(personDTOList ->
-                                personService.count(CriteriasDTO.build(term, countryIds, fromBirthDate, toBirthDate, fromDeathDate, toDeathDate, fromCreationDate, toCreationDate, fromLastUpdate, toLastUpdate)).map(total ->
+                                personService.count(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -306,7 +278,7 @@ public abstract class PersonResource<T extends Person> {
     public Uni<Response> delete(@RestPath Long id) {
         return
                 personService.delete(id)
-                        .map(deleted -> deleted
+                        .map(deleted -> Boolean.TRUE.equals(deleted)
                                 ? Response.ok().status(NO_CONTENT).build()
                                 : Response.ok().status(NOT_FOUND).build())
                 ;

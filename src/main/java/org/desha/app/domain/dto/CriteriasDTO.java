@@ -27,19 +27,19 @@ public class CriteriasDTO {
     private LocalDateTime fromLastUpdate;
     private LocalDateTime toLastUpdate;
 
-    public static CriteriasDTO build(String term, List<Integer> countryIds, LocalDate fromBirthDate, LocalDate toBirthDate, LocalDate fromDeathDate, LocalDate toDeathDate, LocalDateTime fromCreationDate, LocalDateTime toCreationDate, LocalDateTime fromLastUpdate, LocalDateTime toLastUpdate) {
+    public static CriteriasDTO build(PersonFilterDTO personFilterDTO) {
         return
                 CriteriasDTO.builder()
-                        .term(term)
-                        .countryIds(countryIds)
-                        .fromBirthDate(fromBirthDate)
-                        .toBirthDate(toBirthDate)
-                        .fromDeathDate(fromDeathDate)
-                        .toDeathDate(toDeathDate)
-                        .fromCreationDate(fromCreationDate)
-                        .toCreationDate(toCreationDate)
-                        .fromLastUpdate(fromLastUpdate)
-                        .toLastUpdate(toLastUpdate)
+                        .term(personFilterDTO.getTerm())
+                        .countryIds(personFilterDTO.getCountryIds())
+                        .fromBirthDate(personFilterDTO.getFromBirthDate())
+                        .toBirthDate(personFilterDTO.getToBirthDate())
+                        .fromDeathDate(personFilterDTO.getFromDeathDate())
+                        .toDeathDate(personFilterDTO.getToDeathDate())
+                        .fromCreationDate(personFilterDTO.getFromCreationDate())
+                        .toCreationDate(personFilterDTO.getToCreationDate())
+                        .fromLastUpdate(personFilterDTO.getFromLastUpdate())
+                        .toLastUpdate(personFilterDTO.getToLastUpdate())
                         .build();
     }
 
