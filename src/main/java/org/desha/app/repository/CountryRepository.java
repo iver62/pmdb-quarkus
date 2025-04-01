@@ -14,13 +14,30 @@ import java.util.List;
 public class CountryRepository implements PanacheRepository<Country> {
 
     /**
+     * Cmpte le nombre de pays uniques liés aux films et applique une recherche insensible aux accents
+     * et à la casse sur le nom du pays.
+     *
+     * @param term Le terme de recherche à appliquer sur le nom du pays (insensible aux accents et à la casse).
+     * @return Un {@link Uni} contenant le nombre de pays distincts correspondant au terme de recherche.
+     */
+    public Uni<Long> countExistingCountries(String term) {
+        return count(
+                "SELECT COUNT(DISTINCT c) " +
+                        "FROM Movie m " +
+                        "JOIN m.countries c " +
+                        "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
+                Parameters.with("term", "%" + term + "%")
+        );
+    }
+
+    /**
      * Compte le nombre de pays dont le nom en français correspond partiellement au terme recherché.
      *
      * @param term Le terme à rechercher dans le nom des pays (insensible à la casse).
      * @return Un {@link Uni} contenant le nombre total de pays correspondant au critère de recherche.
      */
     public Uni<Long> countCountries(String term) {
-        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', ?1))", "%" + term + "%");
+        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))", Parameters.with("term", "%" + term + "%"));
     }
 
     /**
@@ -31,6 +48,20 @@ public class CountryRepository implements PanacheRepository<Country> {
      */
     public Uni<List<Country>> findByIds(List<Long> ids) {
         return list("id IN ?1", ids);
+    }
+
+    public Uni<List<Country>> findExistingCountries(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                find(
+                        "SELECT DISTINCT c " +
+                                "FROM Movie m " +
+                                "JOIN m.countries c " +
+                                "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
+                        Sort.by(sort, direction),
+                        Parameters.with("term", "%" + term + "%")
+                )
+                        .page(page)
+                        .list();
     }
 
     /**

@@ -10,6 +10,8 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CountryDTO;
+import org.desha.app.domain.dto.MovieQueryParamsDTO;
+import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.service.CountryService;
@@ -44,24 +46,40 @@ public class CountryResource {
     }
 
     @GET
-    public Uni<Response> getCountries(
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("nomFrFr") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Country.ALLOWED_SORT_FIELDS);
+    @Path("existing")
+    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                countryService.getCountries(Page.of(pageIndex, size), sort, sortDirection, term)
+                countryService.getExistingCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
-                                countryService.countCountries(term).map(total ->
+                                countryService.countExistingCountries(queryParams.getTerm()).map(total ->
+                                        countryList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    public Uni<Response> getAllPaginatedCountries(@BeanParam QueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+
+        return
+                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                        .flatMap(countryList ->
+                                countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -72,22 +90,18 @@ public class CountryResource {
 
     @GET
     @Path("all")
-    public Uni<Response> getCountries(
-            @QueryParam("sort") @DefaultValue("nomFrFr") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Country.ALLOWED_SORT_FIELDS);
+    public Uni<Response> getAllCountries(@BeanParam QueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                countryService.getCountries(sort, sortDirection, term)
+                countryService.getCountries(queryParams.getSort(), sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
-                                countryService.countCountries(term).map(total ->
+                                countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -108,23 +122,18 @@ public class CountryResource {
 
     @GET
     @Path("{id}/movies/all")
-    public Uni<Response> getAllMoviesByCountry(
-            @RestPath Long id,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+    public Uni<Response> getAllMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                countryService.getAllMovies(id, sort, sortDirection, term)
+                countryService.getMovies(id, queryParams.getSort(), sortDirection, queryParams.getTerm())
                         .flatMap(movieList ->
-                                countryService.countMovies(id, term).map(total ->
+                                countryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -135,25 +144,18 @@ public class CountryResource {
 
     @GET
     @Path("{id}/movies")
-    public Uni<Response> getMoviesByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
+    public Uni<Response> getMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                countryService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, term)
+                countryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
                         .flatMap(movieList ->
-                                countryService.countMovies(id, term).map(total ->
+                                countryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()

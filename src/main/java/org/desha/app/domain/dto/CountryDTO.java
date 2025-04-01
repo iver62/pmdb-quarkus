@@ -41,10 +41,22 @@ public class CountryDTO {
     private Set<PersonDTO> hairDressers;
     private Set<PersonDTO> stuntMen;
 
-    public static CountryDTO fromCountry(Country country) {
+    public static CountryDTO fromEntity(Country country) {
         return
                 CountryDTO.builder()
-                        .id(country.id)
+                        .id(country.getId())
+                        .code(country.getCode())
+                        .alpha2(country.getAlpha2())
+                        .alpha3(country.getAlpha3())
+                        .nomFrFr(country.getNomFrFr())
+                        .nomEnGb(country.getNomEnGb())
+                        .build();
+    }
+
+    public static CountryDTO fromFullEntity(Country country) {
+        return
+                CountryDTO.builder()
+                        .id(country.getId())
                         .code(country.getCode())
                         .alpha2(country.getAlpha2())
                         .alpha3(country.getAlpha3())

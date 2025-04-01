@@ -10,7 +10,8 @@ import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Country;
-import org.desha.app.repository.*;
+import org.desha.app.repository.CountryRepository;
+import org.desha.app.repository.MovieRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
@@ -18,64 +19,20 @@ import java.util.*;
 @ApplicationScoped
 public class CountryService {
 
-    private final ActorRepository actorRepository;
-    private final ArtDirectorRepository artDirectorRepository;
-    private final CasterRepository casterRepository;
-    private final CostumierRepository costumierRepository;
-    private final DecoratorRepository decoratorRepository;
-    private final DirectorRepository directorRepository;
-    private final EditorRepository editorRepository;
-    private final HairDresserRepository hairDresserRepository;
-    private final MakeupArtistRepository makeupArtistRepository;
-    private final MusicianRepository musicianRepository;
-    private final PhotographerRepository photographerRepository;
-    private final ProducerRepository producerRepository;
-    private final ScreenwriterRepository screenwriterRepository;
-    private final StuntmanRepository stuntmanRepository;
-    private final SoundEditorRepository soundEditorRepository;
-    private final VisualEffectsSupervisorRepository visualEffectsSupervisorRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
 
     @Inject
     public CountryService(
-            ActorRepository actorRepository,
-            ArtDirectorRepository artDirectorRepository,
-            CasterRepository casterRepository,
-            CostumierRepository costumierRepository,
-            DecoratorRepository decoratorRepository,
-            DirectorRepository directorRepository,
-            EditorRepository editorRepository,
-            HairDresserRepository hairDresserRepository,
-            MakeupArtistRepository makeupArtistRepository,
-            MusicianRepository musicianRepository,
-            PhotographerRepository photographerRepository,
-            ProducerRepository producerRepository,
-            ScreenwriterRepository screenwriterRepository,
-            SoundEditorRepository soundEditorRepository,
-            StuntmanRepository stuntmanRepository,
-            VisualEffectsSupervisorRepository visualEffectsSupervisorRepository,
             CountryRepository countryRepository,
             MovieRepository movieRepository
     ) {
-        this.actorRepository = actorRepository;
-        this.artDirectorRepository = artDirectorRepository;
-        this.casterRepository = casterRepository;
-        this.costumierRepository = costumierRepository;
-        this.decoratorRepository = decoratorRepository;
-        this.directorRepository = directorRepository;
-        this.editorRepository = editorRepository;
-        this.hairDresserRepository = hairDresserRepository;
-        this.makeupArtistRepository = makeupArtistRepository;
-        this.musicianRepository = musicianRepository;
-        this.photographerRepository = photographerRepository;
-        this.producerRepository = producerRepository;
-        this.screenwriterRepository = screenwriterRepository;
-        this.soundEditorRepository = soundEditorRepository;
-        this.stuntmanRepository = stuntmanRepository;
-        this.visualEffectsSupervisorRepository = visualEffectsSupervisorRepository;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
+    }
+
+    public Uni<Long> countExistingCountries(String term) {
+        return countryRepository.countExistingCountries(term);
     }
 
     public Uni<Long> countCountries(String term) {
@@ -89,10 +46,22 @@ public class CountryService {
                 ;
     }
 
+    public Uni<List<CountryDTO>> getExistingCountries(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                countryRepository.findExistingCountries(page, sort, direction, term)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
+                        )
+                ;
+    }
+
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
         return
-                countryRepository
-                        .findCountries(page, sort, direction, term)
+                countryRepository.findCountries(page, sort, direction, term)
                         .map(
                                 countryList ->
                                         countryList
@@ -306,7 +275,6 @@ public class CountryService {
     /*public Uni<Long> countStuntmenByCountry(Long id, String term) {
         return stuntmanRepository.countStuntmenByCountry(id, term);
     }*/
-
     public Uni<Set<Country>> getByIds(Set<CountryDTO> countries) {
         return
                 countryRepository.findByIds(
@@ -342,9 +310,9 @@ public class CountryService {
                 ;
     }
 
-    public Uni<List<MovieDTO>> getAllMovies(Long id, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(Long id, String sort, Sort.Direction direction, String term) {
         return
-                movieRepository.findAllMoviesByCountry(id, sort, direction, term)
+                movieRepository.findMoviesByCountry(id, sort, direction, term)
                         .map(movieList ->
                                 movieList
                                         .stream()
@@ -742,7 +710,6 @@ public class CountryService {
                         )
                 ;
     }*/
-
     public Uni<Country> removeMovie(Long countryId, Long movieId) {
         return
                 Panache
