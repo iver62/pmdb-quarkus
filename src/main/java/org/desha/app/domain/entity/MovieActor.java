@@ -1,7 +1,7 @@
 package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.quarkus.hibernate.reactive.panache.PanacheEntity;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -10,11 +10,16 @@ import lombok.*;
 @Entity
 @Getter
 @Setter
+@Builder
 @Table(name = "lnk_film_acteur")
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MovieActor extends PanacheEntity {
+public class MovieActor extends PanacheEntityBase {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    protected Long id;
 
     @ManyToOne
     @JoinColumn(name = "fk_film")
@@ -31,16 +36,6 @@ public class MovieActor extends PanacheEntity {
     @NotNull(message = "Le rang ne peut pas être nul")
     @Column(name = "rang", nullable = false)
     private Integer rank;
-
-    @Builder
-    public MovieActor(Long id, Movie movie, Actor actor, String role, Integer rank) {
-        super();
-        this.id = id;
-        this.movie = movie;
-        this.actor = actor;
-        this.role = role;
-        this.rank = rank;
-    }
 
     public static MovieActor build(Long id, Movie movie, Actor actor, String role, Integer rank) {
         return

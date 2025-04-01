@@ -121,7 +121,7 @@ public class MovieService {
                                 movieList ->
                                         movieList
                                                 .stream()
-                                                .map(MovieDTO::fromEntity)
+                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                                 .toList()
                         )
                 ;
@@ -148,104 +148,151 @@ public class MovieService {
 
     public Uni<TechnicalTeamDTO> getTechnicalTeam(Long id) {
         return
-                movieRepository.findByIdWithTechnicalTeam(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Film non trouvé"))
-                        .onItem().ifNotNull()
-                        .transform(movie ->
-                                TechnicalTeamDTO.build(
-                                        movie.getProducers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getScreenwriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getMusicians().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getPhotographers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getCostumiers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getDecorators().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getCasters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getArtDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getVisualEffectsSupervisors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getMakeupArtists().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getHairDressers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                                        movie.getStuntmen().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet())
-                                )
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findByIdWithTechnicalTeam(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .map(movie ->
+                                                TechnicalTeamDTO.build(
+                                                        movie.getProducers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getScreenwriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getMusicians().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getPhotographers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getCostumiers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getDecorators().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getCasters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getArtDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getVisualEffectsSupervisors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getMakeupArtists().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getHairDressers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                                                        movie.getStuntmen().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet())
+                                                )
+                                        )
                         )
                 ;
     }
 
-    public Uni<Set<Producer>> getProducersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getProducers())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Producer>> getProducersByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getProducers()))
+                ;
     }
 
-    public Uni<Set<Director>> getDirectorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getDirectors())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Director>> getDirectorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getDirectors()))
+                ;
     }
 
-    public Uni<Set<Screenwriter>> getScreenwritersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getScreenwriters())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Screenwriter>> getScreenwritersByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getScreenwriters()))
+                ;
     }
 
-    public Uni<Set<Musician>> getMusiciansByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getMusicians())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Musician>> getMusiciansByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getMusicians()))
+                ;
     }
 
-    public Uni<Set<Photographer>> getPhotographersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getPhotographers())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Photographer>> getPhotographersByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getPhotographers()))
+                ;
     }
 
-    public Uni<Set<Costumier>> getCostumiersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getCostumiers())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Costumier>> getCostumiersByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getCostumiers()))
+                ;
     }
 
-    public Uni<Set<Decorator>> getDecoratorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getDecorators())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Decorator>> getDecoratorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getDecorators()))
+                ;
     }
 
-    public Uni<Set<Editor>> getEditorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getEditors())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Editor>> getEditorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getEditors()))
+                ;
     }
 
-    public Uni<Set<Caster>> getCastersByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getCasters())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Caster>> getCastersByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getCasters()))
+                ;
     }
 
-    public Uni<Set<ArtDirector>> getArtDirectorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getArtDirectors())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<ArtDirector>> getArtDirectorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getArtDirectors()))
+                ;
     }
 
-    public Uni<Set<SoundEditor>> getSoundEditorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getSoundEditors())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<SoundEditor>> getSoundEditorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getSoundEditors()))
+                ;
     }
 
-    public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisorsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getVisualEffectsSupervisors())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getVisualEffectsSupervisors()))
+                ;
     }
 
-    public Uni<Set<MakeupArtist>> getMakeupArtists(Movie movie) {
-        return Mutiny.fetch(movie.getMakeupArtists())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<MakeupArtist>> getMakeupArtists(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getMakeupArtists()))
+                ;
     }
 
-    public Uni<Set<HairDresser>> getHairDressers(Movie movie) {
-        return Mutiny.fetch(movie.getHairDressers())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<HairDresser>> getHairDressers(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getHairDressers()))
+                ;
     }
 
-    public Uni<Set<Stuntman>> getStuntmen(Movie movie) {
-        return Mutiny.fetch(movie.getStuntmen())
-                .onItem().ifNull().continueWith(Collections.emptySet());
+    public Uni<Set<Stuntman>> getStuntmen(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie -> Mutiny.fetch(movie.getStuntmen()))
+                ;
     }
 
     public Uni<List<RepartitionDTO>> getMoviesCreationDateEvolution() {

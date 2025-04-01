@@ -16,10 +16,10 @@ public class MovieActorDTO {
     public static MovieActorDTO fromEntity(MovieActor movieActor) {
         return
                 MovieActorDTO.builder()
-                        .id(movieActor.id)
+                        .id(movieActor.getId())
                         .actor(
                                 PersonDTO.builder()
-                                        .id(movieActor.getActor().id)
+                                        .id(movieActor.getActor().getId())
                                         .name(movieActor.getActor().getName())
                                         .photoFileName(movieActor.getActor().getPhotoFileName())
                                         .build()

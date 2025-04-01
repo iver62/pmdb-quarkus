@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Builder
 @Getter
@@ -25,18 +26,19 @@ public class MovieDTO {
     private Long budget;
     private Long boxOffice;
     private String posterFileName;
-    private String username;
+    private UserDTO user;
     private TechnicalTeamDTO technicalTeam;
     private List<MovieActorDTO> movieActors;
     private Set<CountryDTO> countries;
     private Set<GenreDTO> genres;
-    private Set<Award> awards;
+    private Set<AwardDTO> awards;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
+    private int nbAwards;
 
     public static MovieDTO fromEntity(Movie movie) {
         return MovieDTO.builder()
-                .id(movie.id)
+                .id(movie.getId())
                 .title(movie.getTitle())
                 .originalTitle(movie.getOriginalTitle())
                 .releaseDate(movie.getReleaseDate())
@@ -46,7 +48,24 @@ public class MovieDTO {
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
-                .username(movie.getUsername())
+                .user(UserDTO.fromEntity(movie.getUser()))
+                .build();
+    }
+
+    public static MovieDTO fromEntity(Movie movie, Set<Award> awards) {
+        return MovieDTO.builder()
+                .id(movie.getId())
+                .title(movie.getTitle())
+                .originalTitle(movie.getOriginalTitle())
+                .releaseDate(movie.getReleaseDate())
+                .runningTime(movie.getRunningTime())
+                .budget(movie.getBudget())
+                .boxOffice(movie.getBoxOffice())
+                .posterFileName(movie.getPosterFileName())
+                .creationDate(movie.getCreationDate())
+                .lastUpdate(movie.getLastUpdate())
+                .user(UserDTO.fromEntity(movie.getUser()))
+                .awards(awards.stream().map(AwardDTO::fromEntity).collect(Collectors.toSet()))
                 .build();
     }
 

@@ -6,11 +6,11 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.RepartitionDTO;
 import org.desha.app.domain.entity.Movie;
+import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,7 +33,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByActor(Long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.movieActors ma WHERE ma.actor.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.movieActors ma WHERE ma.actor.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -46,7 +46,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByProducer(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.producers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.producers p WHERE p.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -59,7 +59,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByDirector(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.directors d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.directors d WHERE d.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -72,7 +72,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByScreenwriter(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -85,7 +85,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByMusician(Long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -98,7 +98,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByDecorator(Long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -111,7 +111,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByCostumier(Long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -124,7 +124,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByPhotographer(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -137,7 +137,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByEditor(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -150,7 +150,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByCaster(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -163,7 +163,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByArtDirector(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -176,7 +176,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesBySoundEditor(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -189,7 +189,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByVisualEffectsSupervisor(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -202,7 +202,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByMakeupArtist(long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -215,7 +215,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByHairDresser(Long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -228,7 +228,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByStuntman(Long id, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -243,7 +243,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     public Uni<Long> countMoviesByCountry(Long id, String term) {
         return
                 count(
-                        "SELECT COUNT(m) FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
+                        "SELECT COUNT(m) FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
                 );
@@ -252,47 +252,59 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     public Uni<Long> countMoviesByGenre(Long id, String term) {
         return
                 count(
-                        "SELECT COUNT(m) FROM Movie m JOIN m.genres g WHERE g.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
+                        "SELECT COUNT(m) FROM Movie m JOIN m.genres g WHERE g.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
                 );
     }
 
+    public Uni<Boolean> movieExists(String title, int releaseYear) {
+        return find("title = ?1 AND YEAR(releaseDate) = ?2", title, releaseYear)
+                .firstResult()
+                .map(Objects::nonNull); // Retourne true si un film existe déjà
+    }
+
+    @Override
+    public Uni<Movie> findById(Long id) {
+        return find("id", id).firstResult();
+    }
+
     public Uni<Movie> findByIdWithCountriesAndGenres(Long id) {
         return
-                find("FROM Movie m LEFT JOIN FETCH m.countries LEFT JOIN FETCH m.genres WHERE m.id = ?1", id)
-                        .firstResult()
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable avec l'ID : " + id))
-                ;
+                find("FROM Movie m " +
+                        "LEFT JOIN FETCH m.countries " +
+                        "LEFT JOIN FETCH m.genres " +
+                        "WHERE m.id = ?1", id
+                ).firstResult();
     }
 
     public Uni<Movie> findByIdWithTechnicalTeam(Long id) {
         return
-                find("FROM Movie m " +
-                        "LEFT JOIN FETCH m.producers " +
-                        "LEFT JOIN FETCH m.directors " +
-                        "LEFT JOIN FETCH m.screenwriters " +
-                        "LEFT JOIN FETCH m.musicians " +
-                        "LEFT JOIN FETCH m.photographers " +
-                        "LEFT JOIN FETCH m.costumiers " +
-                        "LEFT JOIN FETCH m.decorators " +
-                        "LEFT JOIN FETCH m.editors " +
-                        "LEFT JOIN FETCH m.casters " +
-                        "LEFT JOIN FETCH m.artDirectors " +
-                        "LEFT JOIN FETCH m.soundEditors " +
-                        "LEFT JOIN FETCH m.visualEffectsSupervisors " +
-                        "LEFT JOIN FETCH m.makeupArtists " +
-                        "LEFT JOIN FETCH m.hairDressers " +
-                        "LEFT JOIN FETCH m.stuntmen " +
-                        "WHERE m.id = ?1", id
-                )
-                        .firstResult()
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable avec l'ID : " + id))
+                findById(id)
+                        .call(movie ->
+                                Mutiny.fetch(movie.getProducers()).invoke(movie::setProducers)
+                                        .call(() -> Mutiny.fetch(movie.getDirectors()).invoke(movie::setDirectors))
+                                        .call(() -> Mutiny.fetch(movie.getScreenwriters()).invoke(movie::setScreenwriters))
+                                        .call(() -> Mutiny.fetch(movie.getMusicians()).invoke(movie::setMusicians))
+                                        .call(() -> Mutiny.fetch(movie.getPhotographers()).invoke(movie::setPhotographers))
+                                        .call(() -> Mutiny.fetch(movie.getCostumiers()).invoke(movie::setCostumiers))
+                                        .call(() -> Mutiny.fetch(movie.getDecorators()).invoke(movie::setDecorators))
+                                        .call(() -> Mutiny.fetch(movie.getEditors()).invoke(movie::setEditors))
+                                        .call(() -> Mutiny.fetch(movie.getCasters()).invoke(movie::setCasters))
+                                        .call(() -> Mutiny.fetch(movie.getArtDirectors()).invoke(movie::setArtDirectors))
+                                        .call(() -> Mutiny.fetch(movie.getSoundEditors()).invoke(movie::setSoundEditors))
+                                        .call(() -> Mutiny.fetch(movie.getVisualEffectsSupervisors()).invoke(movie::setVisualEffectsSupervisors))
+                                        .call(() -> Mutiny.fetch(movie.getMakeupArtists()).invoke(movie::setMakeupArtists))
+                                        .call(() -> Mutiny.fetch(movie.getHairDressers()).invoke(movie::setHairDressers))
+                                        .call(() -> Mutiny.fetch(movie.getStuntmen()).invoke(movie::setStuntmen))
+                        )
                 ;
     }
 
     public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM Movie m " +
+                "LEFT JOIN FETCH m.awards " +
+                "WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -301,7 +313,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by(sort, direction), params)
+                find(query, Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -312,7 +324,10 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByActor(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.movieActors ma JOIN ma.actor a WHERE a.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m " +
+                "JOIN m.movieActors ma " +
+                "JOIN ma.actor a " +
+                "WHERE a.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -329,7 +344,9 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByProducer(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.producers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m " +
+                "JOIN m.producers p " +
+                "WHERE p.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -346,7 +363,9 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByDirector(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.directors d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m " +
+                "JOIN m.directors d " +
+                "WHERE d.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -363,7 +382,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByScreenwriter(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.screenwriters s WHERE s.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -380,7 +399,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByMusician(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.musicians mu WHERE mu.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -397,7 +416,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByDecorator(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.decorators d WHERE d.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -414,7 +433,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByCostumier(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.costumiers c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -431,7 +450,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByPhotographer(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.photographers p WHERE p.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -448,7 +467,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByEditor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.editors e WHERE e.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -465,7 +484,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByCaster(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.casters c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -482,7 +501,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByArtDirector(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.artDirectors ad WHERE ad.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -499,7 +518,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesBySoundEditor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.soundEditors se WHERE se.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -516,7 +535,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByVisualEffectsSupervisor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.visualEffectsSupervisors ves WHERE ves.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -533,7 +552,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByMakeupArtist(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.makeupArtists ma WHERE ma.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -550,7 +569,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByHairDresser(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.hairDressers hd WHERE hd.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -567,7 +586,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByStuntman(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(m.title) LIKE LOWER(:term)" +
+        String query = "FROM Movie m JOIN m.stuntmen s WHERE s.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
@@ -583,10 +602,10 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findAllMoviesByCountry(Long id, String sort, Sort.Direction direction, String term) {
+    public Uni<List<Movie>> findMoviesByCountry(Long id, String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "SELECT m FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
+                        "SELECT m FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Sort.by(sort, direction),
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
@@ -596,7 +615,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     public Uni<List<Movie>> findMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "SELECT m FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
+                        "SELECT m FROM Movie m JOIN m.countries c WHERE c.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Sort.by(sort, direction),
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
@@ -608,7 +627,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     public Uni<List<Movie>> findMoviesByGenre(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "SELECT m FROM Movie m JOIN m.genres g WHERE g.id = :id AND LOWER(m.title) LIKE LOWER(:term)",
+                        "SELECT m FROM Movie m JOIN m.genres g WHERE g.id = :id AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Sort.by(sort, direction),
                         Parameters.with("id", id)
                                 .and("term", "%" + term + "%")
@@ -661,7 +680,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     public Uni<List<RepartitionDTO>> findMoviesByGenreRepartition() {
         return
 
-                find("SELECT g.name, COUNT(m) FROM Movie m JOIN m.genres g GROUP BY g.name ORDER BY COUNT(m) DESC")
+                find("SELECT g.name, COUNT(m) " +
+                        "FROM Movie m " +
+                        "JOIN m.genres g " +
+                        "GROUP BY g.name " +
+                        "ORDER BY COUNT(m) DESC"
+                )
                         .project(RepartitionDTO.class)
                         .list()
                 ;
@@ -669,7 +693,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
     public Uni<List<RepartitionDTO>> findMoviesByCountryRepartition() {
         return
-                find("SELECT c.nomFrFr, COUNT(m) FROM Movie m JOIN m.countries c GROUP BY c.nomFrFr ORDER BY COUNT(m) DESC")
+                find("SELECT c.nomFrFr, COUNT(m) " +
+                        "FROM Movie m " +
+                        "JOIN m.countries c " +
+                        "GROUP BY c.nomFrFr " +
+                        "ORDER BY COUNT(m) DESC"
+                )
                         .project(RepartitionDTO.class)
                         .list()
                 ;
@@ -677,7 +706,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
     public Uni<List<RepartitionDTO>> findMoviesByUserRepartition() {
         return
-                find("SELECT m.username, COUNT(m) FROM Movie m GROUP BY m.username ORDER BY COUNT(m) DESC")
+                find(
+                        "SELECT u.username, COUNT(m) " +
+                                "FROM Movie m " +
+                                "JOIN m.user u " +
+                                "GROUP BY u.username " +
+                                "ORDER BY COUNT(m) DESC"
+                )
                         .project(RepartitionDTO.class)
                         .list()
                 ;
@@ -701,8 +736,8 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
             query.append(" AND EXISTS (SELECT 1 FROM m.countries c WHERE c.id IN :countryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getUsernames()) && !criteriasDTO.getUsernames().isEmpty()) {
-            query.append(" AND m.username IN :usernames");
+        if (Objects.nonNull(criteriasDTO.getUserIds()) && !criteriasDTO.getUserIds().isEmpty()) {
+            query.append(" AND m.user.id IN :userIds");
         }
 
         return query.toString();
@@ -734,8 +769,8 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             params.and("countryIds", criteriasDTO.getCountryIds());
         }
-        if (Objects.nonNull(criteriasDTO.getUsernames()) && !criteriasDTO.getUsernames().isEmpty()) {
-            params.and("usernames", criteriasDTO.getUsernames());
+        if (Objects.nonNull(criteriasDTO.getUserIds()) && !criteriasDTO.getUserIds().isEmpty()) {
+            params.and("userIds", criteriasDTO.getUserIds());
         }
 
         return params;

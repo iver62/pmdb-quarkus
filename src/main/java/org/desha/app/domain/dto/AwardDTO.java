@@ -16,7 +16,6 @@ public class AwardDTO {
     private String ceremony;
     private String name;
     private Year year;
-    private MovieDTO movie;
 
     public static AwardDTO fromEntity(Award award) {
         return
@@ -25,7 +24,6 @@ public class AwardDTO {
                         .ceremony(award.getCeremony())
                         .name(award.getName())
                         .year(award.getYear())
-                        .movie(MovieDTO.fromEntity(award.getMovie()))
                         .build();
     }
 }

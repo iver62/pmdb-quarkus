@@ -202,158 +202,203 @@ public class MovieResource {
     public Uni<Response> getTechnicalTeam(@RestPath Long id) {
         return
                 movieService.getTechnicalTeam(id)
-                        .map(movieActors -> Response.ok(movieActors).build())
+                        .map(technicalTeam -> Response.ok(technicalTeam).build())
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                 ;
     }
 
     @GET
     @Path("{id}/producers")
-    public Uni<Set<Producer>> getProducers(@RestPath Long id) {
+    public Uni<Response> getProducers(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getProducersByMovie)
+                movieService.getProducersByMovie(id)
+                        .map(producers ->
+                                producers.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(producers).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/directors")
-    public Uni<Set<Director>> getDirectors(@RestPath Long id) {
+    public Uni<Response> getDirectors(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getDirectorsByMovie)
+                movieService.getDirectorsByMovie(id)
+                        .map(directors ->
+                                directors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(directors).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/screenwriters")
-    public Uni<Set<Screenwriter>> getScreenwriters(@RestPath Long id) {
+    public Uni<Response> getScreenwriters(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getScreenwritersByMovie)
+                movieService.getScreenwritersByMovie(id)
+                        .map(screenwriters ->
+                                screenwriters.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(screenwriters).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/musicians")
-    public Uni<Set<Musician>> getMusicians(@RestPath Long id) {
+    public Uni<Response> getMusicians(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getMusiciansByMovie)
+                movieService.getMusiciansByMovie(id)
+                        .map(musicians ->
+                                musicians.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(musicians).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/photographers")
-    public Uni<Set<Photographer>> getPhotographers(@RestPath Long id) {
+    public Uni<Response> getPhotographers(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getPhotographersByMovie)
+                movieService.getPhotographersByMovie(id)
+                        .map(photographers ->
+                                photographers.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(photographers).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/costumiers")
-    public Uni<Set<Costumier>> getCostumiers(@RestPath Long id) {
+    public Uni<Response> getCostumiers(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getCostumiersByMovie)
+                movieService.getCostumiersByMovie(id)
+                        .map(costumiers ->
+                                costumiers.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(costumiers).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/decorators")
-    public Uni<Set<Decorator>> getDecorators(@RestPath Long id) {
+    public Uni<Response> getDecorators(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getDecoratorsByMovie)
+                movieService.getDecoratorsByMovie(id)
+                        .map(decorators ->
+                                decorators.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(decorators).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/editors")
-    public Uni<Set<Editor>> getEditors(@RestPath Long id) {
+    public Uni<Response> getEditors(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getEditorsByMovie)
+                movieService.getEditorsByMovie(id)
+                        .map(editors ->
+                                editors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(editors).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/casters")
-    public Uni<Set<Caster>> getCasters(@RestPath Long id) {
+    public Uni<Response> getCasters(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getCastersByMovie)
+                movieService.getCastersByMovie(id)
+                        .map(casters ->
+                                casters.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(casters).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/art-directors")
-    public Uni<Set<ArtDirector>> getArtDirectors(@RestPath Long id) {
+    public Uni<Response> getArtDirectors(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getArtDirectorsByMovie)
+                movieService.getArtDirectorsByMovie(id)
+                        .map(artDirectors ->
+                                artDirectors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(artDirectors).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/sound-editors")
-    public Uni<Set<SoundEditor>> getSoundEditors(@RestPath Long id) {
+    public Uni<Response> getSoundEditors(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getSoundEditorsByMovie)
+                movieService.getSoundEditorsByMovie(id)
+                        .map(soundEditors ->
+                                soundEditors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(soundEditors).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/visual-effects-supervisors")
-    public Uni<Set<VisualEffectsSupervisor>> getVisualEffectsSupervisors(@RestPath Long id) {
+    public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getVisualEffectsSupervisorsByMovie)
+                movieService.getVisualEffectsSupervisorsByMovie(id)
+                        .map(visualEffectsSupervisors ->
+                                visualEffectsSupervisors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(visualEffectsSupervisors).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/makeup-artists")
-    public Uni<Set<MakeupArtist>> getMakeupArtists(@RestPath Long id) {
+    public Uni<Response> getMakeupArtists(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getMakeupArtists)
+                movieService.getMakeupArtists(id)
+                        .map(makeupArtists ->
+                                makeupArtists.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(makeupArtists).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/hair-dressers")
-    public Uni<Set<HairDresser>> getHairDressers(@RestPath Long id) {
+    public Uni<Response> getHairDressers(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getHairDressers)
+                movieService.getHairDressers(id)
+                        .map(hairDressers ->
+                                hairDressers.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(hairDressers).build()
+                        )
                 ;
     }
 
     @GET
     @Path("{id}/stuntmen")
-    public Uni<Set<Stuntman>> getStuntmen(@RestPath Long id) {
+    public Uni<Response> getStuntmen(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getStuntmen)
+                movieService.getStuntmen(id)
+                        .map(stuntmen ->
+                                stuntmen.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(stuntmen).build()
+                        )
                 ;
     }
 

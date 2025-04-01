@@ -177,8 +177,7 @@ public class Movie extends PanacheEntityBase {
     private Set<Genre> genres = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
-    @Fetch(FetchMode.SELECT)
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Award> awards = new HashSet<>();
 
     @PrePersist
@@ -676,7 +675,7 @@ public class Movie extends PanacheEntityBase {
                 Mutiny.fetch(awards)
                         .map(
                                 fetchAwards -> {
-                                    fetchAwards.removeIf(award -> Objects.equals(award.id, id));
+                                    fetchAwards.removeIf(award -> Objects.equals(award.getId(), id));
                                     return fetchAwards;
                                 }
                         )
