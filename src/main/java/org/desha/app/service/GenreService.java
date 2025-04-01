@@ -6,7 +6,6 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.GenreDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.entity.Genre;

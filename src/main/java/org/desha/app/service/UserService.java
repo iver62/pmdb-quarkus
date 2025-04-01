@@ -23,8 +23,8 @@ public class UserService {
     }
 
     @WithTransaction
-    public Uni<Long> countUsers() {
-        return userRepository.count();
+    public Uni<Long> countUsers(String term) {
+        return userRepository.countUsers(term);
     }
 
     @WithTransaction

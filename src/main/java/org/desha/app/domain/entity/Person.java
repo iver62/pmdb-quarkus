@@ -44,10 +44,6 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
     @Column(name = "date_mise_a_jour")
     protected LocalDateTime lastUpdate;
 
-    /*@JsonIgnore
-    @OneToMany(mappedBy = "person", orphanRemoval = true)
-    private Set<Award> awards = new HashSet<>();*/
-
     @PrePersist
     protected void onCreate() {
         this.creationDate = LocalDateTime.now();
@@ -58,30 +54,6 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
     protected void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
     }
-
-    /*public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
-        return
-                Mutiny.fetch(awards)
-                        .map(
-                                fetchedAwards -> {
-                                    fetchedAwards.addAll(awardSet);
-                                    return fetchedAwards;
-                                }
-                        )
-                ;
-    }*/
-
-    /*public Uni<Set<Award>> removeAward(Long id) {
-        return
-                Mutiny.fetch(awards)
-                        .map(
-                                awardSet -> {
-                                    awardSet.removeIf(award -> Objects.equals(award.id, id));
-                                    return awardSet;
-                                }
-                        )
-                ;
-    }*/
 
     public abstract List<Movie> getMovies();
 

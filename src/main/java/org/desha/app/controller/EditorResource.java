@@ -1,6 +1,5 @@
 package org.desha.app.controller;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;

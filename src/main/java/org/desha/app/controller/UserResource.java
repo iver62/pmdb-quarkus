@@ -50,7 +50,7 @@ public class UserResource {
         return
                 userService.getUsers(Page.of(pageIndex, size), sort, sortDirection, term)
                         .flatMap(userList ->
-                                userService.countUsers()
+                                userService.countUsers(term)
                                         .map(total ->
                                                 userList.isEmpty()
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()

@@ -86,12 +86,7 @@ public class ActorRepository extends PersonRepository<Actor> {
                 ;
     }
 
-    public Uni<List<Actor>> find(
-            Page page,
-            String sort,
-            Sort.Direction direction,
-            CriteriasDTO criteriasDTO
-    ) {
+    public Uni<List<Actor>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = "FROM Actor p " +
                 "LEFT JOIN FETCH p.movieActors ma " +
                 "LEFT JOIN FETCH ma.movie m " +

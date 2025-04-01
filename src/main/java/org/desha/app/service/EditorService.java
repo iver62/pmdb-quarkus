@@ -49,6 +49,6 @@ public class EditorService extends PersonService<Editor> {
     }
 
     public Uni<Editor> save(PersonDTO personDTO) {
-        return Panache.withTransaction(() -> Costumier.fromDTO(personDTO).persist());
+        return Panache.withTransaction(() -> Editor.fromDTO(personDTO).persist());
     }
 }

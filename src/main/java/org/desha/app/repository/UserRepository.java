@@ -16,6 +16,10 @@ import java.util.UUID;
 @ApplicationScoped
 public class UserRepository implements PanacheRepositoryBase<User, UUID> {
 
+    public Uni<Long> countUsers(String term) {
+        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', ?1))", "%" + term + "%");
+    }
+
     public Uni<List<User>> findUsers(Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(

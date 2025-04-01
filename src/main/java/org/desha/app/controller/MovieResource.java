@@ -559,17 +559,17 @@ public class MovieResource {
     @PUT
     @Path("{id}/casting")
     public Uni<Response> saveCasting(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
-        if (Objects.isNull(movieActorsList) || movieActorsList.isEmpty()) {
+        if (Objects.isNull(movieActorsList)) {
             return Uni.createFrom().item(
                     Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des acteurs ne peut pas être vide.")
+                            .entity("La liste des acteurs ne peut pas être nulle.")
                             .build()
             );
         }
 
         return
                 movieService.saveCasting(id, movieActorsList)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNotNull().transform(movieActorDTOList -> Response.ok(movieActorDTOList).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                         /*.onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity("Erreur lors de la mise à jour du casting: " + e.getMessage())
