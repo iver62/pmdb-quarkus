@@ -45,7 +45,7 @@ public class ArtDirectorRepository extends PersonRepository<ArtDirector> {
         );
 
         return
-                find(query, Sort.by("p." + sort, direction), params)
+                find(query, Sort.by("p." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;

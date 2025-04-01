@@ -47,7 +47,7 @@ public class HairDresserRepository extends PersonRepository<HairDresser> {
         );
 
         return
-                find(query, Sort.by("p." + sort, direction), params)
+                find(query, Sort.by("p." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;

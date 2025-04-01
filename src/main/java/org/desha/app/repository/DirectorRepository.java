@@ -47,7 +47,7 @@ public class DirectorRepository extends PersonRepository<Director> {
         );
 
         return
-                find(query, Sort.by("p." + sort, direction), params)
+                find(query, Sort.by("p." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
