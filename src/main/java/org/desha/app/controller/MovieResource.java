@@ -95,9 +95,9 @@ public class MovieResource {
 
     @GET
     @Path("count")
-    public Uni<Response> count(@BeanParam MovieFilterDTO movieFilter) {
+    public Uni<Response> count(@BeanParam MovieQueryParamsDTO queryParams) {
         return
-                movieService.count(CriteriasDTO.build(movieFilter))
+                movieService.count(CriteriasDTO.build(queryParams))
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
@@ -112,11 +112,11 @@ public class MovieResource {
     }
 
     @GET
-    public Uni<Response> getMovies(@BeanParam MovieFilterDTO movieFilter) {
+    public Uni<Response> getMovies(@BeanParam MovieQueryParamsDTO queryParams) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
-                || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
-                || Objects.nonNull(movieFilter.getFromLastUpdate()) && Objects.nonNull(movieFilter.getToLastUpdate()) && movieFilter.getFromLastUpdate().isAfter(movieFilter.getToLastUpdate())
+        if (Objects.nonNull(queryParams.getFromReleaseDate()) && Objects.nonNull(queryParams.getToReleaseDate()) && queryParams.getFromReleaseDate().isAfter(queryParams.getToReleaseDate())
+                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
+                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -127,17 +127,17 @@ public class MovieResource {
         }
 
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(movieFilter.getSort());
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort());
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(movieFilter);
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                movieService.getMovies(Page.of(movieFilter.getPageIndex(), movieFilter.getSize()), movieFilter.getSort(), sortDirection, criteriasDTO)
+                movieService.getMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, criteriasDTO)
                         .flatMap(movieList ->
                                 movieService.count(criteriasDTO)
                                         .map(total ->
@@ -151,19 +151,19 @@ public class MovieResource {
 
     @GET
     @Path("all")
-    public Uni<Response> getAllMovies(MovieFilterDTO movieFilter) {
+    public Uni<Response> getAllMovies(MovieQueryParamsDTO queryParams) {
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(movieFilter.getSort());
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort());
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                Movie.getAllMovies(movieFilter.getSort(), sortDirection, movieFilter.getTerm())
+                Movie.getAllMovies(queryParams.getSort(), sortDirection, queryParams.getTerm())
                         .flatMap(movieList ->
-                                Movie.count(movieFilter.getTerm()).map(total ->
+                                Movie.count(queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -381,11 +381,11 @@ public class MovieResource {
     @Path("{id}/awards")
     public Uni<Response> getAwards(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getAwardsByMovie)
-                        .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
-                        .onItem().ifNull().continueWith(Response.status(404, "Ce film n'existe pas").build())
+                movieService.getAwardsByMovie(id)
+                        .map(awards -> awards.isEmpty()
+                                ? Response.ok(Collections.emptyList()).build() // 200 avec liste vide si pas d'awards
+                                : Response.ok(awards).build()
+                        )
                 ;
     }
 
@@ -531,6 +531,15 @@ public class MovieResource {
                                 .build()
                         )*/
                 ;
+    }
+
+    @PUT
+    @Path("{id}/awards")
+    public Uni<Response> saveAwards(@RestPath Long id, Set<AwardDTO> awardDTOSet) {
+        return
+                movieService.saveAwards(id, awardDTOSet)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }
 
     /*@PUT
@@ -849,7 +858,7 @@ public class MovieResource {
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }
 
-    @PUT
+    /*@PUT
     @Path("{id}/awards")
     public Uni<Response> addAwards(Long id, Set<Award> awardSet) {
         return
@@ -857,7 +866,7 @@ public class MovieResource {
                         .map(Movie::getAwards)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }
+    }*/
 
     @PUT
     @Path("{movieId}/producers/{producerId}")

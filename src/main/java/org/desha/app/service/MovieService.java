@@ -6,6 +6,8 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
@@ -147,7 +149,9 @@ public class MovieService {
     public Uni<TechnicalTeamDTO> getTechnicalTeam(Long id) {
         return
                 movieRepository.findByIdWithTechnicalTeam(id)
-                        .map(movie ->
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Film non trouvé"))
+                        .onItem().ifNotNull()
+                        .transform(movie ->
                                 TechnicalTeamDTO.build(
                                         movie.getProducers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                                         movie.getDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
@@ -291,8 +295,11 @@ public class MovieService {
         return Mutiny.fetch(movie.getCountries());
     }
 
-    public Uni<Set<Award>> getAwardsByMovie(Movie movie) {
-        return Mutiny.fetch(movie.getAwards());
+    public Uni<Set<Award>> getAwardsByMovie(Long id) {
+        return
+                getById(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas")) // 404 si le film n'existe pas
+                        .chain(movie -> Mutiny.fetch(movie.getAwards()));
     }
 
     public Uni<File> getPoster(String fileName) {
@@ -322,33 +329,35 @@ public class MovieService {
     }
 
     public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
-        return
-                Uni.createFrom()
-                        .item(Movie.fromDTO(movieDTO))
-                        .call(
-                                movie ->
-                                        countryService.getByIds(movieDTO.getCountries())
-                                                .invoke(movie::setCountries)
-                                                .chain(() ->
-                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                .invoke(movie::setGenres)
-                                                )
-                        )
-                        .call(movie -> {
-                                    if (Objects.nonNull(file)) {
-                                        return uploadPoster(file)
-                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
-                                                .invoke(movie::setPosterFileName);
-                                    }
-                                    movie.setPosterFileName(DEFAULT_POSTER);
-                                    return Uni.createFrom().item(movie);
-                                }
-                        )
-                        .chain(movie -> {
-                            log.info("MOVIE -> " + movie.getUsername());
-                            return Panache.withTransaction(movie::persist);
-                        })
-                ;
+        return movieRepository.movieExists(movieDTO.getTitle().trim(), movieDTO.getReleaseDate().getYear())
+                .flatMap(exists -> {
+                    if (Boolean.TRUE.equals(exists)) {
+                        return Uni.createFrom().failure(new WebApplicationException("Le film existe déjà.", 409));
+                    }
+
+                    Movie movie = Movie.fromDTO(movieDTO);
+
+                    return Panache.withTransaction(() ->
+                            // Récupérer les pays et les genres en parallèle
+                            countryService.getByIds(movieDTO.getCountries())
+                                    .invoke(movie::setCountries)
+                                    .chain(() ->
+                                            genreService.getByIds(movieDTO.getGenres())
+                                                    .invoke(movie::setGenres)
+                                    )
+                                    .chain(() -> {
+                                        if (Objects.nonNull(file)) {
+                                            return uploadPoster(file)
+                                                    .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
+                                                    .invoke(movie::setPosterFileName);
+                                        }
+                                        movie.setPosterFileName(DEFAULT_POSTER);
+                                        return Uni.createFrom().voidItem();
+                                    })
+                                    .chain(movie::persist)
+                                    .replaceWith(movie) // Retourne le film après la transaction
+                    );
+                });
     }
 
     public Uni<TechnicalTeamDTO> saveTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
@@ -401,7 +410,7 @@ public class MovieService {
 
                                             // Récupérer les ID des acteurs existants
                                             Map<Long, MovieActor> existingActorMap = modifiableMovieActors.stream()
-                                                    .collect(Collectors.toMap(ma -> ma.getActor().id, ma -> ma));
+                                                    .collect(Collectors.toMap(ma -> ma.getActor().getId(), ma -> ma));
 
                                             // Identifier les acteurs à ajouter ou mettre à jour
                                             List<Long> newActorIds = new ArrayList<>();
@@ -429,7 +438,7 @@ public class MovieService {
                                                     .filter(ma ->
                                                             movieActorsList
                                                                     .stream()
-                                                                    .noneMatch(dto -> dto.getActor().getId().equals(ma.getActor().id))
+                                                                    .noneMatch(dto -> dto.getActor().getId().equals(ma.getActor().getId()))
                                                     )
                                                     .toList();
 
@@ -438,7 +447,7 @@ public class MovieService {
 
                                             // Charger ces nouveaux acteurs et les ajouter au casting
                                             return
-                                                    movieActorRepository.deleteByIds(actorsToRemove.stream().map(movieActor -> movieActor.id).toList())
+                                                    movieActorRepository.deleteByIds(actorsToRemove.stream().map(MovieActor::getId).toList())
                                                             .chain(() ->
                                                                     actorService.getByIds(newActorIds)
                                                                             .map(newActors -> {
@@ -448,8 +457,8 @@ public class MovieService {
                                                                                                         .map(actor -> MovieActor.build(
                                                                                                                 movie,
                                                                                                                 actor,
-                                                                                                                roleMap.getOrDefault(actor.id, "Inconnu"),
-                                                                                                                rankMap.getOrDefault(actor.id, 0)
+                                                                                                                roleMap.getOrDefault(actor.getId(), "Inconnu"),
+                                                                                                                rankMap.getOrDefault(actor.getId(), 0)
                                                                                                         )).toList()
                                                                                         );
                                                                                         return modifiableMovieActors;
@@ -466,10 +475,56 @@ public class MovieService {
                                                                             .sorted(Comparator.comparing(MovieActor::getRank))
                                                                             .map(MovieActorDTO::fromEntity)
                                                                             .toList()
-                                                            );
+                                                            )
+                                                    ;
                                         })
                         )
         );
+    }
+
+    public Uni<Set<Award>> saveAwards(Long id, Set<AwardDTO> awardDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .chain(
+                                                movie ->
+                                                        Mutiny.fetch(movie.getAwards())
+                                                                .invoke(
+                                                                        awards -> {
+                                                                            // Modifier les récompenses
+                                                                            awards.forEach(award ->
+                                                                                    awardDTOSet.stream()
+                                                                                            .filter(a -> Objects.nonNull(a.getId()) && a.getId().equals(award.getId()))
+                                                                                            .findFirst()
+                                                                                            .ifPresent(existingAward -> {
+                                                                                                award.setCeremony(existingAward.getCeremony());
+                                                                                                award.setName(existingAward.getName());
+                                                                                                award.setYear(existingAward.getYear());
+                                                                                            })
+                                                                            );
+
+                                                                            // Supprimer les récompenses obsolètes
+                                                                            awards.removeIf(existing ->
+                                                                                    awardDTOSet.stream().noneMatch(updated ->
+                                                                                            Objects.nonNull(updated.getId()) && updated.getId().equals(existing.getId())
+                                                                                    )
+                                                                            );
+
+                                                                            // Ajouter les nouvelles récompenses
+                                                                            awardDTOSet.forEach(updated -> {
+                                                                                if (Objects.isNull(updated.getId())) {
+                                                                                    Award newAward = Award.fromDTO(updated);
+                                                                                    newAward.setMovie(movie);
+                                                                                    awards.add(newAward);
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                )
+                                        )
+                        )
+                ;
     }
 
     /**
@@ -977,38 +1032,77 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        countryService.getByIds(movieDTO.getCountries())
-                                                                .invoke(movie::setCountries)
-                                                                .chain(() ->
-                                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                                .invoke(movie::setGenres))
-                                        )
-                                        .invoke(
-                                                movie -> {
-                                                    movie.setTitle(movieDTO.getTitle());
-                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                    movie.setSynopsis(movieDTO.getSynopsis());
-                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                    movie.setRunningTime(movieDTO.getRunningTime());
-                                                    movie.setBudget(movieDTO.getBudget());
-                                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                }
-                                        )
-                                        .call(
-                                                entity -> {
-                                                    if (Objects.nonNull(file)) {
-                                                        return uploadPoster(file)
-                                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                                .invoke(entity::setPosterFileName);
-                                                    }
-                                                    return Uni.createFrom().item(entity);
-                                                }
-                                        )
+                                        movieRepository.findById(id)
+                                                .onItem().ifNull().failWith(() -> new NotFoundException("Film non trouvé"))
+                                                .onItem().ifNotNull()
+                                                .call(
+                                                        movie ->
+                                                                countryService.getByIds(movieDTO.getCountries())
+                                                                        .invoke(movie::setCountries)
+                                                                        .chain(() ->
+                                                                                genreService.getByIds(movieDTO.getGenres())
+                                                                                        .invoke(movie::setGenres)
+                                                                        )
+                                                )
+                                        /*.call(movie ->
+                                                // Gestion des récompenses
+                                                Mutiny.fetch(movie.getAwards())
+                                                        .invoke(
+                                                                awards -> {
+                                                                    Set<AwardDTO> updatedAwards = movieDTO.getAwards();
+
+                                                                    // Modifier les récompenses
+                                                                    awards.forEach(award ->
+                                                                            updatedAwards.stream()
+                                                                                    .filter(a -> Objects.nonNull(a.getId()) && a.getId().equals(award.getId()))
+                                                                                    .findFirst()
+                                                                                    .ifPresent(existingAward -> {
+                                                                                        award.setCeremony(existingAward.getCeremony());
+                                                                                        award.setName(existingAward.getName());
+                                                                                        award.setYear(existingAward.getYear());
+                                                                                    })
+                                                                    );
+
+                                                                    // Supprimer les récompenses obsolètes
+                                                                    awards.removeIf(existing ->
+                                                                            updatedAwards.stream().noneMatch(updated ->
+                                                                                    Objects.nonNull(updated.getId()) && updated.getId().equals(existing.getId())
+                                                                            )
+                                                                    );
+
+                                                                    // Ajouter les nouvelles récompenses
+                                                                    updatedAwards.forEach(updated -> {
+                                                                        if (Objects.isNull(updated.getId())) {
+                                                                            Award newAward = Award.fromDTO(updated);
+                                                                            newAward.setMovie(movie);
+                                                                            awards.add(newAward);
+                                                                        }
+                                                                    });
+                                                                }
+                                                        )
+                                        )*/
+                        )
+                        .invoke(
+                                movie -> {
+                                    movie.setTitle(movieDTO.getTitle());
+                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                    movie.setSynopsis(movieDTO.getSynopsis());
+                                    movie.setReleaseDate(movieDTO.getReleaseDate());
+                                    movie.setRunningTime(movieDTO.getRunningTime());
+                                    movie.setBudget(movieDTO.getBudget());
+                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
+                                    movie.setBoxOffice(movieDTO.getBoxOffice());
+                                }
+                        )
+                        .call(
+                                entity -> {
+                                    if (Objects.nonNull(file)) {
+                                        return uploadPoster(file)
+                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                .invoke(entity::setPosterFileName);
+                                    }
+                                    return Uni.createFrom().item(entity);
+                                }
                         )
                 ;
     }

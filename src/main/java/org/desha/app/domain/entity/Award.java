@@ -5,21 +5,28 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.desha.app.domain.dto.AwardDTO;
 
 import java.time.Year;
 
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@Table(name = "recompense")
+@Table(name = "recompense", uniqueConstraints = {@UniqueConstraint(columnNames = {"ceremonie", "nom"})})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Award extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    protected Long id;
+    private Long id;
+
+    @NotBlank(message = "La cérémonie ne peut pas être vide")
+    @Column(name = "ceremonie", nullable = false)
+    private String ceremony;
 
     @NotBlank(message = "Le nom ne peut pas être vide")
     @Column(name = "nom", nullable = false)
@@ -30,12 +37,17 @@ public class Award extends PanacheEntityBase {
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "fk_film")
+    @JoinColumn(name = "fk_film", nullable = false)
     private Movie movie;
 
-    /*@JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "fk_person")
-    private Person person;*/
+    public static Award fromDTO(AwardDTO awardDTO) {
+        return
+                Award.builder()
+                        .id(awardDTO.getId())
+                        .ceremony(awardDTO.getCeremony())
+                        .name(awardDTO.getName())
+                        .year(awardDTO.getYear())
+                        .build();
+    }
 
 }
