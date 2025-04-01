@@ -27,35 +27,35 @@ public class CriteriasDTO {
     private LocalDateTime fromLastUpdate;
     private LocalDateTime toLastUpdate;
 
-    public static CriteriasDTO build(PersonFilterDTO personFilterDTO) {
+    public static CriteriasDTO build(PersonQueryParamsDTO queryParamsDTO) {
         return
                 CriteriasDTO.builder()
-                        .term(personFilterDTO.getTerm())
-                        .countryIds(personFilterDTO.getCountryIds())
-                        .fromBirthDate(personFilterDTO.getFromBirthDate())
-                        .toBirthDate(personFilterDTO.getToBirthDate())
-                        .fromDeathDate(personFilterDTO.getFromDeathDate())
-                        .toDeathDate(personFilterDTO.getToDeathDate())
-                        .fromCreationDate(personFilterDTO.getFromCreationDate())
-                        .toCreationDate(personFilterDTO.getToCreationDate())
-                        .fromLastUpdate(personFilterDTO.getFromLastUpdate())
-                        .toLastUpdate(personFilterDTO.getToLastUpdate())
+                        .term(queryParamsDTO.getTerm())
+                        .countryIds(queryParamsDTO.getCountryIds())
+                        .fromBirthDate(queryParamsDTO.getFromBirthDate())
+                        .toBirthDate(queryParamsDTO.getToBirthDate())
+                        .fromDeathDate(queryParamsDTO.getFromDeathDate())
+                        .toDeathDate(queryParamsDTO.getToDeathDate())
+                        .fromCreationDate(queryParamsDTO.getFromCreationDate())
+                        .toCreationDate(queryParamsDTO.getToCreationDate())
+                        .fromLastUpdate(queryParamsDTO.getFromLastUpdate())
+                        .toLastUpdate(queryParamsDTO.getToLastUpdate())
                         .build();
     }
 
-    public static CriteriasDTO build(MovieFilterDTO movieFilterDTO) {
+    public static CriteriasDTO build(MovieQueryParamsDTO queryParamsDTO) {
         return
                 CriteriasDTO.builder()
-                        .term(movieFilterDTO.getTerm())
-                        .countryIds(movieFilterDTO.getCountryIds())
-                        .genreIds(movieFilterDTO.getGenreIds())
-                        .userIds(movieFilterDTO.getUserIds())
-                        .fromReleaseDate(movieFilterDTO.getFromReleaseDate())
-                        .toReleaseDate(movieFilterDTO.getToReleaseDate())
-                        .fromCreationDate(movieFilterDTO.getFromCreationDate())
-                        .toCreationDate(movieFilterDTO.getToCreationDate())
-                        .fromLastUpdate(movieFilterDTO.getFromLastUpdate())
-                        .toLastUpdate(movieFilterDTO.getToLastUpdate())
+                        .term(queryParamsDTO.getTerm())
+                        .countryIds(queryParamsDTO.getCountryIds())
+                        .genreIds(queryParamsDTO.getGenreIds())
+                        .userIds(queryParamsDTO.getUserIds())
+                        .fromReleaseDate(queryParamsDTO.getFromReleaseDate())
+                        .toReleaseDate(queryParamsDTO.getToReleaseDate())
+                        .fromCreationDate(queryParamsDTO.getFromCreationDate())
+                        .toCreationDate(queryParamsDTO.getToCreationDate())
+                        .fromLastUpdate(queryParamsDTO.getFromLastUpdate())
+                        .toLastUpdate(queryParamsDTO.getToLastUpdate())
                         .build();
     }
 

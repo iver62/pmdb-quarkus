@@ -10,9 +10,9 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.MovieFilterDTO;
+import org.desha.app.domain.dto.MovieQueryParamsDTO;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.dto.PersonFilterDTO;
+import org.desha.app.domain.dto.PersonQueryParamsDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.service.PersonService;
@@ -42,9 +42,9 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("count")
-    public Uni<Response> countPersons(@BeanParam PersonFilterDTO personFilter) {
+    public Uni<Response> countPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         return
-                personService.count(CriteriasDTO.build(personFilter))
+                personService.count(CriteriasDTO.build(queryParams))
                         .map(aLong -> Response.ok(aLong).build())
                 ;
     }
@@ -57,11 +57,11 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}/full")
-    public Uni<Response> getPersonByIdWithCountriesAndMovies(@RestPath Long id, @BeanParam MovieFilterDTO movieFilter) {
+    public Uni<Response> getPersonByIdWithCountriesAndMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
-                || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
-                || Objects.nonNull(movieFilter.getFromLastUpdate()) && Objects.nonNull(movieFilter.getToLastUpdate()) && movieFilter.getFromLastUpdate().isAfter(movieFilter.getToLastUpdate())
+        if (Objects.nonNull(queryParams.getFromReleaseDate()) && Objects.nonNull(queryParams.getToReleaseDate()) && queryParams.getFromReleaseDate().isAfter(queryParams.getToReleaseDate())
+                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
+                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -72,15 +72,15 @@ public abstract class PersonResource<T extends Person> {
         }
 
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(movieFilter.getSort(), Movie.ALLOWED_SORT_FIELDS);
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                personService.getByIdWithCountriesAndMovies(id, Page.of(movieFilter.getPageIndex(), movieFilter.getSize()), movieFilter.getSort(), sortDirection, CriteriasDTO.build(movieFilter))
+                personService.getByIdWithCountriesAndMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, CriteriasDTO.build(queryParams))
                         .map(personDTO ->
                                 Response.ok(personDTO).build()
                         )
@@ -88,12 +88,12 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @GET
-    public Uni<Response> getPersons(@BeanParam PersonFilterDTO personFilter) {
+    public Uni<Response> getPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(personFilter.getFromBirthDate()) && Objects.nonNull(personFilter.getToBirthDate()) && personFilter.getFromBirthDate().isAfter(personFilter.getToBirthDate())
-                || Objects.nonNull(personFilter.getFromDeathDate()) && Objects.nonNull(personFilter.getToDeathDate()) && personFilter.getFromDeathDate().isAfter(personFilter.getToDeathDate())
-                || Objects.nonNull(personFilter.getFromCreationDate()) && Objects.nonNull(personFilter.getToCreationDate()) && personFilter.getFromCreationDate().isAfter(personFilter.getToCreationDate())
-                || Objects.nonNull(personFilter.getFromLastUpdate()) && Objects.nonNull(personFilter.getToLastUpdate()) && personFilter.getFromLastUpdate().isAfter(personFilter.getToLastUpdate())
+        if (Objects.nonNull(queryParams.getFromBirthDate()) && Objects.nonNull(queryParams.getToBirthDate()) && queryParams.getFromBirthDate().isAfter(queryParams.getToBirthDate())
+                || Objects.nonNull(queryParams.getFromDeathDate()) && Objects.nonNull(queryParams.getToDeathDate()) && queryParams.getFromDeathDate().isAfter(queryParams.getToDeathDate())
+                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
+                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -103,17 +103,17 @@ public abstract class PersonResource<T extends Person> {
                     );
         }
 
-        Uni<Response> sortValidation = validateSortField(personFilter.getSort(), Person.ALLOWED_SORT_FIELDS);
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Person.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(personFilter.getDirection());
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(personFilter);
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.get(Page.of(personFilter.getPageIndex(), personFilter.getSize()), personFilter.getSort(), sortDirection, criteriasDTO)
+                personService.get(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.count(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -136,14 +136,11 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}/movies")
-    public Uni<Response> getMovies(
-            @RestPath Long id,
-            @BeanParam MovieFilterDTO movieFilter
-    ) {
+    public Uni<Response> getMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         // Vérification de la cohérence des dates
-        if (Objects.nonNull(movieFilter.getFromReleaseDate()) && Objects.nonNull(movieFilter.getToReleaseDate()) && movieFilter.getFromReleaseDate().isAfter(movieFilter.getToReleaseDate())
-                || Objects.nonNull(movieFilter.getFromCreationDate()) && Objects.nonNull(movieFilter.getToCreationDate()) && movieFilter.getFromCreationDate().isAfter(movieFilter.getToCreationDate())
-                || Objects.nonNull(movieFilter.getFromLastUpdate()) && Objects.nonNull(movieFilter.getToLastUpdate()) && movieFilter.getFromLastUpdate().isAfter(movieFilter.getToLastUpdate())
+        if (Objects.nonNull(queryParams.getFromReleaseDate()) && Objects.nonNull(queryParams.getToReleaseDate()) && queryParams.getFromReleaseDate().isAfter(queryParams.getToReleaseDate())
+                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
+                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
         ) {
             return
                     Uni.createFrom().item(
@@ -153,17 +150,17 @@ public abstract class PersonResource<T extends Person> {
                     );
         }
 
-        Uni<Response> sortValidation = validateSortField(movieFilter.getSort(), Movie.ALLOWED_SORT_FIELDS);
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
 
-        Sort.Direction sortDirection = validateSortDirection(movieFilter.getDirection());
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(movieFilter);
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.getMovies(id, Page.of(movieFilter.getPageIndex(), movieFilter.getSize()), movieFilter.getSort(), sortDirection, criteriasDTO)
+                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, criteriasDTO)
                         .flatMap(movieList ->
                                 personService.countMovies(id, criteriasDTO)
                                         .map(total ->

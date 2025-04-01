@@ -1,6 +1,5 @@
 package org.desha.app.domain.dto;
 
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
 import lombok.Getter;
 
@@ -9,27 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
-public class PersonFilterDTO {
-
-    @QueryParam("page")
-    @DefaultValue("0")
-    private int pageIndex;
-
-    @QueryParam("size")
-    @DefaultValue("50")
-    private int size;
-
-    @QueryParam("sort")
-    @DefaultValue("name")
-    private String sort;
-
-    @QueryParam("direction")
-    @DefaultValue("Ascending")
-    private String direction;
-
-    @QueryParam("term")
-    @DefaultValue("")
-    private String term;
+public class PersonQueryParamsDTO extends QueryParamsDTO {
 
     @QueryParam("country")
     private List<Integer> countryIds;

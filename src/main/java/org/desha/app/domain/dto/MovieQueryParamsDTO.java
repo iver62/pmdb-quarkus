@@ -1,6 +1,5 @@
 package org.desha.app.domain.dto;
 
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
 import lombok.Getter;
 
@@ -10,25 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class MovieFilterDTO {
-
-    @QueryParam("page")
-    @DefaultValue("0")
-    private int pageIndex;
-
-    @QueryParam("size")
-    @DefaultValue("50")
-    private int size;
-
-    @QueryParam("sort")
-    @DefaultValue("title")
-    private String sort;
-
-    @QueryParam("direction") @DefaultValue("Ascending")
-    private  String direction;
-
-    @QueryParam("term") @DefaultValue("")
-    private String term;
+public class MovieQueryParamsDTO extends QueryParamsDTO {
 
     @QueryParam("country")
     private List<Integer> countryIds;
