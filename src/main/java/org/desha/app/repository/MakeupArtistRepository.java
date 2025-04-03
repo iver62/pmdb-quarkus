@@ -14,11 +14,11 @@ import java.util.List;
 public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "FROM MakeupArtist p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 
@@ -35,10 +35,10 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
         String query = """
                         FROM MakeupArtist ma
                         LEFT JOIN FETCH ma.countries
-                        WHERE LOWER(FUNCTION('unaccent', ma.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                        WHERE LOWER(FUNCTION('unaccent', ma.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
                 .list();
     }
 
@@ -50,11 +50,11 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
     ) {
         String query = "FROM MakeupArtist p " +
                 "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 

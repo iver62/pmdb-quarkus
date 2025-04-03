@@ -14,11 +14,11 @@ import java.util.List;
 public class CostumierRepository extends PersonRepository<Costumier> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "FROM Costumier p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 
@@ -35,10 +35,10 @@ public class CostumierRepository extends PersonRepository<Costumier> {
         String query = """
                         FROM Costumier c
                         LEFT JOIN FETCH c.countries
-                        WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                        WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
                 .list();
     }
 
@@ -50,11 +50,11 @@ public class CostumierRepository extends PersonRepository<Costumier> {
     ) {
         String query = "FROM Costumier p " +
                 "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 

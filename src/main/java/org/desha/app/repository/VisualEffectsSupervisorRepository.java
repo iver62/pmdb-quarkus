@@ -14,11 +14,11 @@ import java.util.List;
 public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEffectsSupervisor> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "FROM VisualEffectsSupervisor p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 
@@ -50,11 +50,11 @@ public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEf
     ) {
         String query = "FROM VisualEffectsSupervisor p " +
                 "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 

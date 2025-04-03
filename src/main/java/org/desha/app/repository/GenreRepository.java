@@ -19,9 +19,9 @@ public class GenreRepository implements PanacheRepository<Genre> {
     public Uni<List<Genre>> findGenres(String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', :term))",
+                        "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
                         Sort.by(sort, direction),
-                        Parameters.with("term", "%" + term + "%")
+                        Parameters.with("term", term)
                 ).list();
     }
 }

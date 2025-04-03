@@ -6,7 +6,6 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.entity.Screenwriter;
 import org.desha.app.domain.entity.SoundEditor;
 
 import java.util.List;
@@ -15,11 +14,11 @@ import java.util.List;
 public class SoundEditorRepository extends PersonRepository<SoundEditor> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "FROM SoundEditor p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 
@@ -36,10 +35,10 @@ public class SoundEditorRepository extends PersonRepository<SoundEditor> {
         String query = """
                         FROM SoundEditor se
                         LEFT JOIN FETCH se.countries
-                        WHERE LOWER(FUNCTION('unaccent', se.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                        WHERE LOWER(FUNCTION('unaccent', se.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
                 .list();
     }
 
@@ -51,11 +50,11 @@ public class SoundEditorRepository extends PersonRepository<SoundEditor> {
     ) {
         String query = "FROM SoundEditor p " +
                 "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 

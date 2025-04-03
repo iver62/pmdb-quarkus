@@ -14,11 +14,11 @@ import java.util.List;
 public class ArtDirectorRepository extends PersonRepository<ArtDirector> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "FROM ArtDirector p WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 
@@ -35,10 +35,10 @@ public class ArtDirectorRepository extends PersonRepository<ArtDirector> {
         String query = """
                         FROM ArtDirector ad
                         LEFT JOIN FETCH ad.countries
-                        WHERE LOWER(FUNCTION('unaccent', ad.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                        WHERE LOWER(FUNCTION('unaccent', ad.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
                 .list();
     }
 
@@ -48,11 +48,13 @@ public class ArtDirectorRepository extends PersonRepository<ArtDirector> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM ArtDirector p LEFT JOIN FETCH p.movies WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))" +
+        String query = "FROM ArtDirector p " +
+                "LEFT JOIN FETCH p.movies " +
+                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
                 addClauses(criteriasDTO);
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + criteriasDTO.getTerm() + "%"),
+                Parameters.with("term", criteriasDTO.getTerm()),
                 criteriasDTO
         );
 

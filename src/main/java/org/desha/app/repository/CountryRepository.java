@@ -25,8 +25,8 @@ public class CountryRepository implements PanacheRepository<Country> {
                 "SELECT COUNT(DISTINCT c) " +
                         "FROM Movie m " +
                         "JOIN m.countries c " +
-                        "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
-                Parameters.with("term", "%" + term + "%")
+                        "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
+                Parameters.with("term", term)
         );
     }
 
@@ -37,7 +37,9 @@ public class CountryRepository implements PanacheRepository<Country> {
      * @return Un {@link Uni} contenant le nombre total de pays correspondant au critère de recherche.
      */
     public Uni<Long> countCountries(String term) {
-        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))", Parameters.with("term", "%" + term + "%"));
+        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
+                Parameters.with("term", term)
+        );
     }
 
     /**
@@ -56,9 +58,9 @@ public class CountryRepository implements PanacheRepository<Country> {
                         "SELECT DISTINCT c " +
                                 "FROM Movie m " +
                                 "JOIN m.countries c " +
-                                "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
+                                "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
                         Sort.by(sort, direction),
-                        Parameters.with("term", "%" + term + "%")
+                        Parameters.with("term", term)
                 )
                         .page(page)
                         .list();
@@ -75,18 +77,18 @@ public class CountryRepository implements PanacheRepository<Country> {
     public Uni<List<Country>> findCountries(String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
+                        "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
                         Sort.by(sort, direction),
-                        Parameters.with("term", "%" + term + "%")
+                        Parameters.with("term", term)
                 ).list();
     }
 
     public Uni<List<Country>> findCountries(Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
+                        "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
                         Sort.by(sort, direction),
-                        Parameters.with("term", "%" + term + "%")
+                        Parameters.with("term", term)
                 )
                         .page(page)
                         .list()

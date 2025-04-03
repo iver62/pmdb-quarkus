@@ -15,10 +15,6 @@ import java.util.Optional;
 
 public abstract class PersonRepository<T extends Person> implements PanacheRepository<T> {
 
-    public Uni<Long> count(String term) {
-        return count("lower(name) like lower(:term)", Parameters.with("term", "%" + term + "%"));
-    }
-
     public abstract Uni<Long> count(CriteriasDTO criteriasDTO);
 
     public abstract Uni<T> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
@@ -33,17 +29,6 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
     }
 
     public abstract Uni<List<T>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
-
-    public Uni<List<T>> find(Page page, String sort, Sort.Direction direction, String term) {
-        return
-                find("lower(name) like lower(:term)",
-                        Sort.by(sort, direction),
-                        Parameters.with("term", "%" + term + "%")
-                )
-                        .page(page)
-                        .list()
-                ;
-    }
 
     protected String addClauses(CriteriasDTO criteriasDTO) {
         StringBuilder query = new StringBuilder();
