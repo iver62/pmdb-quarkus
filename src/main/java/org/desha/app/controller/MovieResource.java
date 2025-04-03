@@ -190,12 +190,7 @@ public class MovieResource {
     public Uni<Response> getActors(@RestPath Long id) {
         return
                 movieService.getActorsByMovie(id)
-                        .map(movieActors ->
-                                movieActors.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(movieActors).build()
-                        )
-//                        .onFailure().recoverWithItem(ex -> Response.serverError().entity(ex.getMessage()).build())
+                        .map(movieActors -> Response.ok(movieActors).build())
                 ;
     }
 
@@ -213,7 +208,7 @@ public class MovieResource {
     @Path("{id}/producers")
     public Uni<Response> getProducers(@RestPath Long id) {
         return
-                producerService.getByMovie(id)
+                movieService.getProducersByMovie(id)
                         .map(producers ->
                                 producers.isEmpty()
                                         ? Response.noContent().build()
@@ -226,7 +221,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Response> getDirectors(@RestPath Long id) {
         return
-                directorService.getByMovie(id)
+                movieService.getDirectorsByMovie(id)
                         .map(directors ->
                                 directors.isEmpty()
                                         ? Response.noContent().build()
@@ -239,7 +234,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Response> getScreenwriters(@RestPath Long id) {
         return
-                screenwriterService.getByMovie(id)
+                movieService.getScreenwritersByMovie(id)
                         .map(screenwriters ->
                                 screenwriters.isEmpty()
                                         ? Response.noContent().build()
@@ -252,7 +247,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Response> getMusicians(@RestPath Long id) {
         return
-                musicianService.getByMovie(id)
+                movieService.getMusiciansByMovie(id)
                         .map(musicians ->
                                 musicians.isEmpty()
                                         ? Response.noContent().build()
@@ -265,7 +260,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Response> getPhotographers(@RestPath Long id) {
         return
-                photographerService.getByMovie(id)
+                movieService.getProducersByMovie(id)
                         .map(photographers ->
                                 photographers.isEmpty()
                                         ? Response.noContent().build()
@@ -278,7 +273,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Response> getCostumiers(@RestPath Long id) {
         return
-                costumierService.getByMovie(id)
+                movieService.getCostumiersByMovie(id)
                         .map(costumiers ->
                                 costumiers.isEmpty()
                                         ? Response.noContent().build()
@@ -291,7 +286,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Response> getDecorators(@RestPath Long id) {
         return
-                decoratorService.getByMovie(id)
+                movieService.getDecoratorsByMovie(id)
                         .map(decorators ->
                                 decorators.isEmpty()
                                         ? Response.noContent().build()
@@ -304,7 +299,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Response> getEditors(@RestPath Long id) {
         return
-                editorService.getByMovie(id)
+                movieService.getEditorsByMovie(id)
                         .map(editors ->
                                 editors.isEmpty()
                                         ? Response.noContent().build()
@@ -317,7 +312,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Response> getCasters(@RestPath Long id) {
         return
-                casterService.getByMovie(id)
+                movieService.getCastersByMovie(id)
                         .map(casters ->
                                 casters.isEmpty()
                                         ? Response.noContent().build()
@@ -330,7 +325,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Response> getArtDirectors(@RestPath Long id) {
         return
-                artDirectorService.getByMovie(id)
+                movieService.getArtDirectorsByMovie(id)
                         .map(artDirectors ->
                                 artDirectors.isEmpty()
                                         ? Response.noContent().build()
@@ -343,7 +338,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Response> getSoundEditors(@RestPath Long id) {
         return
-                soundEditorService.getByMovie(id)
+                movieService.getSoundEditorsByMovie(id)
                         .map(soundEditors ->
                                 soundEditors.isEmpty()
                                         ? Response.noContent().build()
@@ -356,7 +351,7 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                visualEffectsSupervisorService.getByMovie(id)
+                movieService.getVisualEffectsSupervisorsByMovie(id)
                         .map(visualEffectsSupervisors ->
                                 visualEffectsSupervisors.isEmpty()
                                         ? Response.noContent().build()
@@ -369,7 +364,7 @@ public class MovieResource {
     @Path("{id}/makeup-artists")
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
         return
-                makeupArtistService.getByMovie(id)
+                movieService.getMakeupArtistsByMovie(id)
                         .map(makeupArtists ->
                                 makeupArtists.isEmpty()
                                         ? Response.noContent().build()
@@ -382,7 +377,7 @@ public class MovieResource {
     @Path("{id}/hair-dressers")
     public Uni<Response> getHairDressers(@RestPath Long id) {
         return
-                hairDresserService.getByMovie(id)
+                movieService.getHairDressersByMovie(id)
                         .map(hairDressers ->
                                 hairDressers.isEmpty()
                                         ? Response.noContent().build()
@@ -395,7 +390,7 @@ public class MovieResource {
     @Path("{id}/stuntmen")
     public Uni<Response> getStuntmen(@RestPath Long id) {
         return
-                stuntmanService.getByMovie(id)
+                movieService.getStuntmenByMovie(id)
                         .map(stuntmen ->
                                 stuntmen.isEmpty()
                                         ? Response.noContent().build()
@@ -429,10 +424,7 @@ public class MovieResource {
     public Uni<Response> getAwards(@RestPath Long id) {
         return
                 movieService.getAwardsByMovie(id)
-                        .map(awards -> awards.isEmpty()
-                                ? Response.ok(Collections.emptyList()).build() // 200 avec liste vide si pas d'awards
-                                : Response.ok(awards).build()
-                        )
+                        .map(awards -> Response.ok(awards).build())
                 ;
     }
 
