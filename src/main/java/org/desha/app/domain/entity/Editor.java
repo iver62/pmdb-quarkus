@@ -43,6 +43,7 @@ public class Editor extends Person {
     public static Editor fromDTO(PersonDTO personDTO) {
         return
                 Editor.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

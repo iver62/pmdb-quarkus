@@ -44,6 +44,7 @@ public class Decorator extends Person {
     public static Decorator fromDTO(PersonDTO personDTO) {
         return
                 Decorator.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

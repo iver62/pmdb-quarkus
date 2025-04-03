@@ -43,6 +43,7 @@ public class Screenwriter extends Person {
     public static Screenwriter fromDTO(PersonDTO personDTO) {
         return
                 Screenwriter.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

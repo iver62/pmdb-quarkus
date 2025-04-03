@@ -43,6 +43,7 @@ public class VisualEffectsSupervisor extends Person {
     public static VisualEffectsSupervisor fromDTO(PersonDTO personDTO) {
         return
                 VisualEffectsSupervisor.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

@@ -43,6 +43,7 @@ public class Producer extends Person {
     public static Producer fromDTO(PersonDTO personDTO) {
         return
                 Producer.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

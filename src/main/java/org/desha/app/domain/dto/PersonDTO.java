@@ -4,10 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Award;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,15 +56,28 @@ public class PersonDTO {
                 .build();
     }
 
-    public static PersonDTO fromEntityWithCountriesAndMovies(Person person) {
+    public static PersonDTO fromEntity(Person person, Set<Country> countries) {
         return PersonDTO.builder()
                 .id(person.getId())
                 .name(person.getName())
                 .dateOfBirth(person.getDateOfBirth())
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
-                .countries(person.getCountries().stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
-                .movies(person.getMovies().stream().map(MovieDTO::fromEntity).collect(Collectors.toSet()))
+                .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
+                .creationDate(person.getCreationDate())
+                .lastUpdate(person.getLastUpdate())
+                .build();
+    }
+
+    public static PersonDTO fromEntity(Person person, List<Movie> movies, Set<Country> countries) {
+        return PersonDTO.builder()
+                .id(person.getId())
+                .name(person.getName())
+                .dateOfBirth(person.getDateOfBirth())
+                .dateOfDeath(person.getDateOfDeath())
+                .photoFileName(person.getPhotoFileName())
+                .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
+                .movies(movies.stream().map(MovieDTO::fromEntity).collect(Collectors.toSet()))
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
                 .build();

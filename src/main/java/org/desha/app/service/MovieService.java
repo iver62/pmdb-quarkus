@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -106,7 +108,7 @@ public class MovieService {
         return movieRepository.countMovies(criteriasDTO);
     }
 
-    public Uni<Movie> getById(long id) {
+    public Uni<Movie> getById(Long id) {
         return
                 movieRepository.findByIdWithCountriesAndGenres(id)
                         .onFailure().recoverWithNull()
@@ -131,18 +133,22 @@ public class MovieService {
         return movieRepository.findByTitle(pattern);
     }
 
-    public Uni<List<MovieActorDTO>> getActorsByMovie(Movie movie) {
+    public Uni<List<MovieActorDTO>> getActorsByMovie(Long id) {
         return
-                Mutiny.fetch(movie.getMovieActors())
-                        .map(
-                                movieActors ->
-                                        movieActors
-                                                .stream()
-                                                .map(MovieActorDTO::fromEntity)
-                                                .sorted(Comparator.comparing(MovieActorDTO::getRank))
-                                                .toList()
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie ->
+                                Mutiny.fetch(movie.getMovieActors())
+                                        .map(
+                                                movieActors ->
+                                                        movieActors
+                                                                .stream()
+                                                                .map(MovieActorDTO::fromEntity)
+                                                                .sorted(Comparator.comparing(MovieActorDTO::getRank))
+                                                                .toList()
+                                        )
+                                        .onItem().ifNull().continueWith(Collections.emptyList())
                         )
-                        .onItem().ifNull().continueWith(Collections.emptyList())
                 ;
     }
 
@@ -175,13 +181,34 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Set<Producer>> getProducersByMovie(Long id) {
+    /*public Uni<List<Producer>> getProducersByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie ->
+                                Mutiny.fetch(movie.getProducers())
+                                        .flatMap(producers ->
+                                                Uni.join().all(
+                                                        producers.stream()
+                                                                .map(producer ->
+                                                                        Mutiny.fetch(producer.getCountries())
+                                                                                .invoke(producer::setCountries) // Assigner les pays au producteur
+                                                                                .replaceWith(producer) // Retourner le producteur mis à jour
+                                                                )
+                                                                .toList()
+                                                ).andCollectFailures() // Gérer les erreurs de récupération
+                                        )
+                        )
+                ;
+    }*/
+
+    /*public Uni<Set<Producer>> getProducersByMovie(Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
                         .flatMap(movie -> Mutiny.fetch(movie.getProducers()))
                 ;
-    }
+    }*/
 
     public Uni<Set<Director>> getDirectorsByMovie(Long id) {
         return
@@ -574,220 +601,62 @@ public class MovieService {
                 ;
     }
 
-    /**
-     * Ajoute une liste de {@link Person} à la liste des producteurs d'un {@link Movie} et, pour chaque {@link Person},
-     * ajoute le {@link Movie} dans la liste des {@link Movie} en tant que producteur.
-     *
-     * @param id        l'identifiant du {@link Movie}
-     * @param personSet la liste des {@link Person}
-     * @return le {@link Movie}
-     */
- /*   public Uni<Movie> addProducers(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNotNull()
-                                                .call(
-                                                        entity ->
-                                                                Uni.join().all(
-                                                                                personSet
-                                                                                        .stream()
-                                                                                        .map(person -> msf.openSession().chain(() -> person.addMovieAsProducer(entity)))
-                                                                                        .toList()
-                                                                        )
-                                                                        .usingConcurrencyOf(1)
-                                                                        .andFailFast()
-                                                )
-                                                .call(entity -> entity.addProducers(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
+    public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> savePeople(
+            Long id,
+            Set<PersonDTO> personDTOSet,
+            Function<Movie, Set<T>> getPeople,
+            BiFunction<Movie, PersonDTO, T> createPerson,
+            S service
+    ) {
+        return Panache.withTransaction(() ->
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .chain(movie ->
+                                Mutiny.fetch(getPeople.apply(movie))
+                                        .chain(existingPeople -> {
+                                            Set<T> updatedPeople = new HashSet<>(existingPeople);
 
-    /*public Uni<Movie> addDirectors(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsDirector(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addDirectors(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
+                                            // Supprimer les personnes obsolètes
+                                            updatedPeople.removeIf(existing ->
+                                                    personDTOSet.stream().noneMatch(personDTO ->
+                                                            Objects.nonNull(personDTO.getId()) && personDTO.getId().equals(existing.getId())
+                                                    )
+                                            );
 
-    /*public Uni<Movie> addScreenwriters(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsScreenwriter(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addScreenwriters(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
+                                            // Ajouter les nouvelles personnes
+                                            personDTOSet.stream()
+                                                    .filter(personDTO -> Objects.isNull(personDTO.getId()))
+                                                    .forEach(personDTO -> {
+                                                        T newPerson = createPerson.apply(movie, personDTO);
+                                                        updatedPeople.add(newPerson);
+                                                    });
 
-    /*public Uni<Movie> addMusicians(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsMusician(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addMusicians(personSet))
-                                        .chain(entity -> entity.persist())
+                                            // Récupérer et ajouter les personnes existantes
+                                            return service.getByIds(
+                                                            personDTOSet.stream()
+                                                                    .map(PersonDTO::getId)
+                                                                    .filter(Objects::nonNull)
+                                                                    .filter(idToCheck -> existingPeople.stream()
+                                                                            .noneMatch(person -> person.getId().equals(idToCheck)))
+                                                                    .toList()
+                                                    )
+                                                    .invoke(updatedPeople::addAll)
+                                                    .map(foundPeople -> {
+                                                        updatedPeople.addAll(foundPeople);
+                                                        getPeople.apply(movie).clear();
+                                                        getPeople.apply(movie).addAll(updatedPeople);
+                                                        return updatedPeople;
+                                                    });
+                                        })
                         )
-                ;
-    }*/
+                        .map(updatedPeople ->
+                                updatedPeople.stream()
+                                        .map(PersonDTO::fromEntity)
+                                        .collect(Collectors.toSet())
+                        )
+        );
+    }
 
-    /*public Uni<Movie> addPhotographers(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsPhotographer(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addPhotographers(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
-
-    /*public Uni<Movie> addCostumiers(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsCostumier(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addCostumiers(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
-
-    /*public Uni<Movie> addDecorators(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsDecorator(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addDecorators(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
-
-   /* public Uni<Movie> addEditors(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.addMovieAsEditor(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.addEditors(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
-
-    /*public Uni<Movie> saveCasting(Long id, Set<Person> personSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(
-                                                movie ->
-                                                        Uni.join().all(
-                                                                        personSet
-                                                                                .stream()
-                                                                                .map(person -> msf.openSession().chain(() -> person.saveMovieAsCaster(movie)))
-                                                                                .toList()
-                                                                )
-                                                                .usingConcurrencyOf(1)
-                                                                .andFailFast()
-                                        )
-                                        .call(entity -> entity.saveCasting(personSet))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }*/
     public Uni<Movie> addRole(Long id, MovieActor movieActor) {
         return
                 Panache

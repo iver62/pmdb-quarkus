@@ -189,11 +189,13 @@ public class MovieResource {
     @Path("{id}/actors")
     public Uni<Response> getActors(@RestPath Long id) {
         return
-                movieService.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .flatMap(movieService::getActorsByMovie)
-                        .map(movieActors -> Response.ok(movieActors).build())
-                        .onFailure().recoverWithItem(ex -> Response.serverError().entity(ex.getMessage()).build())
+                movieService.getActorsByMovie(id)
+                        .map(movieActors ->
+                                movieActors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieActors).build()
+                        )
+//                        .onFailure().recoverWithItem(ex -> Response.serverError().entity(ex.getMessage()).build())
                 ;
     }
 
@@ -203,7 +205,7 @@ public class MovieResource {
         return
                 movieService.getTechnicalTeam(id)
                         .map(technicalTeam -> Response.ok(technicalTeam).build())
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
+//                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                 ;
     }
 
@@ -211,7 +213,7 @@ public class MovieResource {
     @Path("{id}/producers")
     public Uni<Response> getProducers(@RestPath Long id) {
         return
-                movieService.getProducersByMovie(id)
+                producerService.getByMovie(id)
                         .map(producers ->
                                 producers.isEmpty()
                                         ? Response.noContent().build()
@@ -224,7 +226,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Response> getDirectors(@RestPath Long id) {
         return
-                movieService.getDirectorsByMovie(id)
+                directorService.getByMovie(id)
                         .map(directors ->
                                 directors.isEmpty()
                                         ? Response.noContent().build()
@@ -237,7 +239,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Response> getScreenwriters(@RestPath Long id) {
         return
-                movieService.getScreenwritersByMovie(id)
+                screenwriterService.getByMovie(id)
                         .map(screenwriters ->
                                 screenwriters.isEmpty()
                                         ? Response.noContent().build()
@@ -250,7 +252,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Response> getMusicians(@RestPath Long id) {
         return
-                movieService.getMusiciansByMovie(id)
+                musicianService.getByMovie(id)
                         .map(musicians ->
                                 musicians.isEmpty()
                                         ? Response.noContent().build()
@@ -263,7 +265,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Response> getPhotographers(@RestPath Long id) {
         return
-                movieService.getPhotographersByMovie(id)
+                photographerService.getByMovie(id)
                         .map(photographers ->
                                 photographers.isEmpty()
                                         ? Response.noContent().build()
@@ -276,7 +278,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Response> getCostumiers(@RestPath Long id) {
         return
-                movieService.getCostumiersByMovie(id)
+                costumierService.getByMovie(id)
                         .map(costumiers ->
                                 costumiers.isEmpty()
                                         ? Response.noContent().build()
@@ -289,7 +291,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Response> getDecorators(@RestPath Long id) {
         return
-                movieService.getDecoratorsByMovie(id)
+                decoratorService.getByMovie(id)
                         .map(decorators ->
                                 decorators.isEmpty()
                                         ? Response.noContent().build()
@@ -302,7 +304,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Response> getEditors(@RestPath Long id) {
         return
-                movieService.getEditorsByMovie(id)
+                editorService.getByMovie(id)
                         .map(editors ->
                                 editors.isEmpty()
                                         ? Response.noContent().build()
@@ -315,7 +317,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Response> getCasters(@RestPath Long id) {
         return
-                movieService.getCastersByMovie(id)
+                casterService.getByMovie(id)
                         .map(casters ->
                                 casters.isEmpty()
                                         ? Response.noContent().build()
@@ -328,7 +330,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Response> getArtDirectors(@RestPath Long id) {
         return
-                movieService.getArtDirectorsByMovie(id)
+                artDirectorService.getByMovie(id)
                         .map(artDirectors ->
                                 artDirectors.isEmpty()
                                         ? Response.noContent().build()
@@ -341,7 +343,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Response> getSoundEditors(@RestPath Long id) {
         return
-                movieService.getSoundEditorsByMovie(id)
+                soundEditorService.getByMovie(id)
                         .map(soundEditors ->
                                 soundEditors.isEmpty()
                                         ? Response.noContent().build()
@@ -354,7 +356,7 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                movieService.getVisualEffectsSupervisorsByMovie(id)
+                visualEffectsSupervisorService.getByMovie(id)
                         .map(visualEffectsSupervisors ->
                                 visualEffectsSupervisors.isEmpty()
                                         ? Response.noContent().build()
@@ -367,7 +369,7 @@ public class MovieResource {
     @Path("{id}/makeup-artists")
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
         return
-                movieService.getMakeupArtists(id)
+                makeupArtistService.getByMovie(id)
                         .map(makeupArtists ->
                                 makeupArtists.isEmpty()
                                         ? Response.noContent().build()
@@ -380,7 +382,7 @@ public class MovieResource {
     @Path("{id}/hair-dressers")
     public Uni<Response> getHairDressers(@RestPath Long id) {
         return
-                movieService.getHairDressers(id)
+                hairDresserService.getByMovie(id)
                         .map(hairDressers ->
                                 hairDressers.isEmpty()
                                         ? Response.noContent().build()
@@ -393,7 +395,7 @@ public class MovieResource {
     @Path("{id}/stuntmen")
     public Uni<Response> getStuntmen(@RestPath Long id) {
         return
-                movieService.getStuntmen(id)
+                stuntmanService.getByMovie(id)
                         .map(stuntmen ->
                                 stuntmen.isEmpty()
                                         ? Response.noContent().build()
@@ -550,6 +552,14 @@ public class MovieResource {
     @PUT
     @Path("{id}/technical-team")
     public Uni<Response> saveTechnicalTeam(@RestPath Long id, TechnicalTeamDTO technicalTeam) {
+        if (Objects.isNull(technicalTeam)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La fiche technique ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
                 movieService.saveTechnicalTeam(id, technicalTeam)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
@@ -581,226 +591,439 @@ public class MovieResource {
     @PUT
     @Path("{id}/awards")
     public Uni<Response> saveAwards(@RestPath Long id, Set<AwardDTO> awardDTOSet) {
+        if (Objects.isNull(awardDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des récompenses ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
                 movieService.saveAwards(id, awardDTOSet)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }
 
-    /*@PUT
+    @PUT
     @Path("{id}/producers")
-    public Uni<Response> addProducers(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addProducers(id, persons))
-                        .map(Movie::getProducers)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
+    public Uni<Response> saveProducers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des producteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getProducers,
+                                (movie, dto) -> {
+                                    Producer producer = Producer.fromDTO(dto);
+                                    producer.addMovie(movie);
+                                    return producer;
+                                },
+                                producerService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
     @Path("{id}/directors")
-    public Uni<Response> addDirectors(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(d -> Objects.isNull(d.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addDirectors(id, persons))
-                        .map(Movie::getDirectors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
+    public Uni<Response> saveDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des réalisateurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getDirectors,
+                                (movie, dto) -> {
+                                    Director director = Director.fromDTO(dto);
+                                    director.addMovie(movie);
+                                    return director;
+                                },
+                                directorService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
     @Path("{id}/screenwriters")
-    public Uni<Response> addScreenwriters(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(s -> Objects.isNull(s.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addScreenwriters(id, persons))
-                        .map(Movie::getScreenwriters)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }*/
+    public Uni<Response> saveScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des scénaristes ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getScreenwriters,
+                                (movie, dto) -> {
+                                    Screenwriter screenwriter = Screenwriter.fromDTO(dto);
+                                    screenwriter.addMovie(movie);
+                                    return screenwriter;
+                                },
+                                screenwriterService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
     @Path("{id}/musicians")
-    public Uni<Response> addMusicians(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addMusicians(id, persons))
-                        .map(Movie::getMusicians)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
+    public Uni<Response> saveMusicians(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des musiciens ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getMusicians,
+                                (movie, dto) -> {
+                                    Musician musician = Musician.fromDTO(dto);
+                                    musician.addMovie(movie);
+                                    return musician;
+                                },
+                                musicianService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
     @Path("{id}/photographers")
-    public Uni<Response> addPhotographers(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addPhotographers(id, persons))
-                        .map(Movie::getPhotographers)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
+    public Uni<Response> savePhotographers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des photographes ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getPhotographers,
+                                (movie, dto) -> {
+                                    Photographer photographer = Photographer.fromDTO(dto);
+                                    photographer.addMovie(movie);
+                                    return photographer;
+                                },
+                                photographerService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
     @Path("{id}/costumiers")
-    public Uni<Response> addCostumiers(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(c -> Person.findById(c.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addCostumiers(id, persons))
-                        .map(Movie::getCostumiers)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
+    public Uni<Response> saveCostumiers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des costumiers ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getCostumiers,
+                                (movie, dto) -> {
+                                    Costumier costumier = Costumier.fromDTO(dto);
+                                    costumier.addMovie(movie);
+                                    return costumier;
+                                },
+                                costumierService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
     @Path("{id}/decorators")
-    public Uni<Response> addDecorators(Long id, Set<Person> personSet) {
-        return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addDecorators(id, persons))
-                        .map(Movie::getDecorators)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
+    public Uni<Response> saveDecorators(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des décorateurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
 
-    /*@PUT
-    @Path("{id}/editors")
-    public Uni<Response> addEditors(Long id, Set<Person> personSet) {
         return
-                Uni.join().all(
-                                personSet.stream().filter(p -> Objects.nonNull(p.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        personSet
-                                                .stream()
-                                                .filter(p -> Objects.nonNull(p.id))
-                                                .map(p -> Person.findById(p.id))
-                                                .toList()
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getDecorators,
+                                (movie, dto) -> {
+                                    Decorator decorator = Decorator.fromDTO(dto);
+                                    decorator.addMovie(movie);
+                                    return decorator;
+                                },
+                                decoratorService
                         )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-                        .map(HashSet::new)
-                        .map(persons -> personSet.stream().filter(p -> Objects.isNull(p.id)).collect(Collectors.toCollection(() -> persons)))
-                        .chain(persons -> movieService.addEditors(id, persons))
-                        .map(Movie::getEditors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
                 ;
-    }*/
+    }
+
+    @PUT
+    @Path("{id}/editors")
+    public Uni<Response> saveEditors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des monteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getEditors,
+                                (movie, dto) -> {
+                                    Editor editor = Editor.fromDTO(dto);
+                                    editor.addMovie(movie);
+                                    return editor;
+                                },
+                                editorService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/casters")
+    public Uni<Response> saveCasters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des casteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getCasters,
+                                (movie, dto) -> {
+                                    Caster caster = Caster.fromDTO(dto);
+                                    caster.addMovie(movie);
+                                    return caster;
+                                },
+                                casterService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/art-directors")
+    public Uni<Response> saveArtDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des directeurs artistiques ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getArtDirectors,
+                                (movie, dto) -> {
+                                    ArtDirector artDirector = ArtDirector.fromDTO(dto);
+                                    artDirector.addMovie(movie);
+                                    return artDirector;
+                                },
+                                artDirectorService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/sound-editors")
+    public Uni<Response> saveSoundEditors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des ingénieurs du son ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getSoundEditors,
+                                (movie, dto) -> {
+                                    SoundEditor soundEditor = SoundEditor.fromDTO(dto);
+                                    soundEditor.addMovie(movie);
+                                    return soundEditor;
+                                },
+                                soundEditorService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/visual-effects-supervisors")
+    public Uni<Response> saveVisualEffectsSupervisors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des spécialistes des effets spéciaux ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getVisualEffectsSupervisors,
+                                (movie, dto) -> {
+                                    VisualEffectsSupervisor visualEffectsSupervisor = VisualEffectsSupervisor.fromDTO(dto);
+                                    visualEffectsSupervisor.addMovie(movie);
+                                    return visualEffectsSupervisor;
+                                },
+                                visualEffectsSupervisorService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/makeup-artists")
+    public Uni<Response> saveMakeupArtists(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des maquilleurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getMakeupArtists,
+                                (movie, dto) -> {
+                                    MakeupArtist makeupArtist = MakeupArtist.fromDTO(dto);
+                                    makeupArtist.addMovie(movie);
+                                    return makeupArtist;
+                                },
+                                makeupArtistService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/hair-dressers")
+    public Uni<Response> saveHairDressers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des coiffeurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getHairDressers,
+                                (movie, dto) -> {
+                                    HairDresser hairDresser = HairDresser.fromDTO(dto);
+                                    hairDresser.addMovie(movie);
+                                    return hairDresser;
+                                },
+                                hairDresserService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PUT
+    @Path("{id}/stuntmen")
+    public Uni<Response> saveStuntmen(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        if (Objects.isNull(personDTOSet)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des cascadeurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.savePeople(
+                                id,
+                                personDTOSet,
+                                Movie::getStuntmen,
+                                (movie, dto) -> {
+                                    Stuntman stuntman = Stuntman.fromDTO(dto);
+                                    stuntman.addMovie(movie);
+                                    return stuntman;
+                                },
+                                stuntmanService
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
 
     @PUT
     @Path("{id}/actor")

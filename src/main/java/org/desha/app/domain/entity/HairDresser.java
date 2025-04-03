@@ -43,6 +43,7 @@ public class HairDresser extends Person {
     public static HairDresser fromDTO(PersonDTO personDTO) {
         return
                 HairDresser.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

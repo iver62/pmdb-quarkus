@@ -43,6 +43,7 @@ public class Caster extends Person {
     public static Caster fromDTO(PersonDTO personDTO) {
         return
                 Caster.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

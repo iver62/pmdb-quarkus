@@ -43,6 +43,7 @@ public class Director extends Person {
     public static Director fromDTO(PersonDTO personDTO) {
         return
                 Director.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

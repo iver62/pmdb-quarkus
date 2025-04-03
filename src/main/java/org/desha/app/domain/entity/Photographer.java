@@ -43,6 +43,7 @@ public class Photographer extends Person {
     public static Photographer fromDTO(PersonDTO personDTO) {
         return
                 Photographer.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

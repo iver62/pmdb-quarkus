@@ -43,6 +43,7 @@ public class ArtDirector extends Person {
     public static ArtDirector fromDTO(PersonDTO personDTO) {
         return
                 ArtDirector.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

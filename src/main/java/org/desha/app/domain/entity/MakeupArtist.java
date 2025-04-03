@@ -43,6 +43,7 @@ public class MakeupArtist extends Person {
     public static MakeupArtist fromDTO(PersonDTO personDTO) {
         return
                 MakeupArtist.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()

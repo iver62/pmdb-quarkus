@@ -43,6 +43,7 @@ public class Musician extends Person {
     public static Musician fromDTO(PersonDTO personDTO) {
         return
                 Musician.builder()
+                        .id(personDTO.getId())
                         .name(personDTO.getName())
                         .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
                         .build()
