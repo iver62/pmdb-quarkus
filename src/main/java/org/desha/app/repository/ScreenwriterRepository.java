@@ -26,8 +26,20 @@ public class ScreenwriterRepository extends PersonRepository<Screenwriter> {
     }
 
     @Override
-    public Uni<Screenwriter> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Screenwriter> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Screenwriter>> findByName(String name) {
+        String query = """
+                        FROM Screenwriter s
+                        LEFT JOIN FETCH s.countries
+                        WHERE LOWER(FUNCTION('unaccent', s.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Screenwriter>> find(

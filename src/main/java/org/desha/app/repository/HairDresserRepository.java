@@ -26,8 +26,20 @@ public class HairDresserRepository extends PersonRepository<HairDresser> {
     }
 
     @Override
-    public Uni<HairDresser> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<HairDresser> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<HairDresser>> findByName(String name) {
+        String query = """
+                        FROM HairDresser hd
+                        LEFT JOIN FETCH hd.countries
+                        WHERE LOWER(FUNCTION('unaccent', hd.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<HairDresser>> find(

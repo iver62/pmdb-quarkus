@@ -26,8 +26,20 @@ public class MakeupArtistRepository extends PersonRepository<MakeupArtist> {
     }
 
     @Override
-    public Uni<MakeupArtist> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<MakeupArtist> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<MakeupArtist>> findByName(String name) {
+        String query = """
+                        FROM MakeupArtist ma
+                        LEFT JOIN FETCH ma.countries
+                        WHERE LOWER(FUNCTION('unaccent', ma.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<MakeupArtist>> find(

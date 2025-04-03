@@ -26,8 +26,20 @@ public class PhotographerRepository extends PersonRepository<Photographer> {
     }
 
     @Override
-    public Uni<Photographer> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Photographer> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Photographer>> findByName(String name) {
+        String query = """
+                        FROM Photographer p
+                        LEFT JOIN FETCH p.countries
+                        WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Photographer>> find(

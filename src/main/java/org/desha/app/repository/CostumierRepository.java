@@ -26,8 +26,20 @@ public class CostumierRepository extends PersonRepository<Costumier> {
     }
 
     @Override
-    public Uni<Costumier> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Costumier> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Costumier>> findByName(String name) {
+        String query = """
+                        FROM Costumier c
+                        LEFT JOIN FETCH c.countries
+                        WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Costumier>> find(

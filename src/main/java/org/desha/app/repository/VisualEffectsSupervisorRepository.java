@@ -26,8 +26,20 @@ public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEf
     }
 
     @Override
-    public Uni<VisualEffectsSupervisor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<VisualEffectsSupervisor> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<VisualEffectsSupervisor>> findByName(String name) {
+        String query = """
+                        FROM VisualEffectsSupervisor ves
+                        LEFT JOIN FETCH ves.countries
+                        WHERE LOWER(FUNCTION('unaccent', ves.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<VisualEffectsSupervisor>> find(
@@ -52,5 +64,4 @@ public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEf
                         .list()
                 ;
     }
-
 }

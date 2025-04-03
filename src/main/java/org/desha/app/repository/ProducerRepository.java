@@ -26,8 +26,20 @@ public class ProducerRepository extends PersonRepository<Producer> {
     }
 
     @Override
-    public Uni<Producer> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Producer> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Producer>> findByName(String name) {
+        String query = """
+                        FROM Producer p
+                        LEFT JOIN FETCH p.countries
+                        WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Producer>> find(

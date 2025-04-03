@@ -29,7 +29,7 @@ public class ActorRepository extends PersonRepository<Actor> {
     }
 
     @Override
-    public Uni<Actor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Actor> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         StringBuilder query = new StringBuilder(
                 "FROM Actor a " +
                         "JOIN FETCH a.movieActors ma " +
@@ -37,6 +37,7 @@ public class ActorRepository extends PersonRepository<Actor> {
                         "WHERE a.id = :id " +
                         "AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))"
         );
+
         Parameters params = Parameters.with("id", id)
                 .and("term", "%" + criteriasDTO.getTerm() + "%");
 
@@ -84,6 +85,18 @@ public class ActorRepository extends PersonRepository<Actor> {
                 find(query.toString(), params)
                         .firstResult()
                 ;
+    }
+
+    @Override
+    public Uni<List<Actor>> findByName(String name) {
+        String query = """
+                        FROM Actor a
+                        LEFT JOIN FETCH a.countries
+                        WHERE LOWER(FUNCTION('unaccent', a.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Actor>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {

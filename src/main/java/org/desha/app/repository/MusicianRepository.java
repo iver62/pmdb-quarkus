@@ -26,8 +26,20 @@ public class MusicianRepository extends PersonRepository<Musician> {
     }
 
     @Override
-    public Uni<Musician> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Musician> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Musician>> findByName(String name) {
+        String query = """
+                        FROM Musician m
+                        LEFT JOIN FETCH m.countries
+                        WHERE LOWER(FUNCTION('unaccent', m.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Musician>> find(

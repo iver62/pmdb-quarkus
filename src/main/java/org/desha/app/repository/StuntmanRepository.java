@@ -26,8 +26,20 @@ public class StuntmanRepository extends PersonRepository<Stuntman> {
     }
 
     @Override
-    public Uni<Stuntman> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Stuntman> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Stuntman>> findByName(String name) {
+        String query = """
+                        FROM Stuntman s
+                        LEFT JOIN FETCH s.countries
+                        WHERE LOWER(FUNCTION('unaccent', s.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Stuntman>> find(
@@ -52,5 +64,4 @@ public class StuntmanRepository extends PersonRepository<Stuntman> {
                         .list()
                 ;
     }
-
 }

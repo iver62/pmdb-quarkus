@@ -66,11 +66,24 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
+    public Uni<List<PersonDTO>> getByName(String name) {
+        return
+                personRepository.findByName(name.trim())
+                        .onItem().ifNotNull()
+                        .transform(tList ->
+                                tList.stream()
+                                        .map(t -> PersonDTO.fromEntity(t, t.getCountries()))
+                                        .toList()
+                        )
+                        .onFailure().recoverWithItem(Collections.emptyList())
+                ;
+    }
+
     public Uni<PersonDTO> getByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
-                personRepository.findByIdWithCountriesAndMovies(id, page, sort, direction, criteriasDTO)
+                personRepository.findByIdWithMovies(id, page, sort, direction, criteriasDTO)
                         .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
-                        .map(PersonDTO::fromEntityWithCountriesAndMovies)
+                        .map(t -> PersonDTO.fromEntity(t, t.getMovies(), t.getCountries()))
                 ;
     }
 
@@ -119,6 +132,19 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                 .toList()
                 );
     }
+
+    /*public Uni<List<PersonDTO>> getByMovie(Long id) {
+        return
+                personRepository.findByMovie(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .map(tList ->
+                                tList
+                                        .stream()
+                                        .map(PersonDTO::fromEntity)
+                                        .toList()
+                        )
+                ;
+    }*/
 
     @Override
     public Uni<List<Movie>> addMovie(Long id, Movie movie) {
@@ -220,5 +246,15 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
 
     public Uni<Boolean> delete(Long id) {
         return Panache.withTransaction(() -> personRepository.deleteById(id));
+    }
+
+    protected List<PersonDTO> fromPersonListEntity(Set<T> personSet) {
+        return
+                personSet
+                        .stream()
+                        .map(PersonDTO::fromEntity)
+                        .sorted(Comparator.comparing(PersonDTO::getName))
+                        .toList()
+                ;
     }
 }

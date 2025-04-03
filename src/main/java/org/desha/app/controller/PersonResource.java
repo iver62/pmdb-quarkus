@@ -51,8 +51,31 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}")
-    public Uni<T> getPersonById(Long id) {
+    public Uni<T> getPersonById(@RestPath Long id) {
         return personService.getById(id);
+    }
+
+    @GET
+    @Path("search")
+    public Uni<Response> getPersonsByName(@QueryParam("query") String query) {
+        if (Objects.isNull(query) || query.trim().isEmpty()) {
+            return Uni.createFrom()
+                    .item(
+                            Response
+                                    .status(Response.Status.BAD_REQUEST)
+                                    .entity("Le paramètre 'query' est requis")
+                                    .build()
+                    );
+        }
+
+        return
+                personService.getByName(query)
+                        .map(personDTOS ->
+                                personDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOS).build()
+                        )
+                ;
     }
 
     @GET

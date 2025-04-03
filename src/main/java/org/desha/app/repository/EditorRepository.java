@@ -26,8 +26,20 @@ public class EditorRepository extends PersonRepository<Editor> {
     }
 
     @Override
-    public Uni<Editor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Editor> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Editor>> findByName(String name) {
+        String query = """
+                        FROM Editor e
+                        LEFT JOIN FETCH e.countries
+                        WHERE LOWER(FUNCTION('unaccent', e.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Editor>> find(

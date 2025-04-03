@@ -6,6 +6,7 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.entity.Screenwriter;
 import org.desha.app.domain.entity.SoundEditor;
 
 import java.util.List;
@@ -26,8 +27,20 @@ public class SoundEditorRepository extends PersonRepository<SoundEditor> {
     }
 
     @Override
-    public Uni<SoundEditor> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<SoundEditor> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<SoundEditor>> findByName(String name) {
+        String query = """
+                        FROM SoundEditor se
+                        LEFT JOIN FETCH se.countries
+                        WHERE LOWER(FUNCTION('unaccent', se.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<SoundEditor>> find(
@@ -52,5 +65,4 @@ public class SoundEditorRepository extends PersonRepository<SoundEditor> {
                         .list()
                 ;
     }
-
 }

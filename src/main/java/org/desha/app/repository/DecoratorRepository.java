@@ -26,8 +26,20 @@ public class DecoratorRepository extends PersonRepository<Decorator> {
     }
 
     @Override
-    public Uni<Decorator> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<Decorator> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return null;
+    }
+
+    @Override
+    public Uni<List<Decorator>> findByName(String name) {
+        String query = """
+                        FROM Decorator d
+                        LEFT JOIN FETCH d.countries
+                        WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                """;
+
+        return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
+                .list();
     }
 
     public Uni<List<Decorator>> find(

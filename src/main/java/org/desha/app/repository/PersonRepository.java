@@ -21,7 +21,9 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
 
     public abstract Uni<Long> count(CriteriasDTO criteriasDTO);
 
-    public abstract Uni<T> findByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
+    public abstract Uni<T> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
+
+    public abstract Uni<List<T>> findByName(String name);
 
     public Uni<List<T>> findByIds(List<Long> ids) {
         if (Objects.isNull(ids) || ids.isEmpty()) {
