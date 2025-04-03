@@ -14,8 +14,10 @@ import java.util.List;
 public class DecoratorRepository extends PersonRepository<Decorator> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Decorator p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),
@@ -33,9 +35,9 @@ public class DecoratorRepository extends PersonRepository<Decorator> {
     @Override
     public Uni<List<Decorator>> findByName(String name) {
         String query = """
-                        FROM Decorator d
-                        LEFT JOIN FETCH d.countries
-                        WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                FROM Decorator d
+                LEFT JOIN FETCH d.countries
+                WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
         return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
@@ -48,10 +50,11 @@ public class DecoratorRepository extends PersonRepository<Decorator> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Decorator p " +
-                "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Decorator p
+                LEFT JOIN FETCH p.movies
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),

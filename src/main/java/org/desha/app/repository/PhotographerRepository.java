@@ -14,8 +14,10 @@ import java.util.List;
 public class PhotographerRepository extends PersonRepository<Photographer> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Photographer p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),
@@ -33,9 +35,9 @@ public class PhotographerRepository extends PersonRepository<Photographer> {
     @Override
     public Uni<List<Photographer>> findByName(String name) {
         String query = """
-                        FROM Photographer p
-                        LEFT JOIN FETCH p.countries
-                        WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                FROM Photographer p
+                LEFT JOIN FETCH p.countries
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
         return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
@@ -48,10 +50,11 @@ public class PhotographerRepository extends PersonRepository<Photographer> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Photographer p " +
-                "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Photographer p
+                LEFT JOIN FETCH p.movies
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),

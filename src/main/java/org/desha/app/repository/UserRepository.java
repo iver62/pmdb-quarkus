@@ -17,15 +17,16 @@ import java.util.UUID;
 public class UserRepository implements PanacheRepositoryBase<User, UUID> {
 
     public Uni<Long> countUsers(String term) {
-        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))", term);
+        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', ?1, '%')))", term);
     }
 
     public Uni<List<User>> findUsers(Page page, String sort, Sort.Direction direction, String term) {
         return
-                find(
-                        "FROM User u " +
-                                "LEFT JOIN FETCH u.movies " +
-                                "WHERE LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
+                find("""
+                                FROM User u
+                                LEFT JOIN FETCH u.movies
+                                WHERE LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                                """,
                         Sort.by(sort, direction),
                         Parameters.with("term", term)
                 )

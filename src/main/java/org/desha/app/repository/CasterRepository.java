@@ -14,8 +14,10 @@ import java.util.List;
 public class CasterRepository extends PersonRepository<Caster> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Caster p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),
@@ -33,9 +35,9 @@ public class CasterRepository extends PersonRepository<Caster> {
     @Override
     public Uni<List<Caster>> findByName(String name) {
         String query = """
-                        FROM Caster c
-                        LEFT JOIN FETCH c.countries
-                        WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                FROM Caster c
+                LEFT JOIN FETCH c.countries
+                WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
         return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
@@ -48,10 +50,11 @@ public class CasterRepository extends PersonRepository<Caster> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Caster p " +
-                "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Caster p
+                LEFT JOIN FETCH p.movies
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),

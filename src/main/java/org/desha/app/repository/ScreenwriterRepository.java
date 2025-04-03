@@ -14,8 +14,10 @@ import java.util.List;
 public class ScreenwriterRepository extends PersonRepository<Screenwriter> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                        FROM Screenwriter p
+                        WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),
@@ -33,9 +35,9 @@ public class ScreenwriterRepository extends PersonRepository<Screenwriter> {
     @Override
     public Uni<List<Screenwriter>> findByName(String name) {
         String query = """
-                        FROM Screenwriter s
-                        LEFT JOIN FETCH s.countries
-                        WHERE LOWER(FUNCTION('unaccent', s.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                FROM Screenwriter s
+                LEFT JOIN FETCH s.countries
+                WHERE LOWER(FUNCTION('unaccent', s.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
         return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
@@ -48,10 +50,11 @@ public class ScreenwriterRepository extends PersonRepository<Screenwriter> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Screenwriter p " +
-                "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Screenwriter p
+                LEFT JOIN FETCH p.movies
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),

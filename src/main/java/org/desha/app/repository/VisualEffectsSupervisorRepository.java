@@ -14,8 +14,10 @@ import java.util.List;
 public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEffectsSupervisor> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                        FROM VisualEffectsSupervisor p
+                        WHERE LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),
@@ -33,9 +35,9 @@ public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEf
     @Override
     public Uni<List<VisualEffectsSupervisor>> findByName(String name) {
         String query = """
-                        FROM VisualEffectsSupervisor ves
-                        LEFT JOIN FETCH ves.countries
-                        WHERE LOWER(FUNCTION('unaccent', ves.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
+                FROM VisualEffectsSupervisor ves
+                LEFT JOIN FETCH ves.countries
+                WHERE LOWER(FUNCTION('unaccent', ves.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :name, '%')))
                 """;
 
         return find(query, Sort.by("name"), Parameters.with("name", name.toLowerCase()))
@@ -48,10 +50,11 @@ public class VisualEffectsSupervisorRepository extends PersonRepository<VisualEf
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM VisualEffectsSupervisor p " +
-                "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM VisualEffectsSupervisor p
+                LEFT JOIN FETCH p.movies
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),

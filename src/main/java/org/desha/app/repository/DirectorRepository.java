@@ -17,8 +17,10 @@ import java.util.Objects;
 public class DirectorRepository extends PersonRepository<Director> {
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        String query = "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Director p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),
@@ -30,11 +32,12 @@ public class DirectorRepository extends PersonRepository<Director> {
 
     @Override
     public Uni<Director> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        StringBuilder query = new StringBuilder(
-                "FROM Director d " +
-                        "JOIN FETCH d.movies m " +
-                        "WHERE d.id = :id " +
-                        "AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))"
+        StringBuilder query = new StringBuilder("""
+                FROM Director d
+                JOIN FETCH d.movies m
+                WHERE d.id = :id
+                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """
         );
 
         Parameters params = Parameters.with("id", id)
@@ -88,9 +91,9 @@ public class DirectorRepository extends PersonRepository<Director> {
 
     public Uni<List<Director>> findByName(String name) {
         String query = """
-                        FROM Director d
-                        LEFT JOIN FETCH d.countries
-                        WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                FROM Director d
+                LEFT JOIN FETCH d.countries
+                WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """;
 
         return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
@@ -103,10 +106,11 @@ public class DirectorRepository extends PersonRepository<Director> {
             Sort.Direction direction,
             CriteriasDTO criteriasDTO
     ) {
-        String query = "FROM Director p " +
-                "LEFT JOIN FETCH p.movies " +
-                "WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))" +
-                addClauses(criteriasDTO);
+        String query = """
+                FROM Director p
+                LEFT JOIN FETCH p.movies
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """ + addClauses(criteriasDTO);
 
         Parameters params = addParameters(
                 Parameters.with("term", criteriasDTO.getTerm()),

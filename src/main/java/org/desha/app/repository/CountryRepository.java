@@ -21,11 +21,12 @@ public class CountryRepository implements PanacheRepository<Country> {
      * @return Un {@link Uni} contenant le nombre de pays distincts correspondant au terme de recherche.
      */
     public Uni<Long> countExistingCountries(String term) {
-        return count(
-                "SELECT COUNT(DISTINCT c) " +
-                        "FROM Movie m " +
-                        "JOIN m.countries c " +
-                        "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Movie m
+                        JOIN m.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
                 Parameters.with("term", term)
         );
     }
@@ -54,11 +55,12 @@ public class CountryRepository implements PanacheRepository<Country> {
 
     public Uni<List<Country>> findExistingCountries(Page page, String sort, Sort.Direction direction, String term) {
         return
-                find(
-                        "SELECT DISTINCT c " +
-                                "FROM Movie m " +
-                                "JOIN m.countries c " +
-                                "WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
+                find("""
+                                SELECT DISTINCT c
+                                FROM Movie m
+                                JOIN m.countries c
+                                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                                """,
                         Sort.by(sort, direction),
                         Parameters.with("term", term)
                 )
