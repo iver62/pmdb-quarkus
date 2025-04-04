@@ -7,10 +7,12 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -27,6 +29,7 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 public abstract class PersonService<T extends Person> implements PersonServiceInterface<T> {
 
     private final CountryService countryService;
+    protected final CountryRepository countryRepository;
     protected final MovieRepository movieRepository;
     private final PersonRepository<T> personRepository;
     private final FileService fileService;
@@ -37,11 +40,13 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     @Inject
     protected PersonService(
             CountryService countryService,
+            CountryRepository countryRepository,
             MovieRepository movieRepository,
             PersonRepository<T> personRepository,
             FileService fileService
     ) {
         this.countryService = countryService;
+        this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
         this.personRepository = personRepository;
         this.fileService = fileService;
@@ -157,8 +162,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    public abstract Uni<T> save(PersonDTO personDTO);
-
     public Uni<File> getPhoto(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {
             log.warn("Photo name is missing, returning default photo.");
@@ -231,4 +234,5 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                         .toList()
                 ;
     }
+
 }

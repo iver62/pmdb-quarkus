@@ -9,6 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.RepartitionDTO;
+import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.hibernate.reactive.mutiny.Mutiny;
 

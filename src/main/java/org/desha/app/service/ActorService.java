@@ -7,11 +7,13 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Actor;
 import org.desha.app.repository.ActorRepository;
+import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 
 import java.util.List;
@@ -25,11 +27,12 @@ public class ActorService extends PersonService<Actor> {
     @Inject
     public ActorService(
             CountryService countryService,
+            CountryRepository countryRepository,
             MovieRepository movieRepository,
             ActorRepository actorRepository,
             FileService fileService
     ) {
-        super(countryService, movieRepository, actorRepository, fileService);
+        super(countryService, countryRepository, movieRepository, actorRepository, fileService);
         this.actorRepository = actorRepository;
     }
 
@@ -57,6 +60,10 @@ public class ActorService extends PersonService<Actor> {
         return movieRepository.countMoviesByActor(actorId, criteriasDTO);
     }
 
+    public Uni<Long> countCountries(String term) {
+        return countryRepository.countActorCountries(term);
+    }
+
     public Uni<List<MovieDTO>> getMovies(long actorId, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 movieRepository
@@ -66,6 +73,19 @@ public class ActorService extends PersonService<Actor> {
                                         .stream()
                                         .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                         .toList()
+                        )
+                ;
+    }
+
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                countryRepository.findActorCountries(page, sort, direction, term)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
                         )
                 ;
     }

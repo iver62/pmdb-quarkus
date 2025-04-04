@@ -9,10 +9,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.MovieQueryParamsDTO;
-import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.dto.PersonQueryParamsDTO;
+import org.desha.app.domain.dto.*;
+import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.service.PersonService;
@@ -154,6 +152,28 @@ public abstract class PersonResource<T extends Person> {
                 personService.getAll()
                         .onItem().ifNotNull().transform(persons -> Response.ok(persons).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("countries")
+    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+
+        return
+                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                        .flatMap(countryList ->
+                                personService.countCountries(queryParams.getTerm()).map(total ->
+                                        countryList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
                 ;
     }
 

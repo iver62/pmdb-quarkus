@@ -11,6 +11,7 @@ import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
+import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieActorRepository;
 import org.desha.app.repository.MovieRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class MovieService {
 
-    private final Mutiny.SessionFactory msf;
+    private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
     private final CountryService countryService;
@@ -57,8 +58,8 @@ public class MovieService {
 
     @Inject
     public MovieService(
-            Mutiny.SessionFactory msf,
             CountryService countryService,
+            CountryRepository countryRepository,
             FileService fileService,
             GenreService genreService,
             MovieRepository movieRepository,
@@ -80,8 +81,8 @@ public class MovieService {
             StuntmanService stuntmanService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
-        this.msf = msf;
         this.countryService = countryService;
+        this.countryRepository = countryRepository;
         this.fileService = fileService;
         this.genreService = genreService;
         this.movieRepository = movieRepository;
@@ -108,6 +109,10 @@ public class MovieService {
         return movieRepository.countMovies(criteriasDTO);
     }
 
+    public Uni<Long> countCountries(String term) {
+        return countryRepository.countMovieCountries(term);
+    }
+
     public Uni<Movie> getById(Long id) {
         return
                 movieRepository.findByIdWithCountriesAndGenres(id)
@@ -131,6 +136,19 @@ public class MovieService {
 
     public Uni<List<Movie>> getByTitle(String pattern) {
         return movieRepository.findByTitle(pattern);
+    }
+
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                countryRepository.findMovieCountries(page, sort, direction, term)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
+                        )
+                ;
     }
 
     public Uni<List<MovieActorDTO>> getActorsByMovie(Long id) {
@@ -693,7 +711,7 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Movie> addGenres(Long id, Set<Genre> genreSet) {
+    /*public Uni<Movie> addGenres(Long id, Set<Genre> genreSet) {
         return
                 Panache
                         .withTransaction(() ->
@@ -714,9 +732,9 @@ public class MovieService {
                                         .chain(entity -> entity.persist())
                         )
                 ;
-    }
+    }*/
 
-    public Uni<Movie> addCountries(Long id, Set<Country> countrySet) {
+    /*public Uni<Movie> addCountries(Long id, Set<Country> countrySet) {
         return
                 Panache
                         .withTransaction(() ->
@@ -737,7 +755,7 @@ public class MovieService {
                                         .chain(entity -> entity.persist())
                         )
                 ;
-    }
+    }*/
 
     public Uni<Movie> addAwards(Long id, Set<Award> awardSet) {
         return

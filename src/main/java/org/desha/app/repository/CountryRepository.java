@@ -14,24 +14,6 @@ import java.util.List;
 public class CountryRepository implements PanacheRepository<Country> {
 
     /**
-     * Cmpte le nombre de pays uniques liés aux films et applique une recherche insensible aux accents
-     * et à la casse sur le nom du pays.
-     *
-     * @param term Le terme de recherche à appliquer sur le nom du pays (insensible aux accents et à la casse).
-     * @return Un {@link Uni} contenant le nombre de pays distincts correspondant au terme de recherche.
-     */
-    public Uni<Long> countExistingCountries(String term) {
-        return count("""
-                        SELECT COUNT(DISTINCT c)
-                        FROM Movie m
-                        JOIN m.countries c
-                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
-                        """,
-                Parameters.with("term", term)
-        );
-    }
-
-    /**
      * Compte le nombre de pays dont le nom en français correspond partiellement au terme recherché.
      *
      * @param term Le terme à rechercher dans le nom des pays (insensible à la casse).
@@ -44,6 +26,200 @@ public class CountryRepository implements PanacheRepository<Country> {
     }
 
     /**
+     * Cmpte le nombre de pays uniques liés aux films et applique une recherche insensible aux accents
+     * et à la casse sur le nom du pays.
+     *
+     * @param term Le terme de recherche à appliquer sur le nom du pays (insensible aux accents et à la casse).
+     * @return Un {@link Uni} contenant le nombre de pays distincts correspondant au terme de recherche.
+     */
+    public Uni<Long> countMovieCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Movie m
+                        JOIN m.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countActorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Actor a
+                        JOIN a.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countProducerCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Producer p
+                        JOIN p.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countDirectorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Director d
+                        JOIN d.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countScreenwriterCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Screenwriter s
+                        JOIN s.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countMusicianCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Musician m
+                        JOIN m.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countDecoratorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Decorator d
+                        JOIN d.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countCostumierCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Costumier co
+                        JOIN co.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countPhotographerCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Photographer p
+                        JOIN p.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countEditorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Editor e
+                        JOIN e.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countCasterCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Caster ca
+                        JOIN ca.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countArtDirectorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM ArtDirector ad
+                        JOIN ad.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countSoundEditorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM SoundEditor se
+                        JOIN se.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countVisualEffectsSupervisorCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM VisualEffectsSupervisor ves
+                        JOIN ves.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countMakeupArtistCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM MakeupArtist ma
+                        JOIN ma.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countHairDresserCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM HairDresser hd
+                        JOIN hd.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    public Uni<Long> countStuntmanCountries(String term) {
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Stuntman s
+                        JOIN s.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        """,
+                Parameters.with("term", term)
+        );
+    }
+
+    /**
      * Récupère une liste de pays en fonction de leurs identifiants.
      *
      * @param ids la liste des identifiants des pays à récupérer.
@@ -51,21 +227,6 @@ public class CountryRepository implements PanacheRepository<Country> {
      */
     public Uni<List<Country>> findByIds(List<Long> ids) {
         return list("id IN ?1", ids);
-    }
-
-    public Uni<List<Country>> findExistingCountries(Page page, String sort, Sort.Direction direction, String term) {
-        return
-                find("""
-                                SELECT DISTINCT c
-                                FROM Movie m
-                                JOIN m.countries c
-                                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
-                                """,
-                        Sort.by(sort, direction),
-                        Parameters.with("term", term)
-                )
-                        .page(page)
-                        .list();
     }
 
     /**
@@ -96,4 +257,242 @@ public class CountryRepository implements PanacheRepository<Country> {
                         .list()
                 ;
     }
+
+    public Uni<List<Country>> findMovieCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Movie m
+                JOIN m.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findActorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Actor a
+                JOIN a.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findProducerCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Producer p
+                JOIN p.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findDirectorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Director d
+                JOIN d.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findScreenwriterCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Screenwriter s
+                JOIN s.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findMusicianCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Musician m
+                JOIN m.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findDecoratorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Decorator d
+                JOIN d.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findCostumierCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Costumier co
+                JOIN co.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findPhotographerCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Photographer p
+                JOIN p.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findEditorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Editor e
+                JOIN e.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findCasterCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Caster ca
+                JOIN ca.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findArtDirectorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM ArtDirector ad
+                JOIN ad.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findSoundEditorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM SoundEditor se
+                JOIN se.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findVisualEffectsSupervisorCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM VisualEffectsSupervisor ves
+                JOIN ves.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findMakeupArtistCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM MakeupArtist ma
+                JOIN ma.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findHairDresserCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM HairDresser hd
+                JOIN hd.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
+    public Uni<List<Country>> findStuntmanCountries(Page page, String sort, Sort.Direction direction, String term) {
+        String query = """
+                SELECT DISTINCT c
+                FROM Stuntman s
+                JOIN s.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                """;
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", term))
+                        .page(page)
+                        .list();
+    }
+
 }

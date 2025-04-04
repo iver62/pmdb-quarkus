@@ -7,11 +7,13 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Costumier;
 import org.desha.app.domain.entity.VisualEffectsSupervisor;
+import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.VisualEffectsSupervisorRepository;
 
@@ -24,11 +26,12 @@ public class VisualEffectsSupervisorService extends PersonService<VisualEffectsS
     @Inject
     public VisualEffectsSupervisorService(
             CountryService countryService,
+            CountryRepository countryRepository,
             MovieRepository movieRepository,
             VisualEffectsSupervisorRepository visualEffectsSupervisorRepository,
             FileService fileService
     ) {
-        super(countryService, movieRepository, visualEffectsSupervisorRepository, fileService);
+        super(countryService, countryRepository, movieRepository, visualEffectsSupervisorRepository, fileService);
     }
 
     public Uni<Long> countMovies(long visualEffectsSupervisorId, CriteriasDTO criteriasDTO) {
@@ -44,6 +47,25 @@ public class VisualEffectsSupervisorService extends PersonService<VisualEffectsS
                                         .stream()
                                         .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                         .toList()
+                        )
+                ;
+    }
+
+    @Override
+    public Uni<Long> countCountries(String term) {
+        return countryRepository.countVisualEffectsSupervisorCountries(term);
+    }
+
+    @Override
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                countryRepository.findVisualEffectsSupervisorCountries(page, sort, direction, term)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
                         )
                 ;
     }

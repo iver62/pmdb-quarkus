@@ -7,10 +7,12 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Photographer;
+import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PhotographerRepository;
 
@@ -23,11 +25,12 @@ public class PhotographerService extends PersonService<Photographer> {
     @Inject
     public PhotographerService(
             CountryService countryService,
+            CountryRepository countryRepository,
             MovieRepository movieRepository,
             PhotographerRepository photographerRepository,
             FileService fileService
     ) {
-        super(countryService, movieRepository, photographerRepository, fileService);
+        super(countryService, countryRepository, movieRepository, photographerRepository, fileService);
     }
 
     public Uni<Long> countMovies(long photographerId, CriteriasDTO criteriasDTO) {
@@ -43,6 +46,25 @@ public class PhotographerService extends PersonService<Photographer> {
                                         .stream()
                                         .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                         .toList()
+                        )
+                ;
+    }
+
+    @Override
+    public Uni<Long> countCountries(String term) {
+        return countryRepository.countPhotographerCountries(term);
+    }
+
+    @Override
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                countryRepository.findPhotographerCountries(page, sort, direction, term)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
                         )
                 ;
     }

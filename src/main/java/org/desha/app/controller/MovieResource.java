@@ -127,7 +127,7 @@ public class MovieResource {
         }
 
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort());
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
@@ -153,7 +153,7 @@ public class MovieResource {
     @Path("all")
     public Uni<Response> getAllMovies(MovieQueryParamsDTO queryParams) {
         // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort());
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
@@ -171,6 +171,28 @@ public class MovieResource {
                         )
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        )
+                ;
+    }
+
+    @GET
+    @Path("countries")
+    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
+        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
+        if (Objects.nonNull(sortValidation)) {
+            return sortValidation;
+        }
+
+        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+
+        return
+                movieService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                        .flatMap(countryList ->
+                                movieService.countCountries(queryParams.getTerm()).map(total ->
+                                        countryList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
                         )
                 ;
     }
@@ -1073,7 +1095,7 @@ public class MovieResource {
 //
 //    }
 
-    @PUT
+    /*@PUT
     @Path("{id}/genres")
     public Uni<Response> addGenres(Long id, Set<Genre> genreSet) {
         return
@@ -1097,9 +1119,9 @@ public class MovieResource {
                         .map(Movie::getGenres)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{id}/countries")
     public Uni<Response> addCountries(Long id, Set<Country> countrySet) {
         return
@@ -1116,7 +1138,7 @@ public class MovieResource {
                         .map(Movie::getCountries)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }
+    }*/
 
     /*@PUT
     @Path("{id}/awards")
@@ -1389,8 +1411,8 @@ public class MovieResource {
                 .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
     }
 
-    private Uni<Response> validateSortField(String sort) {
-        if (!Movie.ALLOWED_SORT_FIELDS.contains(sort)) {
+    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
+        if (!allowedSortFields.contains(sort)) {
             return Uni.createFrom().item(
                     Response.status(Response.Status.BAD_REQUEST)
                             .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, Movie.ALLOWED_SORT_FIELDS))

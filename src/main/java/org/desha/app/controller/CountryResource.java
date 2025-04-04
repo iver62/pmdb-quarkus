@@ -46,28 +46,6 @@ public class CountryResource {
     }
 
     @GET
-    @Path("existing")
-    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
-
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
-
-        return
-                countryService.getExistingCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
-                        .flatMap(countryList ->
-                                countryService.countExistingCountries(queryParams.getTerm()).map(total ->
-                                        countryList.isEmpty()
-                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                )
-                        )
-                ;
-    }
-
-    @GET
     public Uni<Response> getAllPaginatedCountries(@BeanParam QueryParamsDTO queryParams) {
         Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {

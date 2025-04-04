@@ -31,10 +31,6 @@ public class CountryService {
         this.movieRepository = movieRepository;
     }
 
-    public Uni<Long> countExistingCountries(String term) {
-        return countryRepository.countExistingCountries(term);
-    }
-
     public Uni<Long> countCountries(String term) {
         return countryRepository.countCountries(term);
     }
@@ -43,19 +39,6 @@ public class CountryService {
         return
                 countryRepository.findById(id)
                         .onFailure().recoverWithNull()
-                ;
-    }
-
-    public Uni<List<CountryDTO>> getExistingCountries(Page page, String sort, Sort.Direction direction, String term) {
-        return
-                countryRepository.findExistingCountries(page, sort, direction, term)
-                        .map(
-                                countryList ->
-                                        countryList
-                                                .stream()
-                                                .map(CountryDTO::fromEntity)
-                                                .toList()
-                        )
                 ;
     }
 

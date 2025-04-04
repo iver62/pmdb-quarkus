@@ -16,7 +16,6 @@ public class QueryParamsDTO {
     private int size;
 
     @QueryParam("sort")
-    @DefaultValue("title")
     private String sort;
 
     @QueryParam("direction")
