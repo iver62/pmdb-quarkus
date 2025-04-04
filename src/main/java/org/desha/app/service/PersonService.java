@@ -133,19 +133,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 );
     }
 
-    /*public Uni<List<PersonDTO>> getByMovie(Long id) {
-        return
-                personRepository.findByMovie(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                        .map(tList ->
-                                tList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
     @Override
     public Uni<List<Movie>> addMovie(Long id, Movie movie) {
         return
@@ -171,19 +158,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
     }
 
     public abstract Uni<T> save(PersonDTO personDTO);
-
-    /*public Uni<T> save(PersonDTO personDTO) {
-        return
-                Panache
-                        .withTransaction(() -> T.fromDTO(personDTO).persist()
-        *//*{
-                                    instance.setName(StringUtils.trim(personDTO.getName()));
-                                    instance.setPhotoFileName(DEFAULT_PHOTO);
-                                    return instance.persist();
-                                }*//*
-                        )
-                ;
-    }*/
 
     public Uni<File> getPhoto(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {

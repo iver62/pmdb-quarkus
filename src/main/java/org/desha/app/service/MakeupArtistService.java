@@ -41,7 +41,7 @@ public class MakeupArtistService extends PersonService<MakeupArtist> {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                         .toList()
                         )
                 ;

@@ -404,11 +404,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return list("title", title);
     }
 
-    public Uni<List<Movie>> findMoviesByActor(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Movie>> findMoviesByActor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Movie m
                 JOIN m.movieActors ma
                 JOIN ma.actor a
+                LEFT JOIN FETCH m.awards
                 WHERE a.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -420,7 +421,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -430,6 +431,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.producers p
+                LEFT JOIN FETCH m.awards
                 WHERE p.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -441,7 +443,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -451,6 +453,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.directors d
+                LEFT JOIN FETCH m.awards
                 WHERE d.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -462,7 +465,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -472,6 +475,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.screenwriters s
+                LEFT JOIN FETCH m.awards
                 WHERE s.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -483,7 +487,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -493,6 +497,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.musicians mu
+                LEFT JOIN FETCH m.awards
                 WHERE mu.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -504,7 +509,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -514,6 +519,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.decorators d
+                LEFT JOIN FETCH m.awards
                 WHERE d.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -525,7 +531,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -535,6 +541,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.costumiers c
+                LEFT JOIN FETCH m.awards
                 WHERE c.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -546,7 +553,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -556,6 +563,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.photographers p
+                LEFT JOIN FETCH m.awards
                 WHERE p.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -567,7 +575,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -577,6 +585,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.editors e
+                LEFT JOIN FETCH m.awards
                 WHERE e.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -588,7 +597,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -598,6 +607,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.casters c
+                LEFT JOIN FETCH m.awards
                 WHERE c.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -609,7 +619,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -619,6 +629,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.artDirectors ad
+                LEFT JOIN FETCH m.awards
                 WHERE ad.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -630,7 +641,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -640,6 +651,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.soundEditors se
+                LEFT JOIN FETCH m.awards
                 WHERE se.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -651,7 +663,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -661,6 +673,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.visualEffectsSupervisors ves
+                LEFT JOIN FETCH m.awards
                 WHERE ves.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -672,7 +685,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -682,6 +695,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.makeupArtists ma
+                LEFT JOIN FETCH m.awards
                 WHERE ma.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -693,7 +707,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -703,6 +717,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.hairDressers hd
+                LEFT JOIN FETCH m.awards
                 WHERE hd.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -714,7 +729,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -724,6 +739,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String query = """
                 FROM Movie m
                 JOIN m.stuntmen s
+                LEFT JOIN FETCH m.awards
                 WHERE s.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                 """ + addClauses(criteriasDTO);
@@ -735,7 +751,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return
-                find(query, Sort.by("m." + sort, direction), params)
+                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
                         .page(page)
                         .list()
                 ;
@@ -746,10 +762,11 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 find("""
                                 FROM Movie m
                                 JOIN m.countries c
+                                LEFT JOIN FETCH m.awards
                                 WHERE c.id = :id
                                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                                 """,
-                        Sort.by(sort, direction),
+                        Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST),
                         Parameters.with("id", id)
                                 .and("term", term)
                 ).list();
@@ -760,10 +777,11 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 find("""
                                 FROM Movie m
                                 JOIN m.countries c
+                                LEFT JOIN FETCH m.awards
                                 WHERE c.id = :id
                                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                                 """,
-                        Sort.by(sort, direction),
+                        Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST),
                         Parameters.with("id", id)
                                 .and("term", term)
                 )
@@ -776,10 +794,11 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 find("""
                                 FROM Movie m
                                 JOIN m.genres g
+                                LEFT JOIN FETCH m.awards
                                 WHERE g.id = :id
                                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                                 """,
-                        Sort.by(sort, direction),
+                        Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST),
                         Parameters.with("id", id)
                                 .and("term", term)
                 )

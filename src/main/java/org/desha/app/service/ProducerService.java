@@ -41,7 +41,7 @@ public class ProducerService extends PersonService<Producer> {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                         .toList()
                         )
                 ;

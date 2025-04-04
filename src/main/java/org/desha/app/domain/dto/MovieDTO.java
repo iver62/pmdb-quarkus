@@ -34,7 +34,6 @@ public class MovieDTO {
     private Set<AwardDTO> awards;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
-    private int nbAwards;
 
     public static MovieDTO fromEntity(Movie movie) {
         return MovieDTO.builder()

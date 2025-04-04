@@ -9,6 +9,7 @@ import org.desha.app.domain.entity.MovieActor;
 public class MovieActorDTO {
 
     private Long id;
+    private MovieDTO movie;
     private PersonDTO actor;
     private String role;
     private Integer rank;
@@ -17,13 +18,8 @@ public class MovieActorDTO {
         return
                 MovieActorDTO.builder()
                         .id(movieActor.getId())
-                        .actor(
-                                PersonDTO.builder()
-                                        .id(movieActor.getActor().getId())
-                                        .name(movieActor.getActor().getName())
-                                        .photoFileName(movieActor.getActor().getPhotoFileName())
-                                        .build()
-                        )
+                        .actor(PersonDTO.fromEntity(movieActor.getActor()))
+                        .movie(MovieDTO.fromEntity(movieActor.getMovie()))
                         .role(movieActor.getRole())
                         .rank(movieActor.getRank())
                         .build()

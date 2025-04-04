@@ -42,7 +42,7 @@ public class VisualEffectsSupervisorService extends PersonService<VisualEffectsS
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
                                         .toList()
                         )
                 ;
