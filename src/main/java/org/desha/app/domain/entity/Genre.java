@@ -140,4 +140,9 @@ public class Genre extends PanacheEntityBase {
         return Panache.withTransaction(() -> deleteById(id));
     }
 
+    @Override
+    public String toString() {
+        return id + "-" + name;
+    }
+
 }

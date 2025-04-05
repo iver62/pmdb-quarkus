@@ -426,13 +426,8 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<Genre>> addGenres(Set<Genre> genreSet) {
         return
                 Mutiny.fetch(genres)
-                        .map(
-                                fetchGenres -> {
-                                    fetchGenres.clear();
-                                    fetchGenres.addAll(genreSet);
-                                    return fetchGenres;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés"))
+                        .invoke(fetchGenres -> fetchGenres.addAll(genreSet))
                 ;
     }
 
@@ -661,12 +656,8 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<Genre>> removeGenre(Long id) {
         return
                 Mutiny.fetch(genres)
-                        .map(
-                                fetchGenres -> {
-                                    fetchGenres.removeIf(genre -> Objects.equals(genre.id, id));
-                                    return fetchGenres;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés"))
+                        .invoke(fetchGenres -> fetchGenres.removeIf(genre -> Objects.equals(genre.id, id)))
                 ;
     }
 

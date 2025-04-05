@@ -945,19 +945,58 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNotNull()
                                         .call(entity -> entity.removeStuntman(stuntmanId))
-                                        .chain(entity -> entity.persist())
+                                        .chain(movieRepository::persist)
                         )
                 ;
     }
 
-    public Uni<Movie> removeGenre(Long movieId, Long genreId) {
+    /**
+     * Ajoute un ou plusieurs genres à un film existant.
+     *
+     * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
+     * @param genreDTOSet Un ensemble d'objets {@link GenreDTO} représentant les genres à ajouter.
+     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après l'ajout des genres
+     */
+    public Uni<MovieDTO> addGenres(Long movieId, Set<GenreDTO> genreDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
-                                        .onItem().ifNotNull()
-                                        .call(entity -> entity.removeGenre(genreId))
-                                        .chain(entity -> entity.persist())
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .flatMap(movie ->
+                                                genreService.getByIds(genreDTOSet.stream().map(GenreDTO::getId).toList())
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs genres sont introuvables"))
+                                                        .call(movie::addGenres)
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getGenres())
+                                                        .invoke(movie::setGenres)
+                                                        .map(genreSet -> MovieDTO.fromEntity(movie, movie.getGenres(), null, null))
+                                        )
+                        )
+                ;
+    }
+
+    /**
+     * Supprime un genre d'un film existant.
+     *
+     * @param movieId L'identifiant du film dont le genre doit être supprimé.
+     * @param genreId L'identifiant du genre à supprimer du film.
+     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après la suppression du genre.
+     */
+    public Uni<MovieDTO> removeGenre(Long movieId, Long genreId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .call(movie -> movie.removeGenre(genreId))
+                                        .chain(movieRepository::persist)
+                                        .flatMap(movie -> Mutiny.fetch(movie.getGenres()).invoke(movie::setGenres)
+                                                .map(genreSet -> MovieDTO.fromEntity(movie, movie.getGenres(), null, null))
+                                        )
                         )
                 ;
     }
@@ -990,55 +1029,18 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNull().failWith(() -> new NotFoundException("Film non trouvé"))
-                                                .onItem().ifNotNull()
-                                                .call(
-                                                        movie ->
-                                                                countryService.getByIds(movieDTO.getCountries())
-                                                                        .invoke(movie::setCountries)
-                                                                        .chain(() ->
-                                                                                genreService.getByIds(movieDTO.getGenres())
-                                                                                        .invoke(movie::setGenres)
-                                                                        )
-                                                )
-                                        /*.call(movie ->
-                                                // Gestion des récompenses
-                                                Mutiny.fetch(movie.getAwards())
-                                                        .invoke(
-                                                                awards -> {
-                                                                    Set<AwardDTO> updatedAwards = movieDTO.getAwards();
-
-                                                                    // Modifier les récompenses
-                                                                    awards.forEach(award ->
-                                                                            updatedAwards.stream()
-                                                                                    .filter(a -> Objects.nonNull(a.getId()) && a.getId().equals(award.getId()))
-                                                                                    .findFirst()
-                                                                                    .ifPresent(existingAward -> {
-                                                                                        award.setCeremony(existingAward.getCeremony());
-                                                                                        award.setName(existingAward.getName());
-                                                                                        award.setYear(existingAward.getYear());
-                                                                                    })
-                                                                    );
-
-                                                                    // Supprimer les récompenses obsolètes
-                                                                    awards.removeIf(existing ->
-                                                                            updatedAwards.stream().noneMatch(updated ->
-                                                                                    Objects.nonNull(updated.getId()) && updated.getId().equals(existing.getId())
-                                                                            )
-                                                                    );
-
-                                                                    // Ajouter les nouvelles récompenses
-                                                                    updatedAwards.forEach(updated -> {
-                                                                        if (Objects.isNull(updated.getId())) {
-                                                                            Award newAward = Award.fromDTO(updated);
-                                                                            newAward.setMovie(movie);
-                                                                            awards.add(newAward);
-                                                                        }
-                                                                    });
-                                                                }
-                                                        )
-                                        )*/
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new NotFoundException("Film non trouvé"))
+                                        .onItem().ifNotNull()
+                                        .call(
+                                                movie ->
+                                                        countryService.getByIds(movieDTO.getCountries())
+                                                                .invoke(movie::setCountries)
+                                                                .chain(() ->
+                                                                        genreService.getByIds(movieDTO.getGenres())
+                                                                                .invoke(movie::setGenres)
+                                                                )
+                                        )
                         )
                         .invoke(
                                 movie -> {

@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Award;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Genre;
 import org.desha.app.domain.entity.Movie;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,7 +38,7 @@ public class MovieDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
 
-    public static MovieDTO fromEntity(Movie movie) {
+    public static MovieDTO fromEntity(Movie movie, Set<Genre> genreSet, Set<Country> countrySet, Set<Award> awardSet) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
@@ -47,9 +50,60 @@ public class MovieDTO {
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
+                .genres(
+                        Optional.ofNullable(genreSet)
+                                .map(
+                                        genres ->
+                                                genres
+                                                        .stream()
+                                                        .map(GenreDTO::fromEntity)
+                                                        .collect(Collectors.toSet())
+                                )
+                                .orElse(null)
+                )
+                .countries(
+                        Optional.ofNullable(countrySet)
+                                .map(
+                                        countries ->
+                                                countries
+                                                        .stream()
+                                                        .map(CountryDTO::fromEntity)
+                                                        .collect(Collectors.toSet())
+                                )
+                                .orElse(null)
+                )
+                .awards(
+                        Optional.ofNullable(awardSet)
+                                .map(
+                                        awards ->
+                                                awards
+                                                        .stream()
+                                                        .map(AwardDTO::fromEntity)
+                                                        .collect(Collectors.toSet())
+                                )
+                                .orElse(null)
+                )
                 .user(UserDTO.fromEntity(movie.getUser()))
                 .build();
     }
+
+    /*public static MovieDTO fromEntity(Movie movie, Set<Genre> genreSet, Set<Country> countrySet) {
+        return MovieDTO.builder()
+                .id(movie.getId())
+                .title(movie.getTitle())
+                .originalTitle(movie.getOriginalTitle())
+                .releaseDate(movie.getReleaseDate())
+                .runningTime(movie.getRunningTime())
+                .budget(movie.getBudget())
+                .boxOffice(movie.getBoxOffice())
+                .posterFileName(movie.getPosterFileName())
+                .creationDate(movie.getCreationDate())
+                .lastUpdate(movie.getLastUpdate())
+                .genres(genreSet.stream().map(GenreDTO::fromEntity).collect(Collectors.toSet()))
+                .countries(countrySet.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
+                .user(UserDTO.fromEntity(movie.getUser()))
+                .build();
+    }*/
 
     public static MovieDTO fromEntity(Movie movie, Set<Award> awards) {
         return MovieDTO.builder()

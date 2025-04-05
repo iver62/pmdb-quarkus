@@ -19,7 +19,7 @@ public class MovieActorDTO {
                 MovieActorDTO.builder()
                         .id(movieActor.getId())
                         .actor(PersonDTO.fromEntity(movieActor.getActor()))
-                        .movie(MovieDTO.fromEntity(movieActor.getMovie()))
+                        .movie(MovieDTO.fromEntity(movieActor.getMovie(), null, null, null))
                         .role(movieActor.getRole())
                         .rank(movieActor.getRank())
                         .build()

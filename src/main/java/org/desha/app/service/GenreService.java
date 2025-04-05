@@ -57,13 +57,17 @@ public class GenreService {
                 ).map(HashSet::new);
     }
 
+    public Uni<Set<Genre>> getByIds(List<Long> ids) {
+        return genreRepository.findByIds(ids).map(HashSet::new);
+    }
+
     public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 movieRepository.findMoviesByGenre(id, page, sort, direction, term)
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(movie ->  MovieDTO.fromEntity(movie, null, null, null))
                                         .toList()
 
                         )

@@ -23,7 +23,10 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.*;
@@ -34,7 +37,6 @@ import static jakarta.ws.rs.core.Response.Status.*;
 public class MovieResource {
 
     private final CountryService countryService;
-    private final GenreService genreService;
     private final MovieService movieService;
     private final ArtDirectorService artDirectorService;
     private final CasterService casterService;
@@ -74,7 +76,6 @@ public class MovieResource {
             VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
         this.countryService = countryService;
-        this.genreService = genreService;
         this.movieService = movieService;
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
@@ -1063,6 +1064,25 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Ajoute un ensemble de genres à un film spécifique.
+     *
+     * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
+     * @param genreDTOSet L'ensemble des genres à ajouter, représentés sous forme de DTO.
+     * @return Une réponse HTTP contenant le film mis à jour avec ses nouveaux genres :
+     * - 200 OK si l'opération réussit et retourne l'entité mise à jour.
+     * - 500 Server Error si l'ajout échoue.
+     */
+    @PUT
+    @Path("{movieId}/genres")
+    public Uni<Response> addGenres(@RestPath Long movieId, Set<GenreDTO> genreDTOSet) {
+        return
+                movieService.addGenres(movieId, genreDTOSet)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
 //    @PUT
 //    @Path("{id}/actors")
 //    public Uni<Response> addActors(Long id, List<MovieActor> movieActors) {
@@ -1094,32 +1114,6 @@ public class MovieResource {
 //                .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
 //
 //    }
-
-    /*@PUT
-    @Path("{id}/genres")
-    public Uni<Response> addGenres(Long id, Set<Genre> genreSet) {
-        return
-                Uni.join().all(
-                                genreSet.stream().filter(g -> Objects.nonNull(g.getId())).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        genreSet
-                                                .stream()
-                                                .filter(g -> Objects.nonNull(g.getId()))
-                                                .map(g -> Genre.findById(g.getId()))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Genre) e).toList())
-                        .map(HashSet::new)
-                        .map(genres -> genreSet.stream().filter(g -> Objects.isNull(g.getId())).collect(Collectors.toCollection(() -> genres)))
-                        .chain(genres -> movieService.addGenres(id, genres))
-                        .map(Movie::getGenres)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }*/
 
     /*@PUT
     @Path("{id}/countries")
@@ -1330,15 +1324,22 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Supprime un genre spécifique d'un film donné.
+     *
+     * @param movieId L'identifiant du film dont le genre doit être supprimé.
+     * @param genreId L'identifiant du genre à supprimer.
+     * @return Une réponse HTTP contenant le film mis à jour après la suppression du genre :
+     * - 200 OK si la suppression est réussie et retourne l'entité mise à jour.
+     * - 500 Internal Server Error en cas d'erreur interne.
+     */
     @PUT
     @Path("{movieId}/genres/{genreId}")
-    public Uni<Response> removeGenre(Long movieId, Long genreId) {
+    public Uni<Response> removeGenre(@RestPath Long movieId, @RestPath Long genreId) {
         return
-                genreService.removeMovie(genreId, movieId)
-                        .chain(() -> movieService.removeGenre(movieId, genreId))
-                        .map(Movie::getGenres)
+                movieService.removeGenre(movieId, genreId)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
