@@ -418,15 +418,25 @@ public class MovieResource {
                 ;
     }
 
-    /*@GET
+    /**
+     * Récupère les genres associés à un film donné.
+     *
+     * @param id L'ID du film.
+     * @return Une réponse HTTP :
+     * - 200 (OK) avec la liste des genres si elle n'est pas vide.
+     */
+    @GET
     @Path("{id}/genres")
-    public Uni<Set<Genre>> getGenres(@RestPath Long id) {
+    public Uni<Response> getGenres(@RestPath Long id) {
         return
-                Movie.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getGenresByMovie)
+                movieService.getGenresByMovie(id)
+                        .map(genreDTOS ->
+                                genreDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(genreDTOS).build()
+                        )
                 ;
-    }*/
+    }
 
     /*@GET
     @Path("{id}/countries")

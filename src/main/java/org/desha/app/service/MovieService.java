@@ -335,6 +335,30 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère la liste des genres associés à un film donné.
+     *
+     * @param id L'ID du film pour lequel récupérer les genres.
+     * @return Un {@link Uni} contenant une liste de {@link GenreDTO}.
+     * - Retourne une erreur si le film n'existe pas.
+     */
+    public Uni<List<GenreDTO>> getGenresByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie ->
+                                Mutiny.fetch(movie.getGenres())
+                                        .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés pour ce film"))
+                                        .map(genreSet ->
+                                                genreSet
+                                                        .stream()
+                                                        .map(GenreDTO::fromEntity)
+                                                        .toList()
+                                        )
+                        )
+                ;
+    }
+
     public Uni<TechnicalTeamDTO> getTechnicalTeam(Long id) {
         return
                 Panache
