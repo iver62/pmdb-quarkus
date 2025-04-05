@@ -340,7 +340,8 @@ public class MovieService {
      *
      * @param id L'ID du film pour lequel récupérer les genres.
      * @return Un {@link Uni} contenant une liste de {@link GenreDTO}.
-     * - Retourne une erreur si le film n'existe pas.
+     * @throws IllegalArgumentException Si le film n'existe pas.
+     * @throws IllegalStateException    Si les genres ne sont pas initialisés pour ce film.
      */
     public Uni<List<GenreDTO>> getGenresByMovie(Long id) {
         return
@@ -353,6 +354,31 @@ public class MovieService {
                                                 genreSet
                                                         .stream()
                                                         .map(GenreDTO::fromEntity)
+                                                        .toList()
+                                        )
+                        )
+                ;
+    }
+
+    /**
+     * Récupère la liste des pays associés à un film donné.
+     *
+     * @param id L'ID du film.
+     * @return Une liste de `CountryDTO` représentant les pays du film.
+     * @throws IllegalArgumentException Si le film n'existe pas.
+     * @throws IllegalStateException    Si les pays ne sont pas initialisés pour ce film.
+     */
+    public Uni<List<CountryDTO>> getCountriesByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                        .flatMap(movie ->
+                                Mutiny.fetch(movie.getCountries())
+                                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés pour ce film"))
+                                        .map(countrySet ->
+                                                countrySet
+                                                        .stream()
+                                                        .map(CountryDTO::fromEntity)
                                                         .toList()
                                         )
                         )

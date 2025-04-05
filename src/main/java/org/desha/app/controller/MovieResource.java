@@ -438,15 +438,25 @@ public class MovieResource {
                 ;
     }
 
-    /*@GET
+    /**
+     * Récupère les pays associés à un film donné.
+     *
+     * @param id L'ID du film.
+     * @return Une réponse HTTP :
+     * - 200 (OK) avec la liste des pays si elle contient des données.
+     */
+    @GET
     @Path("{id}/countries")
-    public Uni<Set<Country>> getCountries(@RestPath Long id) {
+    public Uni<Response> getCountries(@RestPath Long id) {
         return
-                Movie.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
-                        .chain(movieService::getCountriesByMovie)
+                movieService.getCountriesByMovie(id)
+                        .map(countryDTOS ->
+                                countryDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOS).build()
+                        )
                 ;
-    }*/
+    }
 
     @GET
     @Path("{id}/awards")
