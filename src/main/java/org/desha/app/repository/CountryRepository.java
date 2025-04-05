@@ -32,7 +32,7 @@ public class CountryRepository implements PanacheRepository<Country> {
      * @param term Le terme de recherche à appliquer sur le nom du pays (insensible aux accents et à la casse).
      * @return Un {@link Uni} contenant le nombre de pays distincts correspondant au terme de recherche.
      */
-    public Uni<Long> countMovieCountries(String term) {
+    public Uni<Long> countCountriesInMovies(String term) {
         return count("""
                         SELECT COUNT(DISTINCT c)
                         FROM Movie m
@@ -258,7 +258,14 @@ public class CountryRepository implements PanacheRepository<Country> {
                 ;
     }
 
-    public Uni<List<Country>> findMovieCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<Country>> findByName(String nomFrFr) {
+        String query = "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))";
+
+        return find(query, Sort.by("nomFrFr"), Parameters.with("term", nomFrFr.toLowerCase()))
+                .list();
+    }
+
+    public Uni<List<Country>> findCountriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
         String query = """
                 SELECT DISTINCT c
                 FROM Movie m

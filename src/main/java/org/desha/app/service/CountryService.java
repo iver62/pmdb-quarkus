@@ -268,6 +268,10 @@ public class CountryService {
                 ).map(HashSet::new);
     }
 
+    public Uni<Set<Country>> getByIds(List<Long> ids) {
+        return countryRepository.findByIds(ids).map(HashSet::new);
+    }
+
     public Uni<CountryDTO> getFull(Long id) {
         return
                 countryRepository.findById(id)
@@ -293,13 +297,26 @@ public class CountryService {
                 ;
     }
 
+    public Uni<List<CountryDTO>> searchByName(String name) {
+        return
+                countryRepository.findByName(name.trim())
+                        .onItem().ifNotNull()
+                        .transform(tList ->
+                                tList.stream()
+                                        .map(CountryDTO::fromEntity)
+                                        .toList()
+                        )
+                        .onFailure().recoverWithItem(Collections.emptyList())
+                ;
+    }
+
     public Uni<List<MovieDTO>> getMovies(Long id, String sort, Sort.Direction direction, String term) {
         return
                 movieRepository.findMoviesByCountry(id, sort, direction, term)
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
                                         .toList()
                         )
                 ;
@@ -311,7 +328,7 @@ public class CountryService {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
                                         .toList()
                         )
                 ;

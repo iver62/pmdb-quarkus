@@ -99,6 +99,29 @@ public class CountryResource {
     }
 
     @GET
+    @Path("search")
+    public Uni<Response> searchCountriesByName(@QueryParam("query") String query) {
+        if (Objects.isNull(query) || query.trim().isEmpty()) {
+            return Uni.createFrom()
+                    .item(
+                            Response
+                                    .status(Response.Status.BAD_REQUEST)
+                                    .entity("Le paramètre 'query' est requis")
+                                    .build()
+                    );
+        }
+
+        return
+                countryService.searchByName(query)
+                        .map(countryDTOS ->
+                                countryDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOS).build()
+                        )
+                ;
+    }
+
+    @GET
     @Path("{id}/movies/all")
     public Uni<Response> getAllMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
