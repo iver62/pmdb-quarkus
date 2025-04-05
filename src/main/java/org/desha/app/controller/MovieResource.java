@@ -36,7 +36,6 @@ import static jakarta.ws.rs.core.Response.Status.*;
 @Slf4j
 public class MovieResource {
 
-    private final CountryService countryService;
     private final MovieService movieService;
     private final ArtDirectorService artDirectorService;
     private final CasterService casterService;
@@ -56,8 +55,6 @@ public class MovieResource {
 
     @Inject
     public MovieResource(
-            CountryService countryService,
-            GenreService genreService,
             MovieService movieService,
             ArtDirectorService artDirectorService,
             CasterService casterService,
@@ -75,7 +72,6 @@ public class MovieResource {
             StuntmanService stuntmanService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
-        this.countryService = countryService;
         this.movieService = movieService;
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
@@ -178,7 +174,7 @@ public class MovieResource {
 
     @GET
     @Path("countries")
-    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
+    public Uni<Response> getCountriesInMovies(@BeanParam QueryParamsDTO queryParams) {
         Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
@@ -187,9 +183,9 @@ public class MovieResource {
         Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
 
         return
-                movieService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
-                                movieService.countCountries(queryParams.getTerm()).map(total ->
+                                movieService.countCountriesInMovies(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -1067,17 +1063,36 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de genres à un film spécifique.
      *
-     * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
+     * @param id          L'identifiant du film auquel les genres doivent être ajoutés.
      * @param genreDTOSet L'ensemble des genres à ajouter, représentés sous forme de DTO.
      * @return Une réponse HTTP contenant le film mis à jour avec ses nouveaux genres :
      * - 200 OK si l'opération réussit et retourne l'entité mise à jour.
      * - 500 Server Error si l'ajout échoue.
      */
     @PUT
-    @Path("{movieId}/genres")
-    public Uni<Response> addGenres(@RestPath Long movieId, Set<GenreDTO> genreDTOSet) {
+    @Path("{id}/genres")
+    public Uni<Response> addGenres(@RestPath Long id, Set<GenreDTO> genreDTOSet) {
         return
-                movieService.addGenres(movieId, genreDTOSet)
+                movieService.addGenres(id, genreDTOSet)
+                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute une liste de pays associés à un film.
+     *
+     * @param id            L'identifiant du film auquel les pays doivent être ajoutés.
+     * @param countryDTOSet Un ensemble d'objets {@link CountryDTO} représentant les pays à associer au film.
+     * @return Un {@link Uni} contenant une réponse HTTP :
+     * - 200 OK avec l'entité mise à jour si l'ajout est réussi.
+     * - 500 Internal Server Error en cas d'erreur interne.
+     */
+    @PUT
+    @Path("{id}/countries")
+    public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOSet) {
+        return
+                movieService.addCountries(id, countryDTOSet)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -1114,25 +1129,6 @@ public class MovieResource {
 //                .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
 //
 //    }
-
-    /*@PUT
-    @Path("{id}/countries")
-    public Uni<Response> addCountries(Long id, Set<Country> countrySet) {
-        return
-                Uni.join().all(
-                                countrySet
-                                        .stream()
-                                        .map(c -> Country.findById(c.getId()))
-                                        .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().map(e -> (Country) e).collect(Collectors.toSet()))
-                        .chain(countries -> movieService.addCountries(id, countries))
-                        .map(Movie::getCountries)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }*/
 
     /*@PUT
     @Path("{id}/awards")
@@ -1343,15 +1339,22 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Supprime l'association d'un pays avec un film donné.
+     *
+     * @param movieId   L'identifiant du film concerné.
+     * @param countryId L'identifiant du pays à dissocier du film.
+     * @return Un {@link Uni} contenant une réponse HTTP :
+     * - 200 OK avec l'entité mise à jour si la suppression est réussie.
+     * - 500 Internal Server Error en cas d'erreur interne.
+     */
     @PUT
     @Path("{movieId}/countries/{countryId}")
-    public Uni<Response> removeCountry(Long movieId, Long countryId) {
+    public Uni<Response> removeCountry(@RestPath Long movieId, @RestPath Long countryId) {
         return
-                countryService.removeMovie(countryId, movieId)
-                        .chain(() -> movieService.removeCountry(movieId, countryId))
-                        .map(Movie::getCountries)
+                movieService.removeCountry(movieId, countryId)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 

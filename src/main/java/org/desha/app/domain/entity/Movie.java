@@ -423,6 +423,13 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
+    /**
+     * Ajoute un ensemble de genres à la collection existante.
+     *
+     * @param genreSet L'ensemble des genres à ajouter.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des genres après l'ajout.
+     * - Provoque une erreur si la collection de genres n'est pas initialisée.
+     */
     public Uni<Set<Genre>> addGenres(Set<Genre> genreSet) {
         return
                 Mutiny.fetch(genres)
@@ -431,16 +438,18 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
+    /**
+     * Ajoute un ensemble de pays à la collection existante.
+     *
+     * @param countrySet L'ensemble des pays à ajouter.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après l'ajout.
+     * - Provoque une erreur si la collection de pays n'est pas initialisée.
+     */
     public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
         return
                 Mutiny.fetch(countries)
-                        .map(
-                                fetchCountries -> {
-                                    fetchCountries.clear();
-                                    fetchCountries.addAll(countrySet);
-                                    return fetchCountries;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> fetchCountries.addAll(countrySet))
                 ;
     }
 
@@ -641,23 +650,33 @@ public class Movie extends PanacheEntityBase {
         this.movieActors.removeIf(role -> Objects.equals(role.id, id));
     }
 
-    public Uni<Set<Country>> removeCountry(Long id) {
-        return
-                Mutiny.fetch(countries)
-                        .map(
-                                fetchCountries -> {
-                                    fetchCountries.removeIf(country -> Objects.equals(country.id, id));
-                                    return fetchCountries;
-                                }
-                        )
-                ;
-    }
-
+    /**
+     * Supprime un genre de la collection existante en fonction de son ID.
+     *
+     * @param id L'ID du genre à supprimer.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des genres après la suppression.
+     * - Provoque une erreur si la collection de genres n'est pas initialisée.
+     */
     public Uni<Set<Genre>> removeGenre(Long id) {
         return
                 Mutiny.fetch(genres)
                         .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés"))
                         .invoke(fetchGenres -> fetchGenres.removeIf(genre -> Objects.equals(genre.id, id)))
+                ;
+    }
+
+    /**
+     * Supprime un pays de la collection existante en fonction de son ID.
+     *
+     * @param id L'ID du pays à supprimer.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après la suppression.
+     * - Provoque une erreur si la collection de pays n'est pas initialisée.
+     */
+    public Uni<Set<Country>> removeCountry(Long id) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.id, id)))
                 ;
     }
 

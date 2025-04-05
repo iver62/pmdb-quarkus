@@ -109,8 +109,8 @@ public class MovieService {
         return movieRepository.countMovies(criteriasDTO);
     }
 
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countMovieCountries(term);
+    public Uni<Long> countCountriesInMovies(String term) {
+        return countryRepository.countCountriesInMovies(term);
     }
 
     public Uni<Movie> getById(Long id) {
@@ -138,9 +138,9 @@ public class MovieService {
         return movieRepository.findByTitle(pattern);
     }
 
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
         return
-                countryRepository.findMovieCountries(page, sort, direction, term)
+                countryRepository.findCountriesInMovies(page, sort, direction, term)
                         .map(
                                 countryList ->
                                         countryList
@@ -955,7 +955,8 @@ public class MovieService {
      *
      * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
      * @param genreDTOSet Un ensemble d'objets {@link GenreDTO} représentant les genres à ajouter.
-     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après l'ajout des genres
+     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après l'ajout des genres.
+     * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
      */
     public Uni<MovieDTO> addGenres(Long movieId, Set<GenreDTO> genreDTOSet) {
         return
@@ -972,8 +973,36 @@ public class MovieService {
                                         .flatMap(movieRepository::persist)
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getGenres())
-                                                        .invoke(movie::setGenres)
-                                                        .map(genreSet -> MovieDTO.fromEntity(movie, movie.getGenres(), null, null))
+                                                        .map(genreSet -> MovieDTO.fromEntity(movie, genreSet, null, null))
+                                        )
+                        )
+                ;
+    }
+
+    /**
+     * Ajoute une ou plusieurs associations entre un film et des pays.
+     *
+     * @param movieId       L'identifiant du film auquel associer les pays.
+     * @param countryDTOSet Un ensemble de DTO représentant les pays à associer.
+     * @return Un {@link Uni} contenant un {@link MovieDTO} mis à jour si l'opération réussit.
+     * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
+     */
+    public Uni<MovieDTO> addCountries(Long movieId, Set<CountryDTO> countryDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .flatMap(movie ->
+                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
+                                                        .call(movie::addCountries)
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .map(countrySet -> MovieDTO.fromEntity(movie, null, countrySet, null))
                                         )
                         )
                 ;
@@ -985,6 +1014,7 @@ public class MovieService {
      * @param movieId L'identifiant du film dont le genre doit être supprimé.
      * @param genreId L'identifiant du genre à supprimer du film.
      * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après la suppression du genre.
+     * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
      */
     public Uni<MovieDTO> removeGenre(Long movieId, Long genreId) {
         return
@@ -994,21 +1024,34 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
                                         .call(movie -> movie.removeGenre(genreId))
                                         .chain(movieRepository::persist)
-                                        .flatMap(movie -> Mutiny.fetch(movie.getGenres()).invoke(movie::setGenres)
-                                                .map(genreSet -> MovieDTO.fromEntity(movie, movie.getGenres(), null, null))
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getGenres())
+                                                        .map(genreSet -> MovieDTO.fromEntity(movie, genreSet, null, null))
                                         )
                         )
                 ;
     }
 
-    public Uni<Movie> removeCountry(Long movieId, Long countryId) {
+    /**
+     * Supprime l'association entre un film et un pays donné.
+     *
+     * @param movieId   L'identifiant du film dont on veut retirer un pays associé.
+     * @param countryId L'identifiant du pays à dissocier du film.
+     * @return Un {@link Uni} contenant un {@link MovieDTO} mis à jour après suppression de l'association.
+     * - Provoque une erreur si le film n'est pas trouvé.
+     */
+    public Uni<MovieDTO> removeCountry(Long movieId, Long countryId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
-                                        .onItem().ifNotNull()
-                                        .call(entity -> entity.removeCountry(countryId))
-                                        .chain(entity -> entity.persist())
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .call(movie -> movie.removeCountry(countryId))
+                                        .chain(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .map(countrySet -> MovieDTO.fromEntity(movie, null, countrySet, null))
+                                        )
                         )
                 ;
     }
