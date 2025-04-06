@@ -9,7 +9,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.RepartitionDTO;
-import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.hibernate.reactive.mutiny.Mutiny;
 
@@ -348,6 +347,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return find("id", id).firstResult();
     }
 
+    public Uni<List<Movie>> searchByTitle(String term) {
+        String query = "LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))";
+
+        return list("LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', ?1, '%')))", Sort.by("title"), term.toLowerCase());
+    }
+
     public Uni<Movie> findByIdWithCountriesAndGenres(Long id) {
         return
                 find("""
@@ -402,7 +407,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findByTitle(String title) {
-        return list("title", title);
+        return list("LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', ?1))", title);
     }
 
     public Uni<List<Movie>> findMoviesByActor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {

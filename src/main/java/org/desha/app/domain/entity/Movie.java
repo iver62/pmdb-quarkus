@@ -216,16 +216,18 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
+    /**
+     * Ajoute un ensemble de producteurs à la collection existante.
+     *
+     * @param producerSet L'ensemble des producteurs à ajouter.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des producteurs après l'ajout.
+     * @throws IllegalStateException si la liste des producteurs n'est pas initialisée.
+     */
     public Uni<Set<Producer>> addProducers(Set<Producer> producerSet) {
         return
                 Mutiny.fetch(producers)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(producerSet);
-                                    return people;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des producteurs n'est pas initialisée"))
+                        .invoke(fetchProducers -> fetchProducers.addAll(producerSet))
                 ;
     }
 
@@ -466,15 +468,18 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
+    /**
+     * Supprime un producteur spécifique de la liste des producteurs associés à un film.
+     *
+     * @param id L'identifiant du producteur à supprimer.
+     * @return Une {@link Uni} contenant l'ensemble mis à jour des producteurs après la suppression.
+     * @throws IllegalStateException si la liste des producteurs n'est pas initialisée.
+     */
     public Uni<Set<Producer>> removeProducer(Long id) {
         return
                 Mutiny.fetch(producers)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Producteurs non initialisés"))
+                        .invoke(fetchGenres -> fetchGenres.removeIf(producer -> Objects.equals(producer.id, id)))
                 ;
     }
 
