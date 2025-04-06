@@ -15,6 +15,7 @@ import org.desha.app.repository.MovieRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class CountryService {
@@ -736,6 +737,15 @@ public class CountryService {
                                                 }
                                         )
                         )
+                ;
+    }
+
+    public Set<CountryDTO> fromCountrySetEntity(Set<Country> genreSet) {
+        return
+                genreSet
+                        .stream()
+                        .map(CountryDTO::fromEntity)
+                        .collect(Collectors.toSet())
                 ;
     }
 }

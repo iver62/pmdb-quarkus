@@ -13,6 +13,7 @@ import org.desha.app.repository.GenreRepository;
 import org.desha.app.repository.MovieRepository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class GenreService {
@@ -67,7 +68,7 @@ public class GenreService {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(movie ->  MovieDTO.fromEntity(movie, null, null, null))
+                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
                                         .toList()
 
                         )
@@ -83,6 +84,15 @@ public class GenreService {
                                         .onItem().ifNotNull()
                                         .call(genre -> genre.removeMovie(movieId))
                         )
+                ;
+    }
+
+    public Set<GenreDTO> fromGenreSetEntity(Set<Genre> genreSet) {
+        return
+                genreSet
+                        .stream()
+                        .map(GenreDTO::fromEntity)
+                        .collect(Collectors.toSet())
                 ;
     }
 }

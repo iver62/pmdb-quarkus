@@ -7,7 +7,6 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Movie;
@@ -21,6 +20,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
@@ -71,7 +71,8 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    public Uni<List<PersonDTO>> getByName(String name) {
+    @Override
+    public Uni<List<PersonDTO>> searchByName(String name) {
         return
                 personRepository.findByName(name.trim())
                         .onItem().ifNotNull()
@@ -225,13 +226,12 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
         return Panache.withTransaction(() -> personRepository.deleteById(id));
     }
 
-    protected List<PersonDTO> fromPersonListEntity(Set<T> personSet) {
+    protected Set<PersonDTO> fromPersonSetEntity(Set<T> personSet) {
         return
                 personSet
                         .stream()
                         .map(PersonDTO::fromEntity)
-                        .sorted(Comparator.comparing(PersonDTO::getName))
-                        .toList()
+                        .collect(Collectors.toSet())
                 ;
     }
 

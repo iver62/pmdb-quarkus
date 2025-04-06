@@ -249,7 +249,7 @@ public class MovieResource {
     @Path("{id}/producers")
     public Uni<Response> getProducers(@RestPath Long id) {
         return
-                movieService.getProducersByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getProducers, producerService, "L'ensemble des producteurs n'est pas initialisé pour ce film")
                         .map(producers ->
                                 producers.isEmpty()
                                         ? Response.noContent().build()
@@ -262,7 +262,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Response> getDirectors(@RestPath Long id) {
         return
-                movieService.getDirectorsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getDirectors, directorService, "L'ensemble des réalisateurs n'est pas initialisé pour ce film")
                         .map(directors ->
                                 directors.isEmpty()
                                         ? Response.noContent().build()
@@ -275,7 +275,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Response> getScreenwriters(@RestPath Long id) {
         return
-                movieService.getScreenwritersByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getScreenwriters, screenwriterService, "L'ensemble des scénaristes n'est pas initialisé pour ce film")
                         .map(screenwriters ->
                                 screenwriters.isEmpty()
                                         ? Response.noContent().build()
@@ -288,7 +288,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Response> getMusicians(@RestPath Long id) {
         return
-                movieService.getMusiciansByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getMusicians, musicianService, "L'ensemble des musiciens n'est pas initialisé pour ce film")
                         .map(musicians ->
                                 musicians.isEmpty()
                                         ? Response.noContent().build()
@@ -301,7 +301,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Response> getPhotographers(@RestPath Long id) {
         return
-                movieService.getProducersByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getPhotographers, photographerService, "L'ensemble des photographes n'est pas initialisé pour ce film")
                         .map(photographers ->
                                 photographers.isEmpty()
                                         ? Response.noContent().build()
@@ -314,7 +314,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Response> getCostumiers(@RestPath Long id) {
         return
-                movieService.getCostumiersByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getCostumiers, costumierService, "L'ensemble des costumiers n'est pas initialisé pour ce film")
                         .map(costumiers ->
                                 costumiers.isEmpty()
                                         ? Response.noContent().build()
@@ -327,7 +327,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Response> getDecorators(@RestPath Long id) {
         return
-                movieService.getDecoratorsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getDecorators, decoratorService, "L'ensemble des décorateurs n'est pas initialisé pour ce film")
                         .map(decorators ->
                                 decorators.isEmpty()
                                         ? Response.noContent().build()
@@ -340,7 +340,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Response> getEditors(@RestPath Long id) {
         return
-                movieService.getEditorsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getEditors, editorService, "L'ensemble des monteurs n'est pas initialisé pour ce film")
                         .map(editors ->
                                 editors.isEmpty()
                                         ? Response.noContent().build()
@@ -353,7 +353,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Response> getCasters(@RestPath Long id) {
         return
-                movieService.getCastersByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getCasters, casterService, "L'ensemble des casteurs n'est pas initialisé pour ce film")
                         .map(casters ->
                                 casters.isEmpty()
                                         ? Response.noContent().build()
@@ -366,7 +366,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Response> getArtDirectors(@RestPath Long id) {
         return
-                movieService.getArtDirectorsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getArtDirectors, artDirectorService, "L'ensemble des directeurs artistiques n'est pas initialisé pour ce film")
                         .map(artDirectors ->
                                 artDirectors.isEmpty()
                                         ? Response.noContent().build()
@@ -379,7 +379,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Response> getSoundEditors(@RestPath Long id) {
         return
-                movieService.getSoundEditorsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getSoundEditors, soundEditorService, "L'ensemble des ingénieurs du son n'est pas initialisé pour ce film")
                         .map(soundEditors ->
                                 soundEditors.isEmpty()
                                         ? Response.noContent().build()
@@ -392,7 +392,7 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                movieService.getVisualEffectsSupervisorsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getSoundEditors, soundEditorService, "L'ensemble des spécialistes des effets spéciaux du son n'est pas initialisé pour ce film")
                         .map(visualEffectsSupervisors ->
                                 visualEffectsSupervisors.isEmpty()
                                         ? Response.noContent().build()
@@ -405,7 +405,7 @@ public class MovieResource {
     @Path("{id}/makeup-artists")
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
         return
-                movieService.getMakeupArtistsByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getMakeupArtists, makeupArtistService, "L'ensemble des maquilleurs n'est pas initialisé pour ce film")
                         .map(makeupArtists ->
                                 makeupArtists.isEmpty()
                                         ? Response.noContent().build()
@@ -418,7 +418,7 @@ public class MovieResource {
     @Path("{id}/hair-dressers")
     public Uni<Response> getHairDressers(@RestPath Long id) {
         return
-                movieService.getHairDressersByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getHairDressers, hairDresserService, "L'ensemble des coiffeurs n'est pas initialisé pour ce film")
                         .map(hairDressers ->
                                 hairDressers.isEmpty()
                                         ? Response.noContent().build()
@@ -431,7 +431,7 @@ public class MovieResource {
     @Path("{id}/stuntmen")
     public Uni<Response> getStuntmen(@RestPath Long id) {
         return
-                movieService.getStuntmenByMovie(id)
+                movieService.getPeopleByMovie(id, Movie::getStuntmen, stuntmanService, "L'ensemble des cascadeurs n'est pas initialisé pour ce film")
                         .map(stuntmen ->
                                 stuntmen.isEmpty()
                                         ? Response.noContent().build()
@@ -1291,7 +1291,7 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/photographers/{photographerId}")
     public Uni<Response> removePhotographer(Long movieId, Long photographerId) {
         return
@@ -1301,9 +1301,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/costumiers/{costumierId}")
     public Uni<Response> removeCostumier(Long movieId, Long costumierId) {
         return
@@ -1313,9 +1313,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/decorators/{decoratorId}")
     public Uni<Response> removeDecorator(Long movieId, Long decoratorId) {
         return
@@ -1325,9 +1325,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/editors/{editorId}")
     public Uni<Response> removeEditor(Long movieId, Long editorId) {
         return
@@ -1337,9 +1337,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+   /* @PUT
     @Path("{movieId}/casters/{casterId}")
     public Uni<Response> removeCaster(Long movieId, Long casterId) {
         return
@@ -1349,9 +1349,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/art-directors/{artDirectorId}")
     public Uni<Response> removeArtDirectors(Long movieId, Long artDirectorId) {
         return
@@ -1361,9 +1361,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/sound-editors/{soundDirectorId}")
     public Uni<Response> removeSoundEditors(Long movieId, Long soundDirectorId) {
         return
@@ -1373,9 +1373,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/visual-effects-supervisors/{visualEffectsSupervisorId}")
     public Uni<Response> removeVisualEffectsSupervisor(Long movieId, Long visualEffectsSupervisorId) {
         return
@@ -1385,9 +1385,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+   /* @PUT
     @Path("{movieId}/makeup-artists/{makeupArtistId}")
     public Uni<Response> removeMakeupArtists(Long movieId, Long makeupArtistId) {
         return
@@ -1397,9 +1397,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+    /*@PUT
     @Path("{movieId}/hair-dressers/{hairDresserId}")
     public Uni<Response> removeHairDressers(Long movieId, Long hairDresserId) {
         return
@@ -1409,9 +1409,9 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
-    @PUT
+   /* @PUT
     @Path("{movieId}/stuntmen/{stuntmanId}")
     public Uni<Response> removeStuntman(Long movieId, Long stuntmanId) {
         return
@@ -1421,7 +1421,7 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
     /**
      * Supprime un genre spécifique d'un film donné.
