@@ -1348,125 +1348,195 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    /**
+     * Retire un costumier d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId     L'identifiant du film concerné.
+     * @param costumierId L'identifiant du costumier à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des costumiers si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/costumiers/{costumierId}")
-    public Uni<Response> removeCostumier(Long movieId, Long costumierId) {
+    public Uni<Response> removeCostumier(@RestPath Long movieId, @RestPath Long costumierId) {
         return
-                costumierService.removeMovie(costumierId, movieId)
-                        .chain(() -> movieService.removeCostumier(movieId, costumierId))
-                        .map(Movie::getCostumiers)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, costumierId, Movie::getCostumiers, costumierService, "La collection des costumiers n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-    /*@PUT
+    /**
+     * Retire un décorateur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId     L'identifiant du film concerné.
+     * @param decoratorId L'identifiant du décorateur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des décorateurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/decorators/{decoratorId}")
-    public Uni<Response> removeDecorator(Long movieId, Long decoratorId) {
+    public Uni<Response> removeDecorator(@RestPath Long movieId, @RestPath Long decoratorId) {
         return
-                decoratorService.removeMovie(decoratorId, movieId)
-                        .chain(() -> movieService.removeDecorator(movieId, decoratorId))
-                        .map(Movie::getDecorators)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, decoratorId, Movie::getDecorators, decoratorService, "La collection des décorateurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-    /*@PUT
+    /**
+     * Retire un monteur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId  L'identifiant du film concerné.
+     * @param editorId L'identifiant du monteur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des monteurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/editors/{editorId}")
-    public Uni<Response> removeEditor(Long movieId, Long editorId) {
+    public Uni<Response> removeEditor(@RestPath Long movieId, @RestPath Long editorId) {
         return
-                editorService.removeMovie(editorId, movieId)
-                        .chain(() -> movieService.removeEditor(movieId, editorId))
-                        .map(Movie::getEditors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, editorId, Movie::getEditors, editorService, "La collection des monteurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-   /* @PUT
+    /**
+     * Retire un casteur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId  L'identifiant du film concerné.
+     * @param casterId L'identifiant du casteur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des casteurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/casters/{casterId}")
-    public Uni<Response> removeCaster(Long movieId, Long casterId) {
+    public Uni<Response> removeCaster(@RestPath Long movieId, @RestPath Long casterId) {
         return
-                casterService.removeMovie(casterId, movieId)
-                        .chain(() -> movieService.removeEditor(movieId, casterId))
-                        .map(Movie::getCasters)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, casterId, Movie::getCasters, casterService, "La collection des casteurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-    /*@PUT
+    /**
+     * Retire un directeur artistique d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId       L'identifiant du film concerné.
+     * @param artDirectorId L'identifiant du directeur artistique à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des directeurs artistiques si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/art-directors/{artDirectorId}")
-    public Uni<Response> removeArtDirectors(Long movieId, Long artDirectorId) {
+    public Uni<Response> removeArtDirectors(@RestPath Long movieId, @RestPath Long artDirectorId) {
         return
-                artDirectorService.removeMovie(artDirectorId, movieId)
-                        .chain(() -> movieService.removeArtDirector(movieId, artDirectorId))
-                        .map(Movie::getArtDirectors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, artDirectorId, Movie::getArtDirectors, artDirectorService, "La collection des directeurs artistiques n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-    /*@PUT
+    /**
+     * Retire un ingénieur du son d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId         L'identifiant du film concerné.
+     * @param soundDirectorId L'identifiant de l'ingénieur du son à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des ingénieurs du son si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/sound-editors/{soundDirectorId}")
-    public Uni<Response> removeSoundEditors(Long movieId, Long soundDirectorId) {
+    public Uni<Response> removeSoundEditors(@RestPath Long movieId, @RestPath Long soundDirectorId) {
         return
-                soundEditorService.removeMovie(soundDirectorId, movieId)
-                        .chain(() -> movieService.removeArtDirector(movieId, soundDirectorId))
-                        .map(Movie::getSoundEditors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, soundDirectorId, Movie::getSoundEditors, soundEditorService, "La collection des ingénieurs du son n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-    /*@PUT
+    /**
+     * Retire un spécialiste des effets spéciaux d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId                   L'identifiant du film concerné.
+     * @param visualEffectsSupervisorId L'identifiant du spécialiste des effets spéciaux à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des spécialistes des effets spéciaux si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/visual-effects-supervisors/{visualEffectsSupervisorId}")
-    public Uni<Response> removeVisualEffectsSupervisor(Long movieId, Long visualEffectsSupervisorId) {
+    public Uni<Response> removeVisualEffectsSupervisor(@RestPath Long movieId, @RestPath Long visualEffectsSupervisorId) {
         return
-                visualEffectsSupervisorService.removeMovie(visualEffectsSupervisorId, movieId)
-                        .chain(() -> movieService.removeVisualEffectsSupervisor(movieId, visualEffectsSupervisorId))
-                        .map(Movie::getVisualEffectsSupervisors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, visualEffectsSupervisorId, Movie::getVisualEffectsSupervisors, visualEffectsSupervisorService, "La collection des spécialistes des effets spéciaux n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-   /* @PUT
+    /**
+     * Retire un maquilleur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId        L'identifiant du film concerné.
+     * @param makeupArtistId L'identifiant du maquilleur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des maquilleurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/makeup-artists/{makeupArtistId}")
-    public Uni<Response> removeMakeupArtists(Long movieId, Long makeupArtistId) {
+    public Uni<Response> removeMakeupArtists(@RestPath Long movieId, @RestPath Long makeupArtistId) {
         return
-                makeupArtistService.removeMovie(makeupArtistId, movieId)
-                        .chain(() -> movieService.removeMakeupArtist(movieId, makeupArtistId))
-                        .map(Movie::getMakeupArtists)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, makeupArtistId, Movie::getMakeupArtists, makeupArtistService, "La collection des maquilleurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-    /*@PUT
+    /**
+     * Retire un coiffeur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId       L'identifiant du film concerné.
+     * @param hairDresserId L'identifiant du coiffeur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des coiffeurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/hair-dressers/{hairDresserId}")
-    public Uni<Response> removeHairDressers(Long movieId, Long hairDresserId) {
+    public Uni<Response> removeHairDressers(@RestPath Long movieId, @RestPath Long hairDresserId) {
         return
-                hairDresserService.removeMovie(hairDresserId, movieId)
-                        .chain(() -> movieService.removeHairDresser(movieId, hairDresserId))
-                        .map(Movie::getHairDressers)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, hairDresserId, Movie::getHairDressers, hairDresserService, "La collection des coiffeurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
-   /* @PUT
+    /**
+     * Retire un cascadeur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId    L'identifiant du film concerné.
+     * @param stuntmanId L'identifiant du cascadeur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des cascadeurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/stuntmen/{stuntmanId}")
-    public Uni<Response> removeStuntman(Long movieId, Long stuntmanId) {
+    public Uni<Response> removeStuntman(@RestPath Long movieId, @RestPath Long stuntmanId) {
         return
-                stuntmanService.removeMovie(stuntmanId, movieId)
-                        .chain(() -> movieService.removeStuntman(movieId, stuntmanId))
-                        .map(Movie::getStuntmen)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePerson(movieId, stuntmanId, Movie::getStuntmen, stuntmanService, "La collection des cascadeurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
     /**
      * Supprime un genre spécifique d'un film donné.
