@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -1273,15 +1272,22 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
+    /**
+     * Retire un musicien d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId    L'identifiant du film concerné.
+     * @param musicianId L'identifiant du musicien à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des musiciens si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/musicians/{musicianId}")
-    public Uni<Response> removeMusician(Long movieId, Long musicianId) {
+    public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long musicianId) {
         return
-                musicianService.removeMovie(musicianId, movieId)
-                        .chain(() -> movieService.removeMusician(movieId, musicianId))
-                        .map(Movie::getMusicians)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removeMusician(movieId, musicianId)
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
