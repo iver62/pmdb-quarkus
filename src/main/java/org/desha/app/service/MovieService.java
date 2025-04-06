@@ -190,7 +190,7 @@ public class MovieService {
      * @param <S>          Type du service associé à cette personne.
      * @return Un {@link Uni} contenant un {@link Set} de {@link PersonDTO} correspondant aux personnes du film.
      * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si la l'ensemble des personnes n'est pas initialisé pour ce film.
+     * @throws IllegalStateException    Si l'ensemble des personnes n'est pas initialisé pour ce film.
      */
     public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> getPeopleByMovie(Long id, Function<Movie, Set<T>> peopleGetter, S service, String errorMessage) {
         return
@@ -787,6 +787,68 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Ajoute un ou plusieurs genres à un film existant.
+     *
+     * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
+     * @param genreDTOSet Un ensemble d'objets {@link GenreDTO} représentant les genres à ajouter.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link GenreDTO} mis à jour après l'ajout des genres.
+     * @throws IllegalArgumentException si le film ou certains genres ne sont pas trouvés.
+     * @throws IllegalStateException    si l'ensemble des genres n'est pas initialisé pour ce film.
+     */
+    public Uni<Set<GenreDTO>> addGenres(Long movieId, Set<GenreDTO> genreDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .flatMap(movie ->
+                                                genreService.getByIds(genreDTOSet.stream().map(GenreDTO::getId).toList())
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs genres sont introuvables"))
+                                                        .call(movie::addGenres)
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getGenres())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
+                                                        .map(genreService::fromGenreSetEntity)
+                                        )
+                        )
+                ;
+    }
+
+    /**
+     * Ajoute un ou plusieurs pays à un film existant.
+     *
+     * @param movieId       L'identifiant du film auquel associer les pays.
+     * @param countryDTOSet Un ensemble d'objets {@link CountryDTO} représentant les pays à ajouter.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link CountryDTO} mis à jour après l'ajout des pays.
+     * @throws IllegalArgumentException si le film ou certains pays ne sont pas trouvés.
+     * @throws IllegalStateException    si l'ensemble des pays n'est pas initialisé pour ce film.
+     */
+    public Uni<Set<CountryDTO>> addCountries(Long movieId, Set<CountryDTO> countryDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .flatMap(movie ->
+                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
+                                                        .call(movie::addCountries)
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
+                                                        .map(countryService::fromCountrySetEntity)
+                                        )
+                        )
+                ;
+    }
+
     public Uni<Movie> addRole(Long id, MovieActor movieActor) {
         return
                 Panache
@@ -813,308 +875,31 @@ public class MovieService {
     }
 
     /**
-     * Supprime un producteur d'un film spécifique.
+     * Retire une personne spécifique d'un film.
      *
-     * @param movieId    L'identifiant du film dont le producteur doit être supprimé.
-     * @param producerId L'identifiant du producteur à supprimer.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des producteurs du film sous forme de {@link PersonDTO}.
+     * @param movieId      L'identifiant du film.
+     * @param personId     L'identifiant de la personne à retirer.
+     * @param peopleGetter Fonction permettant d'obtenir la liste des personnes à modifier depuis l'entité {@link Movie}.
+     * @param service      Service permettant de convertir les entités en DTO.
+     * @param errorMessage Message d'erreur si la liste des personnes n'est pas initialisée.
+     * @param <T>          Type de la personne (ex: Producteur, Réalisateur, etc.).
+     * @param <S>          Type du service associé à cette personne.
+     * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} :
      * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws IllegalStateException    si la liste des producteurs n'est pas initialisée pour ce film.
+     * @throws IllegalStateException    si la collection de personnes n'est pas initialisée pour ce film.
      */
-    public Uni<Set<PersonDTO>> removeProducer(Long movieId, Long producerId) {
+    public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> removePerson(Long movieId, Long personId, Function<Movie, Set<T>> peopleGetter, S service, String errorMessage) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removePerson(movie.getProducers(), producerId, "La liste des producteurs n'est pas initialisée"))
+                                        .call(movie -> movie.removePerson(peopleGetter.apply(movie), personId, errorMessage))
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
-                                                Mutiny.fetch(movie.getProducers())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des producteurs n'est pas initialisée"))
-                                                        .map(producerService::fromPersonSetEntity)
-                                        )
-                        )
-                ;
-    }
-
-    /**
-     * Supprime un réalisateur spécifique d'un film donné.
-     *
-     * @param movieId    L'identifiant du film dont on veut supprimer le réalisateur.
-     * @param directorId L'identifiant du réalisateur à supprimer.
-     * @return Une {@link Uni} contenant l'ensemble mis à jour des réalisateurs sous forme de {@link PersonDTO}.
-     * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws IllegalStateException    si la liste des réalisateurs n'est pas initialisée pour ce film.
-     */
-    public Uni<Set<PersonDTO>> removeDirector(Long movieId, Long directorId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removePerson(movie.getDirectors(), directorId, "La liste des réalisateurs n'est pas initialisée"))
-                                        .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getDirectors())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des réalisateurs n'est pas initialisée"))
-                                                        .map(directorService::fromPersonSetEntity)
-                                        )
-                        )
-                ;
-    }
-
-    /**
-     * Supprime un scénariste spécifique d'un film donné.
-     *
-     * @param movieId        L'identifiant du film dont on veut supprimer le scénariste.
-     * @param screenwriterId L'identifiant du scénariste à supprimer.
-     * @return Une {@link Uni} contenant l'ensemble mis à jour des scénaristes sous forme de {@link PersonDTO}.
-     * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws IllegalStateException    si la liste des scénaristes n'est pas initialisée pour ce film.
-     */
-    public Uni<Set<PersonDTO>> removeScreenwriter(Long movieId, Long screenwriterId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removePerson(movie.getScreenwriters(), screenwriterId, "La liste des scénaristes n'est pas initialisée"))
-                                        .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getScreenwriters())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des scénaristes n'est pas initialisée"))
-                                                        .map(screenwriterService::fromPersonSetEntity)
-                                        )
-                        )
-                ;
-    }
-
-    /**
-     * Supprime un musicien spécifique d'un film donné.
-     *
-     * @param movieId    L'identifiant du film dont on veut supprimer le musicien.
-     * @param musicianId L'identifiant du musicien à supprimer.
-     * @return Une {@link Uni} contenant l'ensemble mis à jour des musiciens sous forme de {@link PersonDTO}.
-     * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws IllegalStateException    si la liste des musiciens n'est pas initialisée pour ce film.
-     */
-    public Uni<Set<PersonDTO>> removeMusician(Long movieId, Long musicianId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removePerson(movie.getMusicians(), musicianId, "La liste des musiciens n'est pas initialisée"))
-                                        .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getMusicians())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des musiciens n'est pas initialisée"))
-                                                        .map(musicianService::fromPersonSetEntity)
-                                        )
-                        )
-                ;
-    }
-
-    /**
-     * Supprime un photographe spécifique d'un film donné.
-     *
-     * @param movieId        L'identifiant du film dont on veut supprimer le photographe.
-     * @param photographerId L'identifiant du photographe à supprimer.
-     * @return Une {@link Uni} contenant l'ensemble mis à jour des photographes sous forme de {@link PersonDTO}.
-     * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws IllegalStateException    si la liste des photographes n'est pas initialisée pour ce film.
-     */
-    public Uni<Set<PersonDTO>> removePhotographer(Long movieId, Long photographerId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removePerson(movie.getPhotographers(), photographerId, "La liste des photographes n'est pas initialisée"))
-                                        .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getPhotographers())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des photographes n'est pas initialisée"))
-                                                        .map(photographerService::fromPersonSetEntity)
-                                        )
-                        )
-                ;
-    }
-
-    /*public Uni<Movie> removeCostumier(Long movieId, Long costumierId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeCostumier(costumierId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeDecorator(Long movieId, Long decoratorId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeDecorator(decoratorId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeEditor(Long movieId, Long editorId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeEditor(editorId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeCaster(Long movieId, Long casterId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeCaster(casterId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeArtDirector(Long movieId, Long artDirectorId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeArtDirector(artDirectorId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeSoundEditor(Long movieId, Long soundEditorId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeSoundEditor(soundEditorId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeVisualEffectsSupervisor(Long movieId, Long visualEffectsSupervisorId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeVisualEffectsSupervisor(visualEffectsSupervisorId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeMakeupArtist(Long movieId, Long makeupArtistId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeMakeupArtist(makeupArtistId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeHairDresser(Long movieId, Long hairDresserId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeHairDresser(hairDresserId))
-                                        .chain(movie -> movie.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> removeStuntman(Long movieId, Long stuntmanId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(entity -> entity.removeStuntman(stuntmanId))
-                                        .chain(movieRepository::persist)
-                        )
-                ;
-    }*/
-
-    /**
-     * Ajoute un ou plusieurs genres à un film existant.
-     *
-     * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
-     * @param genreDTOSet Un ensemble d'objets {@link GenreDTO} représentant les genres à ajouter.
-     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après l'ajout des genres.
-     * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
-     */
-    public Uni<MovieDTO> addGenres(Long movieId, Set<GenreDTO> genreDTOSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .flatMap(movie ->
-                                                genreService.getByIds(genreDTOSet.stream().map(GenreDTO::getId).toList())
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs genres sont introuvables"))
-                                                        .call(movie::addGenres)
-                                                        .replaceWith(movie)
-                                        )
-                                        .flatMap(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getGenres())
-                                                        .map(genreSet -> MovieDTO.fromEntity(movie, genreSet, null, null))
-                                        )
-                        )
-                ;
-    }
-
-    /**
-     * Ajoute une ou plusieurs associations entre un film et des pays.
-     *
-     * @param movieId       L'identifiant du film auquel associer les pays.
-     * @param countryDTOSet Un ensemble de DTO représentant les pays à associer.
-     * @return Un {@link Uni} contenant un {@link MovieDTO} mis à jour si l'opération réussit.
-     * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
-     */
-    public Uni<MovieDTO> addCountries(Long movieId, Set<CountryDTO> countryDTOSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .flatMap(movie ->
-                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
-                                                        .call(movie::addCountries)
-                                                        .replaceWith(movie)
-                                        )
-                                        .flatMap(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getCountries())
-                                                        .map(countrySet -> MovieDTO.fromEntity(movie, null, countrySet, null))
+                                                Mutiny.fetch(peopleGetter.apply(movie))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                                                        .map(service::fromPersonSetEntity)
                                         )
                         )
                 ;

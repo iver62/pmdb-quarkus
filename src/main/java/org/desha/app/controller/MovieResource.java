@@ -1266,7 +1266,7 @@ public class MovieResource {
     @Path("{movieId}/producers/{producerId}")
     public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long producerId) {
         return
-                movieService.removeProducer(movieId, producerId)
+                movieService.removePerson(movieId, producerId, Movie::getProducers, producerService, "La collection des producteurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -1285,7 +1285,7 @@ public class MovieResource {
     @Path("{movieId}/directors/{directorId}")
     public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long directorId) {
         return
-                movieService.removeDirector(movieId, directorId)
+                movieService.removePerson(movieId, directorId, Movie::getDirectors, directorService, "La collection des réalisateurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -1304,7 +1304,7 @@ public class MovieResource {
     @Path("{movieId}/screenwriters/{screenwriterId}")
     public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long screenwriterId) {
         return
-                movieService.removeScreenwriter(movieId, screenwriterId)
+                movieService.removePerson(movieId, screenwriterId, Movie::getScreenwriters, screenwriterService, "La collection des scénaristes n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -1323,7 +1323,7 @@ public class MovieResource {
     @Path("{movieId}/musicians/{musicianId}")
     public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long musicianId) {
         return
-                movieService.removeMusician(movieId, musicianId)
+                movieService.removePerson(movieId, musicianId, Movie::getMusicians, musicianService, "La collection des musiciens n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -1342,7 +1342,7 @@ public class MovieResource {
     @Path("{movieId}/photographers/{photographerId}")
     public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long photographerId) {
         return
-                movieService.removePhotographer(movieId, photographerId)
+                movieService.removePerson(movieId, photographerId, Movie::getPhotographers, photographerService, "La collection des photographes n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
