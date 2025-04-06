@@ -30,7 +30,7 @@ public class Country extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    protected Long id;
+    private Long id;
 
     @Column(name = "code", nullable = false, unique = true)
     private int code;

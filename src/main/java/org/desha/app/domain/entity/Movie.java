@@ -334,35 +334,31 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<Genre>> removeGenre(Long id) {
         return
                 Mutiny.fetch(genres)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés"))
-                        .invoke(fetchGenres -> fetchGenres.removeIf(genre -> Objects.equals(genre.id, id)))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des genres n'est pas initialisé"))
+                        .invoke(fetchGenres -> fetchGenres.removeIf(genre -> Objects.equals(genre.getId(), id)))
                 ;
     }
 
     /**
-     * Supprime un pays de la collection existante en fonction de son ID.
+     * Retire un pays de la collection existante en fonction de son ID.
      *
-     * @param id L'ID du pays à supprimer.
+     * @param id L'ID du pays à retirer.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après la suppression.
      * @throws IllegalStateException Si la collection existante des pays est null.
      */
     public Uni<Set<Country>> removeCountry(Long id) {
         return
                 Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
-                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.id, id)))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
                 ;
     }
 
     public Uni<Set<Award>> removeAward(Long id) {
         return
                 Mutiny.fetch(awards)
-                        .map(
-                                fetchAwards -> {
-                                    fetchAwards.removeIf(award -> Objects.equals(award.getId(), id));
-                                    return fetchAwards;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
+                        .invoke(fetchAwards -> fetchAwards.removeIf(award -> Objects.equals(award.getId(), id)))
                 ;
     }
 }

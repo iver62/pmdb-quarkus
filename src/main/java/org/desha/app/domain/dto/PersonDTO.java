@@ -77,7 +77,12 @@ public class PersonDTO {
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
                 .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
-                .movies(movies.stream().map(MovieDTO::fromEntity).collect(Collectors.toSet()))
+                .movies(
+                        movies
+                                .stream()
+                                .map(movie ->  MovieDTO.fromEntity(movie, null, null, null))
+                                .collect(Collectors.toSet())
+                )
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
                 .build();

@@ -39,7 +39,7 @@ public class Genre extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    protected Long id;
+    private Long id;
 
     @NotEmpty(message = "Le nom ne peut pas être vide")
     @Column(name = "nom", nullable = false, unique = true)

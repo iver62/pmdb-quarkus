@@ -22,6 +22,8 @@ public interface PersonServiceInterface<T extends Person> {
 
     Uni<T> getById(Long id);
 
+    Uni<List<PersonDTO>> searchByName(String name);
+
     Uni<List<T>> getByIds(List<Long> ids);
 
     Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term);

@@ -55,7 +55,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("search")
-    public Uni<Response> getPersonsByName(@QueryParam("query") String query) {
+    public Uni<Response> searchByName(@QueryParam("query") String query) {
         if (Objects.isNull(query) || query.trim().isEmpty()) {
             return Uni.createFrom()
                     .item(
@@ -67,7 +67,7 @@ public abstract class PersonResource<T extends Person> {
         }
 
         return
-                personService.getByName(query)
+                personService.searchByName(query)
                         .map(personDTOS ->
                                 personDTOS.isEmpty()
                                         ? Response.noContent().build()
@@ -124,7 +124,9 @@ public abstract class PersonResource<T extends Person> {
                     );
         }
 
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Person.ALLOWED_SORT_FIELDS);
+        String finalSort = Objects.isNull(queryParams.getSort()) ? "name" : queryParams.getSort();
+
+        Uni<Response> sortValidation = validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
         if (Objects.nonNull(sortValidation)) {
             return sortValidation;
         }
@@ -134,7 +136,7 @@ public abstract class PersonResource<T extends Person> {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.get(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, criteriasDTO)
+                personService.get(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.count(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -324,7 +326,7 @@ public abstract class PersonResource<T extends Person> {
                 ;
     }
 
-    protected Sort.Direction validateSortDirection(String direction) {
+    private Sort.Direction validateSortDirection(String direction) {
         return
                 Arrays.stream(Sort.Direction.values())
                         .filter(d -> d.name().equalsIgnoreCase(direction))
@@ -333,7 +335,7 @@ public abstract class PersonResource<T extends Person> {
                 ;
     }
 
-    protected Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
+    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
         if (!allowedSortFields.contains(sort)) {
             return Uni.createFrom().item(
                     Response.status(Response.Status.BAD_REQUEST)

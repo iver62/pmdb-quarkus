@@ -7,16 +7,16 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.CountryDTO;
-import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.MovieDTO;
-import org.desha.app.domain.dto.PersonDTO;
+import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.Actor;
+import org.desha.app.domain.entity.MovieActor;
 import org.desha.app.repository.ActorRepository;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Singleton
@@ -92,6 +92,16 @@ public class ActorService extends PersonService<Actor> {
 
     public Uni<Actor> save(PersonDTO personDTO) {
         return Panache.withTransaction(() -> Actor.fromDTO(personDTO).persist());
+    }
+
+    public List<MovieActorDTO> fromMovieActorSetEntity(List<MovieActor> movieActorSet) {
+        return
+                movieActorSet
+                        .stream()
+                        .map(MovieActorDTO::fromEntity)
+                        .sorted(Comparator.comparing(MovieActorDTO::getRank))
+                        .toList()
+                ;
     }
 
 }
