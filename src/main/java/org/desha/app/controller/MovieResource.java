@@ -1136,6 +1136,44 @@ public class MovieResource {
     }
 
     /**
+     * Ajoute un ensemble de musiciens à un film spécifique.
+     *
+     * @param id           L'identifiant du film auquel les musiciens doivent être ajoutés.
+     * @param personDTOSet L'ensemble des musiciens à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des musiciens si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/musicians")
+    public Uni<Response> addMusicians(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        return
+                movieService.addMusicians(id, personDTOSet)
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de photographes à un film spécifique.
+     *
+     * @param id           L'identifiant du film auquel les photographes doivent être ajoutés.
+     * @param personDTOSet L'ensemble des photographes à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des photographes si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/photographers")
+    public Uni<Response> addPhotographers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        return
+                movieService.addPhotographers(id, personDTOSet)
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
      * Ajoute un ensemble de genres à un film spécifique.
      *
      * @param id          L'identifiant du film auquel les genres doivent être ajoutés.
@@ -1291,17 +1329,24 @@ public class MovieResource {
                 ;
     }
 
-    /*@PUT
+    /**
+     * Retire un photographe d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId        L'identifiant du film concerné.
+     * @param photographerId L'identifiant du photographe à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des photographes si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/photographers/{photographerId}")
-    public Uni<Response> removePhotographer(Long movieId, Long photographerId) {
+    public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long photographerId) {
         return
-                photographerService.removeMovie(photographerId, movieId)
-                        .chain(() -> movieService.removePhotographer(movieId, photographerId))
-                        .map(Movie::getPhotographers)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removePhotographer(movieId, photographerId)
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
-    }*/
+    }
 
     /*@PUT
     @Path("{movieId}/costumiers/{costumierId}")

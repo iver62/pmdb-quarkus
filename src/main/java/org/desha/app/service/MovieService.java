@@ -174,15 +174,7 @@ public class MovieService {
                         .flatMap(movie ->
                                 Mutiny.fetch(movie.getMovieActors())
                                         .onItem().ifNull().failWith(() -> new IllegalStateException("Acteurs non initialisés pour ce film"))
-                                        .map(
-                                                movieActors ->
-                                                        movieActors
-                                                                .stream()
-                                                                .map(MovieActorDTO::fromEntity)
-                                                                .sorted(Comparator.comparing(MovieActorDTO::getRank))
-                                                                .toList()
-                                        )
-                                        .onItem().ifNull().continueWith(Collections.emptyList())
+                                        .map(actorService::fromMovieActorSetEntity)
                         )
                 ;
     }
