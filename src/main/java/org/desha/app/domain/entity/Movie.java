@@ -217,188 +217,20 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Ajoute un ensemble de producteurs à la collection existante.
+     * Ajoute un ensemble de personnes à une collection existante.
      *
-     * @param producerSet L'ensemble des producteurs à ajouter.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des producteurs après l'ajout.
-     * @throws IllegalStateException si la liste des producteurs n'est pas initialisée.
+     * @param <T>          Le type des personnes à ajouter.
+     * @param persons      L'ensemble existant de personnes auquel ajouter les nouvelles personnes.
+     * @param peopleSet    L'ensemble des personnes à ajouter.
+     * @param errorMessage Le message d'erreur à retourner si l'ensemble existant est null.
+     * @return Une {@link Uni} contenant l'ensemble mis à jour après l'ajout des nouvelles personnes.
+     * @throws IllegalStateException Si la collection existante des personnes est null.
      */
-    public Uni<Set<Producer>> addProducers(Set<Producer> producerSet) {
+    public <T> Uni<Set<T>> addPeople(Set<T> persons, Set<T> peopleSet, String errorMessage) {
         return
-                Mutiny.fetch(producers)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des producteurs n'est pas initialisée"))
-                        .invoke(fetchProducers -> fetchProducers.addAll(producerSet))
-                ;
-    }
-
-    /**
-     * Ajoute un ensemble de réalisateurs à la collection existante.
-     *
-     * @param directorSet L'ensemble des réalisateurs à ajouter.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des réalisateurs après l'ajout.
-     * @throws IllegalStateException si la liste des réalisateurs n'est pas initialisée.
-     */
-    public Uni<Set<Director>> addDirectors(Set<Director> directorSet) {
-        return
-                Mutiny.fetch(directors)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des réalisateurs n'est pas initialisée"))
-                        .invoke(fetchDirectors -> fetchDirectors.addAll(directorSet))
-                ;
-    }
-
-    public Uni<Set<Screenwriter>> addScreenwriters(Set<Screenwriter> screenwriterSet) {
-        return
-                Mutiny.fetch(screenwriters)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(screenwriterSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Musician>> addMusicians(Set<Musician> musicianSet) {
-        return
-                Mutiny.fetch(musicians)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(musicianSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Photographer>> addPhotographers(Set<Photographer> photographerSet) {
-        return
-                Mutiny.fetch(photographers)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(photographerSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Costumier>> addCostumiers(Set<Costumier> costumierSet) {
-        return
-                Mutiny.fetch(costumiers)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(costumierSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Decorator>> addDecorators(Set<Decorator> decoratorSet) {
-        return
-                Mutiny.fetch(decorators)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(decoratorSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Editor>> addEditors(Set<Editor> editorSet) {
-        return
-                Mutiny.fetch(editors)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(editorSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Caster>> saveCasters(Set<Caster> casterSet) {
-        return
-                Mutiny.fetch(casters)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(casterSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<ArtDirector>> saveArtDirectors(Set<ArtDirector> artDirectorSet) {
-        return
-                Mutiny.fetch(artDirectors)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(artDirectorSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<SoundEditor>> saveSoundEditors(Set<SoundEditor> soundEditorSet) {
-        return
-                Mutiny.fetch(soundEditors)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(soundEditorSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<VisualEffectsSupervisor>> saveVisualEffectsSupervisors(Set<VisualEffectsSupervisor> visualEffectsSupervisorSet) {
-        return
-                Mutiny.fetch(visualEffectsSupervisors)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(visualEffectsSupervisorSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<MakeupArtist>> saveMakeupArtists(Set<MakeupArtist> makeupArtistSet) {
-        return
-                Mutiny.fetch(makeupArtists)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(makeupArtistSet);
-                                    return people;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<HairDresser>> saveHairDressers(Set<HairDresser> hairDresserSet) {
-        return
-                Mutiny.fetch(hairDressers)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(hairDresserSet);
-                                    return people;
-                                }
-                        )
+                Mutiny.fetch(persons)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                        .invoke(tSet -> tSet.addAll(peopleSet))
                 ;
     }
 
@@ -432,7 +264,7 @@ public class Movie extends PanacheEntityBase {
      *
      * @param genreSet L'ensemble des genres à ajouter.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des genres après l'ajout.
-     * - Provoque une erreur si la collection de genres n'est pas initialisée.
+     * @throws IllegalStateException Si la collection existante des genres est null.
      */
     public Uni<Set<Genre>> addGenres(Set<Genre> genreSet) {
         return
@@ -447,7 +279,7 @@ public class Movie extends PanacheEntityBase {
      *
      * @param countrySet L'ensemble des pays à ajouter.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après l'ajout.
-     * - Provoque une erreur si la collection de pays n'est pas initialisée.
+     * @throws IllegalStateException Si la collection existante des pays est null.
      */
     public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
         return
@@ -471,185 +303,20 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Supprime un producteur spécifique de la liste des producteurs associés à un film.
+     * Retire une personne dde la collection existante de personnes en fonction de son identifiant.
      *
-     * @param id L'identifiant du producteur à supprimer.
-     * @return Une {@link Uni} contenant l'ensemble mis à jour des producteurs après la suppression.
-     * @throws IllegalStateException si la liste des producteurs n'est pas initialisée.
+     * @param <T>          Le type de la personne (doit être une sous-classe de {@link Person}).
+     * @param persons      L'ensemble des personnes dans lequel rechercher.
+     * @param id           L'identifiant de la personne à retirer.
+     * @param errorMessage Le message d'erreur à retourner si l'ensemble des personnes est null.
+     * @return Une {@link Uni} contenant l'ensemble mis à jour des personnes après suppression.
+     * @throws IllegalStateException Si la collection existante des personnes est null.
      */
-    public Uni<Set<Producer>> removeProducer(Long id) {
+    public <T extends Person> Uni<Set<T>> removePerson(Set<T> persons, Long id, String errorMessage) {
         return
-                Mutiny.fetch(producers)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("Producteurs non initialisés"))
-                        .invoke(fetchGenres -> fetchGenres.removeIf(producer -> Objects.equals(producer.id, id)))
-                ;
-    }
-
-    public Uni<Set<Director>> removeDirector(Long id) {
-        return
-                Mutiny.fetch(directors)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Screenwriter>> removeScreenwriter(Long id) {
-        return
-                Mutiny.fetch(screenwriters)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Musician>> removeMusician(Long id) {
-        return
-                Mutiny.fetch(musicians)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Photographer>> removePhotographer(Long id) {
-        return
-                Mutiny.fetch(photographers)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Costumier>> removeCostumier(Long id) {
-        return
-                Mutiny.fetch(costumiers)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Decorator>> removeDecorator(Long id) {
-        return
-                Mutiny.fetch(decorators)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Editor>> removeEditor(Long id) {
-        return
-                Mutiny.fetch(editors)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Caster>> removeCaster(Long id) {
-        return
-                Mutiny.fetch(casters)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<ArtDirector>> removeArtDirector(Long id) {
-        return
-                Mutiny.fetch(artDirectors)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<SoundEditor>> removeSoundEditor(Long id) {
-        return
-                Mutiny.fetch(soundEditors)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<VisualEffectsSupervisor>> removeVisualEffectsSupervisor(Long id) {
-        return
-                Mutiny.fetch(visualEffectsSupervisors)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<MakeupArtist>> removeMakeupArtist(Long id) {
-        return
-                Mutiny.fetch(makeupArtists)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<HairDresser>> removeHairDresser(Long id) {
-        return
-                Mutiny.fetch(hairDressers)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
-                ;
-    }
-
-    public Uni<Set<Stuntman>> removeStuntman(Long id) {
-        return
-                Mutiny.fetch(stuntmen)
-                        .map(
-                                persons -> {
-                                    persons.removeIf(person -> Objects.equals(person.id, id));
-                                    return persons;
-                                }
-                        )
+                Mutiny.fetch(persons)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                        .invoke(tSet -> tSet.removeIf(t -> Objects.equals(t.id, id)))
                 ;
     }
 
@@ -658,11 +325,11 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Supprime un genre de la collection existante en fonction de son ID.
+     * Retire un genre de la collection existante en fonction de son ID.
      *
      * @param id L'ID du genre à supprimer.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des genres après la suppression.
-     * - Provoque une erreur si la collection de genres n'est pas initialisée.
+     * @throws IllegalStateException Si la collection existante des genres est null.
      */
     public Uni<Set<Genre>> removeGenre(Long id) {
         return
@@ -677,7 +344,7 @@ public class Movie extends PanacheEntityBase {
      *
      * @param id L'ID du pays à supprimer.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après la suppression.
-     * - Provoque une erreur si la collection de pays n'est pas initialisée.
+     * @throws IllegalStateException Si la collection existante des pays est null.
      */
     public Uni<Set<Country>> removeCountry(Long id) {
         return

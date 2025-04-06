@@ -895,15 +895,16 @@ public class MovieService {
     }
 
     /*public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> addPeople(
-            Long movieId,
+            Long id,
             Set<PersonDTO> personDTOSet,
+            Function<Movie, Set<T>> addPeople,
             Function<Movie, Set<T>> getPeople,
             S service
             ) {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(movieId)
+                                movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
                                         .flatMap(movie ->
                                                 service.getByIds(personDTOSet)
@@ -913,9 +914,9 @@ public class MovieService {
                                         )
                                         .flatMap(movieRepository::persist)
                                         .flatMap(movie ->
-                                                Mutiny.fetch(getPeople)
-                                                        .map(producers ->
-                                                                producers
+                                                Mutiny.fetch(getPeople.apply(movie))
+                                                        .map(tSet ->
+                                                                tSet
                                                                         .stream()
                                                                         .map(PersonDTO::fromEntity)
                                                                         .collect(Collectors.toSet())
@@ -943,7 +944,7 @@ public class MovieService {
                                         .flatMap(movie ->
                                                 producerService.getByIds(personDTOSet)
                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs producteurs sont introuvables"))
-                                                        .call(movie::addProducers)
+                                                        .call(producers -> movie.addPeople(movie.getProducers(), producers, "La liste des producteurs n'est pas initialisée"))
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
@@ -979,7 +980,7 @@ public class MovieService {
                                         .flatMap(movie ->
                                                 directorService.getByIds(personDTOSet)
                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs réalisateurs sont introuvables"))
-                                                        .call(movie::addDirectors)
+                                                        .call(directors -> movie.addPeople(movie.getDirectors(), directors, "La liste des réalisateurs n'est pas initialisée"))
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
@@ -988,6 +989,42 @@ public class MovieService {
                                                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des réalisateurs n'est pas initialisée"))
                                                         .map(directors ->
                                                                 directors
+                                                                        .stream()
+                                                                        .map(PersonDTO::fromEntity)
+                                                                        .collect(Collectors.toSet())
+                                                        )
+                                        )
+                        )
+                ;
+    }
+
+    /**
+     * Ajoute une liste de scénaristes à un film donné et retourne la liste mise à jour des scénaristes.
+     *
+     * @param movieId      L'identifiant du film auquel ajouter les scénaristes.
+     * @param personDTOSet L'ensemble des scénaristes à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} représentant les scénaristes du film.
+     * @throws IllegalArgumentException si le film ou certains scénaristes ne sont pas trouvés.
+     * @throws IllegalStateException    si les scénaristes ne sont pas initialisés pour ce film.
+     */
+    public Uni<Set<PersonDTO>> addScreenwriters(Long movieId, Set<PersonDTO> personDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .flatMap(movie ->
+                                                screenwriterService.getByIds(personDTOSet)
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs scénaristes sont introuvables"))
+                                                        .call(screenwriters -> movie.addPeople(movie.getScreenwriters(), screenwriters, "La liste des scénaristes n'est pas initialisée"))
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getScreenwriters())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des scénaristes n'est pas initialisée"))
+                                                        .map(screenwriters ->
+                                                                screenwriters
                                                                         .stream()
                                                                         .map(PersonDTO::fromEntity)
                                                                         .collect(Collectors.toSet())
@@ -1029,6 +1066,7 @@ public class MovieService {
      * @param producerId L'identifiant du producteur à supprimer.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des producteurs du film sous forme de {@link PersonDTO}.
      * @throws IllegalArgumentException Si le film n'est pas trouvé.
+     * @throws IllegalStateException    si la liste des producteurs n'est pas initialisée pour ce film.
      */
     public Uni<Set<PersonDTO>> removeProducer(Long movieId, Long producerId) {
         return
@@ -1036,10 +1074,11 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeProducer(producerId))
+                                        .call(movie -> movie.removePerson(movie.getProducers(), producerId, "La liste des producteurs n'est pas initialisée"))
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getProducers())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des producteurs n'est pas initialisée"))
                                                         .map(producers ->
                                                                 producers
                                                                         .stream()
@@ -1051,26 +1090,64 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Movie> removeDirector(Long movieId, Long directorId) {
+    /**
+     * Supprime un réalisateur spécifique d'un film donné.
+     *
+     * @param movieId    L'identifiant du film dont on veut supprimer le réalisateur.
+     * @param directorId L'identifiant du réalisateur à supprimer.
+     * @return Une {@link Uni} contenant l'ensemble mis à jour des réalisateurs sous forme de {@link PersonDTO}.
+     * @throws IllegalArgumentException Si le film n'est pas trouvé.
+     * @throws IllegalStateException    si la liste des réalisateurs n'est pas initialisée pour ce film.
+     */
+    public Uni<Set<PersonDTO>> removeDirector(Long movieId, Long directorId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeDirector(directorId))
-                                        .chain(movie -> movie.persist())
+                                        .call(movie -> movie.removePerson(movie.getDirectors(), directorId, "La liste des réalisateurs n'est pas initialisée"))
+                                        .chain(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getDirectors())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des réalisateurs n'est pas initialisée"))
+                                                        .map(directors ->
+                                                                directors
+                                                                        .stream()
+                                                                        .map(PersonDTO::fromEntity)
+                                                                        .collect(Collectors.toSet())
+                                                        )
+                                        )
                         )
                 ;
     }
 
-    public Uni<Movie> removeScreenwriter(Long movieId, Long screenwriterId) {
+    /**
+     * Supprime un scénariste spécifique d'un film donné.
+     *
+     * @param movieId        L'identifiant du film dont on veut supprimer le scénariste.
+     * @param screenwriterId L'identifiant du scénariste à supprimer.
+     * @return Une {@link Uni} contenant l'ensemble mis à jour des scénaristes sous forme de {@link PersonDTO}.
+     * @throws IllegalArgumentException Si le film n'est pas trouvé.
+     * @throws IllegalStateException    si la liste des scénaristes n'est pas initialisée pour ce film.
+     */
+    public Uni<Set<PersonDTO>> removeScreenwriter(Long movieId, Long screenwriterId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
-                                        .call(movie -> movie.removeScreenwriter(screenwriterId))
-                                        .chain(movie -> movie.persist())
+                                        .call(movie -> movie.removePerson(movie.getScreenwriters(), screenwriterId, "La liste des scénaristes n'est pas initialisée"))
+                                        .chain(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getScreenwriters())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des scénaristes n'est pas initialisée"))
+                                                        .map(screenwriters ->
+                                                                screenwriters
+                                                                        .stream()
+                                                                        .map(PersonDTO::fromEntity)
+                                                                        .collect(Collectors.toSet())
+                                                        )
+                                        )
                         )
                 ;
     }

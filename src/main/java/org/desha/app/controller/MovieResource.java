@@ -1079,38 +1079,14 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
-    @Path("{id}/actor")
-    public Uni<Response> addRole(Long id, MovieActor movieActor) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                Objects.nonNull(movieActor.getActor().getId())
-                                        ? Person.findById(movieActor.getActor().getId())
-                                        : movieActor.getActor().persist()
-                        )
-                        .map(Person.class::cast)
-                        .chain(() -> movieService.addRole(id, movieActor))
-                        .map(
-                                movie ->
-                                        movie.getMovieActors()
-                                                .stream()
-                                                .map(movieActor1 -> MovieActor.build(movie, movieActor1.getActor(), movieActor1.getRole(), movieActor1.getRank()))
-                                                .collect(Collectors.toSet())
-                        )
-                        .onItem().ifNotNull().transform(roles -> Response.ok(roles).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }
-
     /**
      * Ajoute un ensemble de producteurs à un film spécifique.
      *
      * @param id           L'identifiant du film auquel les producteurs doivent être ajoutés.
      * @param personDTOSet L'ensemble des producteurs à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
-     * * - 200 OK avec la liste mise à jour des producteurs si l'ajout est réussi.
-     * * - 500 Server Error si l'ajout a échoué.
+     * - 200 OK avec la liste mise à jour des producteurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/producers")
@@ -1128,14 +1104,33 @@ public class MovieResource {
      * @param id           L'identifiant du film auquel les réalisateurs doivent être ajoutés.
      * @param personDTOSet L'ensemble des réalisateurs à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
-     * * - 200 OK avec la liste mise à jour des réalisateurs si l'ajout est réussi.
-     * * - 500 Server Error si l'ajout a échoué.
+     * - 200 OK avec la liste mise à jour des réalisateurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/directors")
     public Uni<Response> addDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         return
                 movieService.addDirectors(id, personDTOSet)
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de scénaristes à un film spécifique.
+     *
+     * @param id           L'identifiant du film auquel les scénaristes doivent être ajoutés.
+     * @param personDTOSet L'ensemble des scénaristes à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des scénaristes si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/screenwriters")
+    public Uni<Response> addScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+        return
+                movieService.addScreenwriters(id, personDTOSet)
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -1222,7 +1217,7 @@ public class MovieResource {
     }*/
 
     /**
-     * Supprime un producteur d'un film spécifique et retourne une réponse HTTP appropriée.
+     * Retire un producteur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
      * @param movieId    L'identifiant du film concerné.
      * @param producerId L'identifiant du producteur à dissocier du film.
@@ -1235,32 +1230,46 @@ public class MovieResource {
     public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long producerId) {
         return
                 movieService.removeProducer(movieId, producerId)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
+    /**
+     * Retire un réalisateur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId    L'identifiant du film concerné.
+     * @param directorId L'identifiant du réalisateur à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des réalisateurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
     @PATCH
     @Path("{movieId}/directors/{directorId}")
-    public Uni<Response> removeDirector(Long movieId, Long directorId) {
+    public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long directorId) {
         return
-                directorService.removeMovie(directorId, movieId)
-                        .chain(() -> movieService.removeDirector(movieId, directorId))
-                        .map(Movie::getDirectors)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removeDirector(movieId, directorId)
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
-    @PUT
+    /**
+     * Retire un scénariste d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId        L'identifiant du film concerné.
+     * @param screenwriterId L'identifiant du scénariste à dissocier du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des scénaristes si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
     @Path("{movieId}/screenwriters/{screenwriterId}")
-    public Uni<Response> removeScreenwriter(Long movieId, Long screenwriterId) {
+    public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long screenwriterId) {
         return
-                screenwriterService.removeMovie(screenwriterId, movieId)
-                        .chain(() -> movieService.removeScreenwriter(movieId, screenwriterId))
-                        .map(Movie::getScreenwriters)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                movieService.removeScreenwriter(movieId, screenwriterId)
+                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
