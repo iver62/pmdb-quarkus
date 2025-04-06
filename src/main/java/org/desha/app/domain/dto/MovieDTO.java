@@ -87,24 +87,6 @@ public class MovieDTO {
                 .build();
     }
 
-    /*public static MovieDTO fromEntity(Movie movie, Set<Genre> genreSet, Set<Country> countrySet) {
-        return MovieDTO.builder()
-                .id(movie.getId())
-                .title(movie.getTitle())
-                .originalTitle(movie.getOriginalTitle())
-                .releaseDate(movie.getReleaseDate())
-                .runningTime(movie.getRunningTime())
-                .budget(movie.getBudget())
-                .boxOffice(movie.getBoxOffice())
-                .posterFileName(movie.getPosterFileName())
-                .creationDate(movie.getCreationDate())
-                .lastUpdate(movie.getLastUpdate())
-                .genres(genreSet.stream().map(GenreDTO::fromEntity).collect(Collectors.toSet()))
-                .countries(countrySet.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
-                .user(UserDTO.fromEntity(movie.getUser()))
-                .build();
-    }*/
-
     public static MovieDTO fromEntity(Movie movie, Set<Award> awards) {
         return MovieDTO.builder()
                 .id(movie.getId())

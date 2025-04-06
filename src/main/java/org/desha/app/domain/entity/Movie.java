@@ -231,16 +231,18 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
+    /**
+     * Ajoute un ensemble de réalisateurs à la collection existante.
+     *
+     * @param directorSet L'ensemble des réalisateurs à ajouter.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des réalisateurs après l'ajout.
+     * @throws IllegalStateException si la liste des réalisateurs n'est pas initialisée.
+     */
     public Uni<Set<Director>> addDirectors(Set<Director> directorSet) {
         return
                 Mutiny.fetch(directors)
-                        .map(
-                                people -> {
-                                    people.clear();
-                                    people.addAll(directorSet);
-                                    return people;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des réalisateurs n'est pas initialisée"))
+                        .invoke(fetchDirectors -> fetchDirectors.addAll(directorSet))
                 ;
     }
 

@@ -931,7 +931,7 @@ public class MovieService {
      * @param movieId      L'identifiant du film auquel ajouter les producteurs.
      * @param personDTOSet L'ensemble des producteurs à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} représentant les producteurs du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
+     * @throws IllegalArgumentException si le film ou certains producteurs ne sont pas trouvés.
      * @throws IllegalStateException    Si les producteurs ne sont pas initialisés pour ce film.
      */
     public Uni<Set<PersonDTO>> addProducers(Long movieId, Set<PersonDTO> personDTOSet) {
@@ -967,8 +967,8 @@ public class MovieService {
      * @param movieId      L'identifiant du film auquel ajouter les réalisateurs.
      * @param personDTOSet L'ensemble des réalisateurs à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} représentant les réalisateurs du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si les réalisateurs ne sont pas initialisés pour ce film.
+     * @throws IllegalArgumentException si le film ou certains réalisateurs ne sont pas trouvés.
+     * @throws IllegalStateException    si les réalisateurs ne sont pas initialisés pour ce film.
      */
     public Uni<Set<PersonDTO>> addDirectors(Long movieId, Set<PersonDTO> personDTOSet) {
         return
