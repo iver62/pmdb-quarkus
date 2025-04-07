@@ -230,19 +230,11 @@ public class Movie extends PanacheEntityBase {
         return
                 Mutiny.fetch(persons)
                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                        .invoke(tSet -> tSet.addAll(peopleSet))
-                ;
-    }
-
-    public Uni<List<MovieActor>> addRole(MovieActor movieActor) {
-        return
-                Mutiny.fetch(movieActors)
-                        .map(
-                                fetchRoles -> {
-                                    fetchRoles.add(movieActor);
-                                    return fetchRoles;
-                                }
-                        )
+                        .invoke(tSet -> {
+                            if (Objects.nonNull(peopleSet)) {
+                                tSet.addAll(peopleSet);
+                            }
+                        })
                 ;
     }
 
@@ -270,7 +262,11 @@ public class Movie extends PanacheEntityBase {
         return
                 Mutiny.fetch(genres)
                         .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés"))
-                        .invoke(fetchGenres -> fetchGenres.addAll(genreSet))
+                        .invoke(fetchGenres -> {
+                            if (Objects.nonNull(genreSet)) {
+                                fetchGenres.addAll(genreSet);
+                            }
+                        })
                 ;
     }
 
@@ -279,26 +275,36 @@ public class Movie extends PanacheEntityBase {
      *
      * @param countrySet L'ensemble des pays à ajouter.
      * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après l'ajout.
-     * @throws IllegalStateException Si la collection existante des pays est null.
+     * @throws IllegalStateException Si la collection des pays n'est pas initialisée.
      */
     public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
         return
                 Mutiny.fetch(countries)
                         .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
-                        .invoke(fetchCountries -> fetchCountries.addAll(countrySet))
+                        .invoke(fetchCountries -> {
+                            if (Objects.nonNull(countrySet)) {
+                                fetchCountries.addAll(countrySet);
+                            }
+                        })
                 ;
     }
 
+    /**
+     * Ajoute un ensemble de récompenses à la collection existante.
+     *
+     * @param awardSet L'ensemble des récompenses à ajouter.
+     * @return Une {@link Uni} contenant la collection mise à jour des {@link Award}.
+     * @throws IllegalStateException si la collection des récompenses n'est pas initialisée.
+     */
     public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
         return
                 Mutiny.fetch(awards)
-                        .map(
-                                fetchAwards -> {
-                                    fetchAwards.clear();
-                                    fetchAwards.addAll(awardSet);
-                                    return fetchAwards;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La collection des récompenses n'est pas initialisés"))
+                        .invoke(fetchAwards -> {
+                            if (Objects.nonNull(awardSet)) {
+                                fetchAwards.addAll(awardSet);
+                            }
+                        })
                 ;
     }
 

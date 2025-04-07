@@ -485,7 +485,11 @@ public class MovieResource {
     public Uni<Response> getAwards(@RestPath Long id) {
         return
                 movieService.getAwardsByMovie(id)
-                        .map(awards -> Response.ok(awards).build())
+                        .map(awards ->
+                                awards.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(awards).build()
+                        )
                 ;
     }
 
@@ -1081,18 +1085,22 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de producteurs à un film spécifique.
      *
-     * @param id           L'identifiant du film auquel les producteurs doivent être ajoutés.
-     * @param personDTOSet L'ensemble des producteurs à ajouter sous forme de {@link PersonDTO}.
+     * @param id         L'identifiant du film auquel les producteurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des producteurs à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des producteurs si l'ajout est réussi.
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/producers")
-    public Uni<Response> addProducers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+    public Uni<Response> addProducers(@RestPath Long id, Set<PersonDTO> personDTOS) {
         return
-                movieService.addProducers(id, personDTOSet)
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                movieService.addProducers(id, personDTOS)
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1100,18 +1108,22 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de réalisateurs à un film spécifique.
      *
-     * @param id           L'identifiant du film auquel les réalisateurs doivent être ajoutés.
-     * @param personDTOSet L'ensemble des réalisateurs à ajouter sous forme de {@link PersonDTO}.
+     * @param id         L'identifiant du film auquel les réalisateurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des réalisateurs à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des réalisateurs si l'ajout est réussi.
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/directors")
-    public Uni<Response> addDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+    public Uni<Response> addDirectors(@RestPath Long id, Set<PersonDTO> personDTOS) {
         return
-                movieService.addDirectors(id, personDTOSet)
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                movieService.addDirectors(id, personDTOS)
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1119,18 +1131,22 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de scénaristes à un film spécifique.
      *
-     * @param id           L'identifiant du film auquel les scénaristes doivent être ajoutés.
-     * @param personDTOSet L'ensemble des scénaristes à ajouter sous forme de {@link PersonDTO}.
+     * @param id         L'identifiant du film auquel les scénaristes doivent être ajoutés.
+     * @param personDTOS L'ensemble des scénaristes à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des scénaristes si l'ajout est réussi.
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/screenwriters")
-    public Uni<Response> addScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+    public Uni<Response> addScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOS) {
         return
-                movieService.addScreenwriters(id, personDTOSet)
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                movieService.addScreenwriters(id, personDTOS)
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1138,18 +1154,22 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de musiciens à un film spécifique.
      *
-     * @param id           L'identifiant du film auquel les musiciens doivent être ajoutés.
-     * @param personDTOSet L'ensemble des musiciens à ajouter sous forme de {@link PersonDTO}.
+     * @param id         L'identifiant du film auquel les musiciens doivent être ajoutés.
+     * @param personDTOS L'ensemble des musiciens à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des musiciens si l'ajout est réussi.
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/musicians")
-    public Uni<Response> addMusicians(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+    public Uni<Response> addMusicians(@RestPath Long id, Set<PersonDTO> personDTOS) {
         return
-                movieService.addMusicians(id, personDTOSet)
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                movieService.addMusicians(id, personDTOS)
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1157,18 +1177,22 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de photographes à un film spécifique.
      *
-     * @param id           L'identifiant du film auquel les photographes doivent être ajoutés.
-     * @param personDTOSet L'ensemble des photographes à ajouter sous forme de {@link PersonDTO}.
+     * @param id         L'identifiant du film auquel les photographes doivent être ajoutés.
+     * @param personDTOS L'ensemble des photographes à ajouter sous forme de {@link PersonDTO}.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des photographes si l'ajout est réussi.
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
     @Path("{id}/photographers")
-    public Uni<Response> addPhotographers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
+    public Uni<Response> addPhotographers(@RestPath Long id, Set<PersonDTO> personDTOS) {
         return
-                movieService.addPhotographers(id, personDTOSet)
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                movieService.addPhotographers(id, personDTOS)
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1176,18 +1200,22 @@ public class MovieResource {
     /**
      * Ajoute un ensemble de genres à un film spécifique.
      *
-     * @param id          L'identifiant du film auquel les genres doivent être ajoutés.
-     * @param genreDTOSet L'ensemble des genres à ajouter, représentés sous forme de DTO.
+     * @param id        L'identifiant du film auquel les genres doivent être ajoutés.
+     * @param genreDTOS L'ensemble des genres à ajouter, représentés sous forme de DTO.
      * @return Une réponse HTTP contenant le film mis à jour avec ses nouveaux genres :
      * - 200 OK si l'opération réussit et retourne l'entité mise à jour.
      * - 500 Server Error si l'ajout échoue.
      */
-    @PUT
+    @PATCH
     @Path("{id}/genres")
-    public Uni<Response> addGenres(@RestPath Long id, Set<GenreDTO> genreDTOSet) {
+    public Uni<Response> addGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
         return
-                movieService.addGenres(id, genreDTOSet)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                movieService.addGenres(id, genreDTOS)
+                        .onItem().ifNotNull().transform(genreDTOSet ->
+                                genreDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(genreDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1195,18 +1223,45 @@ public class MovieResource {
     /**
      * Ajoute une liste de pays associés à un film.
      *
-     * @param id            L'identifiant du film auquel les pays doivent être ajoutés.
-     * @param countryDTOSet Un ensemble d'objets {@link CountryDTO} représentant les pays à associer au film.
+     * @param id          L'identifiant du film auquel les pays doivent être ajoutés.
+     * @param countryDTOS Un ensemble d'objets {@link CountryDTO} représentant les pays à associer au film.
      * @return Un {@link Uni} contenant une réponse HTTP :
      * - 200 OK avec l'entité mise à jour si l'ajout est réussi.
      * - 500 Internal Server Error en cas d'erreur interne.
      */
-    @PUT
+    @PATCH
     @Path("{id}/countries")
-    public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOSet) {
+    public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
         return
-                movieService.addCountries(id, countryDTOSet)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                movieService.addCountries(id, countryDTOS)
+                        .onItem().ifNotNull().transform(countryDTOSet ->
+                                countryDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute des récompenses à un film donné.
+     *
+     * @param id        L'identifiant du film.
+     * @param awardDTOS Un ensemble d'objets {@link AwardDTO} représentant les récompenses à ajouter au film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec les récompenses mises à jour si l'ajout est réussi.
+     * - 500 Internal Server Error en cas d'erreur interne.
+     */
+    @PATCH
+    @Path("{id}/awards")
+    public Uni<Response> addAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
+        return
+                movieService.addAwards(id, awardDTOS)
+                        .onItem().ifNotNull().transform(awardDTOSet ->
+                                awardDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(awardDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1243,16 +1298,6 @@ public class MovieResource {
 //
 //    }
 
-    /*@PUT
-    @Path("{id}/awards")
-    public Uni<Response> addAwards(Long id, Set<Award> awardSet) {
-        return
-                movieService.addAwards(id, awardSet)
-                        .map(Movie::getAwards)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }*/
-
     /**
      * Retire un producteur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
@@ -1267,7 +1312,11 @@ public class MovieResource {
     public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long producerId) {
         return
                 movieService.removePerson(movieId, producerId, Movie::getProducers, producerService, "La collection des producteurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1286,7 +1335,11 @@ public class MovieResource {
     public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long directorId) {
         return
                 movieService.removePerson(movieId, directorId, Movie::getDirectors, directorService, "La collection des réalisateurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1305,7 +1358,11 @@ public class MovieResource {
     public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long screenwriterId) {
         return
                 movieService.removePerson(movieId, screenwriterId, Movie::getScreenwriters, screenwriterService, "La collection des scénaristes n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1324,7 +1381,11 @@ public class MovieResource {
     public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long musicianId) {
         return
                 movieService.removePerson(movieId, musicianId, Movie::getMusicians, musicianService, "La collection des musiciens n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1343,7 +1404,11 @@ public class MovieResource {
     public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long photographerId) {
         return
                 movieService.removePerson(movieId, photographerId, Movie::getPhotographers, photographerService, "La collection des photographes n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1362,7 +1427,11 @@ public class MovieResource {
     public Uni<Response> removeCostumier(@RestPath Long movieId, @RestPath Long costumierId) {
         return
                 movieService.removePerson(movieId, costumierId, Movie::getCostumiers, costumierService, "La collection des costumiers n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1381,7 +1450,11 @@ public class MovieResource {
     public Uni<Response> removeDecorator(@RestPath Long movieId, @RestPath Long decoratorId) {
         return
                 movieService.removePerson(movieId, decoratorId, Movie::getDecorators, decoratorService, "La collection des décorateurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1400,7 +1473,11 @@ public class MovieResource {
     public Uni<Response> removeEditor(@RestPath Long movieId, @RestPath Long editorId) {
         return
                 movieService.removePerson(movieId, editorId, Movie::getEditors, editorService, "La collection des monteurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1419,7 +1496,11 @@ public class MovieResource {
     public Uni<Response> removeCaster(@RestPath Long movieId, @RestPath Long casterId) {
         return
                 movieService.removePerson(movieId, casterId, Movie::getCasters, casterService, "La collection des casteurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1438,7 +1519,11 @@ public class MovieResource {
     public Uni<Response> removeArtDirectors(@RestPath Long movieId, @RestPath Long artDirectorId) {
         return
                 movieService.removePerson(movieId, artDirectorId, Movie::getArtDirectors, artDirectorService, "La collection des directeurs artistiques n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1457,7 +1542,11 @@ public class MovieResource {
     public Uni<Response> removeSoundEditors(@RestPath Long movieId, @RestPath Long soundDirectorId) {
         return
                 movieService.removePerson(movieId, soundDirectorId, Movie::getSoundEditors, soundEditorService, "La collection des ingénieurs du son n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1476,7 +1565,11 @@ public class MovieResource {
     public Uni<Response> removeVisualEffectsSupervisor(@RestPath Long movieId, @RestPath Long visualEffectsSupervisorId) {
         return
                 movieService.removePerson(movieId, visualEffectsSupervisorId, Movie::getVisualEffectsSupervisors, visualEffectsSupervisorService, "La collection des spécialistes des effets spéciaux n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1495,7 +1588,11 @@ public class MovieResource {
     public Uni<Response> removeMakeupArtists(@RestPath Long movieId, @RestPath Long makeupArtistId) {
         return
                 movieService.removePerson(movieId, makeupArtistId, Movie::getMakeupArtists, makeupArtistService, "La collection des maquilleurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1514,7 +1611,11 @@ public class MovieResource {
     public Uni<Response> removeHairDressers(@RestPath Long movieId, @RestPath Long hairDresserId) {
         return
                 movieService.removePerson(movieId, hairDresserId, Movie::getHairDressers, hairDresserService, "La collection des coiffeurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1533,7 +1634,11 @@ public class MovieResource {
     public Uni<Response> removeStuntman(@RestPath Long movieId, @RestPath Long stuntmanId) {
         return
                 movieService.removePerson(movieId, stuntmanId, Movie::getStuntmen, stuntmanService, "La collection des cascadeurs n'est pas initialisée")
-                        .onItem().ifNotNull().transform(personDTOSet -> Response.ok(personDTOSet).build())
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1547,12 +1652,16 @@ public class MovieResource {
      * - 200 OK si la suppression est réussie et retourne l'entité mise à jour.
      * - 500 Internal Server Error en cas d'erreur interne.
      */
-    @PUT
+    @PATCH
     @Path("{movieId}/genres/{genreId}")
     public Uni<Response> removeGenre(@RestPath Long movieId, @RestPath Long genreId) {
         return
                 movieService.removeGenre(movieId, genreId)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNotNull().transform(genreDTOSet ->
+                                genreDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(genreDTOSet).build()
+                        )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
@@ -1566,24 +1675,39 @@ public class MovieResource {
      * - 200 OK avec l'entité mise à jour si la suppression est réussie.
      * - 500 Internal Server Error en cas d'erreur interne.
      */
-    @PUT
+    @PATCH
     @Path("{movieId}/countries/{countryId}")
     public Uni<Response> removeCountry(@RestPath Long movieId, @RestPath Long countryId) {
         return
                 movieService.removeCountry(movieId, countryId)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                        .onItem().ifNotNull().transform(countryDTOSet ->
+                                countryDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOSet).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
-    @PUT
+    /**
+     * Enlève une récompense d'un film donné.
+     *
+     * @param movieId L'identifiant du film concerné.
+     * @param awardId L'identifiant de la récompense à enlever du film.
+     * @return Un {@link Uni} contenant une réponse HTTP :
+     * - 200 OK avec l'entité mise à jour si la suppression est réussie.
+     * - 500 Internal Server Error en cas d'erreur interne.
+     */
+    @PATCH
     @Path("{movieId}/awards/{awardId}")
-    public Uni<Response> removeAward(Long movieId, Long awardId) {
+    public Uni<Response> removeAward(@RestPath Long movieId, @RestPath Long awardId) {
         return
                 movieService.removeAward(movieId, awardId)
-                        .map(Movie::getAwards)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
+                        .onItem().ifNotNull().transform(awardDTOSet ->
+                                awardDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(awardDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 

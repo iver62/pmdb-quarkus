@@ -35,6 +35,7 @@ public class MovieService {
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
+    private final AwardService awardService;
     private final CountryService countryService;
     private final GenreService genreService;
     private final FileService fileService;
@@ -61,6 +62,7 @@ public class MovieService {
 
     @Inject
     public MovieService(
+            AwardService awardService,
             CountryService countryService,
             CountryRepository countryRepository,
             FileService fileService,
@@ -84,6 +86,7 @@ public class MovieService {
             StuntmanService stuntmanService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
+        this.awardService = awardService;
         this.countryService = countryService;
         this.countryRepository = countryRepository;
         this.fileService = fileService;
@@ -544,6 +547,20 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Met à jour la liste des personnes associées à un film en supprimant les anciennes entrées,
+     * en ajoutant de nouvelles personnes et en récupérant celles existantes.
+     *
+     * @param id           L'identifiant du film.
+     * @param personDTOSet L'ensemble des personnes à enregistrer sous forme de {@link PersonDTO}.
+     * @param getPeople    Fonction permettant de récupérer la liste des personnes associées au film (ex: Movie::getProducers).
+     * @param createPerson Fonction permettant de créer une nouvelle personne à partir du film et d'un DTO.
+     * @param service      Service permettant la récupération des personnes existantes par ID.
+     * @param <T>          Type de la personne (ex: Producteur, Réalisateur, Cascadeur, etc.).
+     * @param <S>          Type du service associé à cette personne.
+     * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} mis à jour des personnes associées au film.
+     * @throws IllegalArgumentException si le film n'est pas trouvé.
+     */
     public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> savePeople(
             Long id,
             Set<PersonDTO> personDTOSet,
@@ -849,27 +866,37 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Movie> addRole(Long id, MovieActor movieActor) {
+    /**
+     * Ajoute un ensemble de récompenses à un film spécifique.
+     *
+     * @param id          L'identifiant du film auquel les récompenses doivent être ajoutées.
+     * @param awardDTOSet L'ensemble des récompenses à ajouter sous forme de {@link AwardDTO}.
+     * @return Une {@link Uni} contenant un {@link Set} de {@link AwardDTO} :
+     * @throws IllegalArgumentException si le film n'est pas trouvé.
+     * @throws IllegalStateException    si l'ensemble des récompenses n'est pas initialisé pour ce film.
+     */
+    public Uni<Set<AwardDTO>> addAwards(Long id, Set<AwardDTO> awardDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(entity -> entity.addRole(MovieActor.build(entity, movieActor.getActor(), movieActor.getRole(), movieActor.getRank())))
-                                        .chain(entity -> entity.persist())
-                        )
-                ;
-    }
-
-    public Uni<Movie> addAwards(Long id, Set<Award> awardSet) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .call(entity -> entity.addAwards(awardSet))
-                                        .invoke(entity -> awardSet.forEach(award -> award.setMovie(entity)))
-                                        .chain(entity -> entity.persist())
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .flatMap(movie ->
+                                                movie.addAwards(
+                                                                awardDTOSet
+                                                                        .stream()
+                                                                        .map(Award::fromDTO)
+                                                                        .collect(Collectors.toSet())
+                                                        )
+                                                        .invoke(awardSet -> awardSet.forEach(award -> award.setMovie(movie)))
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getAwards())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des récompenses n'est pas initialisée"))
+                                                        .map(awardService::fromAwardSetEntity)
+                                        )
                         )
                 ;
     }
@@ -913,7 +940,7 @@ public class MovieService {
      * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après la suppression du genre.
      * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
      */
-    public Uni<MovieDTO> removeGenre(Long movieId, Long genreId) {
+    public Uni<Set<GenreDTO>> removeGenre(Long movieId, Long genreId) {
         return
                 Panache
                         .withTransaction(() ->
@@ -923,7 +950,8 @@ public class MovieService {
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getGenres())
-                                                        .map(genreSet -> MovieDTO.fromEntity(movie, genreSet, null, null))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
+                                                        .map(genreService::fromGenreSetEntity)
                                         )
                         )
                 ;
@@ -937,7 +965,7 @@ public class MovieService {
      * @return Un {@link Uni} contenant un {@link MovieDTO} mis à jour après suppression de l'association.
      * - Provoque une erreur si le film n'est pas trouvé.
      */
-    public Uni<MovieDTO> removeCountry(Long movieId, Long countryId) {
+    public Uni<Set<CountryDTO>> removeCountry(Long movieId, Long countryId) {
         return
                 Panache
                         .withTransaction(() ->
@@ -947,20 +975,26 @@ public class MovieService {
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getCountries())
-                                                        .map(countrySet -> MovieDTO.fromEntity(movie, null, countrySet, null))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
+                                                        .map(countryService::fromCountrySetEntity)
                                         )
                         )
                 ;
     }
 
-    public Uni<Movie> removeAward(Long movieId, Long awardId) {
+    public Uni<Set<AwardDTO>> removeAward(Long movieId, Long awardId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
-                                        .onItem().ifNotNull()
-                                        .call(entity -> entity.removeAward(awardId))
-                                        .chain(entity -> entity.persist())
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film non trouvé"))
+                                        .call(movie -> movie.removeAward(awardId))
+                                        .chain(movieRepository::persist)
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getAwards())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des récompenses n'est pas initialisée"))
+                                                        .map(awardService::fromAwardSetEntity)
+                                        )
                         )
                 ;
     }
