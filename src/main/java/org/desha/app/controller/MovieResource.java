@@ -646,23 +646,6 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("{id}/awards")
-    public Uni<Response> saveAwards(@RestPath Long id, Set<AwardDTO> awardDTOSet) {
-        if (Objects.isNull(awardDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des récompenses ne peut pas être nulle.")
-                            .build()
-            );
-        }
-
-        return
-                movieService.saveAwards(id, awardDTOSet)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-    }
-
-    @PUT
     @Path("{id}/producers")
     public Uni<Response> saveProducers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
@@ -1082,6 +1065,27 @@ public class MovieResource {
                 ;
     }
 
+    @PUT
+    @Path("{id}/awards")
+    public Uni<Response> saveAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
+        if (Objects.isNull(awardDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des récompenses ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.saveAwards(id, awardDTOS)
+                        .onItem().ifNotNull().transform(awardDTOSet ->
+                                awardDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(awardDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+    }
+
     /**
      * Ajoute un ensemble de producteurs à un film spécifique.
      *
@@ -1094,8 +1098,16 @@ public class MovieResource {
     @PATCH
     @Path("{id}/producers")
     public Uni<Response> addProducers(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des producteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
-                movieService.addProducers(id, personDTOS)
+                movieService.addPeople(id, personDTOS, Movie::getProducers, producerService, "La liste des producteurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet ->
                                 personDTOSet.isEmpty()
                                         ? Response.noContent().build()
@@ -1117,8 +1129,16 @@ public class MovieResource {
     @PATCH
     @Path("{id}/directors")
     public Uni<Response> addDirectors(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des réalisateurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
-                movieService.addDirectors(id, personDTOS)
+                movieService.addPeople(id, personDTOS, Movie::getDirectors, directorService, "La liste des réalisateurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet ->
                                 personDTOSet.isEmpty()
                                         ? Response.noContent().build()
@@ -1140,8 +1160,16 @@ public class MovieResource {
     @PATCH
     @Path("{id}/screenwriters")
     public Uni<Response> addScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des scénaristes ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
-                movieService.addScreenwriters(id, personDTOS)
+                movieService.addPeople(id, personDTOS, Movie::getScreenwriters, screenwriterService, "La liste des scénaristes n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet ->
                                 personDTOSet.isEmpty()
                                         ? Response.noContent().build()
@@ -1163,8 +1191,16 @@ public class MovieResource {
     @PATCH
     @Path("{id}/musicians")
     public Uni<Response> addMusicians(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des musiciens ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
-                movieService.addMusicians(id, personDTOS)
+                movieService.addPeople(id, personDTOS, Movie::getMusicians, musicianService, "La liste des musiciens n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet ->
                                 personDTOSet.isEmpty()
                                         ? Response.noContent().build()
@@ -1186,8 +1222,326 @@ public class MovieResource {
     @PATCH
     @Path("{id}/photographers")
     public Uni<Response> addPhotographers(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des photographes ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
-                movieService.addPhotographers(id, personDTOS)
+                movieService.addPeople(id, personDTOS, Movie::getPhotographers, photographerService, "La liste des photographes n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de costumiers à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les costumiers doivent être ajoutés.
+     * @param personDTOS L'ensemble des costumiers à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des costumiers si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/costumiers")
+    public Uni<Response> addCostumiers(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des costumiers ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getCostumiers, costumierService, "La liste des costumiers n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de décorateurs à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les décorateurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des décorateurs à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des décorateurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/decorators")
+    public Uni<Response> addDecorators(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des décorateurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getDecorators, decoratorService, "La liste des décorateurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de monteurs à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les monteurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des monteurs à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des monteurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/editors")
+    public Uni<Response> addEditors(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des monteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getEditors, editorService, "La liste des monteurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de casteurs à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les casteurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des casteurs à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des casteurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/casters")
+    public Uni<Response> addCasters(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des casteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getCasters, casterService, "La liste des casteurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de directeurs artistiques à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les directeurs artistiques doivent être ajoutés.
+     * @param personDTOS L'ensemble des directeurs artistiques à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des directeurs artistiques si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/art-directors")
+    public Uni<Response> addArtDirectors(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des directeurs artistiques ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getArtDirectors, artDirectorService, "La liste des directeurs artistiques n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble d'ingénieurs du son à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les ingénieurs du son doivent être ajoutés.
+     * @param personDTOS L'ensemble des ingénieurs du son à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des ingénieurs du son si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/sound-editors")
+    public Uni<Response> addSoundEditors(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des ingénieurs du son ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getSoundEditors, soundEditorService, "La liste des ingénieurs du son n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de spécialistes des effets spéciaux à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les spécialistes des effets spéciaux doivent être ajoutés.
+     * @param personDTOS L'ensemble des spécialistes des effets spéciaux à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des spécialistes des effets spéciaux si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/visual-effects-supervisors")
+    public Uni<Response> addVisualEffectsSupervisors(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des spécialistes des effets spéciaux ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getVisualEffectsSupervisors, visualEffectsSupervisorService, "La liste des spécialistes des effets spéciaux n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de maquilleurs à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les maquilleurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des maquilleurs à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des maquilleurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/makeup-artists")
+    public Uni<Response> addMakeupArtists(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des maquilleurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getMakeupArtists, makeupArtistService, "La liste des maquilleurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de coiffeurs à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les coiffeurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des coiffeurs à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des coiffeurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/hair-dressers")
+    public Uni<Response> addHairDressers(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des coiffeurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getHairDressers, hairDresserService, "La liste des maquilleurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(personDTOSet ->
+                                personDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(personDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute un ensemble de cascadeurs à un film spécifique.
+     *
+     * @param id         L'identifiant du film auquel les cascadeurs doivent être ajoutés.
+     * @param personDTOS L'ensemble des cascadeurs à ajouter sous forme de {@link PersonDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des cascadeurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("{id}/stuntmen")
+    public Uni<Response> addStuntmen(@RestPath Long id, Set<PersonDTO> personDTOS) {
+        if (Objects.isNull(personDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des cascadeurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addPeople(id, personDTOS, Movie::getStuntmen, stuntmanService, "La liste des cascadeurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(personDTOSet ->
                                 personDTOSet.isEmpty()
                                         ? Response.noContent().build()
@@ -1209,6 +1563,14 @@ public class MovieResource {
     @PATCH
     @Path("{id}/genres")
     public Uni<Response> addGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
+        if (Objects.isNull(genreDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des genres ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
                 movieService.addGenres(id, genreDTOS)
                         .onItem().ifNotNull().transform(genreDTOSet ->
@@ -1232,6 +1594,14 @@ public class MovieResource {
     @PATCH
     @Path("{id}/countries")
     public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
+        if (Objects.isNull(countryDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des pays ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
                 movieService.addCountries(id, countryDTOS)
                         .onItem().ifNotNull().transform(countryDTOSet ->
@@ -1255,6 +1625,14 @@ public class MovieResource {
     @PATCH
     @Path("{id}/awards")
     public Uni<Response> addAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
+        if (Objects.isNull(awardDTOS)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des récompenses ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
         return
                 movieService.addAwards(id, awardDTOS)
                         .onItem().ifNotNull().transform(awardDTOSet ->

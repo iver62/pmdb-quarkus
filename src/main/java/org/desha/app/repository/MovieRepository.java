@@ -342,6 +342,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 .map(Objects::nonNull); // Retourne true si un film existe déjà
     }
 
+    /**
+     * Recherche un film par son identifiant.
+     *
+     * @param id L'identifiant du film recherché.
+     * @return Une instance de {@link Uni} contenant le film trouvé.
+     */
     @Override
     public Uni<Movie> findById(Long id) {
         return find("id", id).firstResult();
