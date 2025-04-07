@@ -74,7 +74,7 @@ public class Decorator extends Person {
                 Mutiny.fetch(movies)
                         .map(
                                 movieList -> {
-                                    movieList.removeIf(movie -> Objects.equals(movie.id, id));
+                                    movieList.removeIf(movie -> Objects.equals(movie.getId(), id));
                                     return movieList;
                                 }
                         )

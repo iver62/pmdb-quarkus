@@ -114,7 +114,7 @@ public class Genre extends PanacheEntityBase {
                 Mutiny.fetch(movies)
                         .map(
                                 fetchMovies -> {
-                                    fetchMovies.removeIf(movie -> Objects.equals(movie.id, id));
+                                    fetchMovies.removeIf(movie -> Objects.equals(movie.getId(), id));
                                     return fetchMovies;
                                 }
                         )

@@ -176,7 +176,7 @@ public class Country extends PanacheEntityBase {
                 Mutiny.fetch(movies)
                         .invoke(
                                 fetchedMovies -> {
-                                    fetchedMovies.removeIf(movie -> Objects.equals(movie.id, id));
+                                    fetchedMovies.removeIf(movie -> Objects.equals(movie.getId(), id));
                                     log.info("Removed movie with id {} from country {}", id, this);
                                 }
                         )
