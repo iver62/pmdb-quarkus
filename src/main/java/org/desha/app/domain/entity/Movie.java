@@ -10,8 +10,6 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.MovieDTO;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.text.MessageFormat;
@@ -76,96 +74,80 @@ public class Movie extends PanacheEntityBase {
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_producteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_producteur"))
-    @Fetch(FetchMode.SELECT)
     private Set<Producer> producers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_realisateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_realisateur"))
-    @Fetch(FetchMode.SELECT)
     private Set<Director> directors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_scenariste", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_scenariste"))
-    @Fetch(FetchMode.SELECT)
     private Set<Screenwriter> screenwriters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_musicien", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_musicien"))
-    @Fetch(FetchMode.SELECT)
     private Set<Musician> musicians = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_photographe", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_photographe"))
-    @Fetch(FetchMode.SELECT)
     private Set<Photographer> photographers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_costumier", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_costumier"))
-    @Fetch(FetchMode.SELECT)
     private Set<Costumier> costumiers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_decorateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_decorateur"))
-    @Fetch(FetchMode.SELECT)
     private Set<Decorator> decorators = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_monteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_monteur"))
-    @Fetch(FetchMode.SELECT)
     private Set<Editor> editors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_casteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_casteur"))
-    @Fetch(FetchMode.SELECT)
     private Set<Caster> casters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_directeur_artistique", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_directeur_artistique"))
-    @Fetch(FetchMode.SELECT)
     private Set<ArtDirector> artDirectors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_ingenieur_son", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_ingenieur_son"))
-    @Fetch(FetchMode.SELECT)
     private Set<SoundEditor> soundEditors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_specialiste_effets_speciaux", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_specialiste_effets_speciaux"))
-    @Fetch(FetchMode.SELECT)
     private Set<VisualEffectsSupervisor> visualEffectsSupervisors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_maquilleur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_maquilleur"))
-    @Fetch(FetchMode.SELECT)
     private Set<MakeupArtist> makeupArtists = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_coiffeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_coiffeur"))
-    @Fetch(FetchMode.SELECT)
     private Set<HairDresser> hairDressers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "lnk_film_cascadeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_cascadeur"))
-    @Fetch(FetchMode.SELECT)
     private Set<Stuntman> stuntmen = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "movie", cascade = {CascadeType.ALL})
-    @Fetch(FetchMode.SELECT)
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieActor> movieActors = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -224,7 +206,7 @@ public class Movie extends PanacheEntityBase {
      * @param peopleSet    L'ensemble des personnes à ajouter.
      * @param errorMessage Le message d'erreur à retourner si l'ensemble existant est null.
      * @return Une {@link Uni} contenant l'ensemble mis à jour après l'ajout des nouvelles personnes.
-     * @throws IllegalStateException Si la collection existante des personnes est null.
+     * @throws IllegalStateException Si la collection existante des personnes n'est pas initialisée.
      */
     public <T> Uni<Set<T>> addPeople(Set<T> persons, Set<T> peopleSet, String errorMessage) {
         return
@@ -238,16 +220,22 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
-    public Uni<Set<MovieActor>> addRoles(Set<MovieActor> roles) {
+    /**
+     * Ajoute une liste d'acteurs à la collection existante.
+     *
+     * @param movieActorSet La liste des entités {@link MovieActor} à ajouter.
+     * @return Une instance de {@link Uni} contenant la liste mise à jour des acteurs.
+     * @throws IllegalStateException Si la liste des acteurs n'est pas initialisée.
+     */
+    public Uni<List<MovieActor>> addMovieActors(List<MovieActor> movieActorSet) {
         return
-                Mutiny.fetch(roles)
-                        .map(
-                                fetchRoles -> {
-                                    fetchRoles.clear();
-                                    fetchRoles.addAll(roles);
-                                    return fetchRoles;
-                                }
-                        )
+                Mutiny.fetch(movieActors)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                        .invoke(fetchActors -> {
+                            if (Objects.nonNull(movieActorSet)) {
+                                fetchActors.addAll(movieActorSet);
+                            }
+                        })
                 ;
     }
 
@@ -309,14 +297,14 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Retire une personne dde la collection existante de personnes en fonction de son identifiant.
+     * Retire une personne de la collection existante de personnes en fonction de son identifiant.
      *
      * @param <T>          Le type de la personne (doit être une sous-classe de {@link Person}).
      * @param persons      L'ensemble des personnes dans lequel rechercher.
      * @param id           L'identifiant de la personne à retirer.
      * @param errorMessage Le message d'erreur à retourner si l'ensemble des personnes est null.
      * @return Une {@link Uni} contenant l'ensemble mis à jour des personnes après suppression.
-     * @throws IllegalStateException Si la collection existante des personnes est null.
+     * @throws IllegalStateException Si la collection existante des personnes n'est pas initialisée.
      */
     public <T extends Person> Uni<Set<T>> removePerson(Set<T> persons, Long id, String errorMessage) {
         return
@@ -326,8 +314,19 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
-    public void removeRole(Long id) {
-        this.movieActors.removeIf(role -> Objects.equals(role.id, id));
+    /**
+     * Supprime un acteur de la collection existante de personnes en fonction de son identifiant.
+     *
+     * @param id L'identifiant de l'entité {@link MovieActor} à supprimer.
+     * @return Une instance de {@link Uni} contenant la liste mise à jour des acteurs.
+     * @throws IllegalStateException Si la liste des acteurs n'est pas initialisée.
+     */
+    public Uni<List<MovieActor>> removeMovieActor(Long id) {
+        return
+                Mutiny.fetch(movieActors)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                        .invoke(movieActorList -> movieActorList.removeIf(movieActor -> Objects.equals(movieActor.getId(), id)))
+                ;
     }
 
     /**

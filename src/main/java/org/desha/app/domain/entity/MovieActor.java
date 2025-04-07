@@ -19,7 +19,7 @@ public class MovieActor extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    protected Long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "fk_film")
@@ -58,5 +58,9 @@ public class MovieActor extends PanacheEntityBase {
                         .rank(rank)
                         .build()
                 ;
+    }
+
+    public String toString() {
+        return id + " / " + actor.getId() + ": " + actor.getName() + " -> " + role + " (" + rank + ")";
     }
 }

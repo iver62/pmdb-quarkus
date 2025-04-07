@@ -49,8 +49,11 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}")
-    public Uni<T> getPersonById(@RestPath Long id) {
-        return personService.getById(id);
+    public Uni<Response> getPersonById(@RestPath Long id) {
+        return
+                personService.getById(id)
+                        .map(t -> Response.ok(PersonDTO.fromEntity(t, t.getCountries())).build())
+                ;
     }
 
     @GET

@@ -16,7 +16,6 @@ import org.desha.app.repository.MovieRepository;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Singleton
@@ -94,7 +93,7 @@ public class ActorService extends PersonService<Actor> {
         return Panache.withTransaction(() -> Actor.fromDTO(personDTO).persist());
     }
 
-    public List<MovieActorDTO> fromMovieActorSetEntity(List<MovieActor> movieActorSet) {
+    public List<MovieActorDTO> fromMovieActorListEntity(List<MovieActor> movieActorSet) {
         return
                 movieActorSet
                         .stream()

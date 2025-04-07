@@ -38,6 +38,22 @@ public class MovieDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
 
+    public static MovieDTO fromEntity(Movie movie) {
+        return MovieDTO.builder()
+                .id(movie.getId())
+                .title(movie.getTitle())
+                .originalTitle(movie.getOriginalTitle())
+                .releaseDate(movie.getReleaseDate())
+                .runningTime(movie.getRunningTime())
+                .budget(movie.getBudget())
+                .boxOffice(movie.getBoxOffice())
+                .posterFileName(movie.getPosterFileName())
+                .creationDate(movie.getCreationDate())
+                .lastUpdate(movie.getLastUpdate())
+                .user(UserDTO.fromEntity(movie.getUser()))
+                .build();
+    }
+
     public static MovieDTO fromEntity(Movie movie, Set<Genre> genreSet, Set<Country> countrySet, Set<Award> awardSet) {
         return MovieDTO.builder()
                 .id(movie.getId())

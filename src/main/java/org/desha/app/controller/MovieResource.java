@@ -1,6 +1,5 @@
 package org.desha.app.controller;
 
-import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -1551,6 +1550,28 @@ public class MovieResource {
                 ;
     }
 
+    @PATCH
+    @Path("{id}/roles")
+    public Uni<Response> addMovieActors(@RestPath Long id, Set<MovieActorDTO> movieActorsDTO) {
+        if (Objects.isNull(movieActorsDTO)) {
+            return Uni.createFrom().item(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("La liste des acteurs ne peut pas être nulle.")
+                            .build()
+            );
+        }
+
+        return
+                movieService.addMovieActors(id, movieActorsDTO)
+                        .onItem().ifNotNull().transform(movieActorDTOList ->
+                                movieActorDTOList.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieActorDTOList).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
     /**
      * Ajoute un ensemble de genres à un film spécifique.
      *
@@ -1643,38 +1664,6 @@ public class MovieResource {
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
-
-//    @PUT
-//    @Path("{id}/actors")
-//    public Uni<Response> addActors(Long id, List<MovieActor> movieActors) {
-//        if (Objects.isNull(movieActors) || movieActors.isEmpty()) {
-//            throw new WebApplicationException("Movie title was not set on request.", 422);
-//        }
-//
-//        return
-//                Uni.join().all(
-//                                movieActors
-//                                        .stream()
-//                                        .filter(a -> Objects.nonNull(a.getActor().id))
-//                                        .map(a -> (Person) Person.findById(a.getActor().id))
-//                                        .toList()
-//                        )
-//                        .usingConcurrencyOf(1)
-//                        .andFailFast()
-//                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Person) e).toList())
-//                        .map(personList -> personList.stream().collect(Collectors.toCollection(() -> newMusicians)))
-//                        .map(personList -> musicians.stream().filter(m -> Objects.isNull(m.id)).collect(Collectors.toCollection(() -> newMusicians)))
-//        Panache
-//                .withTransaction(() -> Movie.<Movie>findById(id)
-//                        .onItem().ifNotNull()
-//                        .invoke(entity -> entity.setMovieActors(movieActors))
-//                        .chain(entity -> entity.persist())
-//
-//                )
-//                .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-//                .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
-//
-//    }
 
     /**
      * Retire un producteur d'un film spécifique et retourne une réponse HTTP appropriée.
@@ -2022,6 +2011,29 @@ public class MovieResource {
     }
 
     /**
+     * Supprime un acteur associé à un film donné.
+     *
+     * @param movieId      L'identifiant du film dont l'acteur doit être supprimé.
+     * @param movieActorId L'identifiant de l'association acteur-film à supprimer.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des acteurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
+    @Path("{movieId}/roles/{movieActorId}")
+    public Uni<Response> removeMovieActor(@RestPath Long movieId, @RestPath Long movieActorId) {
+        return
+                movieService.removeMovieActor(movieId, movieActorId)
+                        .onItem().ifNotNull().transform(movieActorDTOList ->
+                                movieActorDTOList.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieActorDTOList).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
      * Supprime un genre spécifique d'un film donné.
      *
      * @param movieId L'identifiant du film dont le genre doit être supprimé.
@@ -2089,9 +2101,9 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
-    @Path("{movieId}/actor/{actorId}")
-    public Uni<Response> removeRole(Long movieId, Long actorId) {
+    /*@PATCH
+    @Path("{movieId}/actors/{actorId}")
+    public Uni<Response> removeRole(@RestPath Long movieId, @RestPath Long actorId) {
         return
                 Panache
                         .withTransaction(() -> Movie.<Movie>findById(movieId)
@@ -2102,7 +2114,7 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                 ;
-    }
+    }*/
 
     @PUT
     @Path("{id}")
