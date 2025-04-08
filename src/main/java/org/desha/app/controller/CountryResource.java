@@ -9,18 +9,15 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.dto.CountryDTO;
-import org.desha.app.domain.dto.MovieQueryParamsDTO;
-import org.desha.app.domain.dto.QueryParamsDTO;
-import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Movie;
-import org.desha.app.service.CountryService;
+import org.desha.app.domain.dto.*;
+import org.desha.app.domain.entity.*;
+import org.desha.app.repository.*;
+import org.desha.app.service.*;
 import org.jboss.resteasy.reactive.RestPath;
 
-import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
@@ -31,9 +28,109 @@ public class CountryResource {
 
     private final CountryService countryService;
 
+    private final ActorService actorService;
+    private final ArtDirectorService artDirectorService;
+    private final CasterService casterService;
+    private final CostumierService costumierService;
+    private final DecoratorService decoratorService;
+    private final DirectorService directorService;
+    private final EditorService editorService;
+    private final HairDresserService hairDresserService;
+    private final MakeupArtistService makeupArtistService;
+    private final MusicianService musicianService;
+    private final PhotographerService photographerService;
+    private final ProducerService producerService;
+    private final ScreenwriterService screenwriterService;
+    private final SoundEditorService soundEditorService;
+    private final StuntmanService stuntmanService;
+    private final VisualEffectsSupervisorService visualEffectsSupervisorService;
+
+    private final ActorRepository actorRepository;
+    private final ArtDirectorRepository artDirectorRepository;
+    private final CasterRepository casterRepository;
+    private final CostumierRepository costumierRepository;
+    private final DecoratorRepository decoratorRepository;
+    private final DirectorRepository directorRepository;
+    private final EditorRepository editorRepository;
+    private final HairDresserRepository hairDresserRepository;
+    private final MakeupArtistRepository makeupArtistRepository;
+    private final MusicianRepository musicianRepository;
+    private final PhotographerRepository photographerRepository;
+    private final ProducerRepository producerRepository;
+    private final ScreenwriterRepository screenwriterRepository;
+    private final SoundEditorRepository soundEditorRepository;
+    private final StuntmanRepository stuntmanRepository;
+    private final VisualEffectsSupervisorRepository visualEffectsSupervisorRepository;
+
     @Inject
-    public CountryResource(CountryService countryService) {
+    public CountryResource(
+            CountryService countryService,
+            ActorService actorService,
+            ArtDirectorService artDirectorService,
+            CasterService casterService,
+            CostumierService costumierService,
+            DecoratorService decoratorService,
+            DirectorService directorService,
+            EditorService editorService,
+            HairDresserService hairDresserService,
+            MakeupArtistService makeupArtistService,
+            MusicianService musicianService,
+            PhotographerService photographerService,
+            ProducerService producerService,
+            ScreenwriterService screenwriterService,
+            SoundEditorService soundEditorService,
+            StuntmanService stuntmanService,
+            VisualEffectsSupervisorService visualEffectsSupervisorService,
+            ActorRepository actorRepository,
+            ArtDirectorRepository artDirectorRepository,
+            CasterRepository casterRepository,
+            CostumierRepository costumierRepository,
+            DecoratorRepository decoratorRepository,
+            DirectorRepository directorRepository,
+            EditorRepository editorRepository,
+            HairDresserRepository hairDresserRepository,
+            MakeupArtistRepository makeupArtistRepository,
+            MusicianRepository musicianRepository,
+            PhotographerRepository photographerRepository,
+            ProducerRepository producerRepository,
+            ScreenwriterRepository screenwriterRepository,
+            SoundEditorRepository soundEditorRepository,
+            StuntmanRepository stuntmanRepository,
+            VisualEffectsSupervisorRepository visualEffectsSupervisorRepository
+    ) {
         this.countryService = countryService;
+        this.actorService = actorService;
+        this.artDirectorService = artDirectorService;
+        this.casterService = casterService;
+        this.costumierService = costumierService;
+        this.decoratorService = decoratorService;
+        this.directorService = directorService;
+        this.editorService = editorService;
+        this.hairDresserService = hairDresserService;
+        this.makeupArtistService = makeupArtistService;
+        this.musicianService = musicianService;
+        this.photographerService = photographerService;
+        this.producerService = producerService;
+        this.screenwriterService = screenwriterService;
+        this.soundEditorService = soundEditorService;
+        this.stuntmanService = stuntmanService;
+        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+        this.actorRepository = actorRepository;
+        this.artDirectorRepository = artDirectorRepository;
+        this.casterRepository = casterRepository;
+        this.costumierRepository = costumierRepository;
+        this.decoratorRepository = decoratorRepository;
+        this.directorRepository = directorRepository;
+        this.editorRepository = editorRepository;
+        this.hairDresserRepository = hairDresserRepository;
+        this.makeupArtistRepository = makeupArtistRepository;
+        this.musicianRepository = musicianRepository;
+        this.photographerRepository = photographerRepository;
+        this.producerRepository = producerRepository;
+        this.screenwriterRepository = screenwriterRepository;
+        this.soundEditorRepository = soundEditorRepository;
+        this.stuntmanRepository = stuntmanRepository;
+        this.visualEffectsSupervisorRepository = visualEffectsSupervisorRepository;
     }
 
     @GET
@@ -47,15 +144,12 @@ public class CountryResource {
 
     @GET
     public Uni<Response> getAllPaginatedCountries(@BeanParam QueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
-
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
                                 countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -69,15 +163,12 @@ public class CountryResource {
     @GET
     @Path("all")
     public Uni<Response> getAllCountries(@BeanParam QueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
-
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getCountries(queryParams.getSort(), sortDirection, queryParams.getTerm())
+                countryService.getCountries(finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
                                 countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -124,12 +215,9 @@ public class CountryResource {
     @GET
     @Path("{id}/movies/all")
     public Uni<Response> getAllMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
-
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
                 countryService.getMovies(id, queryParams.getSort(), sortDirection, queryParams.getTerm())
@@ -146,15 +234,12 @@ public class CountryResource {
     @GET
     @Path("{id}/movies")
     public Uni<Response> getMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
-
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+        String finalSort = Optional.of(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                countryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(movieList ->
                                 countryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
@@ -168,469 +253,613 @@ public class CountryResource {
                 ;
     }
 
-    /*@GET
+    /**
+     * Récupère la liste des acteurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les acteurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des acteurs associés au pays.
+     * - 204 OK si liste des acteurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/actors")
-    public Uni<Response> getActorsByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getActorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getActorsByCountry(id, page, size, sort, sortDirection, term)
-                        .flatMap(actorList ->
-                                countryService.countActorsByCountry(id, term).map(total ->
-                                        actorList.isEmpty()
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, actorService, actorRepository, Actor.class)
+                        .flatMap(personDTOList ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, actorRepository, Actor.class).map(total ->
+                                        personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(actorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des producteurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les producteurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des producteurs associés au pays.
+     * - 204 OK si liste des producteurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/producers")
-    public Uni<Response> getProducersByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getProducersByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getProducersByCountry(id, page, size, sort, sortDirection, term)
-                        .flatMap(producerList ->
-                                countryService.countProducersByCountry(id, term).map(total ->
-                                        producerList.isEmpty()
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, producerService, producerRepository, Producer.class)
+                        .flatMap(personDTOList ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, producerRepository, Producer.class).map(total ->
+                                        personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(producerList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des réalisateurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les réalisateurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des réalisateurs associés au pays.
+     * - 204 OK si liste des réalisateurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/directors")
-    public Uni<Response> getDirectorsByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getDirectorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getDirectorsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, directorService, directorRepository, Director.class)
                         .flatMap(directorList ->
-                                countryService.countDirectorsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, directorRepository, Director.class).map(total ->
                                         directorList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(directorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des scénaristes associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les scénaristes.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des scénaristes associés au pays.
+     * - 204 OK si liste des scénaristes associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/screenwriters")
-    public Uni<Response> getScreenwritersByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getScreenwritersByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getScreenwritersByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, screenwriterService, screenwriterRepository, Screenwriter.class)
                         .flatMap(screenwriterList ->
-                                countryService.countScreenwritersByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, screenwriterRepository, Screenwriter.class).map(total ->
                                         screenwriterList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(screenwriterList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des musiciens associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les musiciens.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des musiciens associés au pays.
+     * - 204 OK si liste des musiciens associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/musicians")
-    public Uni<Response> getMusiciansByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getMusiciansByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getMusiciansByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, musicianService, musicianRepository, Musician.class)
                         .flatMap(musicianList ->
-                                countryService.countMusiciansByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, musicianRepository, Musician.class).map(total ->
                                         musicianList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(musicianList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-   /* @GET
+    /**
+     * Récupère la liste des décorateurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les décorateurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des décorateurs associés au pays.
+     * - 204 OK si liste des décorateurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/decorators")
-    public Uni<Response> getDecoratorsByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getDecoratorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getDecoratorsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, decoratorService, decoratorRepository, Decorator.class)
                         .flatMap(decoratorList ->
-                                countryService.countDecoratorsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, decoratorRepository, Decorator.class).map(total ->
                                         decoratorList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(decoratorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des costumiers associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les costumiers.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des costumiers associés au pays.
+     * - 204 OK si liste des costumiers associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/costumiers")
-    public Uni<Response> getCostumiers(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getCostumiers(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getCostumiersByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, costumierService, costumierRepository, Costumier.class)
                         .flatMap(costumierList ->
-                                countryService.countCostumiersByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, costumierRepository, Costumier.class).map(total ->
                                         costumierList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(costumierList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des photographes associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les photographes.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des photographes associés au pays.
+     * - 204 OK si liste des photographes associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/photographers")
-    public Uni<Response> getPhotographersByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getPhotographersByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPhotographersByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, photographerService, photographerRepository, Photographer.class)
                         .flatMap(photographerList ->
-                                countryService.countPhotographersByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, photographerRepository, Photographer.class).map(total ->
                                         photographerList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(photographerList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des monteurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les monteurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des monteurs associés au pays.
+     * - 204 OK si liste des monteurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/editors")
-    public Uni<Response> getEditorsByCountry(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getEditorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getEditorsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, editorService, editorRepository, Editor.class)
                         .flatMap(editorList ->
-                                countryService.countEditorsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, editorRepository, Editor.class).map(total ->
                                         editorList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(editorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des casteurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les casteurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des casteurs associés au pays.
+     * - 204 OK si liste des casteurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/casters")
-    public Uni<Response> getCasters(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getCasters(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getCastersByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, casterService, casterRepository, Caster.class)
                         .flatMap(casterList ->
-                                countryService.countCastersByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, casterRepository, Caster.class).map(total ->
                                         casterList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(casterList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-   /* @GET
+    /**
+     * Récupère la liste des directeurs artistiques associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les directeurs artistiques.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des directeurs artistiques associés au pays.
+     * - 204 OK si liste des directeurs artistiques associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/art-directors")
-    public Uni<Response> getArtDirectors(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getArtDirectors(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getArtDirectorsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, artDirectorService, artDirectorRepository, ArtDirector.class)
                         .flatMap(artDirectorList ->
-                                countryService.countArtDirectorsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, artDirectorRepository, ArtDirector.class).map(total ->
                                         artDirectorList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(artDirectorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des ingénieurs du son associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les ingénieurs du son.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des ingénieurs du son associés au pays.
+     * - 204 OK si liste des ingénieurs du son associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/sound-editors")
-    public Uni<Response> getSoundEditors(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getSoundEditors(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getSoundEditorsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, soundEditorService, soundEditorRepository, SoundEditor.class)
                         .flatMap(soundEditorList ->
-                                countryService.countSoundEditorsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, soundEditorRepository, SoundEditor.class).map(total ->
                                         soundEditorList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(soundEditorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des spécialistes des effets spéciaux associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les spécialistes des effets spéciaux.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des spécialistes des effets spéciaux associés au pays.
+     * - 204 OK si liste des spécialistes des effets spéciaux associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/visual-effects-supervisors")
-    public Uni<Response> getVisualEffectsSupervisors(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getVisualEffectsSupervisorsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, visualEffectsSupervisorService, visualEffectsSupervisorRepository, VisualEffectsSupervisor.class)
                         .flatMap(visualEffectsSupervisorList ->
-                                countryService.countVisualEffectsSupervisorsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, visualEffectsSupervisorRepository, VisualEffectsSupervisor.class).map(total ->
                                         visualEffectsSupervisorList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(visualEffectsSupervisorList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des maquilleurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les maquilleurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des maquilleurs associés au pays.
+     * - 204 OK si liste des maquilleurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/makeup-artists")
-    public Uni<Response> getMakeupArtists(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getMakeupArtists(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getMakeupArtistsByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, makeupArtistService, makeupArtistRepository, MakeupArtist.class)
                         .flatMap(makeupArtistList ->
-                                countryService.countMakeupArtistsByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, makeupArtistRepository, MakeupArtist.class).map(total ->
                                         makeupArtistList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(makeupArtistList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des coiffeurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les coiffeurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des coiffeurs associés au pays.
+     * - 204 OK si liste des coiffeurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/hair-dressers")
-    public Uni<Response> getHairDressers(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getHairDressers(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getHairDressersByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, hairDresserService, hairDresserRepository, HairDresser.class)
                         .flatMap(hairDresserList ->
-                                countryService.countHairDressersByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, hairDresserRepository, HairDresser.class).map(total ->
                                         hairDresserList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(hairDresserList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
-    /*@GET
+    /**
+     * Récupère la liste des cascadeurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les cascadeurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des cascadeurs associés au pays.
+     * - 204 OK si liste des cascadeurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
     @Path("{id}/stuntmen")
-    public Uni<Response> getStuntmen(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue("20") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getStuntmen(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getStuntmenByCountry(id, page, size, sort, sortDirection, term)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, stuntmanService, stuntmanRepository, Stuntman.class)
                         .flatMap(stuntmanList ->
-                                countryService.countStuntmenByCountry(id, term).map(total ->
+                                countryService.countPersonsByCountry(id, criteriasDTO, stuntmanRepository, Stuntman.class).map(total ->
                                         stuntmanList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(stuntmanList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
-    }*/
+    }
 
     @PUT
     @Path("{id}")
@@ -647,24 +876,6 @@ public class CountryResource {
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
-    }
-
-    private Sort.Direction validateSortDirection(String direction) {
-        return Arrays.stream(Sort.Direction.values())
-                .filter(d -> d.name().equalsIgnoreCase(direction))
-                .findFirst()
-                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
-    }
-
-    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
-        if (!allowedSortFields.contains(sort)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields))
-                            .build()
-            );
-        }
-        return null;
     }
 
 }

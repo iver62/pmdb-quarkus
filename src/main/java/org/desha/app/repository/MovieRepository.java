@@ -354,9 +354,9 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> searchByTitle(String term) {
-        String query = "LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))";
+        String query = "LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', ?1, '%')))";
 
-        return list("LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', ?1, '%')))", Sort.by("title"), term.toLowerCase());
+        return list(query, Sort.by("title"), term.toLowerCase());
     }
 
     public Uni<Movie> findByIdWithCountriesAndGenres(Long id) {

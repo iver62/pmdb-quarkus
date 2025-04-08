@@ -21,10 +21,8 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -82,29 +80,15 @@ public abstract class PersonResource<T extends Person> {
     @GET
     @Path("{id}/full")
     public Uni<Response> getPersonByIdWithCountriesAndMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        // Vérification de la cohérence des dates
-        if (Objects.nonNull(queryParams.getFromReleaseDate()) && Objects.nonNull(queryParams.getToReleaseDate()) && queryParams.getFromReleaseDate().isAfter(queryParams.getToReleaseDate())
-                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
-                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
-        ) {
-            return
-                    Uni.createFrom().item(
-                            Response.status(Response.Status.BAD_REQUEST)
-                                    .entity("La date de début ne peut pas être après la date de fin.")
-                                    .build()
-                    );
-        }
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                personService.getByIdWithCountriesAndMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, CriteriasDTO.build(queryParams))
+                personService.getByIdWithCountriesAndMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, CriteriasDTO.build(queryParams))
                         .map(personDTO ->
                                 Response.ok(personDTO).build()
                         )
@@ -113,28 +97,12 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     public Uni<Response> getPersons(@BeanParam PersonQueryParamsDTO queryParams) {
-        // Vérification de la cohérence des dates
-        if (Objects.nonNull(queryParams.getFromBirthDate()) && Objects.nonNull(queryParams.getToBirthDate()) && queryParams.getFromBirthDate().isAfter(queryParams.getToBirthDate())
-                || Objects.nonNull(queryParams.getFromDeathDate()) && Objects.nonNull(queryParams.getToDeathDate()) && queryParams.getFromDeathDate().isAfter(queryParams.getToDeathDate())
-                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
-                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
-        ) {
-            return
-                    Uni.createFrom().item(
-                            Response.status(Response.Status.BAD_REQUEST)
-                                    .entity("La date de début ne peut pas être après la date de fin.")
-                                    .build()
-                    );
-        }
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        String finalSort = Objects.isNull(queryParams.getSort()) ? "name" : queryParams.getSort();
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Uni<Response> sortValidation = validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
-
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
@@ -163,15 +131,13 @@ public abstract class PersonResource<T extends Person> {
     @GET
     @Path("countries")
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
                                 personService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -185,30 +151,17 @@ public abstract class PersonResource<T extends Person> {
     @GET
     @Path("{id}/movies")
     public Uni<Response> getMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        // Vérification de la cohérence des dates
-        if (Objects.nonNull(queryParams.getFromReleaseDate()) && Objects.nonNull(queryParams.getToReleaseDate()) && queryParams.getFromReleaseDate().isAfter(queryParams.getToReleaseDate())
-                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
-                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
-        ) {
-            return
-                    Uni.createFrom().item(
-                            Response.status(Response.Status.BAD_REQUEST)
-                                    .entity("La date de début ne peut pas être après la date de fin.")
-                                    .build()
-                    );
-        }
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, criteriasDTO)
+                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO)
                         .flatMap(movieList ->
                                 personService.countMovies(id, criteriasDTO)
                                         .map(total ->
@@ -327,26 +280,6 @@ public abstract class PersonResource<T extends Person> {
                                 ? Response.ok().status(NO_CONTENT).build()
                                 : Response.ok().status(NOT_FOUND).build())
                 ;
-    }
-
-    private Sort.Direction validateSortDirection(String direction) {
-        return
-                Arrays.stream(Sort.Direction.values())
-                        .filter(d -> d.name().equalsIgnoreCase(direction))
-                        .findFirst()
-                        .orElse(Sort.Direction.Ascending) // Valeur par défaut si invalide
-                ;
-    }
-
-    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
-        if (!allowedSortFields.contains(sort)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields))
-                            .build()
-            );
-        }
-        return null;
     }
 
 }

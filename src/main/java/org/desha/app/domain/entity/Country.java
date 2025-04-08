@@ -15,7 +15,6 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
@@ -26,6 +25,7 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Country extends PanacheEntityBase {
 
+    public static final String DEFAULT_SORT = "nomFrFr";
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("code", "alpha2", "alpha3", "nomEnGb", "nomFrFr", "lastUpdate");
 
     @Id
@@ -159,39 +159,4 @@ public class Country extends PanacheEntityBase {
         this.lastUpdate = LocalDateTime.now();
     }
 
-    /*public Uni<Set<Person>> addPerson(Person person) {
-        return
-                Mutiny.fetch(persons)
-                        .map(
-                                people -> {
-                                    people.add(person);
-                                    return people;
-                                }
-                        )
-                ;
-    }*/
-
-    public Uni<Set<Movie>> removeMovie(Long id) {
-        return
-                Mutiny.fetch(movies)
-                        .invoke(
-                                fetchedMovies -> {
-                                    fetchedMovies.removeIf(movie -> Objects.equals(movie.getId(), id));
-                                    log.info("Removed movie with id {} from country {}", id, this);
-                                }
-                        )
-                ;
-    }
-
-    /*public Uni<Set<Person>> removePerson(Long id) {
-        return
-                Mutiny.fetch(persons)
-                        .map(
-                                fetchPersons -> {
-                                    fetchPersons.removeIf(person -> Objects.equals(person.id, id));
-                                    return fetchPersons;
-                                }
-                        )
-                ;
-    }*/
 }

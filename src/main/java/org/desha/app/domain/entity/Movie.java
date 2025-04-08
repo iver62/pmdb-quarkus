@@ -29,6 +29,7 @@ import java.util.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Movie extends PanacheEntityBase {
 
+    public static final String DEFAULT_SORT = "title";
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "title", "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "creationDate", "lastUpdate");
 
     @Id

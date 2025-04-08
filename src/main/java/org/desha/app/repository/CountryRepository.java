@@ -20,9 +20,7 @@ public class CountryRepository implements PanacheRepository<Country> {
      * @return Un {@link Uni} contenant le nombre total de pays correspondant au critère de recherche.
      */
     public Uni<Long> countCountries(String term) {
-        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
-                Parameters.with("term", term)
-        );
+        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', ?1, '%')))", term);
     }
 
     /**

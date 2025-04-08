@@ -5,14 +5,12 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Named;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Actor;
 
 import java.util.List;
 import java.util.Objects;
 
-@Named("actorRepository")
 @ApplicationScoped
 public class ActorRepository extends PersonRepository<Actor> {
 

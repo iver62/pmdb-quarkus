@@ -25,6 +25,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class User extends PanacheEntityBase {
 
+    public static final String DEFAULT_SORT = "username";
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "username", "email", "emailVerified", "name");
 
     @Id

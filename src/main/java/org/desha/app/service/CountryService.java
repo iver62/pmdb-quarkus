@@ -7,11 +7,14 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.desha.app.domain.dto.CountryDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
+import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
@@ -34,6 +37,38 @@ public class CountryService {
 
     public Uni<Long> countCountries(String term) {
         return countryRepository.countCountries(term);
+    }
+
+    /**
+     * Compte le nombre de films associés à un pays donné, en fonction d'un terme de recherche dans le titre des films.
+     *
+     * @param countryId L'identifiant du pays.
+     * @param term      Le terme de recherche dans le titre des films.
+     * @return Un objet {@link Uni} contenant le nombre de films correspondant aux critères.
+     */
+    public Uni<Long> countMovies(Long countryId, String term) {
+        return movieRepository.countMoviesByCountry(countryId, term);
+    }
+
+    /**
+     * Compte le nombre de personnes (acteurs, producteurs, etc.) associés à un pays spécifique en fonction des critères fournis.
+     * Cette méthode est générique et peut être utilisée pour différents types de personnes (comme Actor, Producer, etc.)
+     * en utilisant les repositories correspondants.
+     *
+     * <p>Cette méthode appelle la méthode {@link PersonRepository#countByCountry} pour effectuer la requête
+     * de comptage des personnes filtrées par pays et les critères fournis dans {@link CriteriasDTO}.</p>
+     *
+     * @param <T>          Le type d'entité qui représente la personne (par exemple, {@link org.desha.app.domain.entity.Actor} ou {@link org.desha.app.domain.entity.Producer}).
+     * @param <R>          Le type du repository utilisé pour accéder aux entités (par exemple, {@link org.desha.app.repository.ActorRepository} ou {@link org.desha.app.repository.ProducerRepository}).
+     * @param countryId    L'ID du pays pour lequel les personnes doivent être comptées.
+     * @param criteriasDTO Un objet contenant des critères supplémentaires pour filtrer les résultats de la recherche comme un terme de recherche sur le nom.
+     * @param repository   Le repository correspondant à l'entité de type {@code T} (par exemple,
+     *                     {@link org.desha.app.repository.ActorRepository} ou {@link org.desha.app.repository.ProducerRepository}).
+     * @return Un objet {@link Uni<Long>} représentant le nombre de personnes associées au pays spécifié,
+     * selon les critères de recherche et de filtrage.
+     */
+    public <T extends Person, R extends PersonRepository<T>> Uni<Long> countPersonsByCountry(Long countryId, CriteriasDTO criteriasDTO, R repository, Class<T> entityClass) {
+        return repository.countByCountry(entityClass, countryId, criteriasDTO);
     }
 
     public Uni<Country> getById(Long id) {
@@ -70,195 +105,6 @@ public class CountryService {
                 ;
     }
 
-    /**
-     * Compte le nombre de films associés à un pays donné, en fonction d'un terme de recherche dans le titre des films.
-     *
-     * @param countryId L'identifiant du pays.
-     * @param term      Le terme de recherche dans le titre des films.
-     * @return Un objet {@link Uni} contenant le nombre de films correspondant aux critères.
-     */
-    public Uni<Long> countMovies(Long countryId, String term) {
-        return movieRepository.countMoviesByCountry(countryId, term);
-    }
-
-    /**
-     * Compte le nombre de producteurs associés à un pays donné, en fonction d'un terme de recherche sur leur nom.
-     *
-     * @param countryId L'identifiant du pays pour lequel rechercher les producteurs.
-     * @param term      Le terme de recherche à comparer avec le nom des producteurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de producteurs correspondant aux critères de recherche.
-     */
-    /*public Uni<Long> countProducersByCountry(Long countryId, String term) {
-        return producerRepository.countProducersByCountry(countryId, term);
-    }*/
-
-    /**
-     * Compte le nombre d'acteurs associés à un pays donné, en fonction d'un terme de recherche dans le nom de l'acteur.
-     *
-     * @param countryId L'identifiant du pays.
-     * @param term      Le terme de recherche dans le nom des acteurs.
-     * @return Un objet {@link Uni} contenant le nombre d'acteurs correspondant aux critères.
-     */
-    /*public Uni<Long> countActorsByCountry(Long countryId, String term) {
-        return actorRepository.countActorsByCountry(countryId, term);
-    }*/
-
-    /**
-     * Compte le nombre de réalisateurs associés à un pays donné, en fonction d'un terme de recherche dans le nom du réalisateur.
-     *
-     * @param countryId L'identifiant du pays.
-     * @param term      Le terme de recherche dans le nom des réalisateurs.
-     * @return Un objet {@link Uni} contenant le nombre de réalisateurs correspondant aux critères.
-     */
-   /* public Uni<Long> countDirectorsByCountry(Long countryId, String term) {
-        return directorRepository.countDirectorsByCountry(countryId, term);
-    }*/
-
-    /**
-     * Compte le nombre de scénaristes associés à un pays donné, en fonction d'un terme de recherche dans le nom du scénariste.
-     *
-     * @param countryId L'identifiant du pays.
-     * @param term      Le terme de recherche dans le nom des scénaristes.
-     * @return Un objet {@link Uni} contenant le nombre de scénaristes correspondant aux critères.
-     */
-    /*public Uni<Long> countScreenwritersByCountry(Long countryId, String term) {
-        return screenwriterRepository.countScreenwritersByCountry(countryId, term);
-    }*/
-
-    /**
-     * Compte le nombre de musiciens associés à un pays donné en fonction d'un critère de recherche sur le nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les musiciens.
-     * @param term Le terme de recherche à comparer avec le nom des musiciens (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de musiciens correspondant aux critères.
-     */
-    /*public Uni<Long> countMusiciansByCountry(Long id, String term) {
-        return musicianRepository.countMusiciansByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de décorateurs associés à un pays donné en fonction d'un critère de recherche sur le nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les décorateurs.
-     * @param term Le terme de recherche à comparer avec le nom des décorateurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de décorateurs correspondant aux critères.
-     */
-    /*public Uni<Long> countDecoratorsByCountry(Long id, String term) {
-        return decoratorRepository.countDecoratorsByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de costumiers associés à un pays donné, en fonction d'un terme de recherche sur le nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les costumiers.
-     * @param term Le terme de recherche à comparer avec le nom des costumiers (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de costumiers correspondant aux critères.
-     */
-   /* public Uni<Long> countCostumiersByCountry(Long id, String term) {
-        return costumierRepository.countCostumiersByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de photographes associés à un pays donné, en fonction d'un terme de recherche sur leur nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les photographes.
-     * @param term Le terme de recherche à comparer avec le nom des photographes (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de photographes correspondant aux critères.
-     */
-    /*public Uni<Long> countPhotographersByCountry(Long id, String term) {
-        return photographerRepository.countPhotographersByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de monteurs associés à un pays donné, en fonction d'un terme de recherche sur leur nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les monteurs.
-     * @param term Le terme de recherche à comparer avec le nom des monteurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de monteurs correspondant aux critères de recherche.
-     */
-   /* public Uni<Long> countEditorsByCountry(Long id, String term) {
-        return editorRepository.countEditorsByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de castings associés à un pays donné, en fonction d'un terme de recherche sur leur nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les castings.
-     * @param term Le terme de recherche à comparer avec le nom des castings (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de castings correspondant aux critères de recherche.
-     */
-//    public Uni<Long> countCastersByCountry(Long id, String term) {
-//        return casterRepository.countCastersByMovie(id, term);
-//    }
-
-    /**
-     * Compte le nombre de directeurs artistiques associés à un pays donné, en fonction d'un terme de recherche sur leur nom.
-     *
-     * @param id   L'identifiant du pays pour lequel rechercher les directeurs artistiques.
-     * @param term Le terme de recherche à comparer avec le nom des directeurs artistiques (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de directeurs artistiques correspondant aux critères de recherche.
-     */
-    /*public Uni<Long> countArtDirectorsByCountry(Long id, String term) {
-        return artDirectorRepository.countArtDirectorsByMovie(id, term);
-    }*/
-
-    /**
-     * Compte le nombre d'ingénieurs son associés à un pays donné, en fonction d'un terme de recherche pour le nom.
-     * Le nom des ingénieurs son est comparé avec le terme de recherche de manière insensible à la casse.
-     *
-     * @param id   L'identifiant du pays pour lequel compter les ingénieurs son.
-     * @param term Le terme de recherche à comparer avec les noms des ingénieurs son (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre d'ingénieurs son correspondant aux critères.
-     */
-    /*public Uni<Long> countSoundEditorsByCountry(Long id, String term) {
-        return soundEditorRepository.countSoundEditorsByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de superviseurs des effets spéciaux associés à un pays donné, en fonction d'un terme de recherche pour le nom.
-     * Le nom des superviseurs des effets spéciaux est comparé avec le terme de recherche de manière insensible à la casse.
-     *
-     * @param id   L'identifiant du pays pour lequel compter les superviseurs des effets spéciaux.
-     * @param term Le terme de recherche à comparer avec les noms des superviseurs des effets spéciaux (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de superviseurs des effets spéciaux correspondant aux critères.
-     */
-    /*public Uni<Long> countVisualEffectsSupervisorsByCountry(Long id, String term) {
-        return visualEffectsSupervisorRepository.countVisualEffectsSupervisorsByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de maquilleurs associés à un pays spécifique, en filtrant les résultats avec un terme
-     * de recherche insensible à la casse sur les noms des maquilleurs.
-     *
-     * @param id   L'identifiant du pays pour lequel compter les maquilleurs associés.
-     * @param term Le terme de recherche à appliquer sur les noms des maquilleurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre de maquilleurs correspondant à la recherche.
-     */
-    /*public Uni<Long> countMakeupArtistsByCountry(Long id, String term) {
-        return makeupArtistRepository.countMakeupArtistsByMovie(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de coiffeurs associés à un pays spécifique en fonction d'un terme de recherche appliqué à leur nom.
-     *
-     * @param id   L'identifiant du pays pour lequel compter les coiffeurs associés.
-     * @param term Le terme de recherche appliqué au nom des coiffeurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre total de coiffeurs correspondant aux critères.
-     */
-    /*public Uni<Long> countHairDressersByCountry(Long id, String term) {
-        return hairDresserRepository.countHairDressersByCountry(id, term);
-    }*/
-
-    /**
-     * Compte le nombre de cascadeurs associés à un pays spécifique correspondant à un terme de recherche donné.
-     *
-     * @param id   L'identifiant du pays pour lequel compter les cascadeurs.
-     * @param term Le terme de recherche appliqué au nom des cascadeurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant le nombre total de cascadeurs correspondant aux critères.
-     */
-    /*public Uni<Long> countStuntmenByCountry(Long id, String term) {
-        return stuntmanRepository.countStuntmenByCountry(id, term);
-    }*/
     public Uni<Set<Country>> getByIds(Set<CountryDTO> countries) {
         return
                 countryRepository.findByIds(
@@ -336,389 +182,23 @@ public class CountryService {
     }
 
     /**
-     * Récupère une liste de producteurs associés à un pays donné, avec pagination, tri et filtrage sur le nom,
-     * et transforme chaque producteur en un {@link PersonDTO}.
+     * Récupère une liste de personnes (acteurs, réalisateurs, producteurs, etc.) appartenant à un pays donné,
+     * en appliquant des critères de pagination, de tri et de filtrage.
      *
-     * @param id        L'identifiant du pays pour lequel rechercher les producteurs.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des producteurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de {@link PersonDTO} correspondant aux critères.
+     * @param id           L'identifiant du pays pour lequel récupérer les personnes.
+     * @param page         L'objet de pagination définissant l'index et la taille des résultats.
+     * @param sort         Le champ sur lequel effectuer le tri.
+     * @param direction    La direction du tri (ASC ou DESC).
+     * @param criteriasDTO Les critères de filtrage pour affiner la recherche.
+     * @param service      Le service spécifique au type de personne (ex: {@link ActorService}, {@link DirectorService}).
+     * @param repository   Le repository correspondant au type de personne (ex: {@link org.desha.app.repository.ActorRepository}, {@link org.desha.app.repository.DirectorRepository}).
+     * @param entityClass  La classe de l'entité concernée (ex: `{@link org.desha.app.domain.entity.Actor}, {@link org.desha.app.domain.entity.Director}).
+     * @return Une instance de {@link Uni<List<PersonDTO>>} contenant la liste des personnes sous forme de DTOs.
      */
-    /*public Uni<List<PersonDTO>> getProducersByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
+    public <T extends Person, S extends PersonService<T>, R extends PersonRepository<T>> Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO, S service, R repository, Class<T> entityClass) {
         return
-                producerRepository.findProducersByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(actorList ->
-                                actorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste d'acteurs associés à un pays donné, avec pagination, tri et filtrage sur le nom.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les acteurs.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des acteurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée d'acteurs sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getActorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                actorRepository.findActorsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(actorList ->
-                                actorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de réalisateurs associés à un pays donné, avec pagination, tri et filtrage sur le nom.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les réalisateurs.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des réalisateurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de réalisateurs sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getDirectorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                directorRepository.findDirectorsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(directorList ->
-                                directorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de scénaristes associés à un pays donné, avec pagination, tri et filtrage sur le nom.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les scénaristes.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des scénaristes (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de scénaristes sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getScreenwritersByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                screenwriterRepository.findScreenwritersByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(screenwriterList ->
-                                screenwriterList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de musiciens associés à un pays donné, avec pagination, tri et filtrage sur le nom.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les musiciens.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des musiciens (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de musiciens sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getMusiciansByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                musicianRepository.findMusiciansByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(musicianList ->
-                                musicianList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de décorateurs associés à un pays donné, avec pagination, tri et filtrage sur le nom.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les décorateurs.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des décorateurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de décorateurs sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getDecoratorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                decoratorRepository.findDecoratorsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(decoratorList ->
-                                decoratorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de costumiers associés à un pays donné, avec pagination, tri et filtrage sur le nom.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les costumiers.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des costumiers (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de costumiers sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getCostumiersByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                costumierRepository.findCostumiersByMovie(id, pageIndex, size, sort, direction, term)
-                        .map(costumierList ->
-                                costumierList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de photographes associés à un pays donné, avec pagination, tri et filtrage sur le nom,
-     * et transforme chaque photographe en un DTO (Data Transfer Object).
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les photographes.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des photographes (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de photographes sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getPhotographersByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                photographerRepository.findPhotographersByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(photographerList ->
-                                photographerList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de monteurs associés à un pays donné, avec pagination, tri et filtrage sur le nom,
-     * et transforme chaque monteur en un {@link PersonDTO}.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les monteurs.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des monteurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de {@link PersonDTO} correspondant aux critères.
-     */
-    /*public Uni<List<PersonDTO>> getEditorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                editorRepository.findEditorsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(editorList ->
-                                editorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de castings associés à un pays donné, avec pagination, tri et filtrage sur le nom des castings,
-     * et transforme chaque casting en un {@link PersonDTO}.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les castings.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des castings (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de {@link PersonDTO} correspondant aux critères.
-     */
-    /*public Uni<List<PersonDTO>> getCastersByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                casterRepository.findCastersByMovie(id, pageIndex, size, sort, direction, term)
-                        .map(casterList ->
-                                casterList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de directeurs artistiques associés à un pays donné, avec pagination, tri et filtrage, puis les transforme en {@link PersonDTO}.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les directeurs artistiques.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des directeurs artistiques (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de {@link PersonDTO} représentant les directeurs artistiques correspondant aux critères de recherche.
-     */
-    /*public Uni<List<PersonDTO>> getArtDirectorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                artDirectorRepository.findArtDirectorsByMovie(id, pageIndex, size, sort, direction, term)
-                        .map(artDirectorList ->
-                                artDirectorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste d'ingénieurs du son associés à un pays donné, avec pagination, tri et filtrage par nom,
-     * puis les transforme en une liste de {@link PersonDTO}.
-     *
-     * @param id        L'identifiant du pays pour lequel rechercher les ingénieurs du son.
-     * @param pageIndex L'index de la page pour la pagination (0 pour la première page).
-     * @param size      Le nombre de résultats par page.
-     * @param sort      Le champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ASC pour ascendant, DESC pour descendant).
-     * @param term      Le terme de recherche à comparer avec le nom des ingénieurs du son (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de {@link PersonDTO} représentant les ingénieurs du son.
-     */
-    /*public Uni<List<PersonDTO>> getSoundEditorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                soundEditorRepository.findSoundEditorsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(soundEditorList ->
-                                soundEditorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de superviseurs des effets spéciaux associés à un pays donné, avec pagination, tri et filtrage
-     * par terme de recherche sur le nom. Les résultats sont retournés sous forme de DTO {@link PersonDTO}.
-     *
-     * @param id        L'identifiant du pays pour lequel récupérer les superviseurs des effets spéciaux.
-     * @param pageIndex L'indice de la page à récupérer (pour la pagination).
-     * @param size      Le nombre d'éléments à récupérer par page.
-     * @param sort      Le nom du champ sur lequel trier les résultats.
-     * @param direction La direction du tri (croissant ou décroissant).
-     * @param term      Le terme de recherche à comparer avec les noms des superviseurs des effets spéciaux (insensible à la casse).
-     * @return Un objet {@link Uni} contenant la liste des superviseurs des effets spéciaux sous forme de {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getVisualEffectsSupervisorsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                visualEffectsSupervisorRepository.findVisualEffectsSupervisorsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(visualEffectsSupervisorList ->
-                                visualEffectsSupervisorList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère la liste des maquilleurs associés à un pays spécifique, avec pagination et tri. Le résultat est
-     * transformé en une liste de DTOs (Data Transfer Object) {@link PersonDTO} pour chaque maquilleur,
-     * après avoir filtré les résultats avec un terme de recherche insensible à la casse sur les noms des maquilleurs.
-     *
-     * @param id        L'identifiant du pays pour lequel récupérer les maquilleurs associés.
-     * @param pageIndex L'index de la page pour la pagination des résultats.
-     * @param size      Le nombre d'éléments par page pour la pagination.
-     * @param sort      Le nom du champ sur lequel trier les résultats (ex. "name", "id").
-     * @param direction La direction du tri (croissant ou décroissant).
-     * @param term      Le terme de recherche à appliquer sur les noms des maquilleurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant la liste paginée des maquilleurs sous forme de DTOs.
-     */
-    /*public Uni<List<PersonDTO>> getMakeupArtistsByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                makeupArtistRepository.findMakeupArtistsByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(makeupArtistList ->
-                                makeupArtistList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste de coiffeurs associés à un pays spécifique, avec des options de pagination, de tri et
-     * de filtrage par un terme de recherche insensible à la casse sur le nom des coiffeurs.
-     *
-     * @param id        L'identifiant du pays pour lequel récupérer les coiffeurs associés.
-     * @param pageIndex L'indice de la page pour la pagination.
-     * @param size      Le nombre d'éléments par page pour la pagination.
-     * @param sort      Le nom du champ sur lequel effectuer le tri.
-     * @param direction La direction du tri (ascendant ou descendant).
-     * @param term      Le terme de recherche à appliquer sur les noms des coiffeurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant la liste des coiffeurs sous forme de DTO {@link PersonDTO}.
-     */
-    /*public Uni<List<PersonDTO>> getHairDressersByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                hairDresserRepository.findHairDressersByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(hairDresserList ->
-                                hairDresserList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-
-    /**
-     * Récupère une liste paginée de cascadeurs associés à un pays spécifique et les convertit en objets {@link PersonDTO}.
-     *
-     * @param id        L'identifiant du pays pour lequel récupérer les cascadeurs associés.
-     * @param pageIndex L'index de la page à récupérer (basé sur la pagination).
-     * @param size      Le nombre d'éléments par page.
-     * @param sort      Le champ selon lequel trier les résultats.
-     * @param direction La direction du tri (ASC ou DESC).
-     * @param term      Le terme de recherche appliqué au nom des cascadeurs (insensible à la casse).
-     * @return Un objet {@link Uni} contenant une liste paginée de {@link PersonDTO} correspondant aux critères.
-     */
-    /*public Uni<List<PersonDTO>> getStuntmenByCountry(Long id, int pageIndex, int size, String sort, Sort.Direction direction, String term) {
-        return
-                stuntmanRepository.findStuntmenByCountry(id, pageIndex, size, sort, direction, term)
-                        .map(stuntmanList ->
-                                stuntmanList
-                                        .stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .toList()
-                        )
-                ;
-    }*/
-    public Uni<Country> removeMovie(Long countryId, Long movieId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                countryRepository.findById(countryId)
-                                        .onItem().ifNotNull()
-                                        .call(country -> country.removeMovie(movieId))
-                        )
+                repository.findByCountry(entityClass, id, page, sort, direction, criteriasDTO)
+                        .map(service::fromPersonListEntity)
                 ;
     }
 

@@ -5,20 +5,17 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
+import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.User;
 import org.desha.app.service.UserService;
 
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 @Path("users")
 @Singleton
@@ -33,24 +30,16 @@ public class UserResource {
     }
 
     @GET
-    public Uni<Response> getUsers(
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("username") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, User.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getUsers(@BeanParam QueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(User.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        queryParams.validateSortField(finalSort, User.ALLOWED_SORT_FIELDS);
 
         return
-                userService.getUsers(Page.of(pageIndex, size), sort, sortDirection, term)
+                userService.getUsers(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(userList ->
-                                userService.countUsers(term)
+                                userService.countUsers(queryParams.getTerm())
                                         .map(total ->
                                                 userList.isEmpty()
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -62,44 +51,20 @@ public class UserResource {
 
     @GET
     @Path("all")
-    public Uni<Response> getAllUsers(
-            @QueryParam("sort") @DefaultValue("username") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, User.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getAllUsers(@BeanParam QueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(User.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        queryParams.validateSortField(finalSort, User.ALLOWED_SORT_FIELDS);
 
         return
-                userService.getUsers(sort, sortDirection, term)
+                userService.getUsers(finalSort, sortDirection, queryParams.getTerm())
                         .map(userList ->
                                 userList.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(userList).build()
                         )
                 ;
-    }
-
-    private Sort.Direction validateSortDirection(String direction) {
-        return Arrays.stream(Sort.Direction.values())
-                .filter(d -> d.name().equalsIgnoreCase(direction))
-                .findFirst()
-                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
-    }
-
-    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
-        if (!allowedSortFields.contains(sort)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields))
-                            .build()
-            );
-        }
-        return null;
     }
 
 }

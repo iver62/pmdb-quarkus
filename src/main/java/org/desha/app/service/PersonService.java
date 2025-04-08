@@ -226,6 +226,15 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
         return Panache.withTransaction(() -> personRepository.deleteById(id));
     }
 
+    protected List<PersonDTO> fromPersonListEntity(List<T> personList) {
+        return
+                personList
+                        .stream()
+                        .map(PersonDTO::fromEntity)
+                        .toList()
+                ;
+    }
+
     protected Set<PersonDTO> fromPersonSetEntity(Set<T> personSet) {
         return
                 personSet

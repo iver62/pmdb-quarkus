@@ -6,7 +6,6 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Person;
 
 import java.util.Collections;
@@ -17,6 +16,27 @@ import java.util.Optional;
 public abstract class PersonRepository<T extends Person> implements PanacheRepository<T> {
 
     public abstract Uni<Long> count(CriteriasDTO criteriasDTO);
+
+    public Uni<Long> countByCountry(Class<T> entityClass, Long id, CriteriasDTO criteriasDTO) {
+        String query = String.format("""
+                        FROM %s p
+                        JOIN p.countries c
+                        WHERE c.id = :id
+                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%%', :term, '%%')))
+                        %s
+                        """,
+                entityClass.getSimpleName(),
+                addClauses(criteriasDTO)
+        );
+
+        Parameters params = addParameters(
+                Parameters.with("id", id)
+                        .and("term", criteriasDTO.getTerm()),
+                criteriasDTO
+        );
+
+        return count(query, params);
+    }
 
     public abstract Uni<T> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
 
@@ -30,6 +50,31 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
     }
 
     public abstract Uni<List<T>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
+
+    public Uni<List<T>> findByCountry(Class<T> entityClass, Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        String query = String.format("""
+                        FROM %s p
+                        JOIN p.countries c
+                        WHERE c.id = :id
+                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%%', :term, '%%')))
+                        %s
+                        """,
+                entityClass.getSimpleName(),
+                addClauses(criteriasDTO)
+        );
+
+        Parameters params = addParameters(
+                Parameters.with("id", id)
+                        .and("term", criteriasDTO.getTerm()),
+                criteriasDTO
+        );
+
+        Sort finalSort = Sort.by( sort, direction, Sort.NullPrecedence.NULLS_LAST);
+
+        return find(query, finalSort, params)
+                .page(page)
+                .list();
+    }
 
     protected String addClauses(CriteriasDTO criteriasDTO) {
         StringBuilder query = new StringBuilder();

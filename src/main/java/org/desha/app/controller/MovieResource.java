@@ -21,10 +21,9 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static jakarta.ws.rs.core.Response.Status.*;
@@ -108,31 +107,17 @@ public class MovieResource {
 
     @GET
     public Uni<Response> getMovies(@BeanParam MovieQueryParamsDTO queryParams) {
-        // Vérification de la cohérence des dates
-        if (Objects.nonNull(queryParams.getFromReleaseDate()) && Objects.nonNull(queryParams.getToReleaseDate()) && queryParams.getFromReleaseDate().isAfter(queryParams.getToReleaseDate())
-                || Objects.nonNull(queryParams.getFromCreationDate()) && Objects.nonNull(queryParams.getToCreationDate()) && queryParams.getFromCreationDate().isAfter(queryParams.getToCreationDate())
-                || Objects.nonNull(queryParams.getFromLastUpdate()) && Objects.nonNull(queryParams.getToLastUpdate()) && queryParams.getFromLastUpdate().isAfter(queryParams.getToLastUpdate())
-        ) {
-            return
-                    Uni.createFrom().item(
-                            Response.status(Response.Status.BAD_REQUEST)
-                                    .entity("La date de début ne peut pas être après la date de fin.")
-                                    .build()
-                    );
-        }
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                movieService.getMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, criteriasDTO)
+                movieService.getMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO)
                         .flatMap(movieList ->
                                 movieService.count(criteriasDTO)
                                         .map(total ->
@@ -146,17 +131,16 @@ public class MovieResource {
 
     @GET
     @Path("all")
-    public Uni<Response> getAllMovies(MovieQueryParamsDTO queryParams) {
-        // Vérifier si la direction est valide
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getAllMovies(@BeanParam MovieQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
+
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                Movie.getAllMovies(queryParams.getSort(), sortDirection, queryParams.getTerm())
+                Movie.getAllMovies(finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(movieList ->
                                 Movie.count(queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
@@ -196,15 +180,13 @@ public class MovieResource {
     @GET
     @Path("countries")
     public Uni<Response> getCountriesInMovies(@BeanParam QueryParamsDTO queryParams) {
-        Uni<Response> sortValidation = validateSortField(queryParams.getSort(), Country.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(queryParams.getDirection());
+        queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), queryParams.getSort(), sortDirection, queryParams.getTerm())
+                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(countryList ->
                                 movieService.countCountriesInMovies(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -2101,21 +2083,6 @@ public class MovieResource {
                 ;
     }
 
-    /*@PATCH
-    @Path("{movieId}/actors/{actorId}")
-    public Uni<Response> removeRole(@RestPath Long movieId, @RestPath Long actorId) {
-        return
-                Panache
-                        .withTransaction(() -> Movie.<Movie>findById(movieId)
-                                .onItem().ifNotNull()
-                                .invoke(entity -> entity.removeRole(actorId))
-                                .chain(entity -> entity.persist())
-                        )
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                ;
-    }*/
-
     @PUT
     @Path("{id}")
     public Uni<Response> update(
@@ -2138,24 +2105,6 @@ public class MovieResource {
     public Uni<Response> delete(Long id) {
         return movieService.deleteMovie(id)
                 .map(deleted -> Response.ok().status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND).build());
-    }
-
-    private Sort.Direction validateSortDirection(String direction) {
-        return Arrays.stream(Sort.Direction.values())
-                .filter(d -> d.name().equalsIgnoreCase(direction))
-                .findFirst()
-                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
-    }
-
-    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
-        if (!allowedSortFields.contains(sort)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, Movie.ALLOWED_SORT_FIELDS))
-                            .build()
-            );
-        }
-        return null;
     }
 
 }

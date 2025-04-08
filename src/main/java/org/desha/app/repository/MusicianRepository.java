@@ -44,12 +44,7 @@ public class MusicianRepository extends PersonRepository<Musician> {
                 .list();
     }
 
-    public Uni<List<Musician>> find(
-            Page page,
-            String sort,
-            Sort.Direction direction,
-            CriteriasDTO criteriasDTO
-    ) {
+    public Uni<List<Musician>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Musician p
                 LEFT JOIN FETCH p.movies
