@@ -584,6 +584,22 @@ public class MovieService {
                         );
     }
 
+    /**
+     * Met à jour la liste des récompenses à un film spécifique.
+     * <p>
+     * Cette méthode récupère un film par son identifiant et met à jour ses récompenses :
+     * - Les récompenses existantes sont mises à jour si elles correspondent à un ID dans la liste fournie.
+     * - Les récompenses qui ne sont plus présentes dans la liste fournie sont supprimées.
+     * - Les nouvelles récompenses (sans ID) sont ajoutées au film.
+     * <p>
+     * La transaction est gérée via Panache. Après modification, la liste mise à jour
+     * des récompenses est récupérée et convertie en objets {@link AwardDTO}.
+     *
+     * @param id          L'identifiant du film.
+     * @param awardDTOSet L'ensemble des récompenses à sauvegarder.
+     * @return Un {@link Uni} contenant la liste mise à jour des {@link AwardDTO}.
+     * @throws IllegalArgumentException si le film est introuvable.
+     */
     public Uni<Set<AwardDTO>> saveAwards(Long id, Set<AwardDTO> awardDTOSet) {
         return
                 Panache
@@ -625,6 +641,7 @@ public class MovieService {
                                                                         }
                                                                 )
                                         )
+                                        .call(movieActorRepository::flush) // Force la génération des IDs
                                         .map(awardService::fromAwardSetEntity)
                         )
                 ;
@@ -973,6 +990,19 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Supprime une récompense associée à un film.
+     * <p>
+     * Cette méthode recherche un film par son identifiant et supprime une récompense
+     * spécifique de sa liste de récompenses si elle est présente. Si le film n'est pas trouvé,
+     * une exception est levée. Après la suppression, les changements sont persistés en base,
+     * puis la liste mise à jour des récompenses est récupérée et retournée sous forme de DTOs.
+     *
+     * @param movieId L'identifiant du film.
+     * @param awardId L'identifiant de la récompense à supprimer.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des {@link AwardDTO} du film.
+     * @throws IllegalArgumentException si le film est introuvable.
+     */
     public Uni<Set<AwardDTO>> removeAward(Long movieId, Long awardId) {
         return
                 Panache
@@ -992,7 +1022,6 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable"))
-                                        .onItem().ifNotNull()
                                         .call(
                                                 movie ->
                                                         countryService.getByIds(movieDTO.getCountries())
@@ -1028,10 +1057,61 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Supprime tous les pays associés à un film donné.
+     * <p>
+     * Cette méthode permet de vider la collection des pays associés à un film en supprimant toutes les entrées
+     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
+     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
+     *
+     * @param id L'identifiant du film pour lequel les pays doivent être supprimés.
+     * @return Un {@link Uni} contenant {@code true} si la suppression des pays a réussi,
+     * ou une exception sera levée en cas d'erreur.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des pays (par exemple,
+     *                                 en cas de film introuvable ou d'erreur de persistance).
+     */
+    public Uni<Boolean> deleteCountries(Long id) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .call(Movie::clearCountries)
+                                        .call(movieRepository::persist)
+                                        .map(movie -> true)
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression des pays", throwable);
+                        });
+    }
+
+    /**
+     * Supprime un film par son identifiant.
+     * <p>
+     * Cette méthode effectue la suppression d'un film dans une transaction.
+     * Si l'identifiant fourni ne correspond à aucun film, la suppression échoue
+     * et retourne `false`.
+     *
+     * @param id L'identifiant du film à supprimer.
+     * @return Un {@link Uni} contenant `true` si la suppression a réussi,
+     * `false` si aucun film avec cet identifiant n'existe.
+     */
     public Uni<Boolean> deleteMovie(Long id) {
         return Panache.withTransaction(() -> movieRepository.deleteById(id));
     }
 
+    /**
+     * Récupère et convertit les genres associés à un film en objets {@link GenreDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les genres d'un film
+     * et les transformer en un ensemble de DTOs. Si la liste des genres est `null`,
+     * une exception est levée.
+     *
+     * @param movie Le film dont les genres doivent être récupérés.
+     * @return Un {@link Uni} contenant un ensemble de {@link GenreDTO}.
+     * @throws IllegalStateException si la liste des genres n'est pas initialisée.
+     */
     private Uni<Set<GenreDTO>> fetchAndMapGenres(Movie movie) {
         return
                 Mutiny.fetch(movie.getGenres())
@@ -1040,6 +1120,17 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
+     * et les transformer en un ensemble de DTOs. Si la liste des pays est `null`,
+     * une exception est levée.
+     *
+     * @param movie Le film dont les pays doivent être récupérés.
+     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.
+     * @throws IllegalStateException si la liste des pays n'est pas initialisée.
+     */
     private Uni<Set<CountryDTO>> fetchAndMapCountries(Movie movie) {
         return
                 Mutiny.fetch(movie.getCountries())
@@ -1048,6 +1139,17 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère et convertit les récompenses associées à un film en objets {@link AwardDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les récompenses liées à un film
+     * et les transformer en un ensemble de DTOs. Si la liste des récompenses est `null`,
+     * une exception est levée.
+     *
+     * @param movie Le film dont les récompenses doivent être récupérées.
+     * @return Un {@link Uni} contenant un ensemble de {@link AwardDTO}.
+     * @throws IllegalStateException si la liste des récompenses n'est pas initialisée.
+     */
     private Uni<Set<AwardDTO>> fetchAndMapAwards(Movie movie) {
         return
                 Mutiny.fetch(movie.getAwards())

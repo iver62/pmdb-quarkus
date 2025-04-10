@@ -346,6 +346,24 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
+     * Vide l'ensemble des pays associés à un objet.
+     * <p>
+     * Cette méthode permet de vider la collection des pays associés à l'objet en utilisant la méthode
+     * {@link Set#clear()}. Elle vérifie également si l'ensemble des pays est correctement initialisé.
+     * Si la collection des pays est nulle, une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble vide de pays après avoir vidé la collection.
+     * @throws IllegalStateException Si l'ensemble des pays n'est pas initialisé (null).
+     */
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
+    }
+
+    /**
      * Retire un pays de la collection existante en fonction de son ID.
      *
      * @param id L'ID du pays à retirer.
