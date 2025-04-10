@@ -12,6 +12,14 @@ import java.util.List;
 @ApplicationScoped
 public class GenreRepository implements PanacheRepository<Genre> {
 
+    public Uni<Long> countGenres(String term) {
+        return
+                count(
+                        "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
+                        Parameters.with("term", term)
+                );
+    }
+
     public Uni<List<Genre>> findByIds(List<Long> ids) {
         return list("id IN ?1", ids);
     }

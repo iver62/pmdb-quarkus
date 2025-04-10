@@ -810,7 +810,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                                 WHERE g.id = :id
                                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                                 """,
-                        Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST),
+                        Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST),
                         Parameters.with("id", id)
                                 .and("term", term)
                 )

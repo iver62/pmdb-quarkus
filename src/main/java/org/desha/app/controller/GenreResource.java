@@ -10,15 +10,15 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.GenreDTO;
+import org.desha.app.domain.dto.MovieQueryParamsDTO;
+import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.Genre;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.service.GenreService;
 import org.jboss.resteasy.reactive.RestPath;
 
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -36,10 +36,11 @@ public class GenreResource {
 
     @GET
     @Path("count")
-    public Uni<Response> count(@QueryParam("name") @DefaultValue("") String name) {
+    public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         return
-                Genre.count(name)
+                genreService.count(queryParams.getTerm())
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
@@ -50,9 +51,9 @@ public class GenreResource {
     @Path("{id}")
     public Uni<Response> getGenre(Long id) {
         return
-                Genre.getById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
+                genreService.getById(id)
                         .onItem().ifNotNull().transform(genre -> Response.ok(genre).build())
+                        .onItem().ifNull().continueWith(Response.noContent().build())
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
@@ -60,20 +61,14 @@ public class GenreResource {
     }
 
     @GET
-    public Uni<Response> getGenres(
-            @QueryParam("sort") @DefaultValue("name") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Genre.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getGenres(@BeanParam MovieQueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Genre.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        queryParams.validateSortField(finalSort, Genre.ALLOWED_SORT_FIELDS);
 
         return
-                genreService.getGenres(sort, sortDirection, term)
+                genreService.getGenres(finalSort, sortDirection, queryParams.getTerm())
                         .map(genreDTOS ->
                                 genreDTOS.isEmpty()
                                         ? Response.noContent().build()
@@ -84,25 +79,16 @@ public class GenreResource {
 
     @GET
     @Path("{id}/movies")
-    public Uni<Response> getMoviesByGenre(
-            @RestPath Long id,
-            @QueryParam("page") @DefaultValue("0") int pageIndex,
-            @QueryParam("size") @DefaultValue("50") int size,
-            @QueryParam("sort") @DefaultValue("title") String sort,
-            @QueryParam("direction") @DefaultValue("Ascending") String direction,
-            @QueryParam("term") @DefaultValue("") String term
-    ) {
-        Uni<Response> sortValidation = validateSortField(sort, Movie.ALLOWED_SORT_FIELDS);
-        if (Objects.nonNull(sortValidation)) {
-            return sortValidation;
-        }
+    public Uni<Response> getMoviesByGenre(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
 
-        Sort.Direction sortDirection = validateSortDirection(direction);
+        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                genreService.getMovies(id, Page.of(pageIndex, size), sort, sortDirection, term)
+                genreService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
                         .flatMap(movieList ->
-                                genreService.countMovies(id, term).map(total ->
+                                genreService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -121,7 +107,7 @@ public class GenreResource {
         }
 
         return
-                Genre.create(genreDTO)
+                genreService.create(genreDTO)
                         .map(genre -> Response.status(CREATED).entity(genre).build())
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
@@ -137,7 +123,7 @@ public class GenreResource {
         }
 
         return
-                Genre.update(id, genreDTO)
+                genreService.update(id, genreDTO)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                         .onFailure().recoverWithItem(err ->
@@ -150,7 +136,7 @@ public class GenreResource {
     @Path("{id}")
     public Uni<Response> deleteGenre(@RestPath Long id) {
         return
-                Genre.deleteGenre(id)
+                genreService.deleteGenre(id)
                         .map(deleted -> Boolean.TRUE.equals(deleted)
                                 ? Response.status(NO_CONTENT).build()
                                 : Response.status(NOT_FOUND).build())
@@ -158,24 +144,6 @@ public class GenreResource {
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
                 ;
-    }
-
-    private Sort.Direction validateSortDirection(String direction) {
-        return Arrays.stream(Sort.Direction.values())
-                .filter(d -> d.name().equalsIgnoreCase(direction))
-                .findFirst()
-                .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
-    }
-
-    private Uni<Response> validateSortField(String sort, List<String> allowedSortFields) {
-        if (!allowedSortFields.contains(sort)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields))
-                            .build()
-            );
-        }
-        return null;
     }
 
 }

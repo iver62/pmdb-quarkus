@@ -10,10 +10,7 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
-import org.desha.app.domain.entity.Award;
-import org.desha.app.domain.entity.Movie;
-import org.desha.app.domain.entity.MovieActor;
-import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.entity.*;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieActorRepository;
 import org.desha.app.repository.MovieRepository;
@@ -219,11 +216,7 @@ public class MovieService {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .flatMap(movie ->
-                                Mutiny.fetch(movie.getGenres())
-                                        .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés pour ce film"))
-                                        .map(genreService::fromGenreSetEntity)
-                        )
+                        .flatMap(this::fetchAndMapGenres)
                 ;
     }
 
@@ -502,6 +495,95 @@ public class MovieService {
         );
     }
 
+    /**
+     * Met à jour les genres associés à un film donné.
+     * <p>
+     * Cette méthode associe de nouveaux genres ou met à jour les genres existants
+     * d'un film en fonction des identifiants fournis dans {@code genreDTOSet}.
+     * Les genres sans identifiant sont créés avant d'être associés au film.
+     *
+     * @param id          L'identifiant du film dont les genres doivent être mis à jour.
+     * @param genreDTOSet Un ensemble de {@link GenreDTO} représentant les genres à associer.
+     * @return Un {@link Uni} contenant l'ensemble des genres mis à jour sous forme de {@link GenreDTO}.
+     * @throws IllegalArgumentException si le film n'est pas trouvé.
+     */
+    public Uni<Set<GenreDTO>> saveGenres(Long id, Set<GenreDTO> genreDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .chain(movie -> {
+                                            // Les genres existants
+                                            List<Long> existingGenreIds = genreDTOSet.stream()
+                                                    .map(GenreDTO::getId)
+                                                    .filter(Objects::nonNull)
+                                                    .toList();
+
+                                            // Les nouveaux genres persistés
+                                            List<Uni<Genre>> newGenreUnis = genreDTOSet.stream()
+                                                    .filter(genreDTO -> Objects.isNull(genreDTO.getId()))
+                                                    .map(genreService::create)
+                                                    .toList();
+
+                                            Uni<Set<Genre>> newGenresUni = newGenreUnis.isEmpty()
+                                                    ? Uni.createFrom().item(new HashSet<>())  // Retourne un empty set s'il n'y pas de nouveaux genres
+                                                    : Uni.join().all(newGenreUnis).andCollectFailures()
+                                                    .map(HashSet::new); // Convertit List<Genre> en Set<Genre>
+
+                                            return newGenresUni
+                                                    .chain(newGenres ->
+                                                            genreService.getByIds(existingGenreIds)
+                                                                    .map(existingGenres -> {
+                                                                        newGenres.addAll(existingGenres);
+                                                                        return newGenres;
+                                                                    })
+                                                                    .invoke(finalGenreSet -> {
+                                                                        movie.setGenres(new HashSet<>(finalGenreSet));
+                                                                        movie.setLastUpdate(LocalDateTime.now());
+                                                                    })
+                                                                    .replaceWith(movie)
+                                                    );
+                                        })
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(this::fetchAndMapGenres)
+                        );
+    }
+
+    /**
+     * Met à jour les pays associés à un film donné.
+     * <p>
+     * Cette méthode met à jour les pays associés à un film en fonction des identifiants fournis dans {@code countryDTOSet}.
+     *
+     * @param id            L'identifiant du film dont les pays doivent être mis à jour.
+     * @param countryDTOSet Un ensemble de {@link CountryDTO} représentant les pays à associer.
+     * @return Un {@link Uni} contenant l'ensemble des pays mis à jour sous forme de {@link CountryDTO}.
+     * @throws IllegalArgumentException si le film n'est pas trouvé.
+     */
+    public Uni<Set<CountryDTO>> saveCountries(Long id, Set<CountryDTO> countryDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .chain(movie ->
+                                                countryService.getByIds(
+                                                                countryDTOSet.stream()
+                                                                        .map(CountryDTO::getId)
+                                                                        .filter(Objects::nonNull)
+                                                                        .toList()
+                                                        )
+                                                        .invoke(finalCountrySet -> {
+                                                            movie.setCountries(new HashSet<>(finalCountrySet));
+                                                            movie.setLastUpdate(LocalDateTime.now());
+                                                        })
+                                                        .replaceWith(movie)
+                                        )
+                                        .flatMap(movieRepository::persist)
+                                        .flatMap(this::fetchAndMapCountries)
+                        );
+    }
+
     public Uni<Set<AwardDTO>> saveAwards(Long id, Set<AwardDTO> awardDTOSet) {
         return
                 Panache
@@ -633,7 +715,8 @@ public class MovieService {
      * @throws IllegalArgumentException Si le film n'est pas trouvé ou si certaines personnes sont introuvables.
      * @throws IllegalStateException    Si une erreur se produit lors de la récupération des personnes après la mise à jour.
      */
-    public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> addPeople(Long id, Set<PersonDTO> personDTOSet, Function<Movie, Set<T>> getPeople, S service, String errorMessage) {
+    public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> addPeople(Long
+                                                                                                id, Set<PersonDTO> personDTOSet, Function<Movie, Set<T>> getPeople, S service, String errorMessage) {
         return
                 Panache
                         .withTransaction(() ->
@@ -727,11 +810,7 @@ public class MovieService {
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getGenres())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
-                                                        .map(genreService::fromGenreSetEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapGenres)
                         )
                 ;
     }
@@ -758,11 +837,7 @@ public class MovieService {
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
-                                                        .map(countryService::fromCountrySetEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapCountries)
                         )
                 ;
     }
@@ -793,11 +868,7 @@ public class MovieService {
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getAwards())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des récompenses n'est pas initialisée"))
-                                                        .map(awardService::fromAwardSetEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapAwards)
                         )
                 ;
     }
@@ -816,7 +887,8 @@ public class MovieService {
      * @throws IllegalArgumentException Si le film n'est pas trouvé.
      * @throws IllegalStateException    si la collection de personnes n'est pas initialisée pour ce film.
      */
-    public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> removePerson(Long movieId, Long personId, Function<Movie, Set<T>> peopleGetter, S service, String errorMessage) {
+    public <T extends Person, S extends PersonService<T>> Uni<Set<PersonDTO>> removePerson(Long movieId, Long
+            personId, Function<Movie, Set<T>> peopleGetter, S service, String errorMessage) {
         return
                 Panache
                         .withTransaction(() ->
@@ -875,11 +947,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(movie -> movie.removeGenre(genreId))
                                         .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getGenres())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
-                                                        .map(genreService::fromGenreSetEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapGenres)
                         )
                 ;
     }
@@ -900,11 +968,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(movie -> movie.removeCountry(countryId))
                                         .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
-                                                        .map(countryService::fromCountrySetEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapCountries)
                         )
                 ;
     }
@@ -917,11 +981,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(movie -> movie.removeAward(awardId))
                                         .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getAwards())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des récompenses n'est pas initialisée"))
-                                                        .map(awardService::fromAwardSetEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapAwards)
                         )
                 ;
     }
@@ -970,5 +1030,29 @@ public class MovieService {
 
     public Uni<Boolean> deleteMovie(Long id) {
         return Panache.withTransaction(() -> movieRepository.deleteById(id));
+    }
+
+    private Uni<Set<GenreDTO>> fetchAndMapGenres(Movie movie) {
+        return
+                Mutiny.fetch(movie.getGenres())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
+                        .map(genreService::fromGenreSetEntity)
+                ;
+    }
+
+    private Uni<Set<CountryDTO>> fetchAndMapCountries(Movie movie) {
+        return
+                Mutiny.fetch(movie.getCountries())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
+                        .map(countryService::fromCountrySetEntity)
+                ;
+    }
+
+    private Uni<Set<AwardDTO>> fetchAndMapAwards(Movie movie) {
+        return
+                Mutiny.fetch(movie.getAwards())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des récompenses n'est pas initialisée"))
+                        .map(awardService::fromAwardSetEntity)
+                ;
     }
 }

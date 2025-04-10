@@ -591,11 +591,7 @@ public class MovieResource {
     @Path("{id}/technical-team")
     public Uni<Response> saveTechnicalTeam(@RestPath Long id, TechnicalTeamDTO technicalTeam) {
         if (Objects.isNull(technicalTeam)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La fiche technique ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La fiche technique ne peut pas être nulle.");
         }
 
         return
@@ -608,11 +604,7 @@ public class MovieResource {
     @Path("{id}/casting")
     public Uni<Response> saveCasting(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
         if (Objects.isNull(movieActorsList)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des acteurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des acteurs ne peut pas être nulle.");
         }
 
         return
@@ -630,11 +622,7 @@ public class MovieResource {
     @Path("{id}/producers")
     public Uni<Response> saveProducers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des producteurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des producteurs ne peut pas être nulle.");
         }
 
         return
@@ -658,11 +646,7 @@ public class MovieResource {
     @Path("{id}/directors")
     public Uni<Response> saveDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des réalisateurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle.");
         }
 
         return
@@ -686,11 +670,7 @@ public class MovieResource {
     @Path("{id}/screenwriters")
     public Uni<Response> saveScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des scénaristes ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des scénaristes ne peut pas être nulle.");
         }
 
         return
@@ -714,11 +694,7 @@ public class MovieResource {
     @Path("{id}/musicians")
     public Uni<Response> saveMusicians(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des musiciens ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des musiciens ne peut pas être nulle.");
         }
 
         return
@@ -742,11 +718,7 @@ public class MovieResource {
     @Path("{id}/photographers")
     public Uni<Response> savePhotographers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des photographes ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des photographes ne peut pas être nulle.");
         }
 
         return
@@ -770,11 +742,7 @@ public class MovieResource {
     @Path("{id}/costumiers")
     public Uni<Response> saveCostumiers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des costumiers ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
         }
 
         return
@@ -798,11 +766,7 @@ public class MovieResource {
     @Path("{id}/decorators")
     public Uni<Response> saveDecorators(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des décorateurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
         }
 
         return
@@ -826,11 +790,7 @@ public class MovieResource {
     @Path("{id}/editors")
     public Uni<Response> saveEditors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des monteurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des monteurs ne peut pas être nulle.");
         }
 
         return
@@ -854,11 +814,7 @@ public class MovieResource {
     @Path("{id}/casters")
     public Uni<Response> saveCasters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des casteurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste casteurs genres ne peut pas être nulle.");
         }
 
         return
@@ -882,11 +838,7 @@ public class MovieResource {
     @Path("{id}/art-directors")
     public Uni<Response> saveArtDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des directeurs artistiques ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des directeurs artistiques ne peut pas être nulle.");
         }
 
         return
@@ -910,11 +862,7 @@ public class MovieResource {
     @Path("{id}/sound-editors")
     public Uni<Response> saveSoundEditors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des ingénieurs du son ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des ingénieurs du son ne peut pas être nulle.");
         }
 
         return
@@ -938,11 +886,7 @@ public class MovieResource {
     @Path("{id}/visual-effects-supervisors")
     public Uni<Response> saveVisualEffectsSupervisors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des spécialistes des effets spéciaux ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle.");
         }
 
         return
@@ -966,11 +910,7 @@ public class MovieResource {
     @Path("{id}/makeup-artists")
     public Uni<Response> saveMakeupArtists(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des maquilleurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle.");
         }
 
         return
@@ -994,11 +934,7 @@ public class MovieResource {
     @Path("{id}/hair-dressers")
     public Uni<Response> saveHairDressers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des coiffeurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle.");
         }
 
         return
@@ -1022,11 +958,7 @@ public class MovieResource {
     @Path("{id}/stuntmen")
     public Uni<Response> saveStuntmen(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
-            return Uni.createFrom().item(
-                    Response.status(Response.Status.BAD_REQUEST)
-                            .entity("La liste des cascadeurs ne peut pas être nulle.")
-                            .build()
-            );
+            throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle.");
         }
 
         return
@@ -1044,6 +976,37 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
                         .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
                 ;
+    }
+
+    /**
+     * Met à jour les genres associés à un film donné.
+     * <p>
+     * Cette méthode permet d'ajouter ou de mettre à jour les genres d'un film
+     * en fonction des identifiants fournis.
+     *
+     * @param id        L'identifiant du film dont les genres doivent être mis à jour.
+     * @param genreDTOS Un ensemble de {@link GenreDTO} représentant les genres à associer.
+     * @return Un {@link Uni} contenant une réponse HTTP :
+     * - `200 OK` avec la liste des genres mise à jour.
+     * - `204 No Content` si aucun genre n'est associé.
+     * - `400 Not Found` si le film n'existe pas.
+     * @throws BadRequestException si la liste des genres est `null`.
+     */
+    @PUT
+    @Path("{id}/genres")
+    public Uni<Response> saveGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
+        if (Objects.isNull(genreDTOS)) {
+            throw new BadRequestException("La liste des genres ne peut pas être nulle.");
+        }
+
+        return
+                movieService.saveGenres(id, genreDTOS)
+                        .onItem().ifNotNull().transform(genreDTOSet ->
+                                genreDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(genreDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
     }
 
     @PUT

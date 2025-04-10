@@ -25,4 +25,8 @@ public class GenreDTO {
                         .build();
     }
 
+    public String toString() {
+        return id + ": " + name;
+    }
+
 }
