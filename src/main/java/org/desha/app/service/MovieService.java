@@ -19,6 +19,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -119,7 +120,7 @@ public class MovieService {
     public Uni<Movie> getById(Long id) {
         return
                 movieRepository.findByIdWithCountriesAndGenres(id)
-                        .onFailure().recoverWithNull()
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                 ;
     }
 
@@ -137,8 +138,15 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<Movie>> getByTitle(String pattern) {
-        return movieRepository.findByTitle(pattern);
+    public Uni<List<Movie>> getByTitle(String title) {
+        return movieRepository.list("title", title);
+    }
+
+    public Uni<List<Movie>> getAllMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        return
+                movieRepository.find("LOWER(title) LIKE LOWER(?1)", Sort.by(sort, direction), MessageFormat.format("%{0}%", criteriasDTO.getTerm()))
+                        .list()
+                ;
     }
 
     public Uni<List<MovieDTO>> searchByTitle(String query) {
@@ -1073,6 +1081,38 @@ public class MovieService {
     }
 
     /**
+     * Vide un ensemble de personnes (acteurs, réalisateurs, etc.) associé à un film.
+     * <p>
+     * Cette méthode permet de vider un ensemble spécifique de personnes associées à un film (comme les acteurs, réalisateurs, etc.).
+     * Elle récupère cet ensemble en appliquant une fonction (`peopleGetter`) sur le film et, si l'ensemble est initialisé,
+     * elle appelle la méthode `clearPersons` sur le film pour le vider. Si l'ensemble est nul ou si le film n'est pas trouvé,
+     * une exception est levée. Enfin, le film est persisté après l'opération.
+     *
+     * @param id           L'identifiant du film dont les personnes associées doivent être supprimées.
+     * @param peopleGetter Une fonction permettant d'obtenir l'ensemble des personnes à partir du film (par exemple, acteurs ou réalisateurs).
+     * @param errorMessage Le message d'erreur à utiliser si l'ensemble des personnes est nul.
+     * @param <T>          Le type des éléments dans l'ensemble des personnes (générique).
+     * @return Un {@link Uni} contenant `true` si l'opération a été réalisée avec succès.
+     * @throws IllegalArgumentException Si le film n'est pas trouvé.
+     * @throws WebApplicationException  Si une erreur se produit lors de la suppression des personnes.
+     */
+    public <T> Uni<Boolean> clearPersons(Long id, Function<Movie, Set<T>> peopleGetter, String errorMessage) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .call(movie -> movie.clearPersons(peopleGetter.apply(movie), errorMessage))
+                                        .call(movieRepository::persist)
+                                        .map(movie -> true)
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression des personnes", throwable);
+                        });
+    }
+
+    /**
      * Supprime tous les genres associés à un film donné.
      * <p>
      * Cette méthode permet de vider la collection des genres associés à un film en supprimant toutes les entrées
@@ -1085,7 +1125,7 @@ public class MovieService {
      * @throws WebApplicationException Si une erreur survient lors de la suppression des genres (par exemple,
      *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> deleteGenres(Long id) {
+    public Uni<Boolean> clearGenres(Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1114,7 +1154,7 @@ public class MovieService {
      * @throws WebApplicationException Si une erreur survient lors de la suppression des pays (par exemple,
      *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> deleteCountries(Long id) {
+    public Uni<Boolean> clearCountries(Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1143,7 +1183,7 @@ public class MovieService {
      * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
      *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> deleteAwards(Long id) {
+    public Uni<Boolean> clearAwards(Long id) {
         return
                 Panache
                         .withTransaction(() ->

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -87,6 +88,19 @@ public class MovieResource {
         this.visualEffectsSupervisorService = visualEffectsSupervisorService;
     }
 
+    /**
+     * Récupère le nombre total de films correspondant aux critères de recherche spécifiés.
+     * <p>
+     * Cette méthode effectue une requête pour compter le nombre de films qui correspondent aux critères fournis dans l'objet
+     * {@link MovieQueryParamsDTO}. Si des critères sont spécifiés, elle renvoie une réponse HTTP avec le statut 200 (OK)
+     * contenant le nombre total de films correspondants. Si aucun film ne correspond aux critères, la méthode renverra également
+     * une réponse HTTP 200 avec la valeur 0.
+     *
+     * @param queryParams Les paramètres de requête encapsulés dans un objet {@link MovieQueryParamsDTO}, qui contiennent
+     *                    les critères de recherche pour filtrer les films.
+     * @return Un {@link Uni} contenant une réponse HTTP 200 (OK) avec le nombre total de films correspondant aux critères.
+     * Si aucun film ne correspond, la réponse contiendra 0.
+     */
     @GET
     @Path("count")
     public Uni<Response> count(@BeanParam MovieQueryParamsDTO queryParams) {
@@ -95,13 +109,25 @@ public class MovieResource {
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
     }
 
+    /**
+     * Récupère un film par son identifiant.
+     * <p>
+     * Cette méthode permet de récupérer les détails d'un film en fonction de son identifiant unique. Si le film existe,
+     * elle renvoie une réponse HTTP avec le statut 200 (OK) contenant les informations du film. Si une erreur se produit
+     * lors de la récupération du film (par exemple, film non trouvé ou problème interne), la méthode renvoie une réponse
+     * HTTP avec le statut 500 (Internal Server Error).
+     *
+     * @param id L'identifiant du film à récupérer.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si le film est trouvé, la réponse contient le film avec le statut 200.
+     * Si le film n'est pas trouvé ou une erreur se produit, la réponse contient un statut 500 (Internal Server Error).
+     */
     @GET
     @Path("{id}")
     public Uni<Response> getMovie(@RestPath Long id) {
         return
                 movieService.getById(id)
                         .onItem().ifNotNull().transform(movie -> Response.ok(movie).build())
-                        .onItem().ifNull().continueWith(Response.status(NOT_FOUND).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -139,10 +165,12 @@ public class MovieResource {
 
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+
         return
-                Movie.getAllMovies(finalSort, sortDirection, queryParams.getTerm())
+                movieService.getAllMovies(finalSort, sortDirection, criteriasDTO)
                         .flatMap(movieList ->
-                                Movie.count(queryParams.getTerm()).map(total ->
+                                movieService.count(criteriasDTO).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -201,7 +229,7 @@ public class MovieResource {
     @Path("title/{title}")
     public Uni<Response> getByTitle(@RestPath String title) {
         return
-                Movie.getByTitle(title)
+                movieService.getByTitle(title)
                         .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                 ;
@@ -356,6 +384,21 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Récupère les ingénieurs du son associés à un film par son identifiant.
+     * <p>
+     * Cette méthode récupère la liste des ingénieurs du son associés à un film donné, en fonction de l'identifiant
+     * du film fourni dans l'URL. Si la liste des ingénieurs du son est vide, une réponse avec le statut HTTP 204 (No Content)
+     * est renvoyée. Si des ingénieurs du son sont trouvés, une réponse avec le statut HTTP 200 (OK) contenant la liste des ingénieurs
+     * du son est renvoyée.
+     * <p>
+     * La récupération des ingénieurs du son est effectuée par l'appel au service correspondant et l'accès à la méthode
+     * spécifiée pour obtenir la liste des ingénieurs du son du film.
+     *
+     * @param id L'identifiant du film pour lequel les ingénieurs du son doivent être récupérés.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si aucun ingénieur du son n'est trouvé, une réponse avec le statut HTTP 204
+     * est renvoyée. Sinon, une réponse avec le statut HTTP 200 et la liste des ingénieurs du son est renvoyée.
+     */
     @GET
     @Path("{id}/sound-editors")
     public Uni<Response> getSoundEditors(@RestPath Long id) {
@@ -369,11 +412,25 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Récupère les superviseurs des effets visuels associés à un film par son identifiant.
+     * <p>
+     * Cette méthode récupère la liste des superviseurs des effets visuels associés à un film donné, en fonction de l'identifiant
+     * du film fourni dans l'URL. Si la liste des superviseurs des effets visuels est vide, une réponse avec le statut HTTP 204 (No Content)
+     * est renvoyée. Si des superviseurs sont trouvés, une réponse avec le statut HTTP 200 (OK) contenant la liste des superviseurs est renvoyée.
+     * <p>
+     * La récupération des superviseurs des effets visuels est effectuée par l'appel au service correspondant et l'accès à la méthode
+     * spécifiée pour obtenir la liste des superviseurs du film.
+     *
+     * @param id L'identifiant du film pour lequel les superviseurs des effets visuels doivent être récupérés.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si aucun superviseur des effets visuels n'est trouvé, une réponse avec le statut HTTP 204
+     * est renvoyée. Sinon, une réponse avec le statut HTTP 200 et la liste des superviseurs est renvoyée.
+     */
     @GET
     @Path("{id}/visual-effects-supervisors")
     public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id) {
         return
-                movieService.getPeopleByMovie(id, Movie::getSoundEditors, soundEditorService, "L'ensemble des spécialistes des effets spéciaux du son n'est pas initialisé pour ce film")
+                movieService.getPeopleByMovie(id, Movie::getVisualEffectsSupervisors, visualEffectsSupervisorService, "L'ensemble des spécialistes des effets spéciaux du son n'est pas initialisé pour ce film")
                         .map(visualEffectsSupervisors ->
                                 visualEffectsSupervisors.isEmpty()
                                         ? Response.noContent().build()
@@ -382,6 +439,20 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Récupère les maquilleurs associés à un film par son identifiant.
+     * <p>
+     * Cette méthode récupère la liste des maquilleurs associés à un film donné, en fonction de l'identifiant du film
+     * fourni dans l'URL. Si la liste des maquilleurs est vide, une réponse avec le statut HTTP 204 (No Content) est renvoyée.
+     * Si des maquilleurs sont trouvés, une réponse avec le statut HTTP 200 (OK) contenant la liste des maquilleurs est renvoyée.
+     * <p>
+     * La récupération des maquilleurs est effectuée par l'appel au service correspondant et l'accès à la méthode
+     * spécifiée pour obtenir la liste des maquilleurs du film.
+     *
+     * @param id L'identifiant du film pour lequel les maquilleurs doivent être récupérés.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si aucun maquilleur n'est trouvé, une réponse avec le statut HTTP 204 est renvoyée.
+     * Sinon, une réponse avec le statut HTTP 200 et la liste des maquilleurs est renvoyée.
+     */
     @GET
     @Path("{id}/makeup-artists")
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
@@ -395,6 +466,20 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Récupère les coiffeurs associés à un film par son identifiant.
+     * <p>
+     * Cette méthode récupère la liste des coiffeurs associés à un film donné, en fonction de l'identifiant du film
+     * fourni dans l'URL. Si la liste des coiffeurs est vide, une réponse avec le statut HTTP 204 (No Content) est renvoyée.
+     * Si des coiffeurs sont trouvés, une réponse avec le statut HTTP 200 (OK) contenant la liste des coiffeurs est renvoyée.
+     * <p>
+     * La récupération des coiffeurs est effectuée par l'appel au service correspondant et l'accès à la méthode
+     * spécifiée pour obtenir la liste des coiffeurs du film.
+     *
+     * @param id L'identifiant du film pour lequel les coiffeurs doivent être récupérés.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si aucun coiffeur n'est trouvé, une réponse avec le statut HTTP 204 est renvoyée.
+     * Sinon, une réponse avec le statut HTTP 200 et la liste des coiffeurs est renvoyée.
+     */
     @GET
     @Path("{id}/hair-dressers")
     public Uni<Response> getHairDressers(@RestPath Long id) {
@@ -408,6 +493,20 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Récupère les cascadeurs associés à un film par son identifiant.
+     * <p>
+     * Cette méthode récupère la liste des cascadeurs associés à un film donné, en fonction de l'identifiant du film
+     * fourni dans l'URL. Si la liste des cascadeurs est vide, une réponse avec le statut HTTP 204 (No Content) est renvoyée.
+     * Si des cascadeurs sont trouvés, une réponse avec le statut HTTP 200 (OK) contenant la liste des cascadeurs est renvoyée.
+     * <p>
+     * La récupération des cascadeurs est effectuée par l'appel au service correspondant et l'accès à la méthode
+     * spécifiée pour obtenir la liste des cascadeurs du film.
+     *
+     * @param id L'identifiant du film pour lequel les cascadeurs doivent être récupérés.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si aucun cascadeur n'est trouvé, une réponse avec le statut HTTP 204 est renvoyée.
+     * Sinon, une réponse avec le statut HTTP 200 et la liste des cascadeurs est renvoyée.
+     */
     @GET
     @Path("{id}/stuntmen")
     public Uni<Response> getStuntmen(@RestPath Long id) {
@@ -427,6 +526,7 @@ public class MovieResource {
      * @param id L'ID du film.
      * @return Une réponse HTTP :
      * - 200 (OK) avec la liste des genres si elle n'est pas vide.
+     * - 204 si la liste des genres est vide.
      */
     @GET
     @Path("{id}/genres")
@@ -447,6 +547,7 @@ public class MovieResource {
      * @param id L'ID du film.
      * @return Une réponse HTTP :
      * - 200 (OK) avec la liste des pays si elle contient des données.
+     * - 204 si la liste des pays est vide.
      */
     @GET
     @Path("{id}/countries")
@@ -461,6 +562,17 @@ public class MovieResource {
                 ;
     }
 
+    /**
+     * Récupère les récompenses associées à un film par son identifiant.
+     * <p>
+     * Cette méthode récupère la liste des récompenses associées à un film donné, en fonction de l'identifiant du film
+     * fourni dans l'URL. Si la liste des récompenses est vide, une réponse avec le statut HTTP 204 (No Content) est renvoyée.
+     * Si des récompenses sont trouvées, une réponse avec le statut HTTP 200 (OK) contenant la liste des récompenses est renvoyée.
+     *
+     * @param id L'identifiant du film pour lequel les récompenses doivent être récupérées.
+     * @return Un {@link Uni} contenant une réponse HTTP. Si aucune récompense n'est trouvée, une réponse avec le statut HTTP 204 est renvoyée.
+     * Sinon, une réponse avec le statut HTTP 200 et la liste des récompenses est renvoyée.
+     */
     @GET
     @Path("{id}/awards")
     public Uni<Response> getAwards(@RestPath Long id) {
@@ -574,18 +686,6 @@ public class MovieResource {
                         })
                 ;
     }
-
-//    @POST
-//    @Path("full")
-//    public Uni<Response> createFullMovie(Movie movie) {
-//        if (Objects.isNull(movie) || Objects.nonNull(movie.id)) {
-//            throw new WebApplicationException("Id was invalidly set on request.", 422);
-//        }
-//
-//        return
-//                movieService.createMovie(movie)
-//                        .replaceWith(Response.ok(movie).status(CREATED)::build);
-//    }
 
     @PUT
     @Path("{id}/technical-team")
@@ -2031,16 +2131,301 @@ public class MovieResource {
 
     @DELETE
     @Path("{id}")
-    public Uni<Response> delete(Long id) {
+    public Uni<Response> delete(@RestPath Long id) {
         return movieService.deleteMovie(id)
                 .map(deleted -> Response.ok().status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND).build());
+    }
+
+    /**
+     * Supprime tous les producteurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les producteurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les producteurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les producteurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des producteurs.
+     */
+    @DELETE
+    @Path("{id}/producers")
+    public Uni<Response> deleteProducers(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getProducers, "L'ensemble des producteurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les réalisateurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les réalisateurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les réalisateurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les réalisateurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des réalisateurs.
+     */
+    @DELETE
+    @Path("{id}/directors")
+    public Uni<Response> deleteDirectors(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getDirectors, "L'ensemble des réalisateurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les scénaristes associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les scénaristes associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les scénaristes doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les scénaristes ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des scénaristes.
+     */
+    @DELETE
+    @Path("{id}/screenwriters")
+    public Uni<Response> deleteScreenwriters(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getScreenwriters, "L'ensemble des scénaristes n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les musiciens associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les musiciens associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les musiciens doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les musiciens ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des musiciens.
+     */
+    @DELETE
+    @Path("{id}/musicians")
+    public Uni<Response> deleteMusicians(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getMusicians, "L'ensemble des musiciens n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les décorateurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les décorateurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les décorateurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les décorateurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des décorateurs.
+     */
+    @DELETE
+    @Path("{id}/decorators")
+    public Uni<Response> deleteDecorators(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getDecorators, "L'ensemble des décorateurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les costumiers associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les costumiers associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les costumiers doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les costumiers ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des costumiers.
+     */
+    @DELETE
+    @Path("{id}/costumiers")
+    public Uni<Response> deleteCostumiers(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getCostumiers, "L'ensemble des costumiers n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les photographes associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les photographes associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les photographes doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les photographes ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des photographes.
+     */
+    @DELETE
+    @Path("{id}/photographers")
+    public Uni<Response> deletePhotographers(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getPhotographers, "L'ensemble des photographes n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les monteurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les monteurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les monteurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les monteurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des monteurs.
+     */
+    @DELETE
+    @Path("{id}/editors")
+    public Uni<Response> deleteEditors(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getEditors, "L'ensemble des monteurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les casteurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les casteurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les casteurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les casteurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des casteurs.
+     */
+    @DELETE
+    @Path("{id}/casters")
+    public Uni<Response> deleteCasters(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getCasters, "L'ensemble des casteurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les directeurs artistiques associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les directeurs artistiques associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les directeurs artistiques doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les directeurs artistiques ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des directeurs artistiques.
+     */
+    @DELETE
+    @Path("{id}/art-directors")
+    public Uni<Response> deleteArtDirectors(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getArtDirectors, "L'ensemble des directeurs artistiques n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les ingénieurs du son associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les ingénieurs du son associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les ingénieurs du son doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les ingénieurs du son ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des ingénieurs du son.
+     */
+    @DELETE
+    @Path("{id}/sound-editors")
+    public Uni<Response> deleteSoundEditors(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getSoundEditors, "L'ensemble des ingénieurs du son n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les spécialistes des effets spéciaux associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les spécialistes des effets spéciaux associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les spécialistes des effets spéciaux doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les spécialistes des effets spéciaux ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des spécialistes des effets spéciaux.
+     */
+    @DELETE
+    @Path("{id}/visual-effects-supervisors")
+    public Uni<Response> deleteVisualEffectsSupervisors(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getVisualEffectsSupervisors, "L'ensemble des spécialistes des effets spéciaux n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les maquilleurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les maquilleurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les maquilleurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les maquilleurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des maquilleurs.
+     */
+    @DELETE
+    @Path("{id}/makeup-artists")
+    public Uni<Response> deleteMakeupArtists(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getMakeupArtists, "L'ensemble des maquilleurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les coiffeurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les coiffeurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les coiffeurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les coiffeurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des coiffeurs.
+     */
+    @DELETE
+    @Path("{id}/hair-dressers")
+    public Uni<Response> deleteHairDressers(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getHairDressers, "L'ensemble des coiffeurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les cascadeurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les cascadeurs associés à un film en appelant la méthode
+     * {@link MovieService#clearPersons(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les cascadeurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les cascadeurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des cascadeurs.
+     */
+    @DELETE
+    @Path("{id}/stuntmen")
+    public Uni<Response> deleteStuntmen(@RestPath Long id) {
+        return
+                movieService.clearPersons(id, Movie::getStuntmen, "L'ensemble des cascadeurs n'est pas initialisé")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
     }
 
     /**
      * Supprime tous les genres associés à un film donné.
      * <p>
      * Cette méthode permet de supprimer tous les genres associés à un film en appelant la méthode
-     * {@link MovieService#deleteCountries(Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     * {@link MovieService#clearGenres(Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
      *
      * @param id L'identifiant du film dont les genres doivent être supprimés.
      * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les genres ont été supprimés avec succès.
@@ -2048,15 +2433,15 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/genres")
-    public Uni<Response> deleteGenres(Long id) {
-        return movieService.deleteGenres(id).map(deleted -> Response.ok(deleted).build());
+    public Uni<Response> deleteGenres(@RestPath Long id) {
+        return movieService.clearGenres(id).map(deleted -> Response.ok(deleted).build());
     }
 
     /**
      * Supprime tous les pays associés à un film donné.
      * <p>
      * Cette méthode permet de supprimer tous les pays associés à un film en appelant la méthode
-     * {@link MovieService#deleteCountries(Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     * {@link MovieService#clearCountries(Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
      *
      * @param id L'identifiant du film dont les pays doivent être supprimés.
      * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les pays ont été supprimés avec succès.
@@ -2064,15 +2449,15 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/countries")
-    public Uni<Response> deleteCountries(Long id) {
-        return movieService.deleteCountries(id).map(deleted -> Response.ok(deleted).build());
+    public Uni<Response> deleteCountries(@RestPath Long id) {
+        return movieService.clearCountries(id).map(deleted -> Response.ok(deleted).build());
     }
 
     /**
      * Supprime toutes les récompenses associées à un film donné.
      * <p>
      * Cette méthode permet de supprimer toutes les récompenses associées à un film en appelant la méthode
-     * {@link MovieService#deleteAwards(Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     * {@link MovieService#clearAwards(Long)} (Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
      *
      * @param id L'identifiant du film dont les récompenses doivent être supprimées.
      * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les récompenses ont été supprimées avec succès.
@@ -2080,8 +2465,8 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/awards")
-    public Uni<Response> deleteAwards(Long id) {
-        return movieService.deleteAwards(id).map(deleted -> Response.ok(deleted).build());
+    public Uni<Response> deleteAwards(@RestPath Long id) {
+        return movieService.clearAwards(id).map(deleted -> Response.ok(deleted).build());
     }
 
 }

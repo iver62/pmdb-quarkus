@@ -188,17 +188,6 @@ public class Movie extends PanacheEntityBase {
                 .build();
     }
 
-    public static Uni<List<Movie>> getByTitle(String title) {
-        return list("title", title);
-    }
-
-    public static Uni<List<Movie>> getAllMovies(String sort, Sort.Direction direction, String title) {
-        return
-                find("lower(title) like lower(?1)", Sort.by(sort, direction), MessageFormat.format("%{0}%", title))
-                        .list()
-                ;
-    }
-
     /**
      * Ajoute un ensemble de personnes à une collection existante.
      *
@@ -360,11 +349,43 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
+    /**
+     * Supprime une récompense par son identifiant de l'ensemble des récompenses.
+     * <p>
+     * Cette méthode permet de supprimer une récompense de l'ensemble des récompenses en fonction de son identifiant.
+     * Si l'ensemble des récompenses n'est pas initialisé, une exception est levée. La suppression de la récompense se
+     * fait en recherchant la récompense dont l'identifiant correspond à celui fourni.
+     *
+     * @param id L'identifiant de la récompense à supprimer.
+     * @return Un {@link Uni} contenant l'ensemble des récompenses après suppression de celle correspondant à l'identifiant.
+     * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisé.
+     */
     public Uni<Set<Award>> removeAward(Long id) {
         return
                 Mutiny.fetch(awards)
                         .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
                         .invoke(fetchAwards -> fetchAwards.removeIf(award -> Objects.equals(award.getId(), id)))
+                ;
+    }
+
+    /**
+     * Vide un ensemble de personnes.
+     * <p>
+     * Cette méthode permet de vider un ensemble de personnes spécifié. Avant de procéder à l'opération, elle vérifie
+     * si l'ensemble est initialisé (non nul). Si l'ensemble est nul, une exception est levée avec le message d'erreur
+     * fourni. Après validation, l'ensemble est vidé à l'aide de la méthode {@link Set#clear()}.
+     *
+     * @param persons      L'ensemble des personnes à vider.
+     * @param errorMessage Le message d'erreur à utiliser dans le cas où l'ensemble des personnes n'est pas initialisé.
+     * @param <T>          Le type des éléments dans l'ensemble des personnes.
+     * @return Un {@link Uni} contenant un ensemble vide après que l'opération a été effectuée.
+     * @throws IllegalStateException Si l'ensemble des personnes n'est pas initialisé (null).
+     */
+    public <T> Uni<Set<T>> clearPersons(Set<T> persons, String errorMessage) {
+        return
+                Mutiny.fetch(persons)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                        .invoke(Set::clear)
                 ;
     }
 
