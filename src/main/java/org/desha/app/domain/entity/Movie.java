@@ -346,24 +346,6 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Vide l'ensemble des pays associés à un objet.
-     * <p>
-     * Cette méthode permet de vider la collection des pays associés à l'objet en utilisant la méthode
-     * {@link Set#clear()}. Elle vérifie également si l'ensemble des pays est correctement initialisé.
-     * Si la collection des pays est nulle, une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble vide de pays après avoir vidé la collection.
-     * @throws IllegalStateException Si l'ensemble des pays n'est pas initialisé (null).
-     */
-    public Uni<Set<Country>> clearCountries() {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
-                        .invoke(Set::clear)
-                ;
-    }
-
-    /**
      * Retire un pays de la collection existante en fonction de son ID.
      *
      * @param id L'ID du pays à retirer.
@@ -383,6 +365,61 @@ public class Movie extends PanacheEntityBase {
                 Mutiny.fetch(awards)
                         .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
                         .invoke(fetchAwards -> fetchAwards.removeIf(award -> Objects.equals(award.getId(), id)))
+                ;
+    }
+
+
+    /**
+     * Vide l'ensemble des genres associés à un objet.
+     * <p>
+     * Cette méthode permet de vider la collection des genres associés à l'objet en utilisant la méthode
+     * {@link Set#clear()}. Elle vérifie également si l'ensemble des genres est correctement initialisé.
+     * Si la collection des genres est nulle, une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble vide de genres après avoir vidé la collection.
+     * @throws IllegalStateException Si l'ensemble des genres n'est pas initialisé (null).
+     */
+    public Uni<Set<Genre>> clearGenres() {
+        return
+                Mutiny.fetch(genres)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des genres n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
+    }
+
+    /**
+     * Vide l'ensemble des pays associés à un objet.
+     * <p>
+     * Cette méthode permet de vider la collection des pays associés à l'objet en utilisant la méthode
+     * {@link Set#clear()}. Elle vérifie également si l'ensemble des pays est correctement initialisé.
+     * Si la collection des pays est nulle, une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble vide de pays après avoir vidé la collection.
+     * @throws IllegalStateException Si l'ensemble des pays n'est pas initialisé (null).
+     */
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
+    }
+
+    /**
+     * Vide l'ensemble des récompenses associées à un objet.
+     * <p>
+     * Cette méthode permet de vider la collection des récompenses associées à l'objet en utilisant la méthode
+     * {@link Set#clear()}. Elle vérifie également si l'ensemble des récompenses est correctement initialisée.
+     * Si la collection des récompenses est nulle, une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble vide de récompenses après avoir vidé la collection.
+     * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisée (null).
+     */
+    public Uni<Set<Award>> clearAwards() {
+        return
+                Mutiny.fetch(awards)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
+                        .invoke(Set::clear)
                 ;
     }
 }

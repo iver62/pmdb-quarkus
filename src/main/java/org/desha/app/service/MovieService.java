@@ -1058,6 +1058,50 @@ public class MovieService {
     }
 
     /**
+     * Supprime un film par son identifiant.
+     * <p>
+     * Cette méthode effectue la suppression d'un film dans une transaction.
+     * Si l'identifiant fourni ne correspond à aucun film, la suppression échoue
+     * et retourne `false`.
+     *
+     * @param id L'identifiant du film à supprimer.
+     * @return Un {@link Uni} contenant `true` si la suppression a réussi,
+     * `false` si aucun film avec cet identifiant n'existe.
+     */
+    public Uni<Boolean> deleteMovie(Long id) {
+        return Panache.withTransaction(() -> movieRepository.deleteById(id));
+    }
+
+    /**
+     * Supprime tous les genres associés à un film donné.
+     * <p>
+     * Cette méthode permet de vider la collection des genres associés à un film en supprimant toutes les entrées
+     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
+     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
+     *
+     * @param id L'identifiant du film pour lequel les genres doivent être supprimés.
+     * @return Un {@link Uni} contenant {@code true} si la suppression des genres a réussi,
+     * ou une exception sera levée en cas d'erreur.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des genres (par exemple,
+     *                                 en cas de film introuvable ou d'erreur de persistance).
+     */
+    public Uni<Boolean> deleteGenres(Long id) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .call(Movie::clearGenres)
+                                        .call(movieRepository::persist)
+                                        .map(movie -> true)
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression des genres", throwable);
+                        });
+    }
+
+    /**
      * Supprime tous les pays associés à un film donné.
      * <p>
      * Cette méthode permet de vider la collection des pays associés à un film en supprimant toutes les entrées
@@ -1087,18 +1131,32 @@ public class MovieService {
     }
 
     /**
-     * Supprime un film par son identifiant.
+     * Supprime toutes les récompenses associées à un film donné.
      * <p>
-     * Cette méthode effectue la suppression d'un film dans une transaction.
-     * Si l'identifiant fourni ne correspond à aucun film, la suppression échoue
-     * et retourne `false`.
+     * Cette méthode permet de vider la collection des récompenses associées à un film en supprimant toutes les entrées
+     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
+     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
      *
-     * @param id L'identifiant du film à supprimer.
-     * @return Un {@link Uni} contenant `true` si la suppression a réussi,
-     * `false` si aucun film avec cet identifiant n'existe.
+     * @param id L'identifiant du film pour lequel les récompenses doivent être supprimées.
+     * @return Un {@link Uni} contenant {@code true} si la suppression des récompenses a réussi,
+     * ou une exception sera levée en cas d'erreur.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
+     *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> deleteMovie(Long id) {
-        return Panache.withTransaction(() -> movieRepository.deleteById(id));
+    public Uni<Boolean> deleteAwards(Long id) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .call(Movie::clearAwards)
+                                        .call(movieRepository::persist)
+                                        .map(movie -> true)
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression des pays", throwable);
+                        });
     }
 
     /**

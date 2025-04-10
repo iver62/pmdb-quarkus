@@ -2037,6 +2037,22 @@ public class MovieResource {
     }
 
     /**
+     * Supprime tous les genres associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les genres associés à un film en appelant la méthode
+     * {@link MovieService#deleteCountries(Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les genres doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les genres ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des genres.
+     */
+    @DELETE
+    @Path("{id}/genres")
+    public Uni<Response> deleteGenres(Long id) {
+        return movieService.deleteGenres(id).map(deleted -> Response.ok(deleted).build());
+    }
+
+    /**
      * Supprime tous les pays associés à un film donné.
      * <p>
      * Cette méthode permet de supprimer tous les pays associés à un film en appelant la méthode
@@ -2050,6 +2066,22 @@ public class MovieResource {
     @Path("{id}/countries")
     public Uni<Response> deleteCountries(Long id) {
         return movieService.deleteCountries(id).map(deleted -> Response.ok(deleted).build());
+    }
+
+    /**
+     * Supprime toutes les récompenses associées à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer toutes les récompenses associées à un film en appelant la méthode
+     * {@link MovieService#deleteAwards(Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les récompenses doivent être supprimées.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les récompenses ont été supprimées avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses.
+     */
+    @DELETE
+    @Path("{id}/awards")
+    public Uni<Response> deleteAwards(Long id) {
+        return movieService.deleteAwards(id).map(deleted -> Response.ok(deleted).build());
     }
 
 }
