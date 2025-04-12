@@ -3,6 +3,7 @@ package org.desha.app.controller;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -38,6 +39,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("count")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> countPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         return
                 personService.count(CriteriasDTO.build(queryParams))
@@ -47,6 +49,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersonById(@RestPath Long id) {
         return
                 personService.getById(id)
@@ -56,6 +59,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("search")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> searchByName(@QueryParam("query") String query) {
         if (Objects.isNull(query) || query.trim().isEmpty()) {
             return Uni.createFrom()
@@ -79,6 +83,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}/full")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersonByIdWithCountriesAndMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -96,6 +101,7 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @GET
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -120,6 +126,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("all")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllPersons() {
         return
                 personService.getAll()
@@ -130,6 +137,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("countries")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
@@ -150,6 +158,7 @@ public abstract class PersonResource<T extends Person> {
 
     @GET
     @Path("{id}/movies")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -173,21 +182,10 @@ public abstract class PersonResource<T extends Person> {
                 ;
     }
 
-    /*@GET
-    @Path("{id}/awards")
-    public Uni<Response> getAwards(Long id) {
-        return
-                Person.findById(id)
-                        .map(Person.class::cast)
-                        .chain(personService::getAwards)
-                        .onItem().ifNotNull().transform(awards -> Response.ok(awards).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
-                ;
-    }*/
-
     @GET
     @Path("photos/{fileName}")
     @Produces({"image/jpg", "image/jpeg", "image/png"})
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhoto(@PathParam("fileName") String fileName) {
         if (Objects.isNull(fileName) || fileName.isEmpty() || Objects.equals("undefined", fileName)) {
             log.warn("Invalid file request: {}", fileName);
@@ -218,6 +216,7 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @POST
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> save(PersonDTO personDTO) {
         return
                 personService
@@ -255,6 +254,7 @@ public abstract class PersonResource<T extends Person> {
 
     @PUT
     @Path("{id}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> update(
             @RestPath Long id,
             @RestForm("file") FileUpload file,
@@ -273,6 +273,7 @@ public abstract class PersonResource<T extends Person> {
 
     @DELETE
     @Path("{id}")
+    @RolesAllowed("admin")
     public Uni<Response> delete(@RestPath Long id) {
         return
                 personService.delete(id)

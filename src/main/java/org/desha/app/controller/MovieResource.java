@@ -3,6 +3,7 @@ package org.desha.app.controller;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -103,6 +104,7 @@ public class MovieResource {
      */
     @GET
     @Path("count")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> count(@BeanParam MovieQueryParamsDTO queryParams) {
         return
                 movieService.count(CriteriasDTO.build(queryParams))
@@ -132,6 +134,7 @@ public class MovieResource {
     }
 
     @GET
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMovies(@BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -157,6 +160,7 @@ public class MovieResource {
 
     @GET
     @Path("all")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllMovies(@BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -184,6 +188,7 @@ public class MovieResource {
 
     @GET
     @Path("search")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> searchByTitle(@QueryParam("query") String query) {
         if (Objects.isNull(query) || query.trim().isEmpty()) {
             return Uni.createFrom()
@@ -207,6 +212,7 @@ public class MovieResource {
 
     @GET
     @Path("countries")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountriesInMovies(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
@@ -227,6 +233,7 @@ public class MovieResource {
 
     @GET
     @Path("title/{title}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getByTitle(@RestPath String title) {
         return
                 movieService.getByTitle(title)
@@ -237,6 +244,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/actors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getActors(@RestPath Long id) {
         return
                 movieService.getActorsByMovie(id)
@@ -246,16 +254,17 @@ public class MovieResource {
 
     @GET
     @Path("{id}/technical-team")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getTechnicalTeam(@RestPath Long id) {
         return
                 movieService.getTechnicalTeam(id)
                         .map(technicalTeam -> Response.ok(technicalTeam).build())
-//                        .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas"))
                 ;
     }
 
     @GET
     @Path("{id}/producers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getProducers(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getProducers, producerService, "L'ensemble des producteurs n'est pas initialisé pour ce film")
@@ -269,6 +278,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getDirectors(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getDirectors, directorService, "L'ensemble des réalisateurs n'est pas initialisé pour ce film")
@@ -282,6 +292,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/screenwriters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getScreenwriters(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getScreenwriters, screenwriterService, "L'ensemble des scénaristes n'est pas initialisé pour ce film")
@@ -295,6 +306,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/musicians")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMusicians(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getMusicians, musicianService, "L'ensemble des musiciens n'est pas initialisé pour ce film")
@@ -308,6 +320,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/photographers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhotographers(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getPhotographers, photographerService, "L'ensemble des photographes n'est pas initialisé pour ce film")
@@ -321,6 +334,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/costumiers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCostumiers(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getCostumiers, costumierService, "L'ensemble des costumiers n'est pas initialisé pour ce film")
@@ -334,6 +348,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/decorators")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getDecorators(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getDecorators, decoratorService, "L'ensemble des décorateurs n'est pas initialisé pour ce film")
@@ -347,6 +362,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getEditors(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getEditors, editorService, "L'ensemble des monteurs n'est pas initialisé pour ce film")
@@ -360,6 +376,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/casters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCasters(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getCasters, casterService, "L'ensemble des casteurs n'est pas initialisé pour ce film")
@@ -373,6 +390,7 @@ public class MovieResource {
 
     @GET
     @Path("{id}/art-directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getArtDirectors(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getArtDirectors, artDirectorService, "L'ensemble des directeurs artistiques n'est pas initialisé pour ce film")
@@ -401,6 +419,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/sound-editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getSoundEditors(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getSoundEditors, soundEditorService, "L'ensemble des ingénieurs du son n'est pas initialisé pour ce film")
@@ -428,6 +447,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/visual-effects-supervisors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getVisualEffectsSupervisors, visualEffectsSupervisorService, "L'ensemble des spécialistes des effets spéciaux du son n'est pas initialisé pour ce film")
@@ -455,6 +475,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/makeup-artists")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getMakeupArtists, makeupArtistService, "L'ensemble des maquilleurs n'est pas initialisé pour ce film")
@@ -482,6 +503,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/hair-dressers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getHairDressers(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getHairDressers, hairDresserService, "L'ensemble des coiffeurs n'est pas initialisé pour ce film")
@@ -509,6 +531,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/stuntmen")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getStuntmen(@RestPath Long id) {
         return
                 movieService.getPeopleByMovie(id, Movie::getStuntmen, stuntmanService, "L'ensemble des cascadeurs n'est pas initialisé pour ce film")
@@ -530,6 +553,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/genres")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getGenres(@RestPath Long id) {
         return
                 movieService.getGenresByMovie(id)
@@ -551,6 +575,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountries(@RestPath Long id) {
         return
                 movieService.getCountriesByMovie(id)
@@ -575,6 +600,7 @@ public class MovieResource {
      */
     @GET
     @Path("{id}/awards")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAwards(@RestPath Long id) {
         return
                 movieService.getAwardsByMovie(id)
@@ -588,6 +614,7 @@ public class MovieResource {
 
     @GET
     @Path("creation-date-evolution")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesCreationDateEvolution() {
         return
                 movieService.getMoviesCreationDateEvolution()
@@ -597,6 +624,7 @@ public class MovieResource {
 
     @GET
     @Path("creation-date-repartition")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesRepartitionByCreationDate() {
         return
                 movieService.getMoviesCreationDateRepartition()
@@ -606,6 +634,7 @@ public class MovieResource {
 
     @GET
     @Path("decade-repartition")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesRepartitionByDecade() {
         return
                 movieService.getMoviesReleaseDateRepartition()
@@ -615,6 +644,7 @@ public class MovieResource {
 
     @GET
     @Path("genre-repartition")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesRepartitionByGenre() {
         return
                 movieService.getMoviesGenresRepartition()
@@ -624,6 +654,7 @@ public class MovieResource {
 
     @GET
     @Path("country-repartition")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesRepartitionByCountry() {
         return
                 movieService.getMoviesCountriesRepartition()
@@ -633,6 +664,7 @@ public class MovieResource {
 
     @GET
     @Path("user-repartition")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesRepartitionByUser() {
         return
                 movieService.getMoviesUsersRepartition()
@@ -641,6 +673,7 @@ public class MovieResource {
     }
 
     @POST
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> create(
             @RestForm("file") FileUpload file,
             @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO
@@ -657,6 +690,7 @@ public class MovieResource {
     @GET
     @Path("posters/{fileName}")
     @Produces({"image/jpg", "image/jpeg", "image/png"})
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPoster(String fileName) {
         if (Objects.isNull(fileName) || fileName.isEmpty() || Objects.equals("undefined", fileName)) {
             log.warn("Invalid file request: {}", fileName);
@@ -689,6 +723,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/technical-team")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveTechnicalTeam(@RestPath Long id, TechnicalTeamDTO technicalTeam) {
         if (Objects.isNull(technicalTeam)) {
             throw new BadRequestException("La fiche technique ne peut pas être nulle.");
@@ -702,6 +737,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/casting")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCasting(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
         if (Objects.isNull(movieActorsList)) {
             throw new BadRequestException("La liste des acteurs ne peut pas être nulle.");
@@ -720,6 +756,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/producers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveProducers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des producteurs ne peut pas être nulle.");
@@ -744,6 +781,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle.");
@@ -768,6 +806,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/screenwriters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des scénaristes ne peut pas être nulle.");
@@ -792,6 +831,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/musicians")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveMusicians(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des musiciens ne peut pas être nulle.");
@@ -816,6 +856,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/photographers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> savePhotographers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des photographes ne peut pas être nulle.");
@@ -840,6 +881,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/costumiers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCostumiers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
@@ -864,6 +906,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/decorators")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveDecorators(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
@@ -888,6 +931,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveEditors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des monteurs ne peut pas être nulle.");
@@ -912,6 +956,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/casters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCasters(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste casteurs genres ne peut pas être nulle.");
@@ -936,6 +981,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/art-directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveArtDirectors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des directeurs artistiques ne peut pas être nulle.");
@@ -960,6 +1006,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/sound-editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveSoundEditors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des ingénieurs du son ne peut pas être nulle.");
@@ -984,6 +1031,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/visual-effects-supervisors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveVisualEffectsSupervisors(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle.");
@@ -1008,6 +1056,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/makeup-artists")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveMakeupArtists(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle.");
@@ -1032,6 +1081,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/hair-dressers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveHairDressers(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle.");
@@ -1056,6 +1106,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}/stuntmen")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveStuntmen(@RestPath Long id, Set<PersonDTO> personDTOSet) {
         if (Objects.isNull(personDTOSet)) {
             throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle.");
@@ -1094,6 +1145,7 @@ public class MovieResource {
      */
     @PUT
     @Path("{id}/genres")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
         if (Objects.isNull(genreDTOS)) {
             throw new BadRequestException("La liste des genres ne peut pas être nulle.");
@@ -1125,6 +1177,7 @@ public class MovieResource {
      */
     @PUT
     @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
         if (Objects.isNull(countryDTOS)) {
             throw new BadRequestException("La liste des pays ne peut pas être nulle.");
@@ -1156,6 +1209,7 @@ public class MovieResource {
      */
     @PUT
     @Path("{id}/awards")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> saveAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
         if (Objects.isNull(awardDTOS)) {
             throw new BadRequestException("La liste des récompenses ne peut pas être nulle.");
@@ -1183,6 +1237,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/producers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addProducers(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des producteurs ne peut pas être nulle.");
@@ -1210,6 +1265,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addDirectors(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle.");
@@ -1237,6 +1293,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/screenwriters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addScreenwriters(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des scénaristes ne peut pas être nulle.");
@@ -1264,6 +1321,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/musicians")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addMusicians(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des musiciens ne peut pas être nulle.");
@@ -1291,6 +1349,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/photographers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addPhotographers(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des photographes ne peut pas être nulle.");
@@ -1318,6 +1377,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/costumiers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addCostumiers(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
@@ -1345,6 +1405,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/decorators")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addDecorators(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
@@ -1372,6 +1433,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addEditors(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des monteurs ne peut pas être nulle.");
@@ -1399,6 +1461,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/casters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addCasters(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des casteurs ne peut pas être nulle.");
@@ -1426,6 +1489,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/art-directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addArtDirectors(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des directeurs artistiques ne peut pas être nulle.");
@@ -1453,6 +1517,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/sound-editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addSoundEditors(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des ingénieurs du son ne peut pas être nulle.");
@@ -1480,6 +1545,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/visual-effects-supervisors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addVisualEffectsSupervisors(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle.");
@@ -1507,6 +1573,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/makeup-artists")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addMakeupArtists(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle.");
@@ -1534,6 +1601,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/hair-dressers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addHairDressers(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle.");
@@ -1561,6 +1629,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/stuntmen")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addStuntmen(@RestPath Long id, Set<PersonDTO> personDTOS) {
         if (Objects.isNull(personDTOS)) {
             throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle.");
@@ -1579,6 +1648,7 @@ public class MovieResource {
 
     @PATCH
     @Path("{id}/roles")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addMovieActors(@RestPath Long id, Set<MovieActorDTO> movieActorsDTO) {
         if (Objects.isNull(movieActorsDTO)) {
             throw new BadRequestException("La liste des acteurs ne peut pas être nulle.");
@@ -1606,6 +1676,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/genres")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
         if (Objects.isNull(genreDTOS)) {
             throw new BadRequestException("La liste des genres ne peut pas être nulle.");
@@ -1633,6 +1704,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
         if (Objects.isNull(countryDTOS)) {
             throw new BadRequestException("La liste des pays ne peut pas être nulle.");
@@ -1660,6 +1732,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{id}/awards")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> addAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
         if (Objects.isNull(awardDTOS)) {
             throw new BadRequestException("La liste des récompenses ne peut pas être nulle.");
@@ -1687,6 +1760,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/producers/{producerId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long producerId) {
         return
                 movieService.removePerson(movieId, producerId, Movie::getProducers, producerService, "La collection des producteurs n'est pas initialisée")
@@ -1710,6 +1784,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/directors/{directorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long directorId) {
         return
                 movieService.removePerson(movieId, directorId, Movie::getDirectors, directorService, "La collection des réalisateurs n'est pas initialisée")
@@ -1733,6 +1808,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/screenwriters/{screenwriterId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long screenwriterId) {
         return
                 movieService.removePerson(movieId, screenwriterId, Movie::getScreenwriters, screenwriterService, "La collection des scénaristes n'est pas initialisée")
@@ -1756,6 +1832,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/musicians/{musicianId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long musicianId) {
         return
                 movieService.removePerson(movieId, musicianId, Movie::getMusicians, musicianService, "La collection des musiciens n'est pas initialisée")
@@ -1779,6 +1856,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/photographers/{photographerId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long photographerId) {
         return
                 movieService.removePerson(movieId, photographerId, Movie::getPhotographers, photographerService, "La collection des photographes n'est pas initialisée")
@@ -1802,6 +1880,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/costumiers/{costumierId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCostumier(@RestPath Long movieId, @RestPath Long costumierId) {
         return
                 movieService.removePerson(movieId, costumierId, Movie::getCostumiers, costumierService, "La collection des costumiers n'est pas initialisée")
@@ -1825,6 +1904,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/decorators/{decoratorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeDecorator(@RestPath Long movieId, @RestPath Long decoratorId) {
         return
                 movieService.removePerson(movieId, decoratorId, Movie::getDecorators, decoratorService, "La collection des décorateurs n'est pas initialisée")
@@ -1848,6 +1928,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/editors/{editorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeEditor(@RestPath Long movieId, @RestPath Long editorId) {
         return
                 movieService.removePerson(movieId, editorId, Movie::getEditors, editorService, "La collection des monteurs n'est pas initialisée")
@@ -1871,6 +1952,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/casters/{casterId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCaster(@RestPath Long movieId, @RestPath Long casterId) {
         return
                 movieService.removePerson(movieId, casterId, Movie::getCasters, casterService, "La collection des casteurs n'est pas initialisée")
@@ -1894,6 +1976,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/art-directors/{artDirectorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeArtDirectors(@RestPath Long movieId, @RestPath Long artDirectorId) {
         return
                 movieService.removePerson(movieId, artDirectorId, Movie::getArtDirectors, artDirectorService, "La collection des directeurs artistiques n'est pas initialisée")
@@ -1917,6 +2000,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/sound-editors/{soundDirectorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeSoundEditors(@RestPath Long movieId, @RestPath Long soundDirectorId) {
         return
                 movieService.removePerson(movieId, soundDirectorId, Movie::getSoundEditors, soundEditorService, "La collection des ingénieurs du son n'est pas initialisée")
@@ -1940,6 +2024,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/visual-effects-supervisors/{visualEffectsSupervisorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeVisualEffectsSupervisor(@RestPath Long movieId, @RestPath Long visualEffectsSupervisorId) {
         return
                 movieService.removePerson(movieId, visualEffectsSupervisorId, Movie::getVisualEffectsSupervisors, visualEffectsSupervisorService, "La collection des spécialistes des effets spéciaux n'est pas initialisée")
@@ -1963,6 +2048,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/makeup-artists/{makeupArtistId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeMakeupArtists(@RestPath Long movieId, @RestPath Long makeupArtistId) {
         return
                 movieService.removePerson(movieId, makeupArtistId, Movie::getMakeupArtists, makeupArtistService, "La collection des maquilleurs n'est pas initialisée")
@@ -1986,6 +2072,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/hair-dressers/{hairDresserId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeHairDressers(@RestPath Long movieId, @RestPath Long hairDresserId) {
         return
                 movieService.removePerson(movieId, hairDresserId, Movie::getHairDressers, hairDresserService, "La collection des coiffeurs n'est pas initialisée")
@@ -2009,6 +2096,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/stuntmen/{stuntmanId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeStuntman(@RestPath Long movieId, @RestPath Long stuntmanId) {
         return
                 movieService.removePerson(movieId, stuntmanId, Movie::getStuntmen, stuntmanService, "La collection des cascadeurs n'est pas initialisée")
@@ -2032,6 +2120,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/roles/{movieActorId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeMovieActor(@RestPath Long movieId, @RestPath Long movieActorId) {
         return
                 movieService.removeMovieActor(movieId, movieActorId)
@@ -2055,6 +2144,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/genres/{genreId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeGenre(@RestPath Long movieId, @RestPath Long genreId) {
         return
                 movieService.removeGenre(movieId, genreId)
@@ -2078,6 +2168,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/countries/{countryId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCountry(@RestPath Long movieId, @RestPath Long countryId) {
         return
                 movieService.removeCountry(movieId, countryId)
@@ -2100,6 +2191,7 @@ public class MovieResource {
      */
     @PATCH
     @Path("{movieId}/awards/{awardId}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> removeAward(@RestPath Long movieId, @RestPath Long awardId) {
         return
                 movieService.removeAward(movieId, awardId)
@@ -2114,6 +2206,7 @@ public class MovieResource {
 
     @PUT
     @Path("{id}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> update(
             Long id,
             @RestForm("file") FileUpload file,
@@ -2131,6 +2224,7 @@ public class MovieResource {
 
     @DELETE
     @Path("{id}")
+    @RolesAllowed("admin")
     public Uni<Response> delete(@RestPath Long id) {
         return movieService.deleteMovie(id)
                 .map(deleted -> Response.ok().status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND).build());
@@ -2148,6 +2242,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/producers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteProducers(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getProducers, "L'ensemble des producteurs n'est pas initialisé")
@@ -2167,6 +2262,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteDirectors(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getDirectors, "L'ensemble des réalisateurs n'est pas initialisé")
@@ -2186,6 +2282,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/screenwriters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteScreenwriters(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getScreenwriters, "L'ensemble des scénaristes n'est pas initialisé")
@@ -2205,6 +2302,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/musicians")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteMusicians(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getMusicians, "L'ensemble des musiciens n'est pas initialisé")
@@ -2224,6 +2322,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/decorators")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteDecorators(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getDecorators, "L'ensemble des décorateurs n'est pas initialisé")
@@ -2243,6 +2342,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/costumiers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCostumiers(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getCostumiers, "L'ensemble des costumiers n'est pas initialisé")
@@ -2262,6 +2362,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/photographers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deletePhotographers(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getPhotographers, "L'ensemble des photographes n'est pas initialisé")
@@ -2281,6 +2382,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteEditors(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getEditors, "L'ensemble des monteurs n'est pas initialisé")
@@ -2300,6 +2402,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/casters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCasters(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getCasters, "L'ensemble des casteurs n'est pas initialisé")
@@ -2319,6 +2422,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/art-directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteArtDirectors(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getArtDirectors, "L'ensemble des directeurs artistiques n'est pas initialisé")
@@ -2338,6 +2442,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/sound-editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSoundEditors(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getSoundEditors, "L'ensemble des ingénieurs du son n'est pas initialisé")
@@ -2357,6 +2462,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/visual-effects-supervisors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteVisualEffectsSupervisors(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getVisualEffectsSupervisors, "L'ensemble des spécialistes des effets spéciaux n'est pas initialisé")
@@ -2376,6 +2482,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/makeup-artists")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteMakeupArtists(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getMakeupArtists, "L'ensemble des maquilleurs n'est pas initialisé")
@@ -2395,6 +2502,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/hair-dressers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteHairDressers(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getHairDressers, "L'ensemble des coiffeurs n'est pas initialisé")
@@ -2414,6 +2522,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/stuntmen")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteStuntmen(@RestPath Long id) {
         return
                 movieService.clearPersons(id, Movie::getStuntmen, "L'ensemble des cascadeurs n'est pas initialisé")
@@ -2433,6 +2542,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/genres")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteGenres(@RestPath Long id) {
         return movieService.clearGenres(id).map(deleted -> Response.ok(deleted).build());
     }
@@ -2449,6 +2559,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCountries(@RestPath Long id) {
         return movieService.clearCountries(id).map(deleted -> Response.ok(deleted).build());
     }
@@ -2465,6 +2576,7 @@ public class MovieResource {
      */
     @DELETE
     @Path("{id}/awards")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteAwards(@RestPath Long id) {
         return movieService.clearAwards(id).map(deleted -> Response.ok(deleted).build());
     }

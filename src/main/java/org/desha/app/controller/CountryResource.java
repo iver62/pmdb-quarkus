@@ -3,11 +3,11 @@ package org.desha.app.controller;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
@@ -23,7 +23,6 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("countries")
 @ApplicationScoped
-@Slf4j
 public class CountryResource {
 
     private final CountryService countryService;
@@ -135,6 +134,7 @@ public class CountryResource {
 
     @GET
     @Path("{id}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountry(Long id) {
         return
                 countryService.getById(id)
@@ -143,6 +143,7 @@ public class CountryResource {
     }
 
     @GET
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllPaginatedCountries(@BeanParam QueryParamsDTO queryParams) {
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
@@ -162,6 +163,7 @@ public class CountryResource {
 
     @GET
     @Path("all")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllCountries(@BeanParam QueryParamsDTO queryParams) {
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
@@ -181,6 +183,7 @@ public class CountryResource {
 
     @GET
     @Path("{id}/full")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getFullCountry(Long id) {
         return
                 countryService.getFull(id)
@@ -191,6 +194,7 @@ public class CountryResource {
 
     @GET
     @Path("search")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> searchCountriesByName(@QueryParam("query") String query) {
         if (Objects.isNull(query) || query.trim().isEmpty()) {
             return Uni.createFrom()
@@ -214,6 +218,7 @@ public class CountryResource {
 
     @GET
     @Path("{id}/movies/all")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
@@ -233,6 +238,7 @@ public class CountryResource {
 
     @GET
     @Path("{id}/movies")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.of(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
@@ -269,6 +275,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/actors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getActorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -307,6 +314,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/producers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getProducersByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -345,6 +353,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getDirectorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -383,6 +392,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/screenwriters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getScreenwritersByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -421,6 +431,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/musicians")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMusiciansByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -459,6 +470,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/decorators")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getDecoratorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -497,6 +509,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/costumiers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCostumiers(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -535,6 +548,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/photographers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhotographersByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -573,6 +587,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getEditorsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -611,6 +626,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/casters")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCasters(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -649,6 +665,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/art-directors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getArtDirectors(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -687,6 +704,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/sound-editors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getSoundEditors(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -725,6 +743,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/visual-effects-supervisors")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getVisualEffectsSupervisors(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -763,6 +782,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/makeup-artists")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMakeupArtists(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -801,6 +821,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/hair-dressers")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getHairDressers(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -839,6 +860,7 @@ public class CountryResource {
      */
     @GET
     @Path("{id}/stuntmen")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getStuntmen(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -863,6 +885,7 @@ public class CountryResource {
 
     @PUT
     @Path("{id}")
+    @RolesAllowed("admin")
     public Uni<Response> update(Long id, CountryDTO countryDTO) {
         if (Objects.isNull(countryDTO) || Objects.isNull(countryDTO.getNomFrFr())) {
             throw new WebApplicationException("Country name was not set on request.", 422);

@@ -3,13 +3,13 @@ package org.desha.app.controller;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.User;
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Path("users")
 @Singleton
-@Slf4j
+@RolesAllowed("admin")
 public class UserResource {
 
     private final UserService userService;

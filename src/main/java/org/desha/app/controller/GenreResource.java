@@ -3,11 +3,11 @@ package org.desha.app.controller;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.GenreDTO;
 import org.desha.app.domain.dto.MovieQueryParamsDTO;
@@ -24,7 +24,6 @@ import static jakarta.ws.rs.core.Response.Status.*;
 
 @Path("genres")
 @ApplicationScoped
-@Slf4j
 public class GenreResource {
 
     private final GenreService genreService;
@@ -36,6 +35,7 @@ public class GenreResource {
 
     @GET
     @Path("count")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         return
                 genreService.count(queryParams.getTerm())
@@ -49,6 +49,7 @@ public class GenreResource {
 
     @GET
     @Path("{id}")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getGenre(Long id) {
         return
                 genreService.getById(id)
@@ -61,6 +62,7 @@ public class GenreResource {
     }
 
     @GET
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getGenres(@BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Genre.DEFAULT_SORT);
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
@@ -79,6 +81,7 @@ public class GenreResource {
 
     @GET
     @Path("{id}/movies")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByGenre(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
@@ -101,6 +104,7 @@ public class GenreResource {
     }
 
     @POST
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> createGenre(GenreDTO genreDTO) {
         if (Objects.isNull(genreDTO) || Objects.nonNull(genreDTO.getId())) {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
@@ -117,6 +121,7 @@ public class GenreResource {
 
     @PUT
     @Path("{id}")
+    @RolesAllowed("admin")
     public Uni<Response> updateGenre(Long id, GenreDTO genreDTO) {
         if (Objects.isNull(genreDTO) || Objects.isNull(genreDTO.getName())) {
             throw new WebApplicationException("Genre name was not set on request.", 422);
@@ -134,6 +139,7 @@ public class GenreResource {
 
     @DELETE
     @Path("{id}")
+    @RolesAllowed("admin")
     public Uni<Response> deleteGenre(@RestPath Long id) {
         return
                 genreService.deleteGenre(id)
