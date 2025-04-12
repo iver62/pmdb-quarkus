@@ -80,4 +80,35 @@ public class VisualEffectsSupervisor extends Person {
                 ;
     }
 
+    @Override
+    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> {
+                            if (Objects.nonNull(countrySet)) {
+                                fetchCountries.addAll(countrySet);
+                            }
+                        })
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> removeCountry(Long id) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
+    }
+
 }

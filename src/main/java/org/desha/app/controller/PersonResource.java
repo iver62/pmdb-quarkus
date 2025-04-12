@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
@@ -226,32 +227,6 @@ public abstract class PersonResource<T extends Person> {
                 ;
     }
 
-    /*@PUT
-    @Path("{id}/countries")
-    public Uni<Response> addCountries(Long id, Set<Country> countrySet) {
-        Set<Country> countries = new HashSet<>();
-        return
-                Uni.join().all(
-                                countrySet.stream().filter(c -> Objects.nonNull(c.id)).toList().isEmpty()
-                                        ?
-                                        List.of(Uni.createFrom().nullItem())
-                                        :
-                                        countrySet
-                                                .stream()
-                                                .filter(c -> Objects.nonNull(c.id))
-                                                .map(c -> Country.findById(c.id))
-                                                .toList()
-                        )
-                        .usingConcurrencyOf(1)
-                        .andFailFast()
-                        .map(entities -> entities.stream().filter(Objects::nonNull).map(e -> (Country) e).toList())
-                        .map(countryList -> countryList.stream().collect(Collectors.toCollection(() -> countries)))
-                        .map(countryList -> countrySet.stream().filter(c -> Objects.isNull(c.id)).collect(Collectors.toCollection(() -> countries)))
-                        .chain(countryList -> personService.addCountries(id, countrySet))
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                ;
-    }*/
-
     @PUT
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
@@ -271,6 +246,58 @@ public abstract class PersonResource<T extends Person> {
                         .onItem().ifNull().failWith(new NotFoundException("Person with ID " + id + " not found."));
     }
 
+    @PUT
+    @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> saveCountries(@RestPath Long id, Set<CountryDTO> countryDTOs) {
+        if (Objects.isNull(countryDTOs)) {
+            throw new BadRequestException("La liste des pays ne peut pas être nulle.");
+        }
+
+        return
+                personService.saveCountries(id, countryDTOs)
+                        .onItem().ifNotNull().transform(countryDTOSet ->
+                                countryDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                ;
+    }
+
+    @PATCH
+    @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
+        if (Objects.isNull(countryDTOS)) {
+            throw new BadRequestException("La liste des pays ne peut pas être nulle.");
+        }
+
+        return
+                personService.addCountries(id, countryDTOS)
+                        .onItem().ifNotNull().transform(countryDTOSet ->
+                                countryDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOSet).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    @PATCH
+    @Path("{personId}/countries/{countryId}")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> removeCountry(@RestPath Long personId, @RestPath Long countryId) {
+        return
+                personService.removeCountry(personId, countryId)
+                        .onItem().ifNotNull().transform(countryDTOSet ->
+                                countryDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(countryDTOSet).build())
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
     @DELETE
     @Path("{id}")
     @RolesAllowed("admin")
@@ -281,6 +308,13 @@ public abstract class PersonResource<T extends Person> {
                                 ? Response.ok().status(NO_CONTENT).build()
                                 : Response.ok().status(NOT_FOUND).build())
                 ;
+    }
+
+    @DELETE
+    @Path("{id}/countries")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> deleteCountries(@RestPath Long id) {
+        return personService.clearCountries(id).map(deleted -> Response.ok(deleted).build());
     }
 
 }

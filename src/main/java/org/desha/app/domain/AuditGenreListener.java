@@ -15,10 +15,10 @@ public class AuditGenreListener {
     @PreUpdate
     @PreRemove
     private void beforeAnyUpdate(Genre genre) {
-        if (Objects.isNull(genre.id)) {
+        if (Objects.isNull(genre.getId())) {
             log.info("[GENRE AUDIT] About to add the genre " + genre.getName());
         } else {
-            log.info("[GENRE AUDIT] About to update/delete genre: " + genre.id);
+            log.info("[GENRE AUDIT] About to update/delete genre: " + genre.getId());
         }
     }
 

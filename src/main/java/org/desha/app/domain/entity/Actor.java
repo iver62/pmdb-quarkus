@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.service.PersonService;
+import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
 
@@ -60,7 +61,34 @@ public class Actor extends Person {
     }
 
     @Override
-    public void setMovies(List<Movie> movieList) {
+    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> {
+                            if (Objects.nonNull(countrySet)) {
+                                fetchCountries.addAll(countrySet);
+                            }
+                        })
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> removeCountry(Long id) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
     }
 
 }

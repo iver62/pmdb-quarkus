@@ -66,7 +66,46 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
 
     public abstract void setCountries(Set<Country> countrySet);
 
-    public abstract void setMovies(List<Movie> movieList);
+    /**
+     * Ajoute un ensemble de pays à la collection existante des pays.
+     * <p>
+     * Cette méthode récupère l'ensemble actuel des pays via Mutiny, puis ajoute les pays
+     * spécifiés dans {@code countrySet} s'ils ne sont pas nuls.
+     * Si la collection initiale de pays est nulle, une exception {@link IllegalStateException}
+     * est levée.
+     * </p>
+     *
+     * @param countrySet l'ensemble des pays à ajouter ; peut être nul (aucune action dans ce cas)
+     * @return un {@link Uni} contenant l'ensemble mis à jour des pays
+     * @throws IllegalStateException si la collection de pays n'est pas initialisée
+     */
+    public abstract Uni<Set<Country>> addCountries(Set<Country> countrySet);
+
+    /**
+     * Supprime un pays de la collection en fonction de son identifiant.
+     * <p>
+     * Cette méthode récupère l'ensemble actuel des pays via Mutiny, puis supprime
+     * celui dont l'identifiant correspond à {@code id}. Si l'ensemble des pays n'est pas
+     * initialisé (null), une exception {@link IllegalStateException} est levée.
+     * </p>
+     *
+     * @param id l'identifiant du pays à supprimer
+     * @return un {@link Uni} contenant l'ensemble mis à jour des pays
+     * @throws IllegalStateException si l'ensemble des pays n'est pas initialisé
+     */
+    public abstract Uni<Set<Country>> removeCountry(Long id);
+
+    /**
+     * Supprime tous les pays de la collection.
+     * <p>
+     * Cette méthode vide l'ensemble des pays récupéré via {@code Mutiny.fetch(countries)}.
+     * Si l'ensemble des pays n'est pas initialisé (null), une exception {@link IllegalStateException} est levée.
+     * </p>
+     *
+     * @return un {@link Uni} contenant l'ensemble désormais vide des pays
+     * @throws IllegalStateException si l'ensemble des pays n'est pas initialisé
+     */
+    public abstract Uni<Set<Country>> clearCountries();
 
     @Override
     public int compareTo(Person p) {

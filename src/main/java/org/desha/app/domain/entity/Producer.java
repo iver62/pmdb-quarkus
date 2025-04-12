@@ -59,12 +59,8 @@ public class Producer extends Person {
     public Uni<List<Movie>> addMovie(Movie movie) {
         return
                 Mutiny.fetch(movies)
-                        .map(
-                                movieList -> {
-                                    movieList.add(movie);
-                                    return movieList;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des films n'est pas initialisée"))
+                        .invoke(fetchedMovies -> fetchedMovies.add(movie))
                 ;
     }
 
@@ -77,12 +73,39 @@ public class Producer extends Person {
     public Uni<List<Movie>> removeMovie(Long id) {
         return
                 Mutiny.fetch(movies)
-                        .map(
-                                movieList -> {
-                                    movieList.removeIf(movie -> Objects.equals(movie.getId(), id));
-                                    return movieList;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des films n'est pas initialisée"))
+                        .invoke(fetchedMovies -> fetchedMovies.removeIf(movie -> Objects.equals(movie.getId(), id)))
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> {
+                            if (Objects.nonNull(countrySet)) {
+                                fetchCountries.addAll(countrySet);
+                            }
+                        })
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> removeCountry(Long id) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
+                ;
+    }
+
+    @Override
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
                 ;
     }
 

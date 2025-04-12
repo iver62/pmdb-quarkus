@@ -7,9 +7,10 @@ import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CountryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Actor;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
@@ -19,6 +20,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -139,7 +141,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 );
     }
 
-    @Override
+    /*@Override
     public Uni<List<Movie>> addMovie(Long id, Movie movie) {
         return
                 Panache
@@ -149,9 +151,9 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                         .transformToUni(person -> person.addMovie(movie))
                         )
                 ;
-    }
+    }*/
 
-    @Override
+   /* @Override
     public Uni<List<Movie>> removeMovie(Long id, Long movieId) {
         return
                 Panache
@@ -161,7 +163,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                         .transformToUni(person -> person.removeMovie(movieId))
                         )
                 ;
-    }
+    }*/
 
     public Uni<File> getPhoto(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {
@@ -189,6 +191,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 });
     }
 
+    @Override
     public Uni<T> update(Long id, FileUpload file, PersonDTO personDTO) {
         // Validate personDTO for null or other basic validation
         if (Objects.isNull(personDTO)) {
@@ -222,8 +225,89 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 );
     }
 
+    @Override
+    public Uni<Set<CountryDTO>> saveCountries(Long id, Set<CountryDTO> countryDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                                        .chain(t ->
+                                                countryService.getByIds(
+                                                                countryDTOSet.stream()
+                                                                        .map(CountryDTO::getId)
+                                                                        .filter(Objects::nonNull)
+                                                                        .toList()
+                                                        )
+                                                        .invoke(finalCountrySet -> {
+                                                            t.setCountries(new HashSet<>(finalCountrySet));
+                                                            t.setLastUpdate(LocalDateTime.now());
+                                                        })
+                                                        .replaceWith(t)
+                                        )
+                                        .flatMap(personRepository::persist)
+                                        .flatMap(this::fetchAndMapCountries)
+                        );
+    }
+
+    @Override
+    public Uni<Set<CountryDTO>> addCountries(Long id, Set<CountryDTO> countryDTOSet) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable introuvable"))
+                                        .flatMap(t ->
+                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
+                                                        .call(t::addCountries)
+                                                        .replaceWith(t)
+                                        )
+                                        .chain(personRepository::persist)
+                                        .flatMap(this::fetchAndMapCountries)
+                        )
+                ;
+    }
+
+    @Override
+    public Uni<Set<CountryDTO>> removeCountry(Long personId, Long countryId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(personId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                                        .call(t -> t.removeCountry(countryId))
+                                        .chain(personRepository::persist)
+                                        .flatMap(this::fetchAndMapCountries)
+                        )
+                ;
+    }
+
+    @Override
     public Uni<Boolean> delete(Long id) {
-        return Panache.withTransaction(() -> personRepository.deleteById(id));
+        return
+                Panache
+                        .withTransaction(() -> personRepository.deleteById(id)
+                                .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                        )
+                ;
+    }
+
+    @Override
+    public Uni<Boolean> clearCountries(Long id) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                                        .call(Person::clearCountries)
+                                        .chain(personRepository::persist)
+                                        .map(t -> true)
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression des pays", throwable);
+                        });
     }
 
     protected List<PersonDTO> fromPersonListEntity(List<T> personList) {
@@ -241,6 +325,14 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                         .stream()
                         .map(PersonDTO::fromEntity)
                         .collect(Collectors.toSet())
+                ;
+    }
+
+    private Uni<Set<CountryDTO>> fetchAndMapCountries(T t) {
+        return
+                Mutiny.fetch(t.getCountries())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
+                        .map(countryService::fromCountrySetEntity)
                 ;
     }
 

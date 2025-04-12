@@ -80,27 +80,34 @@ public class Director extends Person {
                 ;
     }
 
-    /*public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
+    @Override
+    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
         return
                 Mutiny.fetch(countries)
-                        .map(
-                                fetchedCountries -> {
-                                    fetchedCountries.addAll(countrySet);
-                                    return fetchedCountries;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> {
+                            if (Objects.nonNull(countrySet)) {
+                                fetchCountries.addAll(countrySet);
+                            }
+                        })
                 ;
     }
 
+    @Override
     public Uni<Set<Country>> removeCountry(Long id) {
         return
                 Mutiny.fetch(countries)
-                        .map(
-                                countrySet -> {
-                                    countrySet.removeIf(country -> Objects.equals(country.id, id));
-                                    return countrySet;
-                                }
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
                 ;
-    }*/
+    }
+
+    @Override
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
+    }
 }
