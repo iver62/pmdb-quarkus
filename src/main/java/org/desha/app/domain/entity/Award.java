@@ -6,6 +6,7 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
 
 import java.time.Year;
@@ -44,8 +45,8 @@ public class Award extends PanacheEntityBase {
         return
                 Award.builder()
                         .id(awardDTO.getId())
-                        .ceremony(awardDTO.getCeremony())
-                        .name(awardDTO.getName())
+                        .ceremony(StringUtils.capitalize(awardDTO.getCeremony()))
+                        .name(StringUtils.capitalize(awardDTO.getName()))
                         .year(awardDTO.getYear())
                         .build();
     }

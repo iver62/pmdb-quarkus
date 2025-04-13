@@ -49,7 +49,7 @@ public class GenreResource {
     @GET
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getGenre(Long id) {
+    public Uni<Response> getGenre(@RestPath Long id) {
         return
                 genreService.getById(id)
                         .onItem().ifNotNull().transform(genre -> Response.ok(genre).build())
@@ -117,7 +117,7 @@ public class GenreResource {
     @PUT
     @Path("{id}")
     @RolesAllowed("admin")
-    public Uni<Response> updateGenre(Long id, GenreDTO genreDTO) {
+    public Uni<Response> updateGenre(@RestPath Long id, GenreDTO genreDTO) {
         if (Objects.isNull(genreDTO) || Objects.isNull(genreDTO.getName())) {
             throw new WebApplicationException("Genre name was not set on request.", 422);
         }
