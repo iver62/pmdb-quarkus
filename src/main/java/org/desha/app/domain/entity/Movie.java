@@ -3,7 +3,6 @@ package org.desha.app.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -12,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.MovieDTO;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -317,6 +315,10 @@ public class Movie extends PanacheEntityBase {
                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
                         .invoke(movieActorList -> movieActorList.removeIf(movieActor -> Objects.equals(movieActor.getId(), id)))
                 ;
+    }
+
+    public void removeMovieActors(List<MovieActor> movieActorList) {
+        movieActors.removeAll(movieActorList);
     }
 
     /**

@@ -1,7 +1,6 @@
 package org.desha.app.controller;
 
 import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -89,12 +88,10 @@ public abstract class PersonResource<T extends Person> {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                personService.getByIdWithCountriesAndMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, CriteriasDTO.build(queryParams))
+                personService.getByIdWithCountriesAndMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), CriteriasDTO.build(queryParams))
                         .map(personDTO ->
                                 Response.ok(personDTO).build()
                         )
@@ -107,14 +104,12 @@ public abstract class PersonResource<T extends Person> {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.get(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO)
+                personService.get(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.count(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -141,12 +136,10 @@ public abstract class PersonResource<T extends Person> {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
+                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(countryList ->
                                 personService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -164,14 +157,12 @@ public abstract class PersonResource<T extends Person> {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO)
+                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(movieList ->
                                 personService.countMovies(id, criteriasDTO)
                                         .map(total ->

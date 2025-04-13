@@ -1,7 +1,6 @@
 package org.desha.app.controller;
 
 import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -145,12 +144,11 @@ public class CountryResource {
     @GET
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllPaginatedCountries(@BeanParam QueryParamsDTO queryParams) {
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
+                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(countryList ->
                                 countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -165,12 +163,11 @@ public class CountryResource {
     @Path("all")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllCountries(@BeanParam QueryParamsDTO queryParams) {
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getCountries(finalSort, sortDirection, queryParams.getTerm())
+                countryService.getCountries(finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(countryList ->
                                 countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -220,12 +217,11 @@ public class CountryResource {
     @Path("{id}/movies/all")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getAllMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getMovies(id, queryParams.getSort(), sortDirection, queryParams.getTerm())
+                countryService.getMovies(id, queryParams.getSort(), queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(movieList ->
                                 countryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
@@ -240,12 +236,11 @@ public class CountryResource {
     @Path("{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
         String finalSort = Optional.of(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
+                countryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(movieList ->
                                 countryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
@@ -280,14 +275,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, actorService, actorRepository, Actor.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, actorService, actorRepository, Actor.class)
                         .flatMap(personDTOList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, actorRepository, Actor.class).map(total ->
                                         personDTOList.isEmpty()
@@ -319,14 +312,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, producerService, producerRepository, Producer.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, producerService, producerRepository, Producer.class)
                         .flatMap(personDTOList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, producerRepository, Producer.class).map(total ->
                                         personDTOList.isEmpty()
@@ -358,14 +349,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, directorService, directorRepository, Director.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, directorService, directorRepository, Director.class)
                         .flatMap(directorList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, directorRepository, Director.class).map(total ->
                                         directorList.isEmpty()
@@ -397,14 +386,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, screenwriterService, screenwriterRepository, Screenwriter.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, screenwriterService, screenwriterRepository, Screenwriter.class)
                         .flatMap(screenwriterList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, screenwriterRepository, Screenwriter.class).map(total ->
                                         screenwriterList.isEmpty()
@@ -436,14 +423,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, musicianService, musicianRepository, Musician.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, musicianService, musicianRepository, Musician.class)
                         .flatMap(musicianList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, musicianRepository, Musician.class).map(total ->
                                         musicianList.isEmpty()
@@ -475,14 +460,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, decoratorService, decoratorRepository, Decorator.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, decoratorService, decoratorRepository, Decorator.class)
                         .flatMap(decoratorList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, decoratorRepository, Decorator.class).map(total ->
                                         decoratorList.isEmpty()
@@ -514,14 +497,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, costumierService, costumierRepository, Costumier.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, costumierService, costumierRepository, Costumier.class)
                         .flatMap(costumierList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, costumierRepository, Costumier.class).map(total ->
                                         costumierList.isEmpty()
@@ -553,14 +534,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, photographerService, photographerRepository, Photographer.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, photographerService, photographerRepository, Photographer.class)
                         .flatMap(photographerList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, photographerRepository, Photographer.class).map(total ->
                                         photographerList.isEmpty()
@@ -592,14 +571,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, editorService, editorRepository, Editor.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, editorService, editorRepository, Editor.class)
                         .flatMap(editorList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, editorRepository, Editor.class).map(total ->
                                         editorList.isEmpty()
@@ -631,14 +608,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, casterService, casterRepository, Caster.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, casterService, casterRepository, Caster.class)
                         .flatMap(casterList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, casterRepository, Caster.class).map(total ->
                                         casterList.isEmpty()
@@ -670,14 +645,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, artDirectorService, artDirectorRepository, ArtDirector.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, artDirectorService, artDirectorRepository, ArtDirector.class)
                         .flatMap(artDirectorList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, artDirectorRepository, ArtDirector.class).map(total ->
                                         artDirectorList.isEmpty()
@@ -709,14 +682,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, soundEditorService, soundEditorRepository, SoundEditor.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, soundEditorService, soundEditorRepository, SoundEditor.class)
                         .flatMap(soundEditorList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, soundEditorRepository, SoundEditor.class).map(total ->
                                         soundEditorList.isEmpty()
@@ -748,14 +719,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, visualEffectsSupervisorService, visualEffectsSupervisorRepository, VisualEffectsSupervisor.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, visualEffectsSupervisorService, visualEffectsSupervisorRepository, VisualEffectsSupervisor.class)
                         .flatMap(visualEffectsSupervisorList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, visualEffectsSupervisorRepository, VisualEffectsSupervisor.class).map(total ->
                                         visualEffectsSupervisorList.isEmpty()
@@ -787,14 +756,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, makeupArtistService, makeupArtistRepository, MakeupArtist.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, makeupArtistService, makeupArtistRepository, MakeupArtist.class)
                         .flatMap(makeupArtistList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, makeupArtistRepository, MakeupArtist.class).map(total ->
                                         makeupArtistList.isEmpty()
@@ -826,14 +793,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, hairDresserService, hairDresserRepository, HairDresser.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, hairDresserService, hairDresserRepository, HairDresser.class)
                         .flatMap(hairDresserList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, hairDresserRepository, HairDresser.class).map(total ->
                                         hairDresserList.isEmpty()
@@ -865,14 +830,12 @@ public class CountryResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO, stuntmanService, stuntmanRepository, Stuntman.class)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO, stuntmanService, stuntmanRepository, Stuntman.class)
                         .flatMap(stuntmanList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO, stuntmanRepository, Stuntman.class).map(total ->
                                         stuntmanList.isEmpty()

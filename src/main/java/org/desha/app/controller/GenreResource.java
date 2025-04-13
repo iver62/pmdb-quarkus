@@ -1,7 +1,6 @@
 package org.desha.app.controller;
 
 import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -65,12 +64,10 @@ public class GenreResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getGenres(@BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Genre.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Genre.ALLOWED_SORT_FIELDS);
 
         return
-                genreService.getGenres(finalSort, sortDirection, queryParams.getTerm())
+                genreService.getGenres(finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .map(genreDTOS ->
                                 genreDTOS.isEmpty()
                                         ? Response.noContent().build()
@@ -84,12 +81,10 @@ public class GenreResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByGenre(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                genreService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
+                genreService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(movieList ->
                                 genreService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()

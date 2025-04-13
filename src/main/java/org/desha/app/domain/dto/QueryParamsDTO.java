@@ -45,13 +45,29 @@ public class QueryParamsDTO {
     @QueryParam("to-last-update")
     protected LocalDateTime toLastUpdate;
 
+    /**
+     * Valide que le champ de tri spécifié fait partie des champs autorisés.
+     *
+     * @param sort              Le nom du champ de tri à valider.
+     * @param allowedSortFields La liste des champs de tri autorisés.
+     * @throws InvalidSortException si le champ de tri n'est pas autorisé.
+     */
     public void validateSortField(String sort, List<String> allowedSortFields) {
         if (!allowedSortFields.contains(sort)) {
             throw new InvalidSortException(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields));
         }
     }
 
-    public Sort.Direction validateSortDirection(String direction) {
+    /**
+     * Valide et retourne la direction de tri spécifiée par l'utilisateur.
+     * <p>
+     * Si la valeur de {@code direction} correspond (en ignorant la casse) à l'une des valeurs
+     * de l'énumération {@link Sort.Direction}, celle-ci est retournée.
+     * Sinon, la direction {@code Sort.Direction.Ascending} est utilisée par défaut.
+     *
+     * @return La direction de tri validée, ou {@code Sort.Direction.Ascending} si invalide.
+     */
+    public Sort.Direction validateSortDirection() {
         return Arrays.stream(Sort.Direction.values())
                 .filter(d -> d.name().equalsIgnoreCase(direction))
                 .findFirst()

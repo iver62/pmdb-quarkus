@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.repository.CountryRepository;
@@ -412,95 +413,77 @@ public class MovieService {
     }
 
     public Uni<List<MovieActorDTO>> saveCasting(Long id, List<MovieActorDTO> movieActorsList) {
-        Map<Long, String> roleMap = movieActorsList
-                .stream()
-                .collect(Collectors.toMap(movieActorDTO -> movieActorDTO.getActor().getId(), MovieActorDTO::getRole));
+        Map<Long, String> roleMap = movieActorsList.stream()
+                .collect(Collectors.toMap(dto -> dto.getActor().getId(), MovieActorDTO::getRole));
+        Map<Long, Integer> rankMap = movieActorsList.stream()
+                .collect(Collectors.toMap(dto -> dto.getActor().getId(), MovieActorDTO::getRank));
 
-        Map<Long, Integer> rankMap = movieActorsList
-                .stream()
-                .collect(Collectors.toMap(movieActorDTO -> movieActorDTO.getActor().getId(), MovieActorDTO::getRank));
+        return
+                Panache.withTransaction(() ->
+                        movieRepository.findById(id)
+                                .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                .flatMap(movie ->
+                                        Mutiny.fetch(movie.getMovieActors())
+                                                .flatMap(existingMovieActors -> {
+                                                    // Map existants
+                                                    Map<Long, MovieActor> existingActorMap = existingMovieActors.stream()
+                                                            .collect(Collectors.toMap(ma -> ma.getActor().getId(), ma -> ma));
 
-        return Panache.withTransaction(() ->
-                movieRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .flatMap(movie ->
-                                Mutiny.fetch(movie.getMovieActors())
-                                        .flatMap(existingMovieActors -> {
-                                            // Créer une liste modifiable
-                                            List<MovieActor> modifiableMovieActors = new ArrayList<>(existingMovieActors);
+                                                    // IDs des nouveaux acteurs à ajouter
+                                                    List<Long> newActorIds = new ArrayList<>();
 
-                                            // Récupérer les ID des acteurs existants
-                                            Map<Long, MovieActor> existingActorMap = modifiableMovieActors.stream()
-                                                    .collect(Collectors.toMap(ma -> ma.getActor().getId(), ma -> ma));
+                                                    // MàJ des acteurs existants ou ajout à la liste des nouveaux
+                                                    for (MovieActorDTO dto : movieActorsList) {
+                                                        if (Objects.isNull(dto.getActor()) || Objects.isNull(dto.getActor().getId())) {
+                                                            continue;
+                                                        }
+                                                        Long actorId = dto.getActor().getId();
 
-                                            // Identifier les acteurs à ajouter ou mettre à jour
-                                            List<Long> newActorIds = new ArrayList<>();
-                                            for (MovieActorDTO dto : movieActorsList) {
-                                                if (Objects.isNull(dto.getActor()) || Objects.isNull(dto.getActor().getId())) {
-                                                    continue; // Éviter les erreurs avec des données corrompues
-                                                }
-                                                if (existingActorMap.containsKey(dto.getActor().getId())) {
-                                                    // Modifier le rôle de l'acteur existant si nécessaire
-                                                    MovieActor existingMovieActor = existingActorMap.get(dto.getActor().getId());
-                                                    if (!Objects.equals(existingMovieActor.getRole(), dto.getRole())) {
-                                                        existingMovieActor.setRole(dto.getRole());
+                                                        if (existingActorMap.containsKey(actorId)) {
+                                                            MovieActor existing = existingActorMap.get(actorId);
+                                                            existing.setRole(dto.getRole());
+                                                            existing.setRank(dto.getRank());
+                                                        } else {
+                                                            newActorIds.add(actorId);
+                                                        }
                                                     }
-                                                    if (!Objects.equals(existingMovieActor.getRank(), dto.getRank())) {
-                                                        existingMovieActor.setRank(dto.getRank());
-                                                    }
-                                                } else {
-                                                    // Nouvel acteur à ajouter
-                                                    newActorIds.add(dto.getActor().getId());
-                                                }
-                                            }
 
-                                            // Identifier les acteurs à supprimer
-                                            List<MovieActor> actorsToRemove = modifiableMovieActors.stream()
-                                                    .filter(ma ->
-                                                            movieActorsList
-                                                                    .stream()
-                                                                    .noneMatch(dto -> dto.getActor().getId().equals(ma.getActor().getId()))
-                                                    )
-                                                    .toList();
+                                                    // Supprimer les acteurs absents de la nouvelle liste
+                                                    movie.removeMovieActors(
+                                                            existingMovieActors.stream()
+                                                                    .filter(ma -> movieActorsList.stream()
+                                                                            .noneMatch(dto -> dto.getActor().getId().equals(ma.getActor().getId())))
+                                                                    .toList()
+                                                    );
 
-                                            // Supprimer les acteurs retirés
-                                            modifiableMovieActors.removeAll(actorsToRemove);
-
-                                            // Charger ces nouveaux acteurs et les ajouter au casting
-                                            return
-                                                    movieActorRepository.deleteByIds(actorsToRemove.stream().map(MovieActor::getId).toList())
-                                                            .chain(() ->
-                                                                    actorService.getByIds(newActorIds)
-                                                                            .map(newActors -> {
-                                                                                        modifiableMovieActors.addAll(
-                                                                                                newActors
-                                                                                                        .stream()
-                                                                                                        .map(actor -> MovieActor.build(
-                                                                                                                movie,
-                                                                                                                actor,
-                                                                                                                roleMap.getOrDefault(actor.getId(), "Inconnu"),
-                                                                                                                rankMap.getOrDefault(actor.getId(), 0)
-                                                                                                        )).toList()
-                                                                                        );
-                                                                                        return modifiableMovieActors;
-                                                                                    }
-                                                                            )
-                                                                            .invoke(movieActors -> {
-                                                                                movie.setMovieActors(movieActors);
-                                                                                movie.setLastUpdate(LocalDateTime.now());
-                                                                            })
-                                                            )
-                                                            .map(movieActors ->
-                                                                    movieActors
-                                                                            .stream()
-                                                                            .sorted(Comparator.comparing(MovieActor::getRank))
-                                                                            .map(MovieActorDTO::fromEntity)
-                                                                            .toList()
-                                                            )
-                                                    ;
-                                        })
-                        )
-        );
+                                                    return
+                                                            actorService.getByIds(newActorIds)
+                                                                    .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs acteurs sont introuvables"))
+                                                                    .map(actorList ->
+                                                                            actorList.stream()
+                                                                                    .map(actor ->
+                                                                                            MovieActor.build(
+                                                                                                    movie,
+                                                                                                    actor,
+                                                                                                    roleMap.getOrDefault(actor.getId(), "Inconnu").trim(),
+                                                                                                    rankMap.getOrDefault(actor.getId(), 0)
+                                                                                            )
+                                                                                    )
+                                                                                    .toList()
+                                                                    )
+                                                                    .call(movie::addMovieActors)
+                                                                    .replaceWith(movie)
+                                                            ;
+                                                })
+                                )
+                                .chain(movieRepository::persist)
+                                .call(movieActorRepository::flush) // Force la génération des IDs
+                                .flatMap(movie ->
+                                        Mutiny.fetch(movie.getMovieActors())
+                                                .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                                                .map(actorService::fromMovieActorListEntity)
+                                )
+                );
     }
 
     /**
@@ -625,8 +608,8 @@ public class MovieService {
                                                                                             .filter(a -> Objects.nonNull(a.getId()) && a.getId().equals(award.getId()))
                                                                                             .findFirst()
                                                                                             .ifPresent(existingAward -> {
-                                                                                                award.setCeremony(existingAward.getCeremony());
-                                                                                                award.setName(existingAward.getName());
+                                                                                                award.setCeremony(StringUtils.capitalize(existingAward.getCeremony()));
+                                                                                                award.setName(StringUtils.capitalize(existingAward.getName()));
                                                                                                 award.setYear(existingAward.getYear());
                                                                                             })
                                                                             );

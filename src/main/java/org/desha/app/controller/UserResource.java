@@ -1,7 +1,6 @@
 package org.desha.app.controller;
 
 import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -32,12 +31,10 @@ public class UserResource {
     @GET
     public Uni<Response> getUsers(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(User.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, User.ALLOWED_SORT_FIELDS);
 
         return
-                userService.getUsers(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
+                userService.getUsers(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(userList ->
                                 userService.countUsers(queryParams.getTerm())
                                         .map(total ->
@@ -53,12 +50,10 @@ public class UserResource {
     @Path("all")
     public Uni<Response> getAllUsers(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(User.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, User.ALLOWED_SORT_FIELDS);
 
         return
-                userService.getUsers(finalSort, sortDirection, queryParams.getTerm())
+                userService.getUsers(finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .map(userList ->
                                 userList.isEmpty()
                                         ? Response.noContent().build()

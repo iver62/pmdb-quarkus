@@ -1,7 +1,6 @@
 package org.desha.app.controller;
 
 import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -139,14 +138,12 @@ public class MovieResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                movieService.getMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, criteriasDTO)
+                movieService.getMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(movieList ->
                                 movieService.count(criteriasDTO)
                                         .map(total ->
@@ -165,14 +162,12 @@ public class MovieResource {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                movieService.getAllMovies(finalSort, sortDirection, criteriasDTO)
+                movieService.getAllMovies(finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(movieList ->
                                 movieService.count(criteriasDTO).map(total ->
                                         movieList.isEmpty()
@@ -215,12 +210,10 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountriesInMovies(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
-        Sort.Direction sortDirection = queryParams.validateSortDirection(queryParams.getDirection());
-
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, sortDirection, queryParams.getTerm())
+                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(countryList ->
                                 movieService.countCountriesInMovies(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()
@@ -248,7 +241,11 @@ public class MovieResource {
     public Uni<Response> getActors(@RestPath Long id) {
         return
                 movieService.getActorsByMovie(id)
-                        .map(movieActors -> Response.ok(movieActors).build())
+                        .map(movieActors ->
+                                movieActors.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieActors).build()
+                        )
                 ;
     }
 
