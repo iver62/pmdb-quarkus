@@ -42,14 +42,16 @@ public class AwardResource {
      */
     @GET
     @Path("{id}")
-    public Uni<Response> getSingle(Long id) {
-        return awardService.getAward(id)
-                .onItem().ifNotNull().transform(awardDTO -> Response.ok(awardDTO).build())
-                .onFailure().recoverWithItem(err -> {
-                            log.error("Erreur lors de la récupération de la récompense: {}", err.getMessage());
-                            return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
-                        }
-                );
+    public Uni<Response> getSingle(@RestPath Long id) {
+        return
+                awardService.getAward(id)
+                        .onItem().ifNotNull().transform(awardDTO -> Response.ok(awardDTO).build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la récupération de la récompense: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
+                ;
     }
 
     /**

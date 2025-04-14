@@ -12,9 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
-import org.desha.app.repository.CountryRepository;
-import org.desha.app.repository.MovieActorRepository;
-import org.desha.app.repository.MovieRepository;
+import org.desha.app.repository.*;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
@@ -31,9 +29,11 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class MovieService {
 
+    private final AwardRepository awardRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
+    private final UserRepository userRepository;
     private final AwardService awardService;
     private final CountryService countryService;
     private final GenreService genreService;
@@ -61,6 +61,7 @@ public class MovieService {
 
     @Inject
     public MovieService(
+            AwardRepository awardRepository,
             AwardService awardService,
             CountryService countryService,
             CountryRepository countryRepository,
@@ -68,6 +69,7 @@ public class MovieService {
             GenreService genreService,
             MovieRepository movieRepository,
             MovieActorRepository movieActorRepository,
+            UserRepository userRepository,
             ActorService actorService,
             ArtDirectorService artDirectorService,
             CasterService casterService,
@@ -85,6 +87,7 @@ public class MovieService {
             StuntmanService stuntmanService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
+        this.awardRepository = awardRepository;
         this.awardService = awardService;
         this.countryService = countryService;
         this.countryRepository = countryRepository;
@@ -92,6 +95,7 @@ public class MovieService {
         this.genreService = genreService;
         this.movieRepository = movieRepository;
         this.movieActorRepository = movieActorRepository;
+        this.userRepository = userRepository;
         this.actorService = actorService;
         this.artDirectorService = artDirectorService;
         this.casterService = casterService;
@@ -106,8 +110,8 @@ public class MovieService {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
-        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
         this.stuntmanService = stuntmanService;
+        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
     }
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
@@ -366,6 +370,11 @@ public class MovieService {
                                     .chain(() ->
                                             genreService.getByIds(movieDTO.getGenres())
                                                     .invoke(movie::setGenres)
+                                    )
+                                    .chain(() ->
+                                            userRepository.findById(movieDTO.getUser().getId())
+                                                    .invoke(user -> log.info("USER -> " + user))
+                                                    .invoke(movie::setUser)
                                     )
                                     .chain(() -> {
                                         if (Objects.nonNull(file)) {
@@ -631,9 +640,9 @@ public class MovieService {
                                                                             });
                                                                         }
                                                                 )
+                                                                .call(awardRepository::flush)
+                                                                .map(awardService::fromAwardSetEntity)
                                         )
-                                        .call(movieActorRepository::flush) // Force la génération des IDs
-                                        .map(awardService::fromAwardSetEntity)
                         )
                 ;
     }

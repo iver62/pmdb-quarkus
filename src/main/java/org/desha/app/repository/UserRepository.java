@@ -27,7 +27,7 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
                                 LEFT JOIN FETCH u.movies
                                 WHERE LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
                                 """,
-                        Sort.by(sort, direction),
+                        Sort.by("u." + sort, direction),
                         Parameters.with("term", term)
                 )
                         .page(page)
@@ -38,7 +38,7 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
         return
                 find(
                         "LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
-                        Sort.by(sort, direction),
+                        Sort.by("u." + sort, direction),
                         Parameters.with("term", term)
                 ).list();
     }

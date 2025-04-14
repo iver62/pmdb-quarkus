@@ -134,7 +134,7 @@ public class CountryResource {
     @GET
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getCountry(Long id) {
+    public Uni<Response> getCountry(@RestPath Long id) {
         return
                 countryService.getById(id)
                         .onItem().ifNotNull().transform(country -> Response.ok(country).build())
@@ -194,13 +194,7 @@ public class CountryResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> searchCountriesByName(@QueryParam("query") String query) {
         if (Objects.isNull(query) || query.trim().isEmpty()) {
-            return Uni.createFrom()
-                    .item(
-                            Response
-                                    .status(Response.Status.BAD_REQUEST)
-                                    .entity("Le paramètre 'query' est requis")
-                                    .build()
-                    );
+            throw new BadRequestException("Le paramètre 'query' est requis");
         }
 
         return
@@ -849,7 +843,7 @@ public class CountryResource {
     @PUT
     @Path("{id}")
     @RolesAllowed("admin")
-    public Uni<Response> update(Long id, CountryDTO countryDTO) {
+    public Uni<Response> update(@RestPath Long id, CountryDTO countryDTO) {
         if (Objects.isNull(countryDTO) || Objects.isNull(countryDTO.getNomFrFr())) {
             throw new WebApplicationException("Country name was not set on request.", 422);
         }

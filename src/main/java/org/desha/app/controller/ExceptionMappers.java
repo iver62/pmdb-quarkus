@@ -44,7 +44,7 @@ public class ExceptionMappers {
     public Response mapException(WebApplicationException exception) {
         log.info("WebApplicationException: {}", exception.getMessage());
 
-        return Response.status(Response.Status.CONFLICT)
+        return Response.status(exception.getResponse().getStatus())
                 .entity(exception.getMessage())
                 .build();
     }

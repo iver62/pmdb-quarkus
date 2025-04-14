@@ -221,11 +221,7 @@ public abstract class PersonResource<T extends Person> {
     @PUT
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> update(
-            @RestPath Long id,
-            @RestForm("file") FileUpload file,
-            @RestForm @PartType(MediaType.APPLICATION_JSON) PersonDTO personDTO
-    ) {
+    public Uni<Response> update(@RestPath Long id, @RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) PersonDTO personDTO) {
         if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
             throw new WebApplicationException("Person name was not set on request.", 422);
         }

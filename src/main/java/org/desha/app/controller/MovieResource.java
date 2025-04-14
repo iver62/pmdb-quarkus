@@ -128,7 +128,11 @@ public class MovieResource {
         return
                 movieService.getById(id)
                         .onItem().ifNotNull().transform(movie -> Response.ok(movie).build())
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la récupération du film: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -151,6 +155,11 @@ public class MovieResource {
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                         : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                         )
+                        )
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la récupération des films: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
                         )
                 ;
     }
@@ -671,10 +680,7 @@ public class MovieResource {
 
     @POST
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> create(
-            @RestForm("file") FileUpload file,
-            @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO
-    ) {
+    public Uni<Response> create(@RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO) {
         if (Objects.isNull(movieDTO)) {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
         }
@@ -1766,7 +1772,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du producteur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1790,7 +1800,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du réalisateur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1814,7 +1828,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du scénariste: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1838,7 +1856,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du musicien: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1862,7 +1884,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du photographe: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1886,7 +1912,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du costumier: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1910,7 +1940,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du décorateur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1934,7 +1968,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du monteur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1958,7 +1996,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du casteur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -1982,7 +2024,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du directeur artistique: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -2006,7 +2052,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression de l'ingénieur du son: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -2030,7 +2080,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du spécialiste des effets spéciaux: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -2054,7 +2108,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du maquilleur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -2078,7 +2136,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du coiffeur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
@@ -2102,7 +2164,11 @@ public class MovieResource {
                                         ? Response.noContent().build()
                                         : Response.ok(personDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du cascadeur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
                 ;
     }
 
