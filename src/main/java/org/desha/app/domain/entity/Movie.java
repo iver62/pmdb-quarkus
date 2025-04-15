@@ -28,7 +28,7 @@ import java.util.*;
 public class Movie extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "title";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "title", "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "creationDate", "lastUpdate");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "title", "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "user.username", "creationDate", "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
