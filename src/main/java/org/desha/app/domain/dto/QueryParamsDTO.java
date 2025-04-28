@@ -3,6 +3,7 @@ package org.desha.app.domain.dto;
 import io.quarkus.panache.common.Sort;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.WebApplicationException;
 import lombok.Getter;
 import org.desha.app.exception.InvalidSortException;
 
@@ -10,6 +11,7 @@ import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 public class QueryParamsDTO {
@@ -32,6 +34,10 @@ public class QueryParamsDTO {
     @QueryParam("term")
     @DefaultValue("")
     private String term;
+
+    @QueryParam("lang")
+    @DefaultValue("")
+    private String lang;
 
     @QueryParam("from-creation-date")
     protected LocalDateTime fromCreationDate;
@@ -72,6 +78,28 @@ public class QueryParamsDTO {
                 .filter(d -> d.name().equalsIgnoreCase(direction))
                 .findFirst()
                 .orElse(Sort.Direction.Ascending); // Valeur par défaut si invalide
+    }
+
+    /**
+     * Valide la langue fournie en paramètre.
+     * <p>
+     * Si aucune langue n'est précisée (null), retourne "fr" par défaut.
+     * Seules les valeurs "fr" (français) et "en" (anglais) sont autorisées.
+     * <p>
+     * Si une valeur non autorisée est fournie, une WebApplicationException
+     * est levée avec un code HTTP 400 (Bad Request).
+     *
+     * @return La langue validée en minuscules ("fr" ou "en").
+     * @throws WebApplicationException si la langue n'est ni "fr" ni "en".
+     */
+    public String validateLang() {
+        if (Objects.isNull(lang)) {
+            return "fr";
+        }
+        if ("fr".equalsIgnoreCase(lang) || "en".equalsIgnoreCase(lang)) {
+            return lang.toLowerCase();
+        }
+        throw new WebApplicationException("Le paramètre lang est invalide. Les valeurs autorisées sont 'fr' or 'en'.", 400);
     }
 
 }

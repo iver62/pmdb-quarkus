@@ -51,14 +51,14 @@ public class DecoratorService extends PersonService<Decorator> {
     }
 
     @Override
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countDecoratorCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countDecoratorCountries(term, lang);
     }
 
     @Override
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findDecoratorCountries(page, sort, direction, term)
+                countryRepository.findDecoratorCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

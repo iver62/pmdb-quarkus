@@ -9,6 +9,7 @@ import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Musician;
 
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 public class MusicianRepository extends PersonRepository<Musician> {
@@ -16,11 +17,13 @@ public class MusicianRepository extends PersonRepository<Musician> {
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Musician p
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
-                Parameters.with("term", criteriasDTO.getTerm()),
+                Parameters.with("term", "%" + term + "%"),
                 criteriasDTO
         );
 
@@ -37,10 +40,12 @@ public class MusicianRepository extends PersonRepository<Musician> {
         String query = """
                 FROM Musician m
                 LEFT JOIN FETCH m.countries
-                WHERE LOWER(FUNCTION('unaccent', m.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', m.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
+        String term = Optional.ofNullable(name).orElse("");
+
+        return find(query, Sort.by("name"), Parameters.with("term", "%" + term + "%"))
                 .list();
     }
 
@@ -48,11 +53,13 @@ public class MusicianRepository extends PersonRepository<Musician> {
         String query = """
                 FROM Musician p
                 LEFT JOIN FETCH p.movies
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
-                Parameters.with("term", criteriasDTO.getTerm()),
+                Parameters.with("term", "%" + term + "%"),
                 criteriasDTO
         );
 

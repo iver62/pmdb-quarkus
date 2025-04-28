@@ -22,16 +22,18 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
                         FROM %s p
                         JOIN p.countries c
                         WHERE c.id = :id
-                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%%', :term, '%%')))
+                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                         %s
                         """,
                 entityClass.getSimpleName(),
                 addClauses(criteriasDTO)
         );
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", criteriasDTO.getTerm()),
+                        .and("term", "%" + term + "%"),
                 criteriasDTO
         );
 
@@ -56,20 +58,22 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
                         FROM %s p
                         JOIN p.countries c
                         WHERE c.id = :id
-                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%%', :term, '%%')))
+                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                         %s
                         """,
                 entityClass.getSimpleName(),
                 addClauses(criteriasDTO)
         );
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", criteriasDTO.getTerm()),
+                        .and("term", "%" + term + "%"),
                 criteriasDTO
         );
 
-        Sort finalSort = Sort.by( sort, direction, Sort.NullPrecedence.NULLS_LAST);
+        Sort finalSort = Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST);
 
         return find(query, finalSort, params)
                 .page(page)

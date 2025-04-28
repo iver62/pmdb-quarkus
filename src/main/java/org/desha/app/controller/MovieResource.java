@@ -220,11 +220,13 @@ public class MovieResource {
     public Uni<Response> getCountriesInMovies(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
+        String term = queryParams.getTerm();
+        String finalLang = queryParams.validateLang();
 
         return
-                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term, finalLang)
                         .flatMap(countryList ->
-                                movieService.countCountriesInMovies(queryParams.getTerm()).map(total ->
+                                movieService.countCountriesInMovies(term, finalLang).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -2270,11 +2272,7 @@ public class MovieResource {
     @PUT
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> update(
-            Long id,
-            @RestForm("file") FileUpload file,
-            @RestForm @PartType(MediaType.APPLICATION_JSON) MovieDTO movieDTO
-    ) {
+    public Uni<Response> update(@RestPath Long id, @RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) MovieDTO movieDTO) {
         if (Objects.isNull(movieDTO) || Objects.isNull(movieDTO.getTitle())) {
             throw new WebApplicationException("Movie title was not set on request.", 422);
         }

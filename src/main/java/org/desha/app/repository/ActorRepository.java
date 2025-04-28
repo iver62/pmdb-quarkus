@@ -10,6 +10,7 @@ import org.desha.app.domain.entity.Actor;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @ApplicationScoped
 public class ActorRepository extends PersonRepository<Actor> {
@@ -17,11 +18,13 @@ public class ActorRepository extends PersonRepository<Actor> {
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Actor p
-                WHERE LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
-                Parameters.with("term", criteriasDTO.getTerm()),
+                Parameters.with("term", "%" + term + "%"),
                 criteriasDTO
         );
 
@@ -35,12 +38,14 @@ public class ActorRepository extends PersonRepository<Actor> {
                 JOIN FETCH a.movieActors ma
                 JOIN FETCH ma.movie m
                 WHERE a.id = :id
-                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """
         );
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = Parameters.with("id", id)
-                .and("term", criteriasDTO.getTerm());
+                .and("term", "%" + term + "%");
 
         if (Objects.nonNull(criteriasDTO.getFromReleaseDate())) {
             query.append(" AND m.releaseDate >= :fromReleaseDate");
@@ -93,10 +98,12 @@ public class ActorRepository extends PersonRepository<Actor> {
         String query = """
                 FROM Actor a
                 LEFT JOIN FETCH a.countries
-                WHERE LOWER(FUNCTION('unaccent', a.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', a.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
+        String term = Optional.ofNullable(name).orElse("");
+
+        return find(query, Sort.by("name"), Parameters.with("term", "%" + term + "%"))
                 .list();
     }
 
@@ -105,11 +112,13 @@ public class ActorRepository extends PersonRepository<Actor> {
                 FROM Actor p
                 LEFT JOIN FETCH p.movieActors ma
                 LEFT JOIN FETCH ma.movie m
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
-                Parameters.with("term", criteriasDTO.getTerm()),
+                Parameters.with("term", "%" + term + "%"),
                 criteriasDTO
         );
 

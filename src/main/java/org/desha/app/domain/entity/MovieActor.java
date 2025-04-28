@@ -15,7 +15,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MovieActor extends PanacheEntityBase {
+public class MovieActor extends PanacheEntityBase implements Comparable<MovieActor> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -62,5 +62,10 @@ public class MovieActor extends PanacheEntityBase {
 
     public String toString() {
         return id + " / " + actor.getId() + ": " + actor.getName() + " -> " + role + " (" + rank + ")";
+    }
+
+    @Override
+    public int compareTo(MovieActor o) {
+        return rank.compareTo(o.getRank());
     }
 }

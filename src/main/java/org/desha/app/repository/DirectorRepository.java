@@ -11,6 +11,7 @@ import org.desha.app.domain.entity.Director;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @ApplicationScoped
@@ -19,11 +20,13 @@ public class DirectorRepository extends PersonRepository<Director> {
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Director p
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
-                Parameters.with("term", criteriasDTO.getTerm()),
+                Parameters.with("term", "%" + term + "%"),
                 criteriasDTO
         );
 
@@ -36,12 +39,14 @@ public class DirectorRepository extends PersonRepository<Director> {
                 FROM Director d
                 JOIN FETCH d.movies m
                 WHERE d.id = :id
-                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """
         );
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = Parameters.with("id", id)
-                .and("term", criteriasDTO.getTerm());
+                .and("term", "%" + term + "%");
 
         if (Objects.nonNull(criteriasDTO.getFromReleaseDate())) {
             query.append(" AND m.releaseDate >= :fromReleaseDate");
@@ -93,27 +98,26 @@ public class DirectorRepository extends PersonRepository<Director> {
         String query = """
                 FROM Director d
                 LEFT JOIN FETCH d.countries
-                WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', d.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """;
 
-        return find(query, Sort.by("name"), Parameters.with("term", name.toLowerCase()))
+        String term = Optional.ofNullable(name).orElse("");
+
+        return find(query, Sort.by("name"), Parameters.with("term", "%" + term + "%"))
                 .list();
     }
 
-    public Uni<List<Director>> find(
-            Page page,
-            String sort,
-            Sort.Direction direction,
-            CriteriasDTO criteriasDTO
-    ) {
+    public Uni<List<Director>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Director p
                 LEFT JOIN FETCH p.movies
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
         Parameters params = addParameters(
-                Parameters.with("term", criteriasDTO.getTerm()),
+                Parameters.with("term", "%" + term + "%"),
                 criteriasDTO
         );
 

@@ -118,8 +118,8 @@ public class MovieService {
         return movieRepository.countMovies(criteriasDTO);
     }
 
-    public Uni<Long> countCountriesInMovies(String term) {
-        return countryRepository.countCountriesInMovies(term);
+    public Uni<Long> countCountriesInMovies(String term, String lang) {
+        return countryRepository.countCountriesInMovies(term, lang);
     }
 
     public Uni<Movie> getById(Long id) {
@@ -167,9 +167,9 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<CountryDTO>> getCountriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountriesInMovies(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findCountriesInMovies(page, sort, direction, term)
+                countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList
@@ -310,11 +310,19 @@ public class MovieService {
                 );
     }
 
-    public Uni<List<RepartitionDTO>> getMoviesCountriesRepartition() {
-        return movieRepository.findMoviesByCountryRepartition()
-                .onFailure().invoke(failure ->
-                        log.error("Erreur lors de la récupération de la répartition des films par pays", failure)
-                );
+    public Uni<List<CountryRepartitionDTO>> getMoviesCountriesRepartition() {
+        return
+                movieRepository.findMoviesByCountryRepartition()
+                        .map(countryRepartitions ->
+                                countryRepartitions
+                                        .stream()
+                                        .map(CountryRepartitionDTO::fromEntity)
+                                        .toList()
+                        )
+                        .onFailure().invoke(failure ->
+                                log.error("Erreur lors de la récupération de la répartition des films par pays", failure)
+                        )
+                ;
     }
 
     public Uni<List<RepartitionDTO>> getMoviesUsersRepartition() {
@@ -1031,28 +1039,28 @@ public class MovieService {
                                                                                 .invoke(movie::setGenres)
                                                                 )
                                         )
-                        )
-                        .invoke(
-                                movie -> {
-                                    movie.setTitle(movieDTO.getTitle());
-                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                    movie.setSynopsis(movieDTO.getSynopsis());
-                                    movie.setReleaseDate(movieDTO.getReleaseDate());
-                                    movie.setRunningTime(movieDTO.getRunningTime());
-                                    movie.setBudget(movieDTO.getBudget());
-                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                    movie.setBoxOffice(movieDTO.getBoxOffice());
-                                }
-                        )
-                        .call(
-                                entity -> {
-                                    if (Objects.nonNull(file)) {
-                                        return uploadPoster(file)
-                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                .invoke(entity::setPosterFileName);
-                                    }
-                                    return Uni.createFrom().item(entity);
-                                }
+                                        .invoke(
+                                                movie -> {
+                                                    movie.setTitle(movieDTO.getTitle());
+                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                                    movie.setSynopsis(movieDTO.getSynopsis());
+                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
+                                                    movie.setRunningTime(movieDTO.getRunningTime());
+                                                    movie.setBudget(movieDTO.getBudget());
+                                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
+                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                }
+                                        )
+                                        .call(
+                                                entity -> {
+                                                    if (Objects.nonNull(file)) {
+                                                        return uploadPoster(file)
+                                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                                .invoke(entity::setPosterFileName);
+                                                    }
+                                                    return Uni.createFrom().item(entity);
+                                                }
+                                        )
                         )
                 ;
     }

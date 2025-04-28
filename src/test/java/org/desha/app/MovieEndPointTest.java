@@ -7,22 +7,25 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
 
 @QuarkusTest
-public class MovieEndPointTest {
+class MovieEndPointTest {
 
     @Test
-    public void testCreateMovie() {
+    void testCreateMovie() {
         given()
                 .when()
-                .body("{\n" +
-                        "    \"title\": \"Seven\",\n" +
-                        "    \"originalTitle\": \"Se7en\",\n" +
-                        "    \"synopsis\": \"Deux policiers, William Somerset et David Mills, sont chargés d'une enquête criminelle concernant un tueur en série psychopathe, lequel planifie méthodiquement ses meurtres en fonction des sept péchés capitaux qui sont : la gourmandise, l'avarice, la paresse, la luxure, l'orgueil, l'envie et la colère.\",\n" +
-                        "    \"releaseDate\": \"1995-09-22\",\n" +
-                        "    \"duration\": 127,\n" +
-                        "    \"budget\": 30000000,\n" +
-                        "    \"boxOffice\": 327311000,\n" +
-                        "    \"posterPath\": \"seven-path.png\"\n" +
-                        "}")
+                .body("""
+                        {
+                           "title": "Seven",
+                           "originalTitle": "Se7en",
+                            "synopsis": "Deux policiers, William Somerset et David Mills, sont chargés d'une enquête criminelle concernant un tueur en série psychopathe, lequel planifie méthodiquement ses meurtres en fonction des sept péchés capitaux qui sont : la gourmandise, l'avarice, la paresse, la luxure, l'orgueil, l'envie et la colère.",
+                            "releaseDate": "1995-09-22",
+                            "duration": 127,
+                            "budget": 30000000,
+                            "boxOffice": 327311000,
+                            "posterPath": "seven-path.png"
+                        }
+                        """
+                )
                 .contentType("application/json")
                 .post("/movies")
                 .then()
@@ -42,7 +45,7 @@ public class MovieEndPointTest {
     }
 
     @Test
-    public void givenMovies_whenGetMovies_thenReturnAllMovies() {
+    void givenMovies_whenGetMovies_thenReturnAllMovies() {
         given().when()
                 .get("/movies")
                 .then()

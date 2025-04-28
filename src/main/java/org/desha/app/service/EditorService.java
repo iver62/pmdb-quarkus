@@ -51,14 +51,14 @@ public class EditorService extends PersonService<Editor> {
     }
 
     @Override
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countEditorCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countEditorCountries(term, lang);
     }
 
     @Override
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findEditorCountries(page, sort, direction, term)
+                countryRepository.findEditorCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

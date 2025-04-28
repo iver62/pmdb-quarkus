@@ -6,6 +6,8 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.MovieDTO;
@@ -46,15 +48,19 @@ public class Movie extends PanacheEntityBase {
 
     @Column(name = "date_sortie", nullable = false)
     @Temporal(TemporalType.DATE)
+    @PastOrPresent(message = "La date de sortie ne peut pas être dans le futur")
     private LocalDate releaseDate;
 
     @Column(name = "duree")
+    @PositiveOrZero(message = "La durée doit avoir une valeur positive")
     private Long runningTime;
 
     @Column(name = "budget")
+    @PositiveOrZero(message = "Le budget doit avoir une valeur positive")
     private Long budget;
 
     @Column(name = "box_office")
+    @PositiveOrZero(message = "Le box-office doit avoir une valeur positive")
     private Long boxOffice;
 
     @Column(name = "chemin_affiche")

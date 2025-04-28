@@ -51,14 +51,14 @@ public class ProducerService extends PersonService<Producer> {
     }
 
     @Override
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countProducerCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countProducerCountries(term, lang);
     }
 
     @Override
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findProducerCountries(page, sort, direction, term)
+                countryRepository.findProducerCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

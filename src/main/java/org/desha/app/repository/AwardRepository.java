@@ -27,10 +27,10 @@ public class AwardRepository implements PanacheRepository<Award> {
         return find("""
                         SELECT DISTINCT a.ceremony
                         FROM Award a
-                        WHERE LOWER(FUNCTION('unaccent', ceremony)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                        WHERE LOWER(FUNCTION('unaccent', ceremony)) LIKE LOWER(FUNCTION('unaccent', :term))
                         """,
                 Sort.by("ceremony", direction),
-                Parameters.with("term", term)
+                Parameters.with("term", "%" + term + "%")
         )
                 .page(page)
                 .project(String.class)

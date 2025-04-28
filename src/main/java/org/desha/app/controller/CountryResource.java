@@ -143,12 +143,12 @@ public class CountryResource {
 
     @GET
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getAllPaginatedCountries(@BeanParam QueryParamsDTO queryParams) {
+    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
 
         return
-                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm(), queryParams.validateLang())
                         .flatMap(countryList ->
                                 countryService.countCountries(queryParams.getTerm()).map(total ->
                                         countryList.isEmpty()

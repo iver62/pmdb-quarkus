@@ -8,7 +8,6 @@ import jakarta.inject.Inject;
 import org.desha.app.domain.dto.UserDTO;
 import org.desha.app.repository.UserRepository;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -95,7 +94,6 @@ public class UserService {
                                 users
                                         .stream()
                                         .map(UserDTO::fromEntity)
-                                        .sorted(Comparator.comparing(UserDTO::getUsername))
                                         .toList()
                         )
                 ;

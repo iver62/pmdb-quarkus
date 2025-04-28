@@ -51,14 +51,14 @@ public class StuntmanService extends PersonService<Stuntman> {
     }
 
     @Override
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countStuntmanCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countStuntmanCountries(term, lang);
     }
 
     @Override
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findStuntmanCountries(page, sort, direction, term)
+                countryRepository.findStuntmanCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

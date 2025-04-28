@@ -51,14 +51,14 @@ public class SoundEditorService extends PersonService<SoundEditor> {
     }
 
     @Override
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countSoundEditorCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countSoundEditorCountries(term, lang);
     }
 
     @Override
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findSoundEditorCountries(page, sort, direction, term)
+                countryRepository.findSoundEditorCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

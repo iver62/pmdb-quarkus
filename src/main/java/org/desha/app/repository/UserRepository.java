@@ -17,7 +17,7 @@ import java.util.UUID;
 public class UserRepository implements PanacheRepositoryBase<User, UUID> {
 
     public Uni<Long> countUsers(String term) {
-        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', ?1, '%')))", term);
+        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', ?1))", "%" + term + "%");
     }
 
     public Uni<List<User>> findUsers(Page page, String sort, Sort.Direction direction, String term) {
@@ -25,10 +25,10 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
                 find("""
                                 FROM User u
                                 LEFT JOIN FETCH u.movies
-                                WHERE LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))
+                                WHERE LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', :term))
                                 """,
                         Sort.by("u." + sort, direction),
-                        Parameters.with("term", term)
+                        Parameters.with("term", "%" + term + "%")
                 )
                         .page(page)
                         .list();
@@ -37,9 +37,9 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
     public Uni<List<User>> findUsers(String sort, Sort.Direction direction, String term) {
         return
                 find(
-                        "LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', CONCAT('%', :term, '%')))",
-                        Sort.by("u." + sort, direction),
-                        Parameters.with("term", term)
+                        "LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', :term)) ",
+                        Sort.by(sort, direction),
+                        Parameters.with("term", "%" + term + "%")
                 ).list();
     }
 }

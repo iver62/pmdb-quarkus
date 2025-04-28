@@ -6,7 +6,7 @@ import org.desha.app.domain.entity.MovieActor;
 
 @Builder
 @Getter
-public class MovieActorDTO {
+public class MovieActorDTO implements Comparable<MovieActorDTO> {
 
     private Long id;
     private PersonDTO actor;
@@ -28,4 +28,8 @@ public class MovieActorDTO {
         return id + " / " + actor.getId() + ": " + actor.getName() + " -> " + role + " (" + rank + ")";
     }
 
+    @Override
+    public int compareTo(MovieActorDTO o) {
+        return rank.compareTo(o.getRank());
+    }
 }

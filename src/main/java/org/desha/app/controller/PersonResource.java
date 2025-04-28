@@ -137,11 +137,13 @@ public abstract class PersonResource<T extends Person> {
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
+        String term = queryParams.getTerm();
+        String finalLang = queryParams.validateLang();
 
         return
-                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term, finalLang)
                         .flatMap(countryList ->
-                                personService.countCountries(queryParams.getTerm()).map(total ->
+                                personService.countCountries(term, finalLang).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()

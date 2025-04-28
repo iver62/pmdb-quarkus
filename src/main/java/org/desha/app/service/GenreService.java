@@ -32,7 +32,7 @@ public class GenreService {
     }
 
     public Uni<Long> count(String term) {
-        return genreRepository.count(term);
+        return genreRepository.countGenres(term);
     }
 
     public Uni<Genre> getById(Long id) {

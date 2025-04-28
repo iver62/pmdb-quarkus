@@ -1,4 +1,4 @@
-INSERT INTO `pays` (`id`, `code`, `alpha2`, `alpha3`, `nom_en_gb`, `nom_fr_fr`) VALUES
+INSERT INTO pays (id, code, alpha2, alpha3, nom_en_gb, nom_fr_fr) VALUES
 (1, 4, 'AF', 'AFG', 'Afghanistan', 'Afghanistan'),
 (2, 8, 'AL', 'ALB', 'Albania', 'Albanie'),
 (3, 10, 'AQ', 'ATA', 'Antarctica', 'Antarctique'),

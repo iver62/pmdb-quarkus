@@ -65,13 +65,16 @@ public class GenreResource {
     public Uni<Response> getGenres(@BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Genre.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Genre.ALLOWED_SORT_FIELDS);
+        String term = queryParams.getTerm();
 
         return
-                genreService.getGenres(finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
-                        .map(genreDTOS ->
-                                genreDTOS.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(genreDTOS).build()
+                genreService.getGenres(finalSort, queryParams.validateSortDirection(), term)
+                        .flatMap(genreDTOS -> genreService.count(term)
+                                .map(aLong ->
+                                        genreDTOS.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, aLong).build()
+                                                : Response.ok(genreDTOS).header(CustomHttpHeaders.X_TOTAL_COUNT, aLong).build()
+                                )
                         )
                 ;
     }

@@ -52,14 +52,14 @@ public class HairDresserService extends PersonService<HairDresser> {
     }
 
     @Override
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countHairDresserCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countHairDresserCountries(term, lang);
     }
 
     @Override
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findHairDresserCountries(page, sort, direction, term)
+                countryRepository.findHairDresserCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

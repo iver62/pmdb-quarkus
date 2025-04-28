@@ -17,7 +17,7 @@ public interface PersonServiceInterface<T extends Person> {
 
     Uni<Long> count(CriteriasDTO criteriasDTO);
 
-    Uni<Long> countCountries(String term);
+    Uni<Long> countCountries(String term, String lang);
 
     Uni<Long> countMovies(long personId, CriteriasDTO criteriasDTO);
 
@@ -27,7 +27,7 @@ public interface PersonServiceInterface<T extends Person> {
 
     Uni<List<T>> getByIds(List<Long> ids);
 
-    Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term);
+    Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang);
 
     Uni<List<PersonDTO>> get(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
 

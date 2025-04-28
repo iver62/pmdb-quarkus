@@ -78,9 +78,9 @@ public class CountryService {
                 ;
     }
 
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term ,String lang) {
         return
-                countryRepository.findCountries(page, sort, direction, term)
+                countryRepository.findCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList

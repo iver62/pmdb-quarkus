@@ -59,8 +59,8 @@ public class ActorService extends PersonService<Actor> {
         return movieRepository.countMoviesByActor(actorId, criteriasDTO);
     }
 
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countActorCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countActorCountries(term, lang);
     }
 
     public Uni<List<MovieDTO>> getMovies(long actorId, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -76,9 +76,9 @@ public class ActorService extends PersonService<Actor> {
                 ;
     }
 
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findActorCountries(page, sort, direction, term)
+                countryRepository.findActorCountries(page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList
@@ -98,7 +98,7 @@ public class ActorService extends PersonService<Actor> {
                 movieActorSet
                         .stream()
                         .map(MovieActorDTO::fromEntity)
-                        .sorted(Comparator.comparing(MovieActorDTO::getRank))
+                        .sorted(MovieActorDTO::compareTo)
                         .toList()
                 ;
     }
