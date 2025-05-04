@@ -26,7 +26,7 @@ import java.util.UUID;
 public class User extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "username";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "username", "email", "emailVerified", "name");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "username", "email", "emailVerified", "lastname");
 
     @Id
     private UUID id;
@@ -41,7 +41,10 @@ public class User extends PanacheEntityBase {
     private Boolean emailVerified;
 
     @Column(name = "nom")
-    private String name;
+    private String lastname;
+
+    @Column(name = "prenom")
+    private String firstname;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user")
@@ -54,7 +57,8 @@ public class User extends PanacheEntityBase {
                         .username(userDTO.getUsername())
                         .email(userDTO.getEmail())
                         .emailVerified(userDTO.getEmailVerified())
-                        .name(userDTO.getName())
+                        .lastname(userDTO.getLastname())
+                        .firstname(userDTO.getFirstname())
                         .build();
     }
 }

@@ -20,7 +20,8 @@ public class UserDTO {
     private String username;
     private String email;
     private Boolean emailVerified;
-    private String name;
+    private String lastname;
+    private String firstname;
     private Long numberOfMovies;
 
     public static UserDTO fromEntity(User user) {
@@ -30,7 +31,8 @@ public class UserDTO {
                         .username(user.getUsername())
                         .email(user.getEmail())
                         .emailVerified(user.getEmailVerified())
-                        .name(user.getName())
+                        .lastname(user.getLastname())
+                        .firstname(user.getFirstname())
                         .build()
                 ;
     }
@@ -42,7 +44,8 @@ public class UserDTO {
                         .username(user.getUsername())
                         .email(user.getEmail())
                         .emailVerified(user.getEmailVerified())
-                        .name(user.getName())
+                        .lastname(user.getLastname())
+                        .firstname(user.getFirstname())
                         .numberOfMovies(nbMovies)
                         .build()
                 ;

@@ -6,7 +6,6 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +47,6 @@ public class Movie extends PanacheEntityBase {
 
     @Column(name = "date_sortie", nullable = false)
     @Temporal(TemporalType.DATE)
-    @PastOrPresent(message = "La date de sortie ne peut pas être dans le futur")
     private LocalDate releaseDate;
 
     @Column(name = "duree")
