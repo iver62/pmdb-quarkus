@@ -19,8 +19,15 @@ public class CountryRepository implements PanacheRepository<Country> {
      * @param term Le terme à rechercher dans le nom des pays (insensible à la casse).
      * @return Un {@link Uni} contenant le nombre total de pays correspondant au critère de recherche.
      */
-    public Uni<Long> countCountries(String term) {
-        return count("LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', ?1))", "%" + term + "%");
+    public Uni<Long> countCountries(String term, String lang) {
+        String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
+
+        String query = String.format(
+                "LOWER(FUNCTION('unaccent', %s)) LIKE LOWER(FUNCTION('unaccent', ?1))",
+                field
+        );
+
+        return count(query, "%" + term + "%");
     }
 
     /**

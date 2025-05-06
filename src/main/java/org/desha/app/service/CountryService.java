@@ -35,8 +35,8 @@ public class CountryService {
         this.movieRepository = movieRepository;
     }
 
-    public Uni<Long> countCountries(String term) {
-        return countryRepository.countCountries(term);
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countCountries(term, lang);
     }
 
     /**
@@ -78,7 +78,7 @@ public class CountryService {
                 ;
     }
 
-    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term ,String lang) {
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findCountries(page, sort, direction, term, lang)
                         .map(

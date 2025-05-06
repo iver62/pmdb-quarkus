@@ -146,11 +146,12 @@ public class CountryResource {
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
+        String finalLang = queryParams.validateLang();
 
         return
-                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm(), queryParams.validateLang())
+                countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm(), finalLang)
                         .flatMap(countryList ->
-                                countryService.countCountries(queryParams.getTerm()).map(total ->
+                                countryService.countCountries(queryParams.getTerm(), finalLang).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -169,7 +170,7 @@ public class CountryResource {
         return
                 countryService.getCountries(finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(countryList ->
-                                countryService.countCountries(queryParams.getTerm()).map(total ->
+                                countryService.countCountries(queryParams.getTerm(), queryParams.validateLang()).map(total ->
                                         countryList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
