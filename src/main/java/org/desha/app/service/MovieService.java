@@ -3,7 +3,10 @@ package org.desha.app.service;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
@@ -21,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +32,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @ApplicationScoped
 public class MovieService {
+
+    private final AtomicLong movieCount = new AtomicLong(0);
+    private final BroadcastProcessor<Long> processor = BroadcastProcessor.create();
 
     private final AwardRepository awardRepository;
     private final CountryRepository countryRepository;
@@ -112,6 +119,31 @@ public class MovieService {
         this.soundEditorService = soundEditorService;
         this.stuntmanService = stuntmanService;
         this.visualEffectsSupervisorService = visualEffectsSupervisorService;
+    }
+
+    @PostConstruct
+    void init() {
+        Panache.withSession(movieRepository::count).subscribe().with(
+                count -> {
+                    movieCount.set(count);
+                    processor.onNext(count); // valeur émise immédiatement aux nouveaux abonnés
+                    log.info("Initial movie count loaded: {}", count);
+                },
+                failure -> log.error("Failed to initialize movie count", failure)
+        );
+    }
+
+    public Multi<Long> getMovieCountStream() {
+        return
+                Multi.createBy().concatenating()
+                        .streams(
+                                Multi.createFrom().item(movieCount.get()),   // 1. valeur initiale
+                                processor.onOverflow().drop()                // 2. les suivantes
+                        );
+    }
+
+    private void increment() {
+        processor.onNext(movieCount.incrementAndGet());
     }
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
@@ -363,40 +395,42 @@ public class MovieService {
     }
 
     public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
-        return movieRepository.movieExists(movieDTO.getTitle().trim(), movieDTO.getReleaseDate().getYear())
-                .flatMap(exists -> {
-                    if (Boolean.TRUE.equals(exists)) {
-                        return Uni.createFrom().failure(new WebApplicationException("Le film existe déjà.", 409));
-                    }
+        return
+                movieRepository.movieExists(movieDTO.getTitle().trim(), movieDTO.getReleaseDate().getYear())
+                        .flatMap(exists -> {
+                            if (Boolean.TRUE.equals(exists)) {
+                                return Uni.createFrom().failure(new WebApplicationException("Le film existe déjà.", 409));
+                            }
 
-                    Movie movie = Movie.fromDTO(movieDTO);
+                            Movie movie = Movie.fromDTO(movieDTO);
 
-                    return Panache.withTransaction(() ->
-                            // Récupérer les pays et les genres en parallèle
-                            countryService.getByIds(movieDTO.getCountries())
-                                    .invoke(movie::setCountries)
-                                    .chain(() ->
-                                            genreService.getByIds(movieDTO.getGenres())
-                                                    .invoke(movie::setGenres)
-                                    )
-                                    .chain(() ->
-                                            userRepository.findById(movieDTO.getUser().getId())
-                                                    .invoke(user -> log.info("USER -> " + user))
-                                                    .invoke(movie::setUser)
-                                    )
-                                    .chain(() -> {
-                                        if (Objects.nonNull(file)) {
-                                            return uploadPoster(file)
-                                                    .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
-                                                    .invoke(movie::setPosterFileName);
-                                        }
-                                        movie.setPosterFileName(DEFAULT_POSTER);
-                                        return Uni.createFrom().voidItem();
-                                    })
-                                    .chain(movie::persist)
-                                    .replaceWith(movie) // Retourne le film après la transaction
-                    );
-                });
+                            return Panache.withTransaction(() ->
+                                    // Récupérer les pays et les genres en parallèle
+                                    countryService.getByIds(movieDTO.getCountries())
+                                            .invoke(movie::setCountries)
+                                            .chain(() ->
+                                                    genreService.getByIds(movieDTO.getGenres())
+                                                            .invoke(movie::setGenres)
+                                            )
+                                            .chain(() ->
+                                                    userRepository.findById(movieDTO.getUser().getId())
+                                                            .invoke(user -> log.info("USER -> " + user))
+                                                            .invoke(movie::setUser)
+                                            )
+                                            .chain(() -> {
+                                                if (Objects.nonNull(file)) {
+                                                    return uploadPoster(file)
+                                                            .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
+                                                            .invoke(movie::setPosterFileName);
+                                                }
+                                                movie.setPosterFileName(DEFAULT_POSTER);
+                                                return Uni.createFrom().voidItem();
+                                            })
+                                            .chain(movie::persist)
+                                            .invoke(this::increment)
+                                            .replaceWith(movie) // Retourne le film après la transaction
+                            );
+                        });
     }
 
     public Uni<TechnicalTeamDTO> saveTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
