@@ -3,10 +3,7 @@ package org.desha.app.service;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
@@ -15,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
+import org.desha.app.domain.record.Repartition;
 import org.desha.app.repository.*;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -24,7 +22,7 @@ import java.io.FileNotFoundException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,9 +30,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @ApplicationScoped
 public class MovieService {
-
-    private final AtomicLong movieCount = new AtomicLong(0);
-    private final BroadcastProcessor<Long> processor = BroadcastProcessor.create();
 
     private final AwardRepository awardRepository;
     private final CountryRepository countryRepository;
@@ -45,6 +40,7 @@ public class MovieService {
     private final CountryService countryService;
     private final GenreService genreService;
     private final FileService fileService;
+    private final StatsService statsService;
 
     private final ActorService actorService;
     private final ArtDirectorService artDirectorService;
@@ -91,6 +87,7 @@ public class MovieService {
             ProducerService producerService,
             ScreenwriterService screenwriterService,
             SoundEditorService soundEditorService,
+            StatsService statsService,
             StuntmanService stuntmanService,
             VisualEffectsSupervisorService visualEffectsSupervisorService
     ) {
@@ -117,33 +114,9 @@ public class MovieService {
         this.producerService = producerService;
         this.screenwriterService = screenwriterService;
         this.soundEditorService = soundEditorService;
+        this.statsService = statsService;
         this.stuntmanService = stuntmanService;
         this.visualEffectsSupervisorService = visualEffectsSupervisorService;
-    }
-
-    @PostConstruct
-    void init() {
-        Panache.withSession(movieRepository::count).subscribe().with(
-                count -> {
-                    movieCount.set(count);
-                    processor.onNext(count); // valeur émise immédiatement aux nouveaux abonnés
-                    log.info("Initial movie count loaded: {}", count);
-                },
-                failure -> log.error("Failed to initialize movie count", failure)
-        );
-    }
-
-    public Multi<Long> getMovieCountStream() {
-        return
-                Multi.createBy().concatenating()
-                        .streams(
-                                Multi.createFrom().item(movieCount.get()),   // 1. valeur initiale
-                                processor.onOverflow().drop()                // 2. les suivantes
-                        );
-    }
-
-    private void increment() {
-        processor.onNext(movieCount.incrementAndGet());
     }
 
     public Uni<Long> count(CriteriasDTO criteriasDTO) {
@@ -314,51 +287,25 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<RepartitionDTO>> getMoviesCreationDateEvolution() {
+    public Uni<List<Repartition>> getMoviesCreationDateEvolution() {
         return movieRepository.findMoviesCreationDateEvolution()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de l'évolution des films", failure)
                 );
     }
 
-    public Uni<List<RepartitionDTO>> getMoviesCreationDateRepartition() {
+    public Uni<List<Repartition>> getMoviesCreationDateRepartition() {
         return movieRepository.findMoviesByCreationDateRepartition()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de la répartition des films par date de création", failure)
                 );
     }
 
-    public Uni<List<RepartitionDTO>> getMoviesReleaseDateRepartition() {
+    public Uni<List<Repartition>> getMoviesReleaseDateRepartition() {
         return movieRepository.findMoviesByReleaseDateRepartition()
                 .onFailure().invoke(failure ->
                         log.error("Erreur lors de la récupération de la répartition des films par date de sortie", failure)
                 );
-    }
-
-    public Uni<List<RepartitionDTO>> getMoviesGenresRepartition() {
-        return movieRepository.findMoviesByGenreRepartition()
-                .onFailure().invoke(failure ->
-                        log.error("Erreur lors de la récupération de la répartition des films par genre", failure)
-                );
-    }
-
-    public Uni<List<CountryRepartitionDTO>> getMoviesCountriesRepartition() {
-        return
-                movieRepository.findMoviesByCountryRepartition()
-                        .map(countryRepartitions ->
-                                countryRepartitions
-                                        .stream()
-                                        .map(CountryRepartitionDTO::fromEntity)
-                                        .toList()
-                        )
-                        .onFailure().invoke(failure ->
-                                log.error("Erreur lors de la récupération de la répartition des films par pays", failure)
-                        )
-                ;
-    }
-
-    public Uni<List<RepartitionDTO>> getMoviesUsersRepartition() {
-        return movieRepository.findMoviesByUserRepartition();
     }
 
     public Uni<Set<Award>> getAwardsByMovie(Long id) {
@@ -408,13 +355,10 @@ public class MovieService {
                                     // Récupérer les pays et les genres en parallèle
                                     countryService.getByIds(movieDTO.getCountries())
                                             .invoke(movie::setCountries)
-                                            .chain(() ->
-                                                    genreService.getByIds(movieDTO.getGenres())
-                                                            .invoke(movie::setGenres)
-                                            )
+                                            .chain(() -> genreService.getByIds(movieDTO.getGenres()).invoke(movie::setGenres))
                                             .chain(() ->
                                                     userRepository.findById(movieDTO.getUser().getId())
-                                                            .invoke(user -> log.info("USER -> " + user))
+                                                            .invoke(user -> log.info("Movie created by {}", user.getUsername()))
                                                             .invoke(movie::setUser)
                                             )
                                             .chain(() -> {
@@ -427,8 +371,23 @@ public class MovieService {
                                                 return Uni.createFrom().voidItem();
                                             })
                                             .chain(movie::persist)
-                                            .invoke(this::increment)
                                             .replaceWith(movie) // Retourne le film après la transaction
+                                            .flatMap(entity ->
+                                                    statsService.incrementNumberOfMovies()
+                                                            .chain(() -> {
+                                                                if (Objects.nonNull(movie.getCountries()) && !movie.getCountries().isEmpty()) {
+                                                                    return statsService.updateMoviesByCountryRepartition();
+                                                                }
+                                                                return Uni.createFrom().voidItem();
+                                                            })
+                                                            .chain(() -> {
+                                                                if (Objects.nonNull(movie.getGenres()) && !movie.getGenres().isEmpty()) {
+                                                                    return statsService.updateMoviesByGenreRepartition();
+                                                                }
+                                                                return Uni.createFrom().voidItem();
+                                                            })
+                                                            .replaceWith(entity)
+                                            )
                             );
                         });
     }
@@ -588,6 +547,7 @@ public class MovieService {
                                                     );
                                         })
                                         .flatMap(movieRepository::persist)
+                                        .flatMap(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
                                         .flatMap(this::fetchAndMapGenres)
                         );
     }
@@ -622,6 +582,7 @@ public class MovieService {
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
+                                        .flatMap(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
                                         .flatMap(this::fetchAndMapCountries)
                         );
     }
@@ -865,12 +826,15 @@ public class MovieService {
                                         .flatMap(movie ->
                                                 genreService.getByIds(genreDTOSet.stream().map(GenreDTO::getId).toList())
                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs genres sont introuvables"))
-                                                        .call(movie::addGenres)
+                                                        .flatMap(movie::addGenres)
                                                         .replaceWith(movie)
                                         )
-                                        .flatMap(movieRepository::persist)
+                                        .chain(movieRepository::persist)
+                                        .chain(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
                                         .flatMap(this::fetchAndMapGenres)
+                                        .invoke(() -> log.info("Genres ajoutés au film {}", movieId))
                         )
+                        .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des genres au film {} : {}", movieId, e.getMessage()))
                 ;
     }
 
@@ -892,12 +856,15 @@ public class MovieService {
                                         .flatMap(movie ->
                                                 countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
-                                                        .call(movie::addCountries)
+                                                        .flatMap(movie::addCountries)
                                                         .replaceWith(movie)
                                         )
-                                        .flatMap(movieRepository::persist)
+                                        .chain(movieRepository::persist)
+                                        .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
                                         .flatMap(this::fetchAndMapCountries)
+                                        .invoke(() -> log.info("Pays ajoutés au film {}", movieId))
                         )
+                        .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des pays au film {} : {}", movieId, e.getMessage()))
                 ;
     }
 
@@ -1006,8 +973,11 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(movie -> movie.removeGenre(genreId))
                                         .chain(movieRepository::persist)
+                                        .chain(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
                                         .flatMap(this::fetchAndMapGenres)
+                                        .invoke(() -> log.info("Category {} removed from movie {}", genreId, movieId))
                         )
+                        .onFailure().invoke(e -> log.error("Failed to remove genre from movie {}: {}", movieId, e.getMessage()))
                 ;
     }
 
@@ -1027,8 +997,11 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(movie -> movie.removeCountry(countryId))
                                         .chain(movieRepository::persist)
+                                        .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
                                         .flatMap(this::fetchAndMapCountries)
+                                        .invoke(() -> log.info("Country {} removed from movie {}", countryId, movieId))
                         )
+                        .onFailure().invoke(e -> log.error("Failed to remove country from movie {}: {}", movieId, e.getMessage()))
                 ;
     }
 
@@ -1064,39 +1037,72 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable"))
-                                        .call(
-                                                movie ->
-                                                        countryService.getByIds(movieDTO.getCountries())
-                                                                .invoke(movie::setCountries)
-                                                                .chain(() ->
-                                                                        genreService.getByIds(movieDTO.getGenres())
-                                                                                .invoke(movie::setGenres)
-                                                                )
-                                        )
-                                        .invoke(
+                                        .flatMap(
                                                 movie -> {
-                                                    movie.setTitle(movieDTO.getTitle());
-                                                    movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                    movie.setSynopsis(movieDTO.getSynopsis());
-                                                    movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                    movie.setRunningTime(movieDTO.getRunningTime());
-                                                    movie.setBudget(movieDTO.getBudget());
-                                                    movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                                    movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                }
-                                        )
-                                        .call(
-                                                entity -> {
-                                                    if (Objects.nonNull(file)) {
-                                                        return uploadPoster(file)
-                                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                                .invoke(entity::setPosterFileName);
-                                                    }
-                                                    return Uni.createFrom().item(entity);
-                                                }
-                                        )
-                        )
-                ;
+                                                    List<Long> newCountryIds = movieDTO.getCountries().stream().map(CountryDTO::getId).toList();
+                                                    List<Long> newGenreIds = movieDTO.getGenres().stream().map(GenreDTO::getId).toList();
+
+                                                    log.info("CURRENT {} - NEW {}", movie.getReleaseDate(), movieDTO.getReleaseDate());
+
+                                                    boolean shouldUpdateReleaseDate = !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
+                                                    AtomicBoolean shouldUpdateCountries = new AtomicBoolean(false);
+                                                    AtomicBoolean shouldUpdateGenres = new AtomicBoolean(false);
+
+                                                    return
+                                                            Mutiny.fetch(movie.getCountries())
+                                                                    .invoke(countries -> shouldUpdateCountries.set(!new HashSet<>(newCountryIds)
+                                                                                    .equals(
+                                                                                            new HashSet<>(countries.stream()
+                                                                                                    .map(Country::getId)
+                                                                                                    .toList())
+                                                                                    )
+                                                                            )
+                                                                    )
+                                                                    .chain(() ->
+                                                                            Mutiny.fetch(movie.getGenres())
+                                                                                    .invoke(genres -> shouldUpdateGenres.set(!new HashSet<>(newGenreIds)
+                                                                                                    .equals(
+                                                                                                            new HashSet<>(genres.stream()
+                                                                                                                    .map(Genre::getId)
+                                                                                                                    .toList())
+                                                                                                    )
+                                                                                            )
+                                                                                    )
+                                                                    )
+                                                                    .chain(ignore ->
+                                                                            countryService.getByIds(newCountryIds).invoke(movie::setCountries)
+                                                                                    .chain(() -> genreService.getByIds(newGenreIds).invoke(movie::setGenres))
+                                                                                    .invoke(() -> {
+                                                                                                movie.setTitle(movieDTO.getTitle());
+                                                                                                movie.setOriginalTitle(movieDTO.getOriginalTitle());
+                                                                                                movie.setSynopsis(movieDTO.getSynopsis());
+                                                                                                movie.setReleaseDate(movieDTO.getReleaseDate());
+                                                                                                movie.setRunningTime(movieDTO.getRunningTime());
+                                                                                                movie.setBudget(movieDTO.getBudget());
+                                                                                                movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
+                                                                                                movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                                                            }
+                                                                                    )
+                                                                                    .flatMap(genres -> {
+                                                                                                if (Objects.nonNull(file)) {
+                                                                                                    return uploadPoster(file)
+                                                                                                            .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                                                                            .invoke(movie::setPosterFileName)
+                                                                                                            .replaceWith(movie);
+                                                                                                }
+                                                                                                return Uni.createFrom().item(movie);
+                                                                                            }
+                                                                                    )
+                                                                                    .flatMap(entity -> {
+                                                                                        log.info("UPDATE {}", shouldUpdateReleaseDate);
+                                                                                        Uni<Void> releaseDateUpdate = shouldUpdateReleaseDate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem();
+                                                                                        Uni<Void> genreUpdate = shouldUpdateGenres.get() ? statsService.updateMoviesByGenreRepartition() : Uni.createFrom().voidItem();
+                                                                                        Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();
+                                                                                        return releaseDateUpdate.chain(() -> genreUpdate.chain(() -> countryUpdate)).replaceWith(entity);
+                                                                                    })
+                                                                    );
+                                                })
+                        );
     }
 
     /**
@@ -1130,7 +1136,8 @@ public class MovieService {
      * @throws IllegalArgumentException Si le film n'est pas trouvé.
      * @throws WebApplicationException  Si une erreur se produit lors de la suppression des personnes.
      */
-    public <T> Uni<Boolean> clearPersons(Long id, Function<Movie, Set<T>> peopleGetter, String errorMessage) {
+    public <
+            T> Uni<Boolean> clearPersons(Long id, Function<Movie, Set<T>> peopleGetter, String errorMessage) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1166,7 +1173,8 @@ public class MovieService {
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(Movie::clearGenres)
-                                        .call(movieRepository::persist)
+                                        .chain(movieRepository::persist)
+                                        .chain(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
                                         .map(movie -> true)
                         )
                         .onFailure().transform(throwable -> {
@@ -1195,7 +1203,8 @@ public class MovieService {
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(Movie::clearCountries)
-                                        .call(movieRepository::persist)
+                                        .chain(movieRepository::persist)
+                                        .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
                                         .map(movie -> true)
                         )
                         .onFailure().transform(throwable -> {

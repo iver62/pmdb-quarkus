@@ -69,7 +69,6 @@ public class AdminResource {
                     return Response.noContent().build();
                 })
                 .runSubscriptionOn(Infrastructure.getDefaultExecutor()); // déplacer le blocage hors du thread IO
-//                .onFailure().transform(t -> new WebApplicationException("Erreur lors de l'envoi de l'email de réinitialisation", t));
     }
 
     @PUT

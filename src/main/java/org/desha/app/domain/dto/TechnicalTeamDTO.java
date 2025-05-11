@@ -3,7 +3,6 @@ package org.desha.app.domain.dto;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Movie;
-import org.desha.app.domain.entity.Person;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -83,15 +82,6 @@ public class TechnicalTeamDTO {
                         movie.getHairDressers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getStuntmen().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet())
                 );
-    }
-
-    // Convertit une collection d'entités en DTOs
-    private static Set<PersonDTO> toDTOSet(Set<Person> persons) {
-        return
-                persons
-                        .stream()
-                        .map(PersonDTO::fromEntity)
-                        .collect(Collectors.toSet());
     }
 
 }

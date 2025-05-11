@@ -1,7 +1,6 @@
 package org.desha.app.controller;
 
 import io.quarkus.panache.common.Page;
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,7 +17,6 @@ import org.desha.app.service.*;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.RestPath;
-import org.jboss.resteasy.reactive.RestStreamElementType;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
@@ -110,14 +108,6 @@ public class MovieResource {
         return
                 movieService.count(CriteriasDTO.build(queryParams))
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
-    }
-
-    @GET
-    @Path("/count-stream")
-    @Produces(MediaType.SERVER_SENT_EVENTS)
-    @RestStreamElementType(MediaType.APPLICATION_JSON)
-    public Multi<Long> streamMovieCount() {
-        return movieService.getMovieCountStream();
     }
 
     /**
@@ -656,36 +646,6 @@ public class MovieResource {
     public Uni<Response> getMoviesRepartitionByDecade() {
         return
                 movieService.getMoviesReleaseDateRepartition()
-                        .map(countDTOS -> Response.ok(countDTOS).build())
-                ;
-    }
-
-    @GET
-    @Path("genre-repartition")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getMoviesRepartitionByGenre() {
-        return
-                movieService.getMoviesGenresRepartition()
-                        .map(countDTOS -> Response.ok(countDTOS).build())
-                ;
-    }
-
-    @GET
-    @Path("country-repartition")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getMoviesRepartitionByCountry() {
-        return
-                movieService.getMoviesCountriesRepartition()
-                        .map(countDTOS -> Response.ok(countDTOS).build())
-                ;
-    }
-
-    @GET
-    @Path("user-repartition")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getMoviesRepartitionByUser() {
-        return
-                movieService.getMoviesUsersRepartition()
                         .map(countDTOS -> Response.ok(countDTOS).build())
                 ;
     }

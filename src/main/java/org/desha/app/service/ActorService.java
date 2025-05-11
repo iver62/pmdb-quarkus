@@ -3,10 +3,7 @@ package org.desha.app.service;
 import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.operators.multi.processors.BroadcastProcessor;
-import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +15,13 @@ import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Singleton
 public class ActorService extends PersonService<Actor> {
 
-    private final AtomicLong actorCount = new AtomicLong(0);
-    private final BroadcastProcessor<Long> processor = BroadcastProcessor.create();
     private final ActorRepository actorRepository;
+    private final StatsService statsService;
 
     @Inject
     public ActorService(
@@ -34,35 +29,12 @@ public class ActorService extends PersonService<Actor> {
             CountryRepository countryRepository,
             MovieRepository movieRepository,
             ActorRepository actorRepository,
-            FileService fileService
+            FileService fileService,
+            StatsService statsService
     ) {
         super(countryService, countryRepository, movieRepository, actorRepository, fileService);
         this.actorRepository = actorRepository;
-    }
-
-    @PostConstruct
-    void init() {
-        Panache.withSession(actorRepository::count).subscribe().with(
-                count -> {
-                    actorCount.set(count);
-                    processor.onNext(count); // valeur émise immédiatement aux nouveaux abonnés
-                    log.info("Initial actor count loaded: {}", count);
-                },
-                failure -> log.error("Failed to initialize actor count", failure)
-        );
-    }
-
-    public Multi<Long> getActorCountStream() {
-        return
-                Multi.createBy().concatenating()
-                        .streams(
-                                Multi.createFrom().item(actorCount.get()),   // 1. valeur initiale
-                                processor.onOverflow().drop()                // 2. les suivantes
-                        );
-    }
-
-    private void increment() {
-        processor.onNext(actorCount.incrementAndGet()); // diffuse à tous les clients
+        this.statsService = statsService;
     }
 
     @Override
@@ -118,7 +90,7 @@ public class ActorService extends PersonService<Actor> {
         return
                 Panache.withTransaction(() ->
                         actorRepository.persist(Actor.fromDTO(personDTO))
-                                .invoke(this::increment)
+                                .invoke(statsService::incrementNumberOfActors)
                 );
     }
 
