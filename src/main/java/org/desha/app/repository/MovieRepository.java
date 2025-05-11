@@ -8,9 +8,9 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.RepartitionDTO;
-import org.desha.app.domain.entity.CountryRepartition;
 import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.record.CountryRepartition;
+import org.desha.app.domain.record.Repartition;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.List;
@@ -884,7 +884,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<RepartitionDTO>> findMoviesCreationDateEvolution() {
+    public Uni<List<Repartition>> findMoviesCreationDateEvolution() {
         return
                 find("""
                         SELECT CAST(FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY') AS string) AS mois_creation,
@@ -894,12 +894,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         ORDER BY mois_creation
                         """
                 )
-                        .project(RepartitionDTO.class)
+                        .project(Repartition.class)
                         .list()
                 ;
     }
 
-    public Uni<List<RepartitionDTO>> findMoviesByCreationDateRepartition() {
+    public Uni<List<Repartition>> findMoviesByCreationDateRepartition() {
         return
                 find("""
                         SELECT CAST(FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY') AS string) AS mois_creation, COUNT(m)
@@ -908,12 +908,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         ORDER BY mois_creation
                         """
                 )
-                        .project(RepartitionDTO.class)
+                        .project(Repartition.class)
                         .list()
                 ;
     }
 
-    public Uni<List<RepartitionDTO>> findMoviesByReleaseDateRepartition() {
+    public Uni<List<Repartition>> findMoviesByReleaseDateRepartition() {
         return
                 find("""
                         SELECT CAST((YEAR(m.releaseDate) - MOD(YEAR(m.releaseDate), 10)) AS string) AS decade, COUNT(m)
@@ -922,12 +922,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         ORDER BY decade
                         """
                 )
-                        .project(RepartitionDTO.class)
+                        .project(Repartition.class)
                         .list()
                 ;
     }
 
-    public Uni<List<RepartitionDTO>> findMoviesByGenreRepartition() {
+    public Uni<List<Repartition>> findMoviesByGenreRepartition() {
         return
                 find("""
                         SELECT g.name, COUNT(m)
@@ -937,7 +937,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         ORDER BY COUNT(m) DESC
                         """
                 )
-                        .project(RepartitionDTO.class)
+                        .project(Repartition.class)
                         .list()
                 ;
     }
@@ -957,7 +957,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<RepartitionDTO>> findMoviesByUserRepartition() {
+    public Uni<List<Repartition>> findMoviesByUserRepartition() {
         return
                 find("""
                         SELECT u.username, COUNT(m)
@@ -967,7 +967,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         ORDER BY COUNT(m) DESC
                         """
                 )
-                        .project(RepartitionDTO.class)
+                        .project(Repartition.class)
                         .list()
                 ;
     }
