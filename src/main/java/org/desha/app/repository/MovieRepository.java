@@ -8,14 +8,14 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.record.CountryRepartition;
 import org.desha.app.domain.record.Repartition;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ApplicationScoped
@@ -924,6 +924,25 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 )
                         .project(Repartition.class)
                         .list()
+                ;
+    }
+
+    public Uni<Map<Country, Long>> findMoviesByCountryRepartitionBis() {
+        return
+                find("select distinct m from Movie m join fetch m.countries")
+                        .list()
+                        .map(movies ->
+                                movies.stream()
+                                        .flatMap(movie -> movie.getCountries().stream())
+                                        .collect(Collectors.groupingBy(
+                                                country -> country,
+                                                Collectors.counting()
+                                        ))
+                        )
+                        .map(map -> map.entrySet().stream()
+                                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new))
+                        )
                 ;
     }
 

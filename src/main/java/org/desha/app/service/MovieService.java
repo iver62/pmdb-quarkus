@@ -1079,8 +1079,10 @@ public class MovieService {
                                                                                                 movie.setReleaseDate(movieDTO.getReleaseDate());
                                                                                                 movie.setRunningTime(movieDTO.getRunningTime());
                                                                                                 movie.setBudget(movieDTO.getBudget());
+                                                                                                movie.setBudgetCurrency(movieDTO.getBudgetCurrency());
                                                                                                 movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
                                                                                                 movie.setBoxOffice(movieDTO.getBoxOffice());
+                                                                                                movie.setBoxOfficeCurrency(movieDTO.getBoxOfficeCurrency());
                                                                                             }
                                                                                     )
                                                                                     .flatMap(genres -> {
@@ -1094,7 +1096,6 @@ public class MovieService {
                                                                                             }
                                                                                     )
                                                                                     .flatMap(entity -> {
-                                                                                        log.info("UPDATE {}", shouldUpdateReleaseDate);
                                                                                         Uni<Void> releaseDateUpdate = shouldUpdateReleaseDate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem();
                                                                                         Uni<Void> genreUpdate = shouldUpdateGenres.get() ? statsService.updateMoviesByGenreRepartition() : Uni.createFrom().voidItem();
                                                                                         Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();

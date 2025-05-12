@@ -27,7 +27,9 @@ public class MovieDTO {
     private LocalDate releaseDate;
     private Long runningTime;
     private Long budget;
+    private String budgetCurrency;
     private Long boxOffice;
+    private String boxOfficeCurrency;
     private String posterFileName;
     private UserDTO user;
     private TechnicalTeamDTO technicalTeam;
@@ -46,7 +48,9 @@ public class MovieDTO {
                 .releaseDate(movie.getReleaseDate())
                 .runningTime(movie.getRunningTime())
                 .budget(movie.getBudget())
+                .budgetCurrency(movie.getBudgetCurrency())
                 .boxOffice(movie.getBoxOffice())
+                .boxOfficeCurrency(movie.getBoxOfficeCurrency())
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
@@ -62,7 +66,9 @@ public class MovieDTO {
                 .releaseDate(movie.getReleaseDate())
                 .runningTime(movie.getRunningTime())
                 .budget(movie.getBudget())
+                .budgetCurrency(movie.getBudgetCurrency())
                 .boxOffice(movie.getBoxOffice())
+                .boxOfficeCurrency(movie.getBoxOfficeCurrency())
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
@@ -111,7 +117,9 @@ public class MovieDTO {
                 .releaseDate(movie.getReleaseDate())
                 .runningTime(movie.getRunningTime())
                 .budget(movie.getBudget())
+                .budgetCurrency(movie.getBudgetCurrency())
                 .boxOffice(movie.getBoxOffice())
+                .boxOfficeCurrency(movie.getBoxOfficeCurrency())
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())

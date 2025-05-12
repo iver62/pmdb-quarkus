@@ -57,9 +57,15 @@ public class Movie extends PanacheEntityBase {
     @PositiveOrZero(message = "Le budget doit avoir une valeur positive")
     private Long budget;
 
+    @Column(name = "monnaie_budget")
+    private String budgetCurrency;
+
     @Column(name = "box_office")
     @PositiveOrZero(message = "Le box-office doit avoir une valeur positive")
     private Long boxOffice;
+
+    @Column(name = "box_office_budget")
+    private String boxOfficeCurrency;
 
     @Column(name = "chemin_affiche")
     private String posterFileName;
