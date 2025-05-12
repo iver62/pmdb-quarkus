@@ -5,8 +5,10 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
@@ -371,8 +373,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 );
     }
 
-    public Uni<Boolean> movieExists(String title, int releaseYear) {
-        return find("title = ?1 AND YEAR(releaseDate) = ?2", title, releaseYear)
+    public Uni<Boolean> movieExists(String title, @Nullable String originalTitle) {
+        if (StringUtils.isEmpty(originalTitle)) {
+            return find("LOWER(FUNCTION('unaccent', title)) = LOWER(FUNCTION('unaccent', ?1))", title.trim())
+                    .firstResult()
+                    .map(Objects::nonNull); // Retourne true si un film existe déjà
+        }
+        return find("LOWER(FUNCTION('unaccent', title)) = LOWER(FUNCTION('unaccent', ?1)) AND LOWER(FUNCTION('unaccent', originalTitle)) = LOWER(FUNCTION('unaccent', ?2))", title.trim(), originalTitle.trim())
                 .firstResult()
                 .map(Objects::nonNull); // Retourne true si un film existe déjà
     }

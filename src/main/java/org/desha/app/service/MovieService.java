@@ -343,7 +343,7 @@ public class MovieService {
 
     public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
         return
-                movieRepository.movieExists(movieDTO.getTitle().trim(), movieDTO.getReleaseDate().getYear())
+                movieRepository.movieExists(movieDTO.getTitle(), movieDTO.getOriginalTitle())
                         .flatMap(exists -> {
                             if (Boolean.TRUE.equals(exists)) {
                                 return Uni.createFrom().failure(new WebApplicationException("Le film existe déjà.", 409));

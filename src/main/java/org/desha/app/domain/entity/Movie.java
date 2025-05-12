@@ -45,7 +45,7 @@ public class Movie extends PanacheEntityBase {
     @Column(columnDefinition = "TEXT")
     private String synopsis;
 
-    @Column(name = "date_sortie", nullable = false)
+    @Column(name = "date_sortie")
     @Temporal(TemporalType.DATE)
     private LocalDate releaseDate;
 
