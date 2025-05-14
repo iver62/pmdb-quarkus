@@ -1042,8 +1042,6 @@ public class MovieService {
                                                     List<Long> newCountryIds = movieDTO.getCountries().stream().map(CountryDTO::getId).toList();
                                                     List<Long> newGenreIds = movieDTO.getGenres().stream().map(GenreDTO::getId).toList();
 
-                                                    log.info("CURRENT {} - NEW {}", movie.getReleaseDate(), movieDTO.getReleaseDate());
-
                                                     boolean shouldUpdateReleaseDate = !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
                                                     AtomicBoolean shouldUpdateCountries = new AtomicBoolean(false);
                                                     AtomicBoolean shouldUpdateGenres = new AtomicBoolean(false);
@@ -1118,7 +1116,15 @@ public class MovieService {
      * `false` si aucun film avec cet identifiant n'existe.
      */
     public Uni<Boolean> deleteMovie(Long id) {
-        return Panache.withTransaction(() -> movieRepository.deleteById(id));
+        return
+                Panache.withTransaction(() ->
+                                movieRepository.deleteById(id)
+                                        .flatMap(aBoolean -> statsService.decrementNumberOfMovies().replaceWith(aBoolean))
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression du film", throwable);
+                        });
     }
 
     /**

@@ -111,6 +111,18 @@ public class StatsService {
                 ;
     }
 
+    public Uni<Void> decrementNumberOfMovies() {
+        return
+                updateMoviesByReleaseDateRepartition()
+                        .invoke(movieCount::decrementAndGet)
+                        .chain(this::updateMoviesByCreationDateRepartition)
+                        .chain(this::updateMoviesByUserRepartition)
+                        .chain(this::updateMoviesNumberEvolution)
+                        .invoke(this::updateAndEmitStats)
+                        .onFailure().invoke(t -> log.error("Error while decrementing number of movies", t))
+                ;
+    }
+
     public void incrementNumberOfActors() {
         actorCount.incrementAndGet();
         updateAndEmitStats();
