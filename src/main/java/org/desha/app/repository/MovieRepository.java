@@ -440,7 +440,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 FROM Movie m
                 LEFT JOIN FETCH m.awards
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -449,11 +449,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByActor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -464,7 +460,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE a.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -474,11 +470,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByProducer(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -488,7 +480,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE p.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -498,11 +490,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByDirector(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -512,7 +500,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE d.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -522,11 +510,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByScreenwriter(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -536,7 +520,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE s.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -546,11 +530,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByMusician(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -560,7 +540,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE mu.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -570,11 +550,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByDecorator(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -584,7 +560,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE d.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -594,11 +570,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByCostumier(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -608,7 +580,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE c.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -618,11 +590,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByPhotographer(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -632,7 +600,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE p.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -642,11 +610,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByEditor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -656,7 +620,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE e.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -666,11 +630,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByCaster(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -680,7 +640,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE c.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -690,11 +650,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByArtDirector(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -704,7 +660,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE ad.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -714,11 +670,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesBySoundEditor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -728,7 +680,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE se.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -738,11 +690,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByVisualEffectsSupervisor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -752,7 +700,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE ves.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -762,11 +710,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByMakeupArtist(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -776,7 +720,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE ma.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -786,11 +730,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByHairDresser(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -800,7 +740,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE hd.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -810,11 +750,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByStuntman(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
@@ -824,7 +760,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 LEFT JOIN FETCH m.awards
                 WHERE s.id = :id
                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -834,11 +770,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 
     public Uni<List<Movie>> findMoviesByCountry(Long id, String sort, Sort.Direction direction, String term) {
@@ -996,6 +928,26 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         .project(Repartition.class)
                         .list()
                 ;
+    }
+
+    private String addSort(String sort, Sort.Direction direction) {
+        if (StringUtils.isEmpty(sort)) return "";
+
+        String dir = (direction == Sort.Direction.Ascending) ? "ASC" : "DESC";
+
+        // Si le critère de tri est le nombre de récompenses
+        if ("awardsCount".equals(sort)) {
+            return " ORDER BY SIZE(m.awards) " + dir;
+        }
+
+        // Protection basique contre injection ou champ non mappé
+        List<String> allowedFields = Movie.ALLOWED_SORT_FIELDS;
+        if (!allowedFields.contains(sort)) {
+            throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
+        }
+
+        // Cas générique pour trier par un autre champ, avec gestion des NULL
+        return " ORDER BY CASE WHEN m." + sort + " IS NULL THEN 1 ELSE 0 END, m." + sort + " " + dir;
     }
 
     private String addClauses(CriteriasDTO criteriasDTO) {
