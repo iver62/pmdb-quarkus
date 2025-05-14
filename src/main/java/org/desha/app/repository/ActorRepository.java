@@ -5,8 +5,10 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Actor;
+import org.desha.app.domain.entity.Person;
 
 import java.util.List;
 import java.util.Objects;
@@ -113,7 +115,7 @@ public class ActorRepository extends PersonRepository<Actor> {
                 LEFT JOIN FETCH p.movieActors ma
                 LEFT JOIN FETCH ma.movie m
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -122,10 +124,27 @@ public class ActorRepository extends PersonRepository<Actor> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("p." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
+    }
+
+    @Override
+    protected String addSort(String sort, Sort.Direction direction) {
+        if (StringUtils.isEmpty(sort)) return "";
+
+        String dir = (direction == Sort.Direction.Ascending) ? "ASC" : "DESC";
+
+        // Si le critère de tri est le nombre de films
+        if ("moviesCount".equals(sort)) {
+            return String.format(" ORDER BY SIZE(p.movieActors) %s", dir);
+        }
+
+        // Protection basique contre injection ou champ non mappé
+        List<String> allowedFields = Person.ALLOWED_SORT_FIELDS;
+        if (!allowedFields.contains(sort)) {
+            throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
+        }
+
+        // Cas générique pour trier par un autre champ, avec gestion des NULL
+        return String.format(" ORDER BY CASE WHEN p.%s IS NULL THEN 1 ELSE 0 END, p.%s %s", sort, sort, dir);
     }
 }

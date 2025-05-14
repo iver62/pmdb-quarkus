@@ -112,7 +112,7 @@ public class DirectorRepository extends PersonRepository<Director> {
                 FROM Director p
                 LEFT JOIN FETCH p.movies
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -121,10 +121,6 @@ public class DirectorRepository extends PersonRepository<Director> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("p." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 }

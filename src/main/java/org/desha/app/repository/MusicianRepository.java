@@ -54,7 +54,7 @@ public class MusicianRepository extends PersonRepository<Musician> {
                 FROM Musician p
                 LEFT JOIN FETCH p.movies
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
 
         String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
 
@@ -63,10 +63,6 @@ public class MusicianRepository extends PersonRepository<Musician> {
                 criteriasDTO
         );
 
-        return
-                find(query, Sort.by("p." + sort, direction, Sort.NullPrecedence.NULLS_LAST), params)
-                        .page(page)
-                        .list()
-                ;
+        return find(query, params).page(page).list();
     }
 }

@@ -937,7 +937,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
         // Si le critère de tri est le nombre de récompenses
         if ("awardsCount".equals(sort)) {
-            return " ORDER BY SIZE(m.awards) " + dir;
+            return String.format(" ORDER BY SIZE(m.awards) %s", dir);
         }
 
         // Protection basique contre injection ou champ non mappé
@@ -947,7 +947,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         }
 
         // Cas générique pour trier par un autre champ, avec gestion des NULL
-        return " ORDER BY CASE WHEN m." + sort + " IS NULL THEN 1 ELSE 0 END, m." + sort + " " + dir;
+        return String.format(" ORDER BY CASE WHEN m.%s IS NULL THEN 1 ELSE 0 END, m.%s %s", sort, sort, dir);
     }
 
     private String addClauses(CriteriasDTO criteriasDTO) {

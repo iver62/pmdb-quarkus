@@ -5,6 +5,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Person;
 
@@ -78,6 +79,26 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
         return find(query, finalSort, params)
                 .page(page)
                 .list();
+    }
+
+    protected String addSort(String sort, Sort.Direction direction) {
+        if (StringUtils.isEmpty(sort)) return "";
+
+        String dir = (direction == Sort.Direction.Ascending) ? "ASC" : "DESC";
+
+        // Si le critère de tri est le nombre de films
+        if ("moviesCount".equals(sort)) {
+            return String.format(" ORDER BY SIZE(p.movies) %s", dir);
+        }
+
+        // Protection basique contre injection ou champ non mappé
+        List<String> allowedFields = Person.ALLOWED_SORT_FIELDS;
+        if (!allowedFields.contains(sort)) {
+            throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
+        }
+
+        // Cas générique pour trier par un autre champ, avec gestion des NULL
+        return String.format(" ORDER BY CASE WHEN p.%s IS NULL THEN 1 ELSE 0 END, p.%s %s", sort, sort, dir);
     }
 
     protected String addClauses(CriteriasDTO criteriasDTO) {

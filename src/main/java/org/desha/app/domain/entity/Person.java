@@ -21,7 +21,7 @@ import java.util.Set;
 public abstract class Person extends PanacheEntityBase implements Comparable<Person> {
 
     public static final String DEFAULT_SORT = "name";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "name", "dateOfBirth", "dateOfDeath", "creationDate", "lastUpdate");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "dateOfBirth", "dateOfDeath", "moviesCount", "creationDate", "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
