@@ -26,7 +26,7 @@ import java.util.UUID;
 public class User extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "username";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "username", "email", "emailVerified", "lastname");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "lastname", "email", "emailVerified", "moviesCount");
 
     @Id
     private UUID id;
