@@ -1,24 +1,31 @@
 package org.desha.app.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.PersonType;
+import org.desha.app.domain.dto.PersonDTO;
+import org.desha.app.service.PersonService;
+import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-@Slf4j
+@Table(name = "personne")
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@MappedSuperclass
+@Builder
+@Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class Person extends PanacheEntityBase implements Comparable<Person> {
+public class Person extends PanacheEntityBase implements Comparable<Person> {
 
     public static final String DEFAULT_SORT = "name";
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "dateOfBirth", "dateOfDeath", "moviesCount", "creationDate", "lastUpdate");
@@ -34,37 +41,156 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
     protected String photoFileName;
 
     @Column(name = "date_naissance")
-    protected LocalDate dateOfBirth;
+    private LocalDate dateOfBirth;
 
     @Column(name = "date_deces")
-    protected LocalDate dateOfDeath;
+    private LocalDate dateOfDeath;
 
     @Column(name = "date_creation")
-    protected LocalDateTime creationDate;
+    private LocalDateTime creationDate;
 
     @Column(name = "date_mise_a_jour")
-    protected LocalDateTime lastUpdate;
+    private LocalDateTime lastUpdate;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "actor")
+    private List<MovieActor> playedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "producers")
+    private List<Movie> producedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "directors")
+    private List<Movie> directedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "screenwriters")
+    private List<Movie> writtenMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "dialogueWriters")
+    private List<Movie> dialogueWrittenMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "musicians")
+    private List<Movie> musicalMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "photographers")
+    private List<Movie> photographedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "costumiers")
+    private List<Movie> costumeMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "decorators")
+    private List<Movie> decoratedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "editors")
+    private List<Movie> editedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "casters")
+    private List<Movie> castedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "artDirectors")
+    private List<Movie> artDirectedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "soundEditors")
+    private List<Movie> soundEditedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "visualEffectsSupervisors")
+    private List<Movie> vfxSupervisedMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "makeupArtists")
+    private List<Movie> makeupMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "hairDressers")
+    private List<Movie> hairStyledMovies = new ArrayList<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "stuntmen")
+    private List<Movie> stuntMovies = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "personne_type", joinColumns = @JoinColumn(name = "fk_personne"))
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
+    private Set<PersonType> types = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
+    private Set<Country> countries = new HashSet<>();
 
     @PrePersist
-    protected void onCreate() {
+    private void onCreate() {
         this.creationDate = LocalDateTime.now();
         this.lastUpdate = LocalDateTime.now();
     }
 
     @PreUpdate
-    protected void onUpdate() {
+    private void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
     }
 
-    public abstract List<Movie> getMovies();
+    public static Person build(PersonDTO personDTO) {
+        return
+                Person.builder()
+                        .id(personDTO.getId())
+                        .name(personDTO.getName().trim())
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
+                        .dateOfBirth(personDTO.getDateOfBirth())
+                        .dateOfDeath(personDTO.getDateOfDeath())
+                        .types(personDTO.getTypes())
+                        .creationDate(personDTO.getCreationDate())
+                        .lastUpdate(personDTO.getLastUpdate())
+                        .build()
+                ;
+    }
 
-    public abstract Uni<List<Movie>> addMovie(Movie movie);
+    @JsonIgnore
+    public Uni<Set<Movie>> getAllRelatedMovies() {
+        return
+                Uni.createFrom().item(new HashSet<Movie>())
+                        .chain(set -> Mutiny.fetch(playedMovies).map(movieActors -> movieActors.stream().map(MovieActor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(producedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(directedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(writtenMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(dialogueWrittenMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(musicalMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(photographedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(costumeMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(decoratedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(editedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(castedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(artDirectedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(soundEditedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(vfxSupervisedMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(makeupMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(hairStyledMovies).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(stuntMovies).invoke(set::addAll).replaceWith(set))
+                ;
+    }
 
-    public abstract Uni<List<Movie>> removeMovie(Long id);
-
-    public abstract Set<Country> getCountries();
-
-    public abstract void setCountries(Set<Country> countrySet);
+    public Uni<Set<PersonType>> addType(PersonType type) {
+        return
+                Mutiny.fetch(types)
+                        .map(
+                                personTypes -> {
+                                    personTypes.add(type);
+                                    return personTypes;
+                                }
+                        )
+                ;
+    }
 
     /**
      * Ajoute un ensemble de pays à la collection existante des pays.
@@ -79,7 +205,17 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
      * @return un {@link Uni} contenant l'ensemble mis à jour des pays
      * @throws IllegalStateException si la collection de pays n'est pas initialisée
      */
-    public abstract Uni<Set<Country>> addCountries(Set<Country> countrySet);
+    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .invoke(fetchCountries -> {
+                            if (Objects.nonNull(countrySet)) {
+                                fetchCountries.addAll(countrySet);
+                            }
+                        })
+                ;
+    }
 
     /**
      * Supprime un pays de la collection en fonction de son identifiant.
@@ -93,7 +229,13 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
      * @return un {@link Uni} contenant l'ensemble mis à jour des pays
      * @throws IllegalStateException si l'ensemble des pays n'est pas initialisé
      */
-    public abstract Uni<Set<Country>> removeCountry(Long id);
+    public Uni<Set<Country>> removeCountry(Long id) {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
+                ;
+    }
 
     /**
      * Supprime tous les pays de la collection.
@@ -105,7 +247,17 @@ public abstract class Person extends PanacheEntityBase implements Comparable<Per
      * @return un {@link Uni} contenant l'ensemble désormais vide des pays
      * @throws IllegalStateException si l'ensemble des pays n'est pas initialisé
      */
-    public abstract Uni<Set<Country>> clearCountries();
+    public Uni<Set<Country>> clearCountries() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(Set::clear)
+                ;
+    }
+
+    public List<Movie> getMovies() {
+        return Collections.emptyList();
+    }
 
     @Override
     public int compareTo(Person p) {

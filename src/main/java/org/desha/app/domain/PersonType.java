@@ -1,10 +1,11 @@
 package org.desha.app.domain;
 
-public enum Role {
+public enum PersonType {
     ACTOR,
     PRODUCER,
     DIRECTOR,
     SCREENWRITER,
+    DIALOGUE_WRITER,
     MUSICIAN,
     PHOTOGRAPHER,
     COSTUMIER,

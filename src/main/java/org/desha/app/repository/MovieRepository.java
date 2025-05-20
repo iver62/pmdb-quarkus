@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.record.CountryRepartition;
 import org.desha.app.domain.record.Repartition;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -39,7 +40,31 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByActor(Long id, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countMoviesByPerson(Person person, CriteriasDTO criteriasDTO) {
+        final String query = """
+                FROM Movie m
+                WHERE m.id IN :ids
+                  AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                """ + addClauses(criteriasDTO);
+
+        return
+                person.getAllRelatedMovies()
+                        .map(movies -> movies.stream().map(Movie::getId).toList())
+                        .onItem().transformToUni(movieIds -> {
+                                    String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
+                                    Parameters params = addParameters(
+                                            Parameters.with("ids", movieIds)
+                                                    .and("term", "%" + term + "%"),
+                                            criteriasDTO
+                                    );
+
+                                    return count(query, params);
+                                }
+                        );
+    }
+
+    /*public Uni<Long> countMoviesByActor(Long id, CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Movie m
                 JOIN m.movieActors ma
@@ -343,7 +368,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return count(query, params);
-    }
+    }*/
 
     public Uni<Long> countMoviesByCountry(Long id, String term) {
         return
@@ -419,6 +444,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                                 Mutiny.fetch(movie.getProducers()).invoke(movie::setProducers)
                                         .call(() -> Mutiny.fetch(movie.getDirectors()).invoke(movie::setDirectors))
                                         .call(() -> Mutiny.fetch(movie.getScreenwriters()).invoke(movie::setScreenwriters))
+                                        .call(() -> Mutiny.fetch(movie.getDialogueWriters()).invoke(movie::setDialogueWriters))
                                         .call(() -> Mutiny.fetch(movie.getMusicians()).invoke(movie::setMusicians))
                                         .call(() -> Mutiny.fetch(movie.getPhotographers()).invoke(movie::setPhotographers))
                                         .call(() -> Mutiny.fetch(movie.getCostumiers()).invoke(movie::setCostumiers))
@@ -452,7 +478,53 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return find(query, params).page(page).list();
     }
 
-    public Uni<List<Movie>> findMoviesByActor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Movie>> findMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        String query = """
+                FROM Movie m
+                LEFT JOIN FETCH m.awards
+                WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
+
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + term + "%"),
+                criteriasDTO
+        );
+
+        return find(query, params).list();
+    }
+
+    public Uni<List<Movie>> findMoviesByPerson(Person person, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        final String body = """
+                FROM Movie m
+                LEFT JOIN FETCH m.awards
+                WHERE m.id IN :ids
+                  AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                """;
+
+        return
+                person.getAllRelatedMovies()
+                        .map(movies -> movies.stream().map(Movie::getId).toList())
+                        .onItem().transformToUni(movieIds -> {
+                                    if (Objects.isNull(movieIds) || movieIds.isEmpty()) {
+                                        return Uni.createFrom().item(List.of());
+                                    }
+
+                                    String query = body + addClauses(criteriasDTO) + addSort(sort, direction);
+
+                                    Parameters params = addParameters(
+                                            Parameters.with("ids", movieIds)
+                                                    .and("term", "%" + Optional.ofNullable(criteriasDTO.getTerm()).orElse("") + "%"),
+                                            criteriasDTO
+                                    );
+
+                                    return find(query, params).page(page).list();
+                                }
+                        );
+    }
+
+    /*public Uni<List<Movie>> findMoviesByActor(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = """
                 FROM Movie m
                 JOIN m.movieActors ma
@@ -771,7 +843,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         );
 
         return find(query, params).page(page).list();
-    }
+    }*/
 
     public Uni<List<Movie>> findMoviesByCountry(Long id, String sort, Sort.Direction direction, String term) {
         return

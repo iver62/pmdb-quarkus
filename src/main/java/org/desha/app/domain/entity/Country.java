@@ -10,11 +10,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.SortComparator;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Entity
@@ -25,7 +26,7 @@ import java.util.*;
 public class Country extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "nomFrFr";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("code", "alpha2", "alpha3", "nomEnGb", "nomFrFr", "lastUpdate");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("code", "alpha2", "alpha3", "nomEnGb", DEFAULT_SORT, "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -53,87 +54,22 @@ public class Country extends PanacheEntityBase {
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
     @Fetch(FetchMode.SELECT)
-    private Set<Actor> actors;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Producer> producers;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Director> directors;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Screenwriter> screenwriters;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Musician> musicians;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Photographer> photographers;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Costumier> costumiers;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Decorator> decorators;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Editor> editors;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Caster> casters;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<ArtDirector> artDirectors;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<SoundEditor> soundEditors;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<VisualEffectsSupervisor> visualEffectsSupervisors;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<MakeupArtist> makeupArtists;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<HairDresser> hairDressers;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
-    private Set<Stuntman> stuntmen;
-
-    @JsonIgnore
-    @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "countries")
+    @Fetch(FetchMode.SELECT)
+    private Set<Person> persons = new HashSet<>();
+
+    @PrePersist
+    public void onCreate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.lastUpdate = LocalDateTime.now();
+    }
 
     public Uni<Movie> addMovie(Movie movie) {
         return
@@ -146,16 +82,6 @@ public class Country extends PanacheEntityBase {
                         )
                         .replaceWith(movie)
                 ;
-    }
-
-    @PrePersist
-    public void onCreate() {
-        this.lastUpdate = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        this.lastUpdate = LocalDateTime.now();
     }
 
 }

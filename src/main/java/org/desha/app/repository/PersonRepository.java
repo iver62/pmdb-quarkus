@@ -1,32 +1,52 @@
 package org.desha.app.repository;
 
-import io.quarkus.hibernate.reactive.panache.PanacheRepository;
+import io.quarkus.hibernate.reactive.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.record.PersonWithMoviesNumber;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class PersonRepository<T extends Person> implements PanacheRepository<T> {
+@ApplicationScoped
+public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
 
-    public abstract Uni<Long> count(CriteriasDTO criteriasDTO);
+    public Uni<Long> countAll() {
+        return count();
+    }
 
-    public Uni<Long> countByCountry(Class<T> entityClass, Long id, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countPersons(CriteriasDTO criteriasDTO) {
+        String query = """
+                FROM Person p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                """ + addClauses(criteriasDTO);
+
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + term + "%"),
+                criteriasDTO
+        );
+
+        return count(query, params);
+    }
+
+    public Uni<Long> countByCountry(Long id, CriteriasDTO criteriasDTO) {
         String query = String.format("""
-                        FROM %s p
+                        FROM Person p
                         JOIN p.countries c
                         WHERE c.id = :id
                             AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                         %s
                         """,
-                entityClass.getSimpleName(),
                 addClauses(criteriasDTO)
         );
 
@@ -41,28 +61,86 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
         return count(query, params);
     }
 
-    public abstract Uni<T> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
+    public Uni<Person> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        return findById(id);
+    }
 
-    public abstract Uni<List<T>> findByName(String name);
+    public Uni<List<Person>> findByName(String name) {
+        return findAll().list();
+    }
 
-    public Uni<List<T>> findByIds(List<Long> ids) {
+    public Uni<List<Person>> findByIds(List<Long> ids) {
         if (Objects.isNull(ids) || ids.isEmpty()) {
             return Uni.createFrom().item(Collections.emptyList());
         }
         return list("id IN ?1", ids);
     }
 
-    public abstract Uni<List<T>> find(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
-
-    public Uni<List<T>> findByCountry(Class<T> entityClass, Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Person>> findPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
-                        FROM %s p
+                FROM Person p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
+
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + term + "%"),
+                criteriasDTO
+        );
+
+        return find(query, params).page(page).list();
+    }
+
+    public Uni<List<PersonWithMoviesNumber>> findPersonsWithMoviesNumber(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        String query = String.format("""
+                SELECT p, (SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id) AS moviesNumber
+                FROM Person p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
+
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + term + "%"),
+                criteriasDTO
+        );
+
+        return find(query, params).page(page).project(PersonWithMoviesNumber.class).list();
+    }
+
+    /*public Uni<List<Person>> findDirectors(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        String query = """
+                FROM Person p
+                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                    AND :type MEMBER OF p.types
+                """ + addClauses(criteriasDTO) + addSort(sort, direction);
+
+        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + term + "%")
+                        .and("type", PersonType.DIRECTOR),
+                criteriasDTO
+        );
+
+        return find(query, params).page(page).list();
+    }*/
+
+    public Uni<List<Person>> findByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        String query = String.format("""
+                        FROM Person p
                         JOIN p.countries c
                         WHERE c.id = :id
                             AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                         %s
                         """,
-                entityClass.getSimpleName(),
                 addClauses(criteriasDTO)
         );
 
@@ -88,7 +166,7 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
 
         // Si le critère de tri est le nombre de films
         if ("moviesCount".equals(sort)) {
-            return String.format(" ORDER BY SIZE(p.movies) %s", dir);
+            return String.format(" ORDER BY moviesNumber %s", dir);
         }
 
         // Protection basique contre injection ou champ non mappé
@@ -115,6 +193,10 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
 
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM p.countries c WHERE c.id IN :countryIds)");
+        }
+
+        if (Objects.nonNull(criteriasDTO.getPersonTypes()) && !criteriasDTO.getPersonTypes().isEmpty()) {
+            query.append(" AND EXISTS (SELECT 1 FROM p.types t WHERE t IN :personTypes)");
         }
 
         return query.toString();
@@ -147,6 +229,9 @@ public abstract class PersonRepository<T extends Person> implements PanacheRepos
         }
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             params.and("countryIds", criteriasDTO.getCountryIds());
+        }
+        if (Objects.nonNull(criteriasDTO.getPersonTypes()) && !criteriasDTO.getPersonTypes().isEmpty()) {
+            params.and("personTypes", criteriasDTO.getPersonTypes());
         }
         return params;
     }

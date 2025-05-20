@@ -11,7 +11,6 @@ import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
@@ -23,16 +22,22 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class CountryService {
 
+    private final PersonService personService;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
+    private final PersonRepository personRepository;
 
     @Inject
     public CountryService(
+            PersonService personService,
             CountryRepository countryRepository,
-            MovieRepository movieRepository
+            MovieRepository movieRepository,
+            PersonRepository personRepository
     ) {
+        this.personService = personService;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
+        this.personRepository = personRepository;
     }
 
     public Uni<Long> countCountries(String term, String lang) {
@@ -58,17 +63,13 @@ public class CountryService {
      * <p>Cette méthode appelle la méthode {@link PersonRepository#countByCountry} pour effectuer la requête
      * de comptage des personnes filtrées par pays et les critères fournis dans {@link CriteriasDTO}.</p>
      *
-     * @param <T>          Le type d'entité qui représente la personne (par exemple, {@link org.desha.app.domain.entity.Actor} ou {@link org.desha.app.domain.entity.Producer}).
-     * @param <R>          Le type du repository utilisé pour accéder aux entités (par exemple, {@link org.desha.app.repository.ActorRepository} ou {@link org.desha.app.repository.ProducerRepository}).
      * @param countryId    L'ID du pays pour lequel les personnes doivent être comptées.
      * @param criteriasDTO Un objet contenant des critères supplémentaires pour filtrer les résultats de la recherche comme un terme de recherche sur le nom.
-     * @param repository   Le repository correspondant à l'entité de type {@code T} (par exemple,
-     *                     {@link org.desha.app.repository.ActorRepository} ou {@link org.desha.app.repository.ProducerRepository}).
      * @return Un objet {@link Uni<Long>} représentant le nombre de personnes associées au pays spécifié,
      * selon les critères de recherche et de filtrage.
      */
-    public <T extends Person, R extends PersonRepository<T>> Uni<Long> countPersonsByCountry(Long countryId, CriteriasDTO criteriasDTO, R repository, Class<T> entityClass) {
-        return repository.countByCountry(entityClass, countryId, criteriasDTO);
+    public Uni<Long> countPersonsByCountry(Long countryId, CriteriasDTO criteriasDTO) {
+        return personRepository.countByCountry(countryId, criteriasDTO);
     }
 
     public Uni<Country> getById(Long id) {
@@ -124,22 +125,7 @@ public class CountryService {
                 countryRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Pays non trouvé"))
                         .call(country -> Mutiny.fetch(country.getMovies()))
-                        .call(country -> Mutiny.fetch(country.getActors()))
-                        .call(country -> Mutiny.fetch(country.getProducers()))
-                        .call(country -> Mutiny.fetch(country.getDirectors()))
-                        .call(country -> Mutiny.fetch(country.getScreenwriters()))
-                        .call(country -> Mutiny.fetch(country.getMusicians()))
-                        .call(country -> Mutiny.fetch(country.getPhotographers()))
-                        .call(country -> Mutiny.fetch(country.getCostumiers()))
-                        .call(country -> Mutiny.fetch(country.getDecorators()))
-                        .call(country -> Mutiny.fetch(country.getEditors()))
-                        .call(country -> Mutiny.fetch(country.getCasters()))
-                        .call(country -> Mutiny.fetch(country.getArtDirectors()))
-                        .call(country -> Mutiny.fetch(country.getSoundEditors()))
-                        .call(country -> Mutiny.fetch(country.getVisualEffectsSupervisors()))
-                        .call(country -> Mutiny.fetch(country.getMakeupArtists()))
-                        .call(country -> Mutiny.fetch(country.getHairDressers()))
-                        .call(country -> Mutiny.fetch(country.getStuntmen()))
+                        .call(country -> Mutiny.fetch(country.getPersons()))
                         .map(CountryDTO::fromFullEntity)
                 ;
     }
@@ -190,15 +176,12 @@ public class CountryService {
      * @param sort         Le champ sur lequel effectuer le tri.
      * @param direction    La direction du tri (ASC ou DESC).
      * @param criteriasDTO Les critères de filtrage pour affiner la recherche.
-     * @param service      Le service spécifique au type de personne (ex: {@link ActorService}, {@link DirectorService}).
-     * @param repository   Le repository correspondant au type de personne (ex: {@link org.desha.app.repository.ActorRepository}, {@link org.desha.app.repository.DirectorRepository}).
-     * @param entityClass  La classe de l'entité concernée (ex: `{@link org.desha.app.domain.entity.Actor}, {@link org.desha.app.domain.entity.Director}).
      * @return Une instance de {@link Uni<List<PersonDTO>>} contenant la liste des personnes sous forme de DTOs.
      */
-    public <T extends Person, S extends PersonService<T>, R extends PersonRepository<T>> Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO, S service, R repository, Class<T> entityClass) {
+    public Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
-                repository.findByCountry(entityClass, id, page, sort, direction, criteriasDTO)
-                        .map(service::fromPersonListEntity)
+                personRepository.findByCountry(id, page, sort, direction, criteriasDTO)
+                        .map(personService::fromPersonListEntity)
                 ;
     }
 

@@ -3,12 +3,14 @@ package org.desha.app.controller;
 import io.quarkus.panache.common.Page;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
+import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
@@ -23,78 +25,28 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
-import static jakarta.ws.rs.core.Response.Status.*;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
 
 @Slf4j
-public abstract class PersonResource<T extends Person> {
+@Path("persons")
+@ApplicationScoped
+public class PersonResource {
 
-    private final PersonService<T> personService;
+    private final PersonService personService;
 
     @Inject
-    protected PersonResource(PersonService<T> personService) {
+    public PersonResource(PersonService personService) {
         this.personService = personService;
     }
 
     @GET
-    @Path("count")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> countPersons(@BeanParam PersonQueryParamsDTO queryParams) {
-        return
-                personService.count(CriteriasDTO.build(queryParams))
-                        .map(aLong -> Response.ok(aLong).build())
-                ;
-    }
-
-    @GET
-    @Path("{id}")
+    @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersonById(@RestPath Long id) {
         return
                 personService.getById(id)
-                        .map(t -> Response.ok(PersonDTO.fromEntity(t, t.getCountries())).build())
-                ;
-    }
-
-    @GET
-    @Path("search")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> searchByName(@QueryParam("query") String query) {
-        if (Objects.isNull(query) || query.trim().isEmpty()) {
-            return Uni.createFrom()
-                    .item(
-                            Response
-                                    .status(Response.Status.BAD_REQUEST)
-                                    .entity("Le paramètre 'query' est requis")
-                                    .build()
-                    );
-        }
-
-        return
-                personService.searchByName(query)
-                        .map(personDTOS ->
-                                personDTOS.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(personDTOS).build()
-                        )
-                ;
-    }
-
-    @GET
-    @Path("{id}/full")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getPersonByIdWithCountriesAndMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
-
-        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
-
-        return
-                personService.getByIdWithCountriesAndMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), CriteriasDTO.build(queryParams))
-                        .map(personDTO ->
-                                Response.ok(personDTO).build()
-                        )
+                        .map(personDTO -> Response.ok(personDTO).build())
                 ;
     }
 
@@ -109,9 +61,9 @@ public abstract class PersonResource<T extends Person> {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.get(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
-                                personService.count(criteriasDTO).map(total ->
+                                personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -121,39 +73,398 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @GET
-    @Path("all")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getAllPersons() {
-        return
-                personService.getAll()
-                        .onItem().ifNotNull().transform(persons -> Response.ok(persons).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
-                ;
-    }
+    @Path("/movies-number")
+    public Uni<Response> getPersonsWithMoviesNumber(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
-    @GET
-    @Path("countries")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
-        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
-        queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
-        String term = queryParams.getTerm();
-        String finalLang = queryParams.validateLang();
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term, finalLang)
-                        .flatMap(countryList ->
-                                personService.countCountries(term, finalLang).map(total ->
-                                        countryList.isEmpty()
+                personService.getPersonsWithMovieNumbers(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
     }
 
     @GET
-    @Path("{id}/movies")
+    @Path("/producers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getProducers(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.PRODUCER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/directors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getDirectors(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DIRECTOR);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/screenwriters")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getScreenwriters(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SCREENWRITER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/dialogue-writers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getDialogueWriters(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DIALOGUE_WRITER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/musicians")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getMusicians(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.MUSICIAN);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/photographers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getPhotographers(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.PHOTOGRAPHER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/costumiers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getCostumiers(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COSTUMIER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/decorators")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getDecorators(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DECORATOR);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/editors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getEditors(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.EDITOR);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/casters")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getCasters(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.CASTER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/art-directors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getArtDirectors(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ART_DIRECTOR);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/sound-editors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getSoundEditors(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SOUND_EDITOR);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/vfx-supervisors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getVfxSupervisors(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.VISUAL_EFFECTS_SUPERVISOR);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/makeup-artists")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getMakeupArtists(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.MAKEUP_ARTIST);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/hair-dressers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getHairDressers(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.HAIR_DRESSER);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/stuntmen")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getStuntmen(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.STUNT_MAN);
+
+        return
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
@@ -177,7 +488,7 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @GET
-    @Path("photos/{fileName}")
+    @Path("/photos/{fileName}")
     @Produces({"image/jpg", "image/jpeg", "image/png"})
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhoto(@PathParam("fileName") String fileName) {
@@ -209,6 +520,27 @@ public abstract class PersonResource<T extends Person> {
                         });
     }
 
+    @GET
+    @Path("/countries")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
+        String term = queryParams.getTerm();
+        String finalLang = queryParams.validateLang();
+
+        return
+                personService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term, finalLang)
+                        .flatMap(countryList ->
+                                personService.countCountries(term, finalLang).map(total ->
+                                        countryList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
     @POST
     @RolesAllowed({"user", "admin"})
     public Uni<Response> save(PersonDTO personDTO) {
@@ -221,7 +553,7 @@ public abstract class PersonResource<T extends Person> {
     }
 
     @PUT
-    @Path("{id}")
+    @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> update(@RestPath Long id, @RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) PersonDTO personDTO) {
         if (Objects.isNull(personDTO) || Objects.isNull(personDTO.getName())) {
@@ -235,75 +567,18 @@ public abstract class PersonResource<T extends Person> {
                         .onItem().ifNull().failWith(new NotFoundException("Person with ID " + id + " not found."));
     }
 
-    @PUT
-    @Path("{id}/countries")
+    @PATCH
+    @Path("/{id}/types")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> saveCountries(@RestPath Long id, Set<CountryDTO> countryDTOs) {
-        if (Objects.isNull(countryDTOs)) {
-            throw new BadRequestException("La liste des pays ne peut pas être nulle.");
+    public Uni<Response> addPersonType(@RestPath Long id, PersonType personType) {
+        if (Objects.isNull(personType)) {
+            return Uni.createFrom().item(Response.status(Response.Status.BAD_REQUEST).build());
         }
 
         return
-                personService.saveCountries(id, countryDTOs)
-                        .onItem().ifNotNull().transform(countryDTOSet ->
-                                countryDTOSet.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(countryDTOSet).build()
-                        )
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                ;
-    }
-
-    @PATCH
-    @Path("{id}/countries")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
-        if (Objects.isNull(countryDTOS)) {
-            throw new BadRequestException("La liste des pays ne peut pas être nulle.");
-        }
-
-        return
-                personService.addCountries(id, countryDTOS)
-                        .onItem().ifNotNull().transform(countryDTOSet ->
-                                countryDTOSet.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(countryDTOSet).build()
-                        )
+                personService.addPersonType(id, personType)
+                        .onItem().ifNotNull().transform(personDTO -> Response.ok(personDTO).build())
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
-
-    @PATCH
-    @Path("{personId}/countries/{countryId}")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeCountry(@RestPath Long personId, @RestPath Long countryId) {
-        return
-                personService.removeCountry(personId, countryId)
-                        .onItem().ifNotNull().transform(countryDTOSet ->
-                                countryDTOSet.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(countryDTOSet).build())
-                        .onItem().ifNull().continueWith(Response.serverError().build())
-                ;
-    }
-
-    @DELETE
-    @Path("{id}")
-    @RolesAllowed("admin")
-    public Uni<Response> delete(@RestPath Long id) {
-        return
-                personService.delete(id)
-                        .map(deleted -> Boolean.TRUE.equals(deleted)
-                                ? Response.ok().status(NO_CONTENT).build()
-                                : Response.ok().status(NOT_FOUND).build())
-                ;
-    }
-
-    @DELETE
-    @Path("{id}/countries")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> deleteCountries(@RestPath Long id) {
-        return personService.clearCountries(id).map(deleted -> Response.ok(deleted).build());
-    }
-
 }

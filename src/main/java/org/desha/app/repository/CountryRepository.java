@@ -50,7 +50,20 @@ public class CountryRepository implements PanacheRepository<Country> {
         );
     }
 
-    public Uni<Long> countActorCountries(String term, String lang) {
+    public Uni<Long> countPersonCountries(String term, String lang) {
+        String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
+
+        return count("""
+                        SELECT COUNT(DISTINCT c)
+                        FROM Person p
+                        JOIN p.countries c
+                        WHERE LOWER(FUNCTION('unaccent', c.%s)) LIKE LOWER(FUNCTION('unaccent', :term))
+                        """.formatted(field),
+                Parameters.with("term", "%" + term + "%")
+        );
+    }
+
+    /*public Uni<Long> countActorCountries(String term, String lang) {
         String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
 
         return count("""
@@ -256,7 +269,7 @@ public class CountryRepository implements PanacheRepository<Country> {
                         """.formatted(field),
                 Parameters.with("term", "%" + term + "%")
         );
-    }
+    }*/
 
     /**
      * Récupère une liste de pays en fonction de leurs identifiants.
@@ -326,7 +339,23 @@ public class CountryRepository implements PanacheRepository<Country> {
                         .list();
     }
 
-    public Uni<List<Country>> findActorCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
+    public Uni<List<Country>> findPersonCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
+        String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
+
+        String query = """
+                SELECT DISTINCT c
+                FROM Person p
+                JOIN p.countries c
+                WHERE LOWER(FUNCTION('unaccent', c.%s)) LIKE LOWER(FUNCTION('unaccent', :term))
+                """.formatted(field);
+
+        return
+                find(query, Sort.by(sort, direction), Parameters.with("term", "%" + term + "%"))
+                        .page(page)
+                        .list();
+    }
+
+    /*public Uni<List<Country>> findActorCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
 
         String query = """
@@ -580,6 +609,6 @@ public class CountryRepository implements PanacheRepository<Country> {
                 find(query, Sort.by(sort, direction), Parameters.with("term", "%" + term + "%"))
                         .page(page)
                         .list();
-    }
+    }*/
 
 }

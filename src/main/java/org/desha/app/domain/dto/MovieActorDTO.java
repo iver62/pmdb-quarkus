@@ -25,7 +25,7 @@ public class MovieActorDTO implements Comparable<MovieActorDTO> {
     }
 
     public String toString() {
-        return id + " / " + actor.getId() + ": " + actor.getName() + " -> " + role + " (" + rank + ")";
+        return String.format("%s / %s: %s -> %s (%s)", id, actor.getId(), actor.getName(), role, rank);
     }
 
     @Override

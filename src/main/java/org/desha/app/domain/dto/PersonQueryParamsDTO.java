@@ -2,18 +2,23 @@ package org.desha.app.domain.dto;
 
 import jakarta.ws.rs.QueryParam;
 import lombok.Getter;
+import org.desha.app.domain.PersonType;
 import org.desha.app.exception.InvalidDateException;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter
 public class PersonQueryParamsDTO extends QueryParamsDTO {
 
     @QueryParam("country")
     private List<Integer> countryIds;
+
+    @QueryParam("type")
+    private Set<PersonType> personTypes;
 
     @QueryParam("from-birth-date")
     private LocalDate fromBirthDate;

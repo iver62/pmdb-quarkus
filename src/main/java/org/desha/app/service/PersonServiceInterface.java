@@ -13,23 +13,23 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.util.List;
 import java.util.Set;
 
-public interface PersonServiceInterface<T extends Person> {
+public interface PersonServiceInterface {
 
-    Uni<Long> count(CriteriasDTO criteriasDTO);
+    Uni<Long> countPersons(CriteriasDTO criteriasDTO);
 
     Uni<Long> countCountries(String term, String lang);
 
     Uni<Long> countMovies(long personId, CriteriasDTO criteriasDTO);
 
-    Uni<T> getById(Long id);
+    Uni<PersonDTO> getById(Long id);
 
     Uni<List<PersonDTO>> searchByName(String name);
 
-    Uni<List<T>> getByIds(List<Long> ids);
+    Uni<List<Person>> getByIds(List<Long> ids);
 
     Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang);
 
-    Uni<List<PersonDTO>> get(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
+    Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
 
     Uni<List<PersonDTO>> getAll();
 
@@ -39,9 +39,9 @@ public interface PersonServiceInterface<T extends Person> {
 
 //    Uni<List<Movie>> removeMovie(Long personId, Long movieId);
 
-    Uni<T> save(PersonDTO personDTO);
+    Uni<PersonDTO> save(PersonDTO personDTO);
 
-    Uni<T> update(Long id, FileUpload file, PersonDTO personDTO);
+    Uni<PersonDTO> update(Long id, FileUpload file, PersonDTO personDTO);
 
     /**
      * Remplace les pays associés à une personne par un nouvel ensemble de pays.

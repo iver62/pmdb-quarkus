@@ -14,6 +14,7 @@ public class TechnicalTeamDTO {
     private Set<PersonDTO> producers;
     private Set<PersonDTO> directors;
     private Set<PersonDTO> screenwriters;
+    private Set<PersonDTO> dialogueWriters;
     private Set<PersonDTO> musicians;
     private Set<PersonDTO> photographers;
     private Set<PersonDTO> costumiers;
@@ -31,6 +32,7 @@ public class TechnicalTeamDTO {
             final Set<PersonDTO> producers,
             final Set<PersonDTO> directors,
             final Set<PersonDTO> screenwriters,
+            final Set<PersonDTO> dialogueWriters,
             final Set<PersonDTO> musicians,
             final Set<PersonDTO> photographers,
             final Set<PersonDTO> costumiers,
@@ -48,6 +50,7 @@ public class TechnicalTeamDTO {
                 .producers(producers)
                 .directors(directors)
                 .screenwriters(screenwriters)
+                .dialogueWriters(dialogueWriters)
                 .musicians(musicians)
                 .photographers(photographers)
                 .costumiers(costumiers)
@@ -69,6 +72,7 @@ public class TechnicalTeamDTO {
                         movie.getProducers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getScreenwriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
+                        movie.getDialogueWriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getMusicians().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getPhotographers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
                         movie.getCostumiers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),

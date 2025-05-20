@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.MovieDTO;
 import org.hibernate.reactive.mutiny.Mutiny;
 
@@ -82,78 +83,83 @@ public class Movie extends PanacheEntityBase {
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_producteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_producteur"))
-    private Set<Producer> producers = new HashSet<>();
+    @JoinTable(name = "lnk_film_producteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> producers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_realisateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_realisateur"))
-    private Set<Director> directors = new HashSet<>();
+    @JoinTable(name = "lnk_film_realisateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> directors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_scenariste", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_scenariste"))
-    private Set<Screenwriter> screenwriters = new HashSet<>();
+    @JoinTable(name = "lnk_film_scenariste", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> screenwriters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_musicien", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_musicien"))
-    private Set<Musician> musicians = new HashSet<>();
+    @JoinTable(name = "lnk_film_dialoguiste", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> dialogueWriters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_photographe", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_photographe"))
-    private Set<Photographer> photographers = new HashSet<>();
+    @JoinTable(name = "lnk_film_musicien", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> musicians = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_costumier", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_costumier"))
-    private Set<Costumier> costumiers = new HashSet<>();
+    @JoinTable(name = "lnk_film_photographe", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> photographers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_decorateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_decorateur"))
-    private Set<Decorator> decorators = new HashSet<>();
+    @JoinTable(name = "lnk_film_costumier", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> costumiers = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_monteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_monteur"))
-    private Set<Editor> editors = new HashSet<>();
+    @JoinTable(name = "lnk_film_decorateur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> decorators = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_casteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_casteur"))
-    private Set<Caster> casters = new HashSet<>();
+    @JoinTable(name = "lnk_film_monteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> editors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_directeur_artistique", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_directeur_artistique"))
-    private Set<ArtDirector> artDirectors = new HashSet<>();
+    @JoinTable(name = "lnk_film_casteur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> casters = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_ingenieur_son", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_ingenieur_son"))
-    private Set<SoundEditor> soundEditors = new HashSet<>();
+    @JoinTable(name = "lnk_film_directeur_artistique", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> artDirectors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_specialiste_effets_speciaux", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_specialiste_effets_speciaux"))
-    private Set<VisualEffectsSupervisor> visualEffectsSupervisors = new HashSet<>();
+    @JoinTable(name = "lnk_film_ingenieur_son", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> soundEditors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_maquilleur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_maquilleur"))
-    private Set<MakeupArtist> makeupArtists = new HashSet<>();
+    @JoinTable(name = "lnk_film_specialiste_effets_speciaux", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> visualEffectsSupervisors = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_coiffeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_coiffeur"))
-    private Set<HairDresser> hairDressers = new HashSet<>();
+    @JoinTable(name = "lnk_film_maquilleur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> makeupArtists = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "lnk_film_cascadeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_cascadeur"))
-    private Set<Stuntman> stuntmen = new HashSet<>();
+    @JoinTable(name = "lnk_film_coiffeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> hairDressers = new HashSet<>();
+
+    @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "lnk_film_cascadeur", joinColumns = @JoinColumn(name = "fk_film"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> stuntmen = new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -184,10 +190,10 @@ public class Movie extends PanacheEntityBase {
 
     public static Movie fromDTO(MovieDTO movieDTO) {
         return Movie.builder()
-                .title(movieDTO.getTitle())
-                .originalTitle(movieDTO.getOriginalTitle())
+                .title(StringUtils.capitalize(movieDTO.getTitle().trim()))
+                .originalTitle(StringUtils.capitalize(Optional.ofNullable(movieDTO.getOriginalTitle()).orElse(StringUtils.EMPTY).trim()))
                 .releaseDate(movieDTO.getReleaseDate())
-                .synopsis(movieDTO.getSynopsis())
+                .synopsis(movieDTO.getSynopsis().trim())
                 .runningTime(movieDTO.getRunningTime())
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
@@ -297,18 +303,17 @@ public class Movie extends PanacheEntityBase {
     /**
      * Retire une personne de la collection existante de personnes en fonction de son identifiant.
      *
-     * @param <T>          Le type de la personne (doit être une sous-classe de {@link Person}).
      * @param persons      L'ensemble des personnes dans lequel rechercher.
      * @param id           L'identifiant de la personne à retirer.
      * @param errorMessage Le message d'erreur à retourner si l'ensemble des personnes est null.
      * @return Une {@link Uni} contenant l'ensemble mis à jour des personnes après suppression.
      * @throws IllegalStateException Si la collection existante des personnes n'est pas initialisée.
      */
-    public <T extends Person> Uni<Set<T>> removePerson(Set<T> persons, Long id, String errorMessage) {
+    public Uni<Set<Person>> removePerson(Set<Person> persons, Long id, String errorMessage) {
         return
                 Mutiny.fetch(persons)
                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                        .invoke(tSet -> tSet.removeIf(t -> Objects.equals(t.id, id)))
+                        .invoke(personSet -> personSet.removeIf(person -> Objects.equals(person.id, id)))
                 ;
     }
 

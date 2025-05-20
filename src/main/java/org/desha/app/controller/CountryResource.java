@@ -9,9 +9,10 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.*;
-import org.desha.app.domain.entity.*;
-import org.desha.app.repository.*;
-import org.desha.app.service.*;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
+import org.desha.app.service.CountryService;
 import org.jboss.resteasy.reactive.RestPath;
 
 import java.util.List;
@@ -26,109 +27,9 @@ public class CountryResource {
 
     private final CountryService countryService;
 
-    private final ActorService actorService;
-    private final ArtDirectorService artDirectorService;
-    private final CasterService casterService;
-    private final CostumierService costumierService;
-    private final DecoratorService decoratorService;
-    private final DirectorService directorService;
-    private final EditorService editorService;
-    private final HairDresserService hairDresserService;
-    private final MakeupArtistService makeupArtistService;
-    private final MusicianService musicianService;
-    private final PhotographerService photographerService;
-    private final ProducerService producerService;
-    private final ScreenwriterService screenwriterService;
-    private final SoundEditorService soundEditorService;
-    private final StuntmanService stuntmanService;
-    private final VisualEffectsSupervisorService visualEffectsSupervisorService;
-
-    private final ActorRepository actorRepository;
-    private final ArtDirectorRepository artDirectorRepository;
-    private final CasterRepository casterRepository;
-    private final CostumierRepository costumierRepository;
-    private final DecoratorRepository decoratorRepository;
-    private final DirectorRepository directorRepository;
-    private final EditorRepository editorRepository;
-    private final HairDresserRepository hairDresserRepository;
-    private final MakeupArtistRepository makeupArtistRepository;
-    private final MusicianRepository musicianRepository;
-    private final PhotographerRepository photographerRepository;
-    private final ProducerRepository producerRepository;
-    private final ScreenwriterRepository screenwriterRepository;
-    private final SoundEditorRepository soundEditorRepository;
-    private final StuntmanRepository stuntmanRepository;
-    private final VisualEffectsSupervisorRepository visualEffectsSupervisorRepository;
-
     @Inject
-    public CountryResource(
-            CountryService countryService,
-            ActorService actorService,
-            ArtDirectorService artDirectorService,
-            CasterService casterService,
-            CostumierService costumierService,
-            DecoratorService decoratorService,
-            DirectorService directorService,
-            EditorService editorService,
-            HairDresserService hairDresserService,
-            MakeupArtistService makeupArtistService,
-            MusicianService musicianService,
-            PhotographerService photographerService,
-            ProducerService producerService,
-            ScreenwriterService screenwriterService,
-            SoundEditorService soundEditorService,
-            StuntmanService stuntmanService,
-            VisualEffectsSupervisorService visualEffectsSupervisorService,
-            ActorRepository actorRepository,
-            ArtDirectorRepository artDirectorRepository,
-            CasterRepository casterRepository,
-            CostumierRepository costumierRepository,
-            DecoratorRepository decoratorRepository,
-            DirectorRepository directorRepository,
-            EditorRepository editorRepository,
-            HairDresserRepository hairDresserRepository,
-            MakeupArtistRepository makeupArtistRepository,
-            MusicianRepository musicianRepository,
-            PhotographerRepository photographerRepository,
-            ProducerRepository producerRepository,
-            ScreenwriterRepository screenwriterRepository,
-            SoundEditorRepository soundEditorRepository,
-            StuntmanRepository stuntmanRepository,
-            VisualEffectsSupervisorRepository visualEffectsSupervisorRepository
-    ) {
+    public CountryResource(CountryService countryService) {
         this.countryService = countryService;
-        this.actorService = actorService;
-        this.artDirectorService = artDirectorService;
-        this.casterService = casterService;
-        this.costumierService = costumierService;
-        this.decoratorService = decoratorService;
-        this.directorService = directorService;
-        this.editorService = editorService;
-        this.hairDresserService = hairDresserService;
-        this.makeupArtistService = makeupArtistService;
-        this.musicianService = musicianService;
-        this.photographerService = photographerService;
-        this.producerService = producerService;
-        this.screenwriterService = screenwriterService;
-        this.soundEditorService = soundEditorService;
-        this.stuntmanService = stuntmanService;
-        this.visualEffectsSupervisorService = visualEffectsSupervisorService;
-        this.actorRepository = actorRepository;
-        this.artDirectorRepository = artDirectorRepository;
-        this.casterRepository = casterRepository;
-        this.costumierRepository = costumierRepository;
-        this.decoratorRepository = decoratorRepository;
-        this.directorRepository = directorRepository;
-        this.editorRepository = editorRepository;
-        this.hairDresserRepository = hairDresserRepository;
-        this.makeupArtistRepository = makeupArtistRepository;
-        this.musicianRepository = musicianRepository;
-        this.photographerRepository = photographerRepository;
-        this.producerRepository = producerRepository;
-        this.screenwriterRepository = screenwriterRepository;
-        this.soundEditorRepository = soundEditorRepository;
-        this.stuntmanRepository = stuntmanRepository;
-        this.visualEffectsSupervisorRepository = visualEffectsSupervisorRepository;
     }
 
     @GET
@@ -250,6 +151,43 @@ public class CountryResource {
     }
 
     /**
+     * Récupère la liste des producteurs associés à un pays donné, avec prise en charge
+     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
+     *
+     * @param id          L'identifiant du pays pour lequel récupérer les producteurs.
+     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste des producteurs associés au pays.
+     * - 204 OK si liste des producteurs associés au pays est vide.
+     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
+     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
+     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
+     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
+     */
+    @GET
+    @Path("/{id}/persons")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getPersonsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+
+        return
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                countryService.countPersonsByCountry(id, criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    /**
      * Récupère la liste des acteurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -262,7 +200,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/actors")
     @RolesAllowed({"user", "admin"})
@@ -286,7 +224,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des producteurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -299,7 +237,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/producers")
     @RolesAllowed({"user", "admin"})
@@ -323,7 +261,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des réalisateurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -336,7 +274,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/directors")
     @RolesAllowed({"user", "admin"})
@@ -360,7 +298,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des scénaristes associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -373,7 +311,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/screenwriters")
     @RolesAllowed({"user", "admin"})
@@ -397,7 +335,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des musiciens associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -410,7 +348,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/musicians")
     @RolesAllowed({"user", "admin"})
@@ -434,7 +372,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des décorateurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -447,7 +385,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/decorators")
     @RolesAllowed({"user", "admin"})
@@ -471,7 +409,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des costumiers associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -484,7 +422,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/costumiers")
     @RolesAllowed({"user", "admin"})
@@ -508,7 +446,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des photographes associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -521,7 +459,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/photographers")
     @RolesAllowed({"user", "admin"})
@@ -545,7 +483,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des monteurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -558,7 +496,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/editors")
     @RolesAllowed({"user", "admin"})
@@ -582,7 +520,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des casteurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -595,7 +533,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/casters")
     @RolesAllowed({"user", "admin"})
@@ -619,7 +557,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des directeurs artistiques associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -632,7 +570,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/art-directors")
     @RolesAllowed({"user", "admin"})
@@ -656,7 +594,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des ingénieurs du son associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -669,7 +607,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/sound-editors")
     @RolesAllowed({"user", "admin"})
@@ -693,7 +631,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des spécialistes des effets spéciaux associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -706,7 +644,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/visual-effects-supervisors")
     @RolesAllowed({"user", "admin"})
@@ -730,7 +668,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des maquilleurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -743,7 +681,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/makeup-artists")
     @RolesAllowed({"user", "admin"})
@@ -767,7 +705,7 @@ public class CountryResource {
                 ;
     }
 
-    /**
+    *//**
      * Récupère la liste des coiffeurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
      *
@@ -780,7 +718,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/hair-dressers")
     @RolesAllowed({"user", "admin"})
@@ -804,6 +742,8 @@ public class CountryResource {
                 ;
     }
 
+    */
+
     /**
      * Récupère la liste des cascadeurs associés à un pays donné, avec prise en charge
      * de la pagination, du tri et des filtres définis dans les paramètres de requête.
@@ -817,7 +757,7 @@ public class CountryResource {
      *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
      * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
      *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
+     *//*
     @GET
     @Path("{id}/stuntmen")
     @RolesAllowed({"user", "admin"})
@@ -839,8 +779,7 @@ public class CountryResource {
                                 )
                         )
                 ;
-    }
-
+    }*/
     @PUT
     @Path("{id}")
     @RolesAllowed("admin")

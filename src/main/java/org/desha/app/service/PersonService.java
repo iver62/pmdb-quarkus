@@ -4,13 +4,13 @@ import io.quarkus.hibernate.reactive.panache.Panache;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.CountryDTO;
-import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.domain.entity.Actor;
+import org.desha.app.domain.PersonType;
+import org.desha.app.domain.dto.*;
+import org.desha.app.domain.entity.MovieActor;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
@@ -28,23 +28,24 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Slf4j
-public abstract class PersonService<T extends Person> implements PersonServiceInterface<T> {
+@ApplicationScoped
+public class PersonService implements PersonServiceInterface {
+
+    private static final String PHOTOS_DIR = "photos/";
+    public static final String DEFAULT_PHOTO = "default-photo.jpg";
 
     private final CountryService countryService;
     protected final CountryRepository countryRepository;
     protected final MovieRepository movieRepository;
-    private final PersonRepository<T> personRepository;
+    private final PersonRepository personRepository;
     private final FileService fileService;
-
-    private static final String PHOTOS_DIR = "photos/";
-    public static final String DEFAULT_PHOTO = "default-photo.jpg";
 
     @Inject
     protected PersonService(
             CountryService countryService,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
-            PersonRepository<T> personRepository,
+            PersonRepository personRepository,
             FileService fileService
     ) {
         this.countryService = countryService;
@@ -54,26 +55,33 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
         this.fileService = fileService;
     }
 
-    public Uni<Long> count(String term) {
-        return personRepository.count(term);
+    public Uni<Long> countAll() {
+        return personRepository.countAll();
     }
 
-    @Override
-    public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        return personRepository.count(criteriasDTO);
+    public Uni<Long> countPersons(CriteriasDTO criteriasDTO) {
+        return personRepository.countPersons(criteriasDTO);
     }
 
-    @Override
-    public Uni<T> getById(Long id) {
+    public Uni<Long> countMovies(long id, CriteriasDTO criteriasDTO) {
+        return personRepository.findById(id)
+                .chain(person -> movieRepository.countMoviesByPerson(person, criteriasDTO));
+    }
+
+    public Uni<Long> countCountries(String term, String lang) {
+        return countryRepository.countPersonCountries(term, lang);
+    }
+
+    public Uni<PersonDTO> getById(Long id) {
         return
                 personRepository.findById(id)
                         .onItem().ifNotNull()
-                        .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
+                        .call(person -> Mutiny.fetch(person.getCountries()).invoke(person::setCountries))
+                        .map(person -> PersonDTO.fromEntity(person, person.getCountries()))
                         .onFailure().recoverWithNull()
                 ;
     }
 
-    @Override
     public Uni<List<PersonDTO>> searchByName(String name) {
         return
                 personRepository.findByName(name.trim())
@@ -95,7 +103,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    public Uni<Set<T>> getByIds(Set<PersonDTO> persons) {
+    public Uni<Set<Person>> getByIds(Set<PersonDTO> persons) {
         return
                 personRepository.findByIds(
                         Optional.ofNullable(persons).orElse(Collections.emptySet())
@@ -105,40 +113,76 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ).map(HashSet::new);
     }
 
-    @Override
-    public Uni<List<T>> getByIds(List<Long> ids) {
+    public Uni<List<Person>> getByIds(List<Long> ids) {
         return personRepository.findByIds(ids);
     }
 
-    @Override
-    public Uni<List<PersonDTO>> get(
-            Page page,
-            String sort,
-            Sort.Direction direction,
-            CriteriasDTO criteriasDTO
-    ) {
+    public Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository
-                        .find(page, sort, direction, criteriasDTO)
-                        .map(
-                                tList ->
-                                        tList
-                                                .stream()
-                                                .map(t -> PersonDTO.fromEntity(t, t.getMovies().size()))
-                                                .toList()
+                        .findPersons(page, sort, direction, criteriasDTO)
+                        .map(personList ->
+                                personList
+                                        .stream()
+                                        .map(PersonDTO::fromEntity)
+                                        .toList()
                         )
                 ;
     }
 
-    @Override
+    public Uni<List<PersonDTO>> getPersonsWithMovieNumbers(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        return
+                personRepository
+                        .findPersonsWithMoviesNumber(page, sort, direction, criteriasDTO)
+                        .map(personList ->
+                                personList
+                                        .stream()
+                                        .map(personWithMoviesNumber -> PersonDTO.fromEntity(personWithMoviesNumber.person(), personWithMoviesNumber.number()))
+                                        .toList()
+                        )
+                ;
+    }
+
     public Uni<List<PersonDTO>> getAll() {
-        return personRepository.listAll()
-                .map(tList ->
-                        tList
-                                .stream()
-                                .map(PersonDTO::fromEntity)
-                                .toList()
-                );
+        return
+                personRepository.listAll()
+                        .map(tList ->
+                                tList
+                                        .stream()
+                                        .map(PersonDTO::fromEntity)
+                                        .toList()
+                        )
+                ;
+    }
+
+    public Uni<List<MovieDTO>> getMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        return
+                personRepository.findById(id)
+                        .chain(person ->
+                                movieRepository
+                                        .findMoviesByPerson(person, page, sort, direction, criteriasDTO)
+                                        .map(movieList ->
+                                                movieList
+                                                        .stream()
+                                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
+                                                        .toList()
+                                        )
+                        )
+
+                ;
+    }
+
+    public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
+        return
+                countryRepository.findPersonCountries(page, sort, direction, term, lang)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
+                        )
+                ;
     }
 
     /*@Override
@@ -191,8 +235,12 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 });
     }
 
-    @Override
-    public Uni<T> update(Long id, FileUpload file, PersonDTO personDTO) {
+    public Uni<PersonDTO> save(PersonDTO personDTO) {
+        log.info("Saving person: {}, with types: {}", personDTO.getName(), personDTO.getTypes());
+        return Panache.withTransaction(() -> personRepository.persist(Person.build(personDTO)).map(PersonDTO::fromEntity));
+    }
+
+    public Uni<PersonDTO> update(Long id, FileUpload file, PersonDTO personDTO) {
         // Validate personDTO for null or other basic validation
         if (Objects.isNull(personDTO)) {
             return Uni.createFrom().failure(new WebApplicationException("Invalid person data.", BAD_REQUEST));
@@ -222,10 +270,10 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                                     }
                                     return Uni.createFrom().item(entity);
                                 })
+                                .map(PersonDTO::fromEntity)
                 );
     }
 
-    @Override
     public Uni<Set<CountryDTO>> saveCountries(Long id, Set<CountryDTO> countryDTOSet) {
         return
                 Panache
@@ -250,7 +298,19 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                         );
     }
 
-    @Override
+    public Uni<PersonDTO> addPersonType(Long id, PersonType personType) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                personRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable introuvable"))
+                                        .flatMap(person -> person.addType(personType).replaceWith(person))
+                                        .chain(personRepository::persist)
+                                        .map(PersonDTO::fromEntity)
+                        )
+                ;
+    }
+
     public Uni<Set<CountryDTO>> addCountries(Long id, Set<CountryDTO> countryDTOSet) {
         return
                 Panache
@@ -269,7 +329,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    @Override
     public Uni<Set<CountryDTO>> removeCountry(Long personId, Long countryId) {
         return
                 Panache
@@ -283,7 +342,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    @Override
     public Uni<Boolean> delete(Long id) {
         return
                 Panache
@@ -293,7 +351,6 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    @Override
     public Uni<Boolean> clearCountries(Long id) {
         return
                 Panache
@@ -310,7 +367,17 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                         });
     }
 
-    protected List<PersonDTO> fromPersonListEntity(List<T> personList) {
+    public List<MovieActorDTO> fromMovieActorListEntity(List<MovieActor> movieActorSet) {
+        return
+                movieActorSet
+                        .stream()
+                        .map(MovieActorDTO::fromEntity)
+                        .sorted(MovieActorDTO::compareTo)
+                        .toList()
+                ;
+    }
+
+    public List<PersonDTO> fromPersonListEntity(List<Person> personList) {
         return
                 personList
                         .stream()
@@ -319,7 +386,7 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    protected Set<PersonDTO> fromPersonSetEntity(Set<T> personSet) {
+    public Set<PersonDTO> fromPersonSetEntity(Set<Person> personSet) {
         return
                 personSet
                         .stream()
@@ -328,9 +395,9 @@ public abstract class PersonService<T extends Person> implements PersonServiceIn
                 ;
     }
 
-    private Uni<Set<CountryDTO>> fetchAndMapCountries(T t) {
+    private Uni<Set<CountryDTO>> fetchAndMapCountries(Person person) {
         return
-                Mutiny.fetch(t.getCountries())
+                Mutiny.fetch(person.getCountries())
                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
                         .map(countryService::fromCountrySetEntity)
                 ;

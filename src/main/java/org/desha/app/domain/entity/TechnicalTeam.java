@@ -11,43 +11,46 @@ import java.util.Set;
 @AllArgsConstructor
 public class TechnicalTeam {
 
-    private Set<Producer> producers;
-    private Set<Director> directors;
-    private Set<Screenwriter> screenwriters;
-    private Set<Musician> musicians;
-    private Set<Photographer> photographers;
-    private Set<Costumier> costumiers;
-    private Set<Decorator> decorators;
-    private Set<Editor> editors;
-    private Set<Caster> casters;
-    private Set<ArtDirector> artDirectors;
-    private Set<SoundEditor> soundEditors;
-    private Set<VisualEffectsSupervisor> visualEffectsSupervisors;
-    private Set<MakeupArtist> makeupArtists;
-    private Set<HairDresser> hairDressers;
-    private Set<Stuntman> stuntmen;
+    private Set<Person> producers;
+    private Set<Person> directors;
+    private Set<Person> screenwriters;
+    private Set<Person> dialogueWriters;
+    private Set<Person> musicians;
+    private Set<Person> photographers;
+    private Set<Person> costumiers;
+    private Set<Person> decorators;
+    private Set<Person> editors;
+    private Set<Person> casters;
+    private Set<Person> artDirectors;
+    private Set<Person> soundEditors;
+    private Set<Person> visualEffectsSupervisors;
+    private Set<Person> makeupArtists;
+    private Set<Person> hairDressers;
+    private Set<Person> stuntmen;
 
     public static TechnicalTeam build(
-            final Set<Producer> producers,
-            final Set<Director> directors,
-            final Set<Screenwriter> screenwriters,
-            final Set<Musician> musicians,
-            final Set<Photographer> photographers,
-            final Set<Costumier> costumiers,
-            final Set<Decorator> decorators,
-            final Set<Editor> editors,
-            final Set<Caster> casters,
-            final Set<ArtDirector> artDirectors,
-            final Set<SoundEditor> soundEditors,
-            final Set<VisualEffectsSupervisor> visualEffectsSupervisors,
-            final Set<MakeupArtist> makeupArtists,
-            final Set<HairDresser> hairDressers,
-            final Set<Stuntman> stuntmen
+            final Set<Person> producers,
+            final Set<Person> directors,
+            final Set<Person> screenwriters,
+            final Set<Person> dialogueWriters,
+            final Set<Person> musicians,
+            final Set<Person> photographers,
+            final Set<Person> costumiers,
+            final Set<Person> decorators,
+            final Set<Person> editors,
+            final Set<Person> casters,
+            final Set<Person> artDirectors,
+            final Set<Person> soundEditors,
+            final Set<Person> visualEffectsSupervisors,
+            final Set<Person> makeupArtists,
+            final Set<Person> hairDressers,
+            final Set<Person> stuntmen
     ) {
         return TechnicalTeam.builder()
                 .producers(producers)
                 .directors(directors)
                 .screenwriters(screenwriters)
+                .dialogueWriters(dialogueWriters)
                 .musicians(musicians)
                 .photographers(photographers)
                 .costumiers(costumiers)

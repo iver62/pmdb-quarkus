@@ -24,22 +24,7 @@ public class CountryDTO {
     private String nomFrFr;
     private LocalDateTime lastUpdate;
     private Set<MovieDTO> movies;
-    private Set<PersonDTO> actors;
-    private Set<PersonDTO> producers;
-    private Set<PersonDTO> directors;
-    private Set<PersonDTO> screenwriters;
-    private Set<PersonDTO> musicians;
-    private Set<PersonDTO> photographers;
-    private Set<PersonDTO> costumiers;
-    private Set<PersonDTO> decorators;
-    private Set<PersonDTO> editors;
-    private Set<PersonDTO> casters;
-    private Set<PersonDTO> artDirectors;
-    private Set<PersonDTO> soundEditors;
-    private Set<PersonDTO> visualEffectsSupervisors;
-    private Set<PersonDTO> makeupArtists;
-    private Set<PersonDTO> hairDressers;
-    private Set<PersonDTO> stuntMen;
+    private Set<PersonDTO> persons;
 
     public static CountryDTO fromEntity(Country country) {
         return
@@ -69,22 +54,7 @@ public class CountryDTO {
                                         .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
                                         .collect(Collectors.toSet())
                         )
-                        .actors(fromEntitySet(country.getActors()))
-                        .producers(fromEntitySet(country.getProducers()))
-                        .directors(fromEntitySet(country.getDirectors()))
-                        .screenwriters(fromEntitySet(country.getScreenwriters()))
-                        .musicians(fromEntitySet(country.getMusicians()))
-                        .photographers(fromEntitySet(country.getPhotographers()))
-                        .costumiers(fromEntitySet(country.getCostumiers()))
-                        .decorators(fromEntitySet(country.getDecorators()))
-                        .editors(fromEntitySet(country.getEditors()))
-                        .casters(fromEntitySet(country.getCasters()))
-                        .artDirectors(fromEntitySet(country.getArtDirectors()))
-                        .soundEditors(fromEntitySet(country.getSoundEditors()))
-                        .visualEffectsSupervisors(fromEntitySet(country.getVisualEffectsSupervisors()))
-                        .makeupArtists(fromEntitySet(country.getMakeupArtists()))
-                        .hairDressers(fromEntitySet(country.getHairDressers()))
-                        .stuntMen(fromEntitySet(country.getStuntmen()))
+                        .persons(fromEntitySet(country.getPersons()))
                         .build();
     }
 

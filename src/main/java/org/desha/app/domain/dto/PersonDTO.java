@@ -3,6 +3,7 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import org.desha.app.domain.PersonType;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
@@ -27,6 +28,7 @@ public class PersonDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
     private Long numberOfMovies;
+    private Set<PersonType> types;
     private Set<MovieDTO> movies;
     private Set<CountryDTO> countries;
     private Set<Award> awards;
@@ -38,6 +40,7 @@ public class PersonDTO {
                 .dateOfBirth(person.getDateOfBirth())
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
+                .types(person.getTypes())
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
                 .build();
@@ -51,6 +54,7 @@ public class PersonDTO {
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
                 .numberOfMovies(nbMovies)
+                .types(person.getTypes())
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
                 .build();
@@ -63,6 +67,7 @@ public class PersonDTO {
                 .dateOfBirth(person.getDateOfBirth())
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
+                .types(person.getTypes())
                 .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
@@ -76,11 +81,12 @@ public class PersonDTO {
                 .dateOfBirth(person.getDateOfBirth())
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
+                .types(person.getTypes())
                 .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
                 .movies(
                         movies
                                 .stream()
-                                .map(movie ->  MovieDTO.fromEntity(movie, null, null, null))
+                                .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
                                 .collect(Collectors.toSet())
                 )
                 .creationDate(person.getCreationDate())

@@ -45,8 +45,8 @@ public class Award extends PanacheEntityBase {
         return
                 Award.builder()
                         .id(awardDTO.getId())
-                        .ceremony(StringUtils.capitalize(awardDTO.getCeremony()))
-                        .name(StringUtils.capitalize(awardDTO.getName()))
+                        .ceremony(StringUtils.capitalize(awardDTO.getCeremony().trim()))
+                        .name(StringUtils.capitalize(awardDTO.getName().trim()))
                         .year(awardDTO.getYear())
                         .build();
     }
