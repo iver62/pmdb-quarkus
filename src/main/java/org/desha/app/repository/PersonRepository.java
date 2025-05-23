@@ -29,10 +29,27 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addClauses(criteriasDTO);
 
-        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
+                criteriasDTO
+        );
+
+        return count(query, params);
+    }
+
+    public Uni<Long> countPersonsByMovie(Long id, CriteriasDTO criteriasDTO) {
+        String query = String.format("""
+                FROM Person p
+                JOIN MoviePerson mp ON p.id = mp.personId
+                WHERE mp.movieId = :id
+                    AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                """, addClauses(criteriasDTO)
+        );
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + term + "%"),
+                Parameters.with("id", id)
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );
 
@@ -50,11 +67,9 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 addClauses(criteriasDTO)
         );
 
-        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
-
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + term + "%"),
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );
 
@@ -85,10 +100,29 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 """, addClauses(criteriasDTO), addSort(sort, direction)
         );
 
-        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
+        Parameters params = addParameters(
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
+                criteriasDTO
+        );
+
+        return find(query, params).page(page).list();
+    }
+
+    public Uni<List<Person>> findPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        String query = String.format("""
+                SELECT p
+                FROM Person p
+                JOIN MoviePerson mp ON p.id = mp.personId
+                WHERE mp.movieId = :id
+                    AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + term + "%"),
+                Parameters.with("id", id)
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );
 
@@ -105,33 +139,13 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 """, addClauses(criteriasDTO), addSort(sort, direction)
         );
 
-        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
-
         Parameters params = addParameters(
-                Parameters.with("term", "%" + term + "%"),
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );
 
         return find(query, params).page(page).project(PersonWithMoviesNumber.class).list();
     }
-
-    /*public Uni<List<Person>> findDirectors(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = """
-                FROM Person p
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                    AND :type MEMBER OF p.types
-                """ + addClauses(criteriasDTO) + addSort(sort, direction);
-
-        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
-
-        Parameters params = addParameters(
-                Parameters.with("term", "%" + term + "%")
-                        .and("type", PersonType.DIRECTOR),
-                criteriasDTO
-        );
-
-        return find(query, params).page(page).list();
-    }*/
 
     public Uni<List<Person>> findByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
@@ -144,11 +158,9 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 addClauses(criteriasDTO)
         );
 
-        String term = Optional.ofNullable(criteriasDTO.getTerm()).orElse("");
-
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + term + "%"),
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );
 

@@ -19,7 +19,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @Immutable
-@Table(name = "utilisateurs")
+@Table(name = "utilisateurs_vue")
 @Subselect("SELECT * FROM utilisateurs")
 @NoArgsConstructor
 @AllArgsConstructor

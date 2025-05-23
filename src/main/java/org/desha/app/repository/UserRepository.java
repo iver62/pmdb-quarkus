@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.entity.User;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -19,7 +18,7 @@ import java.util.UUID;
 public class UserRepository implements PanacheRepositoryBase<User, UUID> {
 
     public Uni<Long> countUsers(String term) {
-        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', ?1))", "%" + Optional.ofNullable(term).orElse("") + "%");
+        return count("LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', ?1))", "%" + StringUtils.defaultString(term) + "%");
     }
 
     public Uni<List<User>> findUsers(Page page, String sort, Sort.Direction direction, String term) {
@@ -29,7 +28,7 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
                 WHERE LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """ + addSort(sort, direction);
 
-        Parameters params = Parameters.with("term", "%" + Optional.ofNullable(term).orElse("") + "%");
+        Parameters params = Parameters.with("term", "%" + StringUtils.defaultString(term) + "%");
 
         return find(query, params).page(page).list();
     }
@@ -39,7 +38,7 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
                 find(
                         "LOWER(FUNCTION('unaccent', username)) LIKE LOWER(FUNCTION('unaccent', :term)) ",
                         Sort.by(sort, direction),
-                        Parameters.with("term", "%" + Optional.ofNullable(term).orElse("") + "%")
+                        Parameters.with("term", "%" + StringUtils.defaultString(term) + "%")
                 ).list();
     }
 

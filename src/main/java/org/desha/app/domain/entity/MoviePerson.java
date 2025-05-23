@@ -14,15 +14,15 @@ import org.hibernate.annotations.Immutable;
 @Getter
 @Builder
 @Immutable
-@Table(name = "personne_nombre_films_vue")
+@Table(name = "film_personne_vue")
 @NoArgsConstructor
 @AllArgsConstructor
-public class PersonMoviesNumber {
+public class MoviePerson {
 
     @Id
+    @Column(name = "fk_film")
+    Long movieId;
+
     @Column(name = "fk_personne")
     Long personId;
-
-    @Column(name = "nombre_films")
-    Long moviesNumber;
 }

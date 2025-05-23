@@ -1,6 +1,5 @@
 package org.desha.app.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
@@ -10,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
 
 import java.time.Year;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -36,10 +36,13 @@ public class Award extends PanacheEntityBase {
     @Column(name = "annee")
     private Year year;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "fk_film", nullable = false)
     private Movie movie;
+
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinTable(name = "lnk_recompense_personne", joinColumns = @JoinColumn(name = "fk_recompense"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    private Set<Person> personSet;
 
     public static Award fromDTO(AwardDTO awardDTO) {
         return

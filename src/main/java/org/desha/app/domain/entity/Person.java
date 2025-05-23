@@ -15,6 +15,7 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Table(name = "personne")
 @Entity
@@ -120,15 +121,19 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     @ManyToMany(mappedBy = "stuntmen")
     private List<Movie> stuntMovies = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
+    private Set<Country> countries = new HashSet<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "personSet")
+    private Set<Award> awardSet = new HashSet<>();
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "personne_type", joinColumns = @JoinColumn(name = "fk_personne"))
     @Column(name = "type")
     @Enumerated(EnumType.STRING)
     private Set<PersonType> types = new HashSet<>();
-
-    @ManyToMany
-    @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
-    private Set<Country> countries = new HashSet<>();
 
     @PrePersist
     private void onCreate() {
@@ -255,9 +260,17 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                 ;
     }
 
-    public List<Movie> getMovies() {
-        return Collections.emptyList();
+    public static Set<Person> fromDTOSet(Set<PersonDTO> personDTOSet) {
+        return
+                personDTOSet.stream()
+                        .map(Person::build)
+                        .collect(Collectors.toSet())
+                ;
     }
+
+    /*public List<Movie> getMovies() {
+        return Collections.emptyList();
+    }*/
 
     @Override
     public int compareTo(Person p) {

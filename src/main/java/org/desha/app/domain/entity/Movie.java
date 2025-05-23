@@ -190,8 +190,8 @@ public class Movie extends PanacheEntityBase {
 
     public static Movie fromDTO(MovieDTO movieDTO) {
         return Movie.builder()
-                .title(StringUtils.capitalize(movieDTO.getTitle().trim()))
-                .originalTitle(StringUtils.capitalize(Optional.ofNullable(movieDTO.getOriginalTitle()).orElse(StringUtils.EMPTY).trim()))
+                .title(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getTitle()).trim()))
+                .originalTitle(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getOriginalTitle()).trim()))
                 .releaseDate(movieDTO.getReleaseDate())
                 .synopsis(movieDTO.getSynopsis().trim())
                 .runningTime(movieDTO.getRunningTime())

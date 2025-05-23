@@ -12,6 +12,7 @@ import org.desha.app.domain.entity.Person;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -92,5 +93,14 @@ public class PersonDTO {
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
                 .build();
+    }
+
+    public static Set<PersonDTO> fromEntitySet(Set<Person> personSet) {
+        return
+                Optional.ofNullable(personSet).orElse(Set.of())
+                        .stream()
+                        .map(PersonDTO::fromEntity)
+                        .collect(Collectors.toSet())
+                ;
     }
 }

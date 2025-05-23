@@ -58,7 +58,7 @@ public class CountryDTO {
                         .build();
     }
 
-    private static Set<PersonDTO> fromEntitySet(Set<? extends Person> personSet) {
+    private static Set<PersonDTO> fromEntitySet(Set<Person> personSet) {
         return
                 Optional.ofNullable(personSet).orElse(Set.of())
                         .stream()

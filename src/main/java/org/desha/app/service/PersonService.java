@@ -95,13 +95,13 @@ public class PersonService implements PersonServiceInterface {
                 ;
     }
 
-    public Uni<PersonDTO> getByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    /*public Uni<PersonDTO> getByIdWithCountriesAndMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findByIdWithMovies(id, page, sort, direction, criteriasDTO)
                         .call(t -> Mutiny.fetch(t.getCountries()).invoke(t::setCountries))
                         .map(t -> PersonDTO.fromEntity(t, t.getMovies(), t.getCountries()))
                 ;
-    }
+    }*/
 
     public Uni<Set<Person>> getByIds(Set<PersonDTO> persons) {
         return
@@ -270,7 +270,7 @@ public class PersonService implements PersonServiceInterface {
                                     }
                                     return Uni.createFrom().item(entity);
                                 })
-                                .map(PersonDTO::fromEntity)
+                                .map(person -> PersonDTO.fromEntity(person, person.getCountries()))
                 );
     }
 

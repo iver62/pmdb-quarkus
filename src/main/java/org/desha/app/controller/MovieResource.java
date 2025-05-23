@@ -14,6 +14,7 @@ import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.service.MovieService;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
@@ -197,6 +198,29 @@ public class MovieResource {
                 movieService.getByTitle(title)
                         .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
+                ;
+    }
+
+    @GET
+    @Path("/{id}/persons")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getPersonsByMovie(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+
+        return
+                movieService.getPersonsByMovie(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .flatMap(personDTOList ->
+                                movieService.countPersonsByMovie(id, criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
                 ;
     }
 
