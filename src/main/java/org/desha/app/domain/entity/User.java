@@ -20,7 +20,7 @@ import java.util.UUID;
 @Builder
 @Immutable
 @Table(name = "utilisateurs_vue")
-@Subselect("SELECT * FROM utilisateurs")
+@Subselect("SELECT * FROM utilisateurs_vue")
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends PanacheEntityBase {

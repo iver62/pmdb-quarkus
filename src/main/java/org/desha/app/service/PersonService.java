@@ -137,7 +137,7 @@ public class PersonService implements PersonServiceInterface {
                         .map(personList ->
                                 personList
                                         .stream()
-                                        .map(personWithMoviesNumber -> PersonDTO.fromEntity(personWithMoviesNumber.person(), personWithMoviesNumber.number()))
+                                        .map(personWithMoviesNumber -> PersonDTO.fromEntity(personWithMoviesNumber.person(), personWithMoviesNumber.moviesNumber(), personWithMoviesNumber.awardsNumber()))
                                         .toList()
                         )
                 ;

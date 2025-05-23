@@ -29,6 +29,7 @@ public class PersonDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
     private Long numberOfMovies;
+    private Long numberOfAwards;
     private Set<PersonType> types;
     private Set<MovieDTO> movies;
     private Set<CountryDTO> countries;
@@ -47,7 +48,7 @@ public class PersonDTO {
                 .build();
     }
 
-    public static PersonDTO fromEntity(Person person, long nbMovies) {
+    public static PersonDTO fromEntity(Person person, long nbMovies, long nbAwards) {
         return PersonDTO.builder()
                 .id(person.getId())
                 .name(person.getName())
@@ -55,6 +56,7 @@ public class PersonDTO {
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
                 .numberOfMovies(nbMovies)
+                .numberOfAwards(nbAwards)
                 .types(person.getTypes())
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())

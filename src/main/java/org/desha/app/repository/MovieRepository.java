@@ -25,10 +25,12 @@ import java.util.stream.Collectors;
 public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
     public Uni<Long> countMovies(CriteriasDTO criteriasDTO) {
-        String query = """
+        String query = String.format("""
                 FROM Movie m
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                %s
+                """, addClauses(criteriasDTO)
+        );
 
         Parameters params = addParameters(
                 Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
@@ -39,11 +41,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<Long> countMoviesByPerson(Person person, CriteriasDTO criteriasDTO) {
-        final String query = """
+        final String query = String.format("""
                 FROM Movie m
                 WHERE m.id IN :ids
                   AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+                  %s
+                """, addClauses(criteriasDTO)
+        );
 
         return
                 person.getAllRelatedMovies()
@@ -152,11 +156,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = """
-                FROM Movie m
-                LEFT JOIN FETCH m.awards
-                WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO) + addSort(sort, direction);
+        String query = String.format("""
+                       FROM Movie m
+                       LEFT JOIN FETCH m.awards
+                       WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
 
         Parameters params = addParameters(
                 Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
@@ -167,11 +174,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = """
+        String query = String.format("""
                 FROM Movie m
                 LEFT JOIN FETCH m.awards
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO) + addSort(sort, direction);
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
 
         Parameters params = addParameters(
                 Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
@@ -182,12 +192,15 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMoviesByPerson(Person person, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        final String body = """
-                FROM Movie m
-                LEFT JOIN FETCH m.awards
-                WHERE m.id IN :ids
-                  AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """;
+        final String query = String.format("""
+                       FROM Movie m
+                       LEFT JOIN FETCH m.awards
+                       WHERE m.id IN :ids
+                         AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
 
         return
                 person.getAllRelatedMovies()
@@ -196,8 +209,6 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                                     if (Objects.isNull(movieIds) || movieIds.isEmpty()) {
                                         return Uni.createFrom().item(List.of());
                                     }
-
-                                    String query = body + addClauses(criteriasDTO) + addSort(sort, direction);
 
                                     Parameters params = addParameters(
                                             Parameters.with("ids", movieIds)

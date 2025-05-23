@@ -24,10 +24,12 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
     }
 
     public Uni<Long> countPersons(CriteriasDTO criteriasDTO) {
-        String query = """
-                FROM Person p
-                WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """ + addClauses(criteriasDTO);
+        String query = String.format("""
+                     FROM Person p
+                     WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                """, addClauses(criteriasDTO)
+        );
 
         Parameters params = addParameters(
                 Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
@@ -58,13 +60,12 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
 
     public Uni<Long> countByCountry(Long id, CriteriasDTO criteriasDTO) {
         String query = String.format("""
-                        FROM Person p
-                        JOIN p.countries c
-                        WHERE c.id = :id
-                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                        %s
-                        """,
-                addClauses(criteriasDTO)
+                FROM Person p
+                JOIN p.countries c
+                WHERE c.id = :id
+                    AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                """, addClauses(criteriasDTO)
         );
 
         Parameters params = addParameters(
@@ -131,10 +132,12 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
 
     public Uni<List<PersonWithMoviesNumber>> findPersonsWithMoviesNumber(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
-                SELECT p, (SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id) AS moviesNumber
+                SELECT p, (SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id) AS moviesNumber, COUNT(a) AS awardsNumber
                 FROM Person p
+                LEFT JOIN p.awardSet a
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
+                GROUP BY p
                 %s
                 """, addClauses(criteriasDTO), addSort(sort, direction)
         );
@@ -149,13 +152,12 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
 
     public Uni<List<Person>> findByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
-                        FROM Person p
-                        JOIN p.countries c
-                        WHERE c.id = :id
-                            AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                        %s
-                        """,
-                addClauses(criteriasDTO)
+                FROM Person p
+                JOIN p.countries c
+                WHERE c.id = :id
+                    AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                """, addClauses(criteriasDTO)
         );
 
         Parameters params = addParameters(
@@ -179,6 +181,11 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         // Si le critère de tri est le nombre de films
         if ("moviesCount".equals(sort)) {
             return String.format(" ORDER BY moviesNumber %s", dir);
+        }
+
+        // Si le critère de tri est le nombre de récompenses
+        if ("awardsCount".equals(sort)) {
+            return String.format(" ORDER BY awardsNumber %s", dir);
         }
 
         // Protection basique contre injection ou champ non mappé
