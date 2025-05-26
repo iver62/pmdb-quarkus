@@ -7,9 +7,11 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
+import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.record.PersonWithMoviesNumber;
+import org.desha.app.domain.record.Repartition;
 
 import java.util.Collections;
 import java.util.List;
@@ -132,7 +134,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
 
     public Uni<List<PersonWithMoviesNumber>> findPersonsWithMoviesNumber(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
-                SELECT p, (SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id) AS moviesNumber, COUNT(a) AS awardsNumber
+                SELECT p, COALESCE((SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id), 0) AS moviesNumber, COUNT(a) AS awardsNumber
                 FROM Person p
                 LEFT JOIN p.awardSet a
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
@@ -171,6 +173,22 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return find(query, finalSort, params)
                 .page(page)
                 .list();
+    }
+
+    public Uni<List<Repartition>> findActorsCreationDateEvolution() {
+        return
+                find("""
+                        SELECT CAST(FUNCTION('TO_CHAR', p.creationDate, 'MM-YYYY') AS string) AS mois_creation,
+                            SUM(COUNT(*)) OVER (ORDER BY FUNCTION('TO_CHAR', p.creationDate, 'MM-YYYY')) AS cumulative_count
+                        FROM Person p
+                        WHERE ?1 MEMBER OF p.types
+                        GROUP BY mois_creation
+                        ORDER BY mois_creation
+                        """, PersonType.ACTOR
+                )
+                        .project(Repartition.class)
+                        .list()
+                ;
     }
 
     private String addSort(String sort, Sort.Direction direction) {

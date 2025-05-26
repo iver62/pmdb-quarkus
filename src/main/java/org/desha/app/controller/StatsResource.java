@@ -40,7 +40,8 @@ public class StatsResource {
                                         sse.newEventBuilder().name("movies-by-category").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByGenre()).build(),
                                         sse.newEventBuilder().name("movies-by-user").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByUser()).build(),
                                         sse.newEventBuilder().name("movies-number-by-creation-date").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByCreationDate()).build(),
-                                        sse.newEventBuilder().name("movies-number-evolution").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getNumberEvolution()).build()
+                                        sse.newEventBuilder().name("movies-number-evolution").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getMoviesNumberEvolution()).build(),
+                                        sse.newEventBuilder().name("actors-number-evolution").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getActorsNumberEvolution()).build()
                                 )
                         )
                 ;

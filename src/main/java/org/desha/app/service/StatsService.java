@@ -35,7 +35,8 @@ public class StatsService {
     private List<CountryRepartition> moviesByCountryRepartition = new ArrayList<>();
     private List<Repartition> moviesByUserRepartition = new ArrayList<>();
     private List<Repartition> moviesByCreationDateRepartition = new ArrayList<>();
-    private List<Repartition> movieNumberEvolution = new ArrayList<>();
+    private List<Repartition> moviesNumberEvolution = new ArrayList<>();
+    private List<Repartition> actorsNumberEvolution = new ArrayList<>();
 
     private final BroadcastProcessor<MovieStats> statsProcessor = BroadcastProcessor.create();
 
@@ -67,7 +68,9 @@ public class StatsService {
                                 .chain(() -> movieRepository.findMoviesByCreationDateRepartition()
                                         .invoke(repartition -> moviesByCreationDateRepartition = repartition))
                                 .chain(() -> movieRepository.findMoviesCreationDateEvolution()
-                                        .invoke(repartition -> movieNumberEvolution = repartition))
+                                        .invoke(repartition -> moviesNumberEvolution = repartition))
+                                .chain(() -> personRepository.findActorsCreationDateEvolution()
+                                        .invoke(repartition -> actorsNumberEvolution = repartition))
                                 .invoke(() -> {
                                     MovieStats stats = getCurrentStats();
                                     statsProcessor.onNext(stats);
@@ -91,7 +94,8 @@ public class StatsService {
                         moviesByCountryRepartition,
                         moviesByUserRepartition,
                         moviesByCreationDateRepartition,
-                        movieNumberEvolution
+                        moviesNumberEvolution,
+                        actorsNumberEvolution
                 );
     }
 
@@ -126,7 +130,14 @@ public class StatsService {
                 ;
     }
 
-    public Uni<Void> updateNumberOfActors() {
+    public Uni<Void> updateActorsStats() {
+        return
+                updateNumberOfActors()
+                        .chain(this::updateActorsNumberEvolution)
+                        .onFailure().invoke(t -> log.error("Error while updating number of actors", t));
+    }
+
+    private Uni<Void> updateNumberOfActors() {
         return
                 Panache.withTransaction(() ->
                         personRepository.countPersons(CriteriasDTO.builder().personTypes(Set.of(PersonType.ACTOR)).build())
@@ -209,9 +220,22 @@ public class StatsService {
                 Panache.withTransaction(() ->
                         movieRepository.findMoviesCreationDateEvolution()
                                 .invoke(repartition -> {
-                                            movieNumberEvolution = repartition; // ← mise à jour locale
+                                            moviesNumberEvolution = repartition; // ← mise à jour locale
                                             updateAndEmitStats();
                                             log.info("Movies number evolution updated: {}", repartition);
+                                        }
+                                ).replaceWithVoid()
+                );
+    }
+
+    private Uni<Void> updateActorsNumberEvolution() {
+        return
+                Panache.withTransaction(() ->
+                        personRepository.findActorsCreationDateEvolution()
+                                .invoke(repartition -> {
+                                            actorsNumberEvolution = repartition; // ← mise à jour locale
+                                            updateAndEmitStats();
+                                            log.info("Actors number evolution updated: {}", repartition);
                                         }
                                 ).replaceWithVoid()
                 );

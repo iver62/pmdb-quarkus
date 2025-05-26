@@ -541,7 +541,7 @@ public class MovieService {
                                                                                     .toList()
                                                                     )
                                                                     .call(movie::addMovieActors)
-                                                                    .call(statsService::updateNumberOfActors)
+                                                                    .call(statsService::updateActorsStats)
                                                                     .replaceWith(movie)
                                                             ;
                                                 })

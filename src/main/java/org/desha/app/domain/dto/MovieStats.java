@@ -18,9 +18,10 @@ public class MovieStats {
     private final List<CountryRepartition> byCountry;
     private final List<Repartition> byUser;
     private final List<Repartition> byCreationDate;
-    private final List<Repartition> numberEvolution;
+    private final List<Repartition> moviesNumberEvolution;
+    private final List<Repartition> actorsNumberEvolution;
 
-    public static MovieStats build(long movieCount, long actorCount, List<Repartition> byReleaseDate, List<Repartition> byGenre, List<CountryRepartition> byCountry, List<Repartition> byUser, List<Repartition> byCreationDate, List<Repartition> numberEvolution) {
+    public static MovieStats build(long movieCount, long actorCount, List<Repartition> byReleaseDate, List<Repartition> byGenre, List<CountryRepartition> byCountry, List<Repartition> byUser, List<Repartition> byCreationDate, List<Repartition> moviesNumberEvolution, List<Repartition> actorsNumberEvolution) {
         return
                 MovieStats.builder()
                         .movieCount(movieCount)
@@ -30,7 +31,8 @@ public class MovieStats {
                         .byCountry(byCountry)
                         .byUser(byUser)
                         .byCreationDate(byCreationDate)
-                        .numberEvolution(numberEvolution)
+                        .moviesNumberEvolution(moviesNumberEvolution)
+                        .actorsNumberEvolution(actorsNumberEvolution)
                         .build();
     }
 }
