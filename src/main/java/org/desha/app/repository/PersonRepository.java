@@ -150,7 +150,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return find(query, params).page(page).project(PersonWithMoviesNumber.class).list();
     }
 
-    public Uni<List<Person>> findByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Person>> findPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN p.countries c
@@ -173,7 +173,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 .list();
     }
 
-    protected String addSort(String sort, Sort.Direction direction) {
+    private String addSort(String sort, Sort.Direction direction) {
         if (StringUtils.isEmpty(sort)) return "";
 
         String dir = (direction == Sort.Direction.Ascending) ? "ASC" : "DESC";
@@ -198,7 +198,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return String.format(" ORDER BY CASE WHEN p.%s IS NULL THEN 1 ELSE 0 END, p.%s %s", sort, sort, dir);
     }
 
-    protected String addClauses(CriteriasDTO criteriasDTO) {
+    private String addClauses(CriteriasDTO criteriasDTO) {
         StringBuilder query = new StringBuilder();
 
         Optional.ofNullable(criteriasDTO.getFromBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth >= :fromBirthDate"));
@@ -221,7 +221,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return query.toString();
     }
 
-    protected Parameters addParameters(Parameters params, CriteriasDTO criteriasDTO) {
+    private Parameters addParameters(Parameters params, CriteriasDTO criteriasDTO) {
         if (Objects.nonNull(criteriasDTO.getFromBirthDate())) {
             params.and("fromBirthDate", criteriasDTO.getFromBirthDate());
         }

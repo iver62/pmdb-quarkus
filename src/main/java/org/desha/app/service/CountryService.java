@@ -180,7 +180,7 @@ public class CountryService {
      */
     public Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
-                personRepository.findByCountry(id, page, sort, direction, criteriasDTO)
+                personRepository.findPersonsByCountry(id, page, sort, direction, criteriasDTO)
                         .map(personService::fromPersonListEntity)
                 ;
     }
@@ -200,15 +200,6 @@ public class CountryService {
                                                 }
                                         )
                         )
-                ;
-    }
-
-    public Set<CountryDTO> fromCountrySetEntity(Set<Country> genreSet) {
-        return
-                genreSet
-                        .stream()
-                        .map(CountryDTO::fromEntity)
-                        .collect(Collectors.toSet())
                 ;
     }
 }

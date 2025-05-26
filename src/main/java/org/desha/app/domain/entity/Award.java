@@ -17,7 +17,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Getter
 @Setter
-@Table(name = "recompense", uniqueConstraints = {@UniqueConstraint(columnNames = {"ceremonie", "nom"})})
+@Table(name = "recompense")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Award extends PanacheEntityBase {
 
@@ -41,7 +41,11 @@ public class Award extends PanacheEntityBase {
     private Movie movie;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "lnk_recompense_personne", joinColumns = @JoinColumn(name = "fk_recompense"), inverseJoinColumns = @JoinColumn(name = "fk_personne"))
+    @JoinTable(
+            name = "lnk_recompense_personne",
+            joinColumns = @JoinColumn(name = "fk_recompense"),
+            inverseJoinColumns = @JoinColumn(name = "fk_personne")
+    )
     private Set<Person> personSet;
 
     public static Award fromDTO(AwardDTO awardDTO) {

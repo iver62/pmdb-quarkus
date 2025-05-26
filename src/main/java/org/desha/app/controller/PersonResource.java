@@ -466,7 +466,7 @@ public class PersonResource {
     @GET
     @Path("/{id}/movies")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getMovies(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+    public Uni<Response> getMoviesByPerson(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
@@ -539,6 +539,18 @@ public class PersonResource {
                                 )
                         )
                 ;
+    }
+
+    @GET
+    @Path("/{id}/awards")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getAwardsByPerson(@RestPath Long id, @BeanParam QueryParamsDTO queryParams) {
+        return
+                personService.getAwardsByPerson(id).map(awardDTOS ->
+                        awardDTOS.isEmpty()
+                                ? Response.noContent().build()
+                                : Response.ok(awardDTOS).build()
+                );
     }
 
     @POST

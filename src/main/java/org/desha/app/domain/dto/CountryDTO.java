@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Person;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -54,15 +53,15 @@ public class CountryDTO {
                                         .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
                                         .collect(Collectors.toSet())
                         )
-                        .persons(fromEntitySet(country.getPersons()))
+                        .persons(PersonDTO.fromEntitySet(country.getPersons()))
                         .build();
     }
 
-    private static Set<PersonDTO> fromEntitySet(Set<Person> personSet) {
+    public static Set<CountryDTO> fromCountryEntitySet(Set<Country> countrySet) {
         return
-                Optional.ofNullable(personSet).orElse(Set.of())
+                Optional.ofNullable(countrySet).orElse(Set.of())
                         .stream()
-                        .map(PersonDTO::fromEntity)
+                        .map(CountryDTO::fromEntity)
                         .collect(Collectors.toSet())
                 ;
     }

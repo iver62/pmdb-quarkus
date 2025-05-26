@@ -13,6 +13,10 @@ import java.util.List;
 @ApplicationScoped
 public class AwardRepository implements PanacheRepository<Award> {
 
+    /*public Uni<Long> countAwardsByPerson(Long id) {
+        return count("SELECT COUNT(a) FROM Award a JOIN a.personSet p WHERE p.id = ?1", id);
+    }*/
+
     /**
      * Recherche les intitulés distincts des cérémonies correspondant à un terme donné, avec pagination et tri.
      * <p>
@@ -36,5 +40,24 @@ public class AwardRepository implements PanacheRepository<Award> {
                 .project(String.class)
                 .list();
     }
+
+    /*public Uni<List<Award>> findAwardsByPerson(Long id, Page page) {
+        final String query = """
+                SELECT DISTINCT a
+                FROM Award a
+                JOIN a.personSet p
+                WHERE p.id = :id
+                """;
+
+        final Parameters params = Parameters.with("id", id);
+
+        final Sort sort = Sort.by("ceremony", Sort.Direction.Ascending);
+
+        return
+                find(query, sort, params)
+                        .page(page)
+                        .list()
+                ;
+    }*/
 
 }

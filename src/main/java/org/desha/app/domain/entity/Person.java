@@ -125,7 +125,6 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
     private Set<Country> countries = new HashSet<>();
 
-    @JsonIgnore
     @ManyToMany(mappedBy = "personSet")
     private Set<Award> awardSet = new HashSet<>();
 

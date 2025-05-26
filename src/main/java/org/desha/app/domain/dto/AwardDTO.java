@@ -18,18 +18,9 @@ public class AwardDTO {
     private Long id;
     private String ceremony;
     private String name;
+    private MovieDTO movie;
     private Set<PersonDTO> persons;
     private Year year;
-
-    /*public static AwardDTO fromEntity(Award award) {
-        return
-                AwardDTO.builder()
-                        .id(award.getId())
-                        .ceremony(award.getCeremony())
-                        .name(award.getName())
-                        .year(award.getYear())
-                        .build();
-    }*/
 
     public static AwardDTO fromEntity(Award award) {
         return
@@ -37,6 +28,7 @@ public class AwardDTO {
                         .id(award.getId())
                         .ceremony(award.getCeremony())
                         .name(award.getName())
+                        .movie(MovieDTO.fromEntity(award.getMovie()))
                         .persons(PersonDTO.fromEntitySet(award.getPersonSet()))
                         .year(award.getYear())
                         .build();

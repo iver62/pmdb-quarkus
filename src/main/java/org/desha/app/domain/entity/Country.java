@@ -8,8 +8,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDateTime;
@@ -53,12 +51,10 @@ public class Country extends PanacheEntityBase {
 
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
     private Set<Movie> movies = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
-    @Fetch(FetchMode.SELECT)
     private Set<Person> persons = new HashSet<>();
 
     @PrePersist

@@ -25,14 +25,14 @@ import java.util.stream.Collectors;
 public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
     public Uni<Long> countMovies(CriteriasDTO criteriasDTO) {
-        String query = String.format("""
+        final String query = String.format("""
                 FROM Movie m
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 """, addClauses(criteriasDTO)
         );
 
-        Parameters params = addParameters(
+        final Parameters params = addParameters(
                 Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );
@@ -156,7 +156,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        String query = String.format("""
+        final String query = String.format("""
                        FROM Movie m
                        LEFT JOIN FETCH m.awards
                        WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
@@ -165,7 +165,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 """, addClauses(criteriasDTO), addSort(sort, direction)
         );
 
-        Parameters params = addParameters(
+        final Parameters params = addParameters(
                 Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
                 criteriasDTO
         );

@@ -88,10 +88,11 @@ public class MovieService {
         return countryRepository.countCountriesInMovies(term, lang);
     }
 
-    public Uni<Movie> getById(Long id) {
+    public Uni<MovieDTO> getById(Long id) {
         return
                 movieRepository.findByIdWithCountriesAndGenres(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                        .map(movie -> MovieDTO.fromEntity(movie, movie.getGenres(), movie.getCountries()))
                 ;
     }
 
@@ -103,7 +104,7 @@ public class MovieService {
                                 movieList ->
                                         movieList
                                                 .stream()
-                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
+                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards().size()))
                                                 .toList()
                         )
                 ;
@@ -117,7 +118,7 @@ public class MovieService {
                                 movieList ->
                                         movieList
                                                 .stream()
-                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
+                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards().size()))
                                                 .toList()
                         )
                 ;
@@ -229,7 +230,7 @@ public class MovieService {
                         .flatMap(movie ->
                                 Mutiny.fetch(movie.getCountries())
                                         .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés pour ce film"))
-                                        .map(countryService::fromCountrySetEntity)
+                                        .map(CountryDTO::fromCountryEntitySet)
                         )
                 ;
     }
@@ -266,7 +267,7 @@ public class MovieService {
 
     public Uni<Set<AwardDTO>> getAwardsByMovie(Long id) {
         return
-                getById(id)
+                movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas")) // 404 si le film n'existe pas
                         .flatMap(movie -> Mutiny.fetch(movie.getAwards()))
                         .map(AwardDTO::fromEntitySet);
@@ -1343,7 +1344,7 @@ public class MovieService {
         return
                 Mutiny.fetch(movie.getGenres())
                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
-                        .map(genreService::fromGenreSetEntity)
+                        .map(GenreDTO::fromGenreSetEntity)
                 ;
     }
 
@@ -1362,7 +1363,7 @@ public class MovieService {
         return
                 Mutiny.fetch(movie.getCountries())
                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
-                        .map(countryService::fromCountrySetEntity)
+                        .map(CountryDTO::fromCountryEntitySet)
                 ;
     }
 

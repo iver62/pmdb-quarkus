@@ -156,13 +156,4 @@ public class GenreService {
                         .toList()
                 ;
     }
-
-    public Set<GenreDTO> fromGenreSetEntity(Set<Genre> genreSet) {
-        return
-                genreSet
-                        .stream()
-                        .map(GenreDTO::fromEntity)
-                        .collect(Collectors.toSet())
-                ;
-    }
 }

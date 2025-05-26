@@ -35,24 +35,26 @@ public class PersonService implements PersonServiceInterface {
     public static final String DEFAULT_PHOTO = "default-photo.jpg";
 
     private final CountryService countryService;
-    protected final CountryRepository countryRepository;
-    protected final MovieRepository movieRepository;
-    private final PersonRepository personRepository;
     private final FileService fileService;
+
+    private final CountryRepository countryRepository;
+    private final MovieRepository movieRepository;
+    private final PersonRepository personRepository;
+
 
     @Inject
     protected PersonService(
             CountryService countryService,
+            FileService fileService,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
-            PersonRepository personRepository,
-            FileService fileService
+            PersonRepository personRepository
     ) {
         this.countryService = countryService;
+        this.fileService = fileService;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
         this.personRepository = personRepository;
-        this.fileService = fileService;
     }
 
     public Uni<Long> countAll() {
@@ -75,10 +77,9 @@ public class PersonService implements PersonServiceInterface {
     public Uni<PersonDTO> getById(Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNotNull()
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
                         .call(person -> Mutiny.fetch(person.getCountries()).invoke(person::setCountries))
                         .map(person -> PersonDTO.fromEntity(person, person.getCountries()))
-                        .onFailure().recoverWithNull()
                 ;
     }
 
@@ -158,13 +159,14 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<MovieDTO>> getMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
                         .chain(person ->
                                 movieRepository
                                         .findMoviesByPerson(person, page, sort, direction, criteriasDTO)
                                         .map(movieList ->
                                                 movieList
                                                         .stream()
-                                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards()))
+                                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards().size()))
                                                         .toList()
                                         )
                         )
@@ -181,6 +183,17 @@ public class PersonService implements PersonServiceInterface {
                                                 .stream()
                                                 .map(CountryDTO::fromEntity)
                                                 .toList()
+                        )
+                ;
+    }
+
+    public Uni<Set<AwardDTO>> getAwardsByPerson(Long id) {
+        return
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                        .flatMap(
+                                person -> Mutiny.fetch(person.getAwardSet())
+                                        .map(AwardDTO::fromEntitySet)
                         )
                 ;
     }
@@ -399,7 +412,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 Mutiny.fetch(person.getCountries())
                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
-                        .map(countryService::fromCountrySetEntity)
+                        .map(CountryDTO::fromCountryEntitySet)
                 ;
     }
 
