@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Table(name = "personne")
 @Entity
@@ -53,73 +54,59 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     @Column(name = "date_mise_a_jour")
     private LocalDateTime lastUpdate;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "actor")
     private List<MovieActor> playedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "producers")
-    private List<Movie> producedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieProducer> producedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "directors")
-    private List<Movie> directedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieDirector> directedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "screenwriters")
-    private List<Movie> writtenMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieScreenwriter> writtenMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "dialogueWriters")
-    private List<Movie> dialogueWrittenMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieDialogueWriter> dialogueWrittenMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "musicians")
-    private List<Movie> musicalMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieMusician> musicalMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "photographers")
-    private List<Movie> photographedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MoviePhotographer> photographedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "costumiers")
-    private List<Movie> costumeMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieCostumier> costumeMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "decorators")
-    private List<Movie> decoratedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieDecorator> decoratedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "editors")
-    private List<Movie> editedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieEditor> editedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "casters")
-    private List<Movie> castedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieCaster> castedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "artDirectors")
-    private List<Movie> artDirectedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieArtist> artistMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "soundEditors")
-    private List<Movie> soundEditedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieSoundEditor> soundEditedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "visualEffectsSupervisors")
-    private List<Movie> vfxSupervisedMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieVfxSupervisor> vfxSupervisedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "makeupArtists")
-    private List<Movie> makeupMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieSfxSupervisor> sfxSupervisedMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "hairDressers")
-    private List<Movie> hairStyledMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieMakeupArtist> makeupMovies = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "stuntmen")
-    private List<Movie> stuntMovies = new ArrayList<>();
+    @OneToMany(mappedBy = "person")
+    private List<MovieHairDresser> hairStyledMovies = new ArrayList<>();
+
+    @OneToMany(mappedBy = "person")
+    private List<MovieStuntman> stuntMovies = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
@@ -160,39 +147,48 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                 ;
     }
 
+    public static Person of(PersonDTO personDTO, PersonType type) {
+        return
+                Person.builder()
+                        .id(personDTO.getId())
+                        .name(personDTO.getName().trim())
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
+                        .dateOfBirth(personDTO.getDateOfBirth())
+                        .dateOfDeath(personDTO.getDateOfDeath())
+                        .types(
+                                Stream.concat(
+                                        Optional.ofNullable(personDTO.getTypes()).orElse(Set.of()).stream(),
+                                        Stream.of(type)
+                                ).collect(Collectors.toSet())
+                        )
+                        .creationDate(personDTO.getCreationDate())
+                        .lastUpdate(personDTO.getLastUpdate())
+                        .build()
+                ;
+    }
+
     @JsonIgnore
     public Uni<Set<Movie>> getAllRelatedMovies() {
         return
                 Uni.createFrom().item(new HashSet<Movie>())
                         .chain(set -> Mutiny.fetch(playedMovies).map(movieActors -> movieActors.stream().map(MovieActor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(producedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(directedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(writtenMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(dialogueWrittenMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(musicalMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(photographedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(costumeMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(decoratedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(editedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(castedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(artDirectedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(soundEditedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(vfxSupervisedMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(makeupMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(hairStyledMovies).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(stuntMovies).invoke(set::addAll).replaceWith(set))
-                ;
-    }
-
-    public Uni<Set<PersonType>> addType(PersonType type) {
-        return
-                Mutiny.fetch(types)
-                        .map(
-                                personTypes -> {
-                                    personTypes.add(type);
-                                    return personTypes;
-                                }
-                        )
+                        .chain(set -> Mutiny.fetch(producedMovies).map(movieProducers -> movieProducers.stream().map(MovieProducer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(directedMovies).map(movieDirectors -> movieDirectors.stream().map(MovieDirector::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(writtenMovies).map(movieScreenwriters -> movieScreenwriters.stream().map(MovieScreenwriter::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(dialogueWrittenMovies).map(movieDialogueWriters -> movieDialogueWriters.stream().map(MovieDialogueWriter::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(musicalMovies).map(movieMusicians -> movieMusicians.stream().map(MovieMusician::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(photographedMovies).map(moviePhotographers -> moviePhotographers.stream().map(MoviePhotographer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(costumeMovies).map(movieCostumiers -> movieCostumiers.stream().map(MovieCostumier::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(decoratedMovies).map(movieDecorators -> movieDecorators.stream().map(MovieDecorator::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(editedMovies).map(movieEditors -> movieEditors.stream().map(MovieEditor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(castedMovies).map(movieCasters -> movieCasters.stream().map(MovieCaster::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(artistMovies).map(movieArtDirectors -> movieArtDirectors.stream().map(MovieArtist::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(soundEditedMovies).map(movieSoundEditors -> movieSoundEditors.stream().map(MovieSoundEditor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(vfxSupervisedMovies).map(movieVfxSupervisors -> movieVfxSupervisors.stream().map(MovieVfxSupervisor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(sfxSupervisedMovies).map(movieSfxSupervisors -> movieSfxSupervisors.stream().map(MovieSfxSupervisor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(makeupMovies).map(movieMakeupArtists -> movieMakeupArtists.stream().map(MovieMakeupArtist::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(hairStyledMovies).map(movieHairDressers -> movieHairDressers.stream().map(MovieHairDresser::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(stuntMovies).map(movieStuntmen -> movieStuntmen.stream().map(MovieStuntman::getMovie).toList()).invoke(set::addAll).replaceWith(set))
                 ;
     }
 
@@ -212,13 +208,13 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
         return
                 Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
-                        .invoke(fetchCountries -> {
-                            if (Objects.nonNull(countrySet)) {
-                                fetchCountries.addAll(countrySet);
-                            }
-                        })
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .invoke(fetchCountries -> fetchCountries.addAll(countrySet))
                 ;
+    }
+
+    public void addType(PersonType type) {
+        this.types.add(type);
     }
 
     /**

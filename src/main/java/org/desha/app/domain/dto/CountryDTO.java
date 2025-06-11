@@ -50,7 +50,7 @@ public class CountryDTO {
                                 Optional.ofNullable(country.getMovies())
                                         .orElse(Set.of())
                                         .stream()
-                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
+                                        .map(MovieDTO::of)
                                         .collect(Collectors.toSet())
                         )
                         .persons(PersonDTO.fromEntitySet(country.getPersons()))

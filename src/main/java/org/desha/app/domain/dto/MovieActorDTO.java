@@ -1,31 +1,33 @@
 package org.desha.app.domain.dto;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.desha.app.domain.entity.MovieActor;
 
-@Builder
+@SuperBuilder
 @Getter
-public class MovieActorDTO implements Comparable<MovieActorDTO> {
+@NoArgsConstructor
+@AllArgsConstructor
+public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<MovieActorDTO> {
 
-    private Long id;
-    private PersonDTO actor;
-    private String role;
     private Integer rank;
 
-    public static MovieActorDTO fromEntity(MovieActor movieActor) {
+    public static MovieActorDTO of(MovieActor movieActor) {
         return
                 MovieActorDTO.builder()
                         .id(movieActor.getId())
-                        .actor(PersonDTO.fromEntity(movieActor.getActor()))
+                        .person(PersonDTO.fromEntity(movieActor.getActor()))
                         .role(movieActor.getRole())
                         .rank(movieActor.getRank())
                         .build()
                 ;
     }
 
+    @Override
     public String toString() {
-        return String.format("%s / %s: %s -> %s (%s)", id, actor.getId(), actor.getName(), role, rank);
+        return String.format("%s / %s: %s -> %s (%s)", id, person.getId(), person.getName(), role, rank);
     }
 
     @Override

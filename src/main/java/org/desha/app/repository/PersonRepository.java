@@ -149,7 +149,12 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 criteriasDTO
         );
 
-        return find(query, params).page(page).project(PersonWithMoviesNumber.class).list();
+        return
+                find(query, params)
+                        .page(page)
+                        .project(PersonWithMoviesNumber.class)
+                        .list()
+                ;
     }
 
     public Uni<List<Person>> findPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {

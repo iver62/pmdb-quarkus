@@ -89,7 +89,7 @@ public class PersonDTO {
                 .movies(
                         movies
                                 .stream()
-                                .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
+                                .map(movie -> MovieDTO.of(movie, null, null, null))
                                 .collect(Collectors.toSet())
                 )
                 .creationDate(person.getCreationDate())

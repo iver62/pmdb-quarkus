@@ -61,7 +61,7 @@ public class MovieDTO {
                 .build();
     }
 
-    public static MovieDTO fromEntity(Movie movie) {
+    public static MovieDTO of(Movie movie) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
@@ -79,7 +79,7 @@ public class MovieDTO {
                 .build();
     }
 
-    public static MovieDTO fromEntity(Movie movie, Set<Genre> genreSet, Set<Country> countrySet) {
+    public static MovieDTO of(Movie movie, Set<Genre> genreSet, Set<Country> countrySet) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
@@ -100,7 +100,7 @@ public class MovieDTO {
                 .build();
     }
 
-    public static MovieDTO fromEntity(Movie movie, Set<Genre> genreSet, Set<Country> countrySet, Set<Award> awardSet) {
+    public static MovieDTO of(Movie movie, Set<Genre> genreSet, Set<Country> countrySet, Set<Award> awardSet) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
@@ -121,7 +121,7 @@ public class MovieDTO {
                 .build();
     }
 
-    public static MovieDTO fromEntity(Movie movie, Integer numberOfAwards) {
+    public static MovieDTO of(Movie movie, Integer numberOfAwards) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())

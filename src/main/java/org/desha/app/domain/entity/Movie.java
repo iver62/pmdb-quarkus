@@ -10,12 +10,16 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
+import org.desha.app.domain.dto.MovieTechnicianDTO;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @Entity
 @Cacheable
@@ -81,151 +85,57 @@ public class Movie extends PanacheEntityBase {
     @JoinColumn(name = "fk_utilisateur", nullable = false, foreignKey = @ForeignKey(name = "fk_film_utilisateur"), referencedColumnName = "id")
     private User user;
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_producteur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> producers = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieProducer> movieProducers = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_realisateur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> directors = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieDirector> movieDirectors = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_scenariste",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> screenwriters = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieScreenwriter> movieScreenwriters = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_dialoguiste",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> dialogueWriters = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieDialogueWriter> movieDialogueWriters = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_musicien",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> musicians = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieMusician> movieMusicians = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_photographe",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> photographers = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MoviePhotographer> moviePhotographers = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_costumier",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> costumiers = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieCostumier> movieCostumiers = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_decorateur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> decorators = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieDecorator> movieDecorators = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_monteur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> editors = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieEditor> movieEditors = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_casteur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> casters = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieCaster> movieCasters = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_directeur_artistique",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> artDirectors = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieArtist> movieArtists = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_ingenieur_son",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> soundEditors = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieSoundEditor> movieSoundEditors = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_specialiste_effets_speciaux",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> visualEffectsSupervisors = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieVfxSupervisor> movieVfxSupervisors = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_maquilleur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> makeupArtists = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieSfxSupervisor> movieSfxSupervisors = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_coiffeur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> hairDressers = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieMakeupArtist> movieMakeupArtists = new ArrayList<>();
 
-    @JsonIgnore
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "lnk_film_cascadeur",
-            joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_personne")
-    )
-    private Set<Person> stuntmen = new HashSet<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieHairDresser> movieHairDressers = new ArrayList<>();
 
-    @JsonIgnore
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieStuntman> movieStuntmen = new ArrayList<>();
+
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieActor> movieActors = new ArrayList<>();
 
@@ -260,12 +170,12 @@ public class Movie extends PanacheEntityBase {
         this.lastUpdate = LocalDateTime.now();
     }
 
-    public static Movie fromDTO(MovieDTO movieDTO) {
+    public static Movie of(MovieDTO movieDTO) {
         return Movie.builder()
                 .title(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getTitle()).trim()))
                 .originalTitle(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getOriginalTitle()).trim()))
                 .releaseDate(movieDTO.getReleaseDate())
-                .synopsis(movieDTO.getSynopsis().trim())
+                .synopsis(StringUtils.defaultString(movieDTO.getSynopsis()).trim())
                 .runningTime(movieDTO.getRunningTime())
                 .budget(movieDTO.getBudget())
                 .boxOffice(movieDTO.getBoxOffice())
@@ -274,44 +184,83 @@ public class Movie extends PanacheEntityBase {
                 .build();
     }
 
-    /**
-     * Ajoute un ensemble de personnes à une collection existante.
-     *
-     * @param <T>          Le type des personnes à ajouter.
-     * @param persons      L'ensemble existant de personnes auquel ajouter les nouvelles personnes.
-     * @param peopleSet    L'ensemble des personnes à ajouter.
-     * @param errorMessage Le message d'erreur à retourner si l'ensemble existant est null.
-     * @return Une {@link Uni} contenant l'ensemble mis à jour après l'ajout des nouvelles personnes.
-     * @throws IllegalStateException Si la collection existante des personnes n'est pas initialisée.
-     */
-    public <T> Uni<Set<T>> addPeople(Set<T> persons, Set<T> peopleSet, String errorMessage) {
-        return
-                Mutiny.fetch(persons)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                        .invoke(tSet -> {
-                            if (Objects.nonNull(peopleSet)) {
-                                tSet.addAll(peopleSet);
+    public <T extends MovieTechnician> void removeObsoleteTechnicians(List<T> technicians, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        technicians.removeIf(t ->
+                movieTechnicianDTOList.stream().noneMatch(movieTechnicianDTO ->
+                        Objects.nonNull(movieTechnicianDTO.getId()) && movieTechnicianDTO.getId().equals(t.getId())
+                )
+        );
+    }
+
+    public <T extends MovieTechnician> void updateExistingTechnicians(List<T> technicians, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        technicians.forEach(t ->
+                movieTechnicianDTOList.stream()
+                        .filter(dto -> Objects.equals(dto.getId(), t.getId()))
+                        .findFirst()
+                        .ifPresent(dto -> {
+                            if (!Objects.equals(t.getRole(), dto.getRole())) {
+                                t.setRole(dto.getRole());
                             }
                         })
+        );
+    }
+
+    public <T extends MovieTechnician> Uni<Boolean> addTechnicians(
+            List<MovieTechnicianDTO> movieTechnicianDTOList,
+            Function<Movie, List<T>> techniciansGetter,
+            BiFunction<Movie, MovieTechnicianDTO, Uni<T>> asyncTechnicianFactory
+    ) {
+        List<Uni<T>> newTechniciansUnis = movieTechnicianDTOList.stream()
+                .filter(dto -> Objects.isNull(dto.getId()))
+                .map(dto -> asyncTechnicianFactory.apply(this, dto)) // async creation
+                .toList();
+
+        return
+                Uni.join().all(newTechniciansUnis)
+                        .usingConcurrencyOf(1)
+                        .andCollectFailures()
+                        .map(tList -> techniciansGetter.apply(this).addAll(tList))
                 ;
     }
 
-    /**
-     * Ajoute une liste d'acteurs à la collection existante.
-     *
-     * @param movieActorSet La liste des entités {@link MovieActor} à ajouter.
-     * @return Une instance de {@link Uni} contenant la liste mise à jour des acteurs.
-     * @throws IllegalStateException Si la liste des acteurs n'est pas initialisée.
-     */
-    public Uni<List<MovieActor>> addMovieActors(List<MovieActor> movieActorSet) {
-        return
-                Mutiny.fetch(movieActors)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
-                        .invoke(fetchActors -> {
-                            if (Objects.nonNull(movieActorSet)) {
-                                fetchActors.addAll(movieActorSet);
+    public void removeObsoleteActors(List<MovieActorDTO> movieActorsDTOList) {
+        movieActors.removeIf(movieActor ->
+                movieActorsDTOList.stream().noneMatch(movieActorDTO ->
+                        Objects.nonNull(movieActorDTO.getId()) && movieActorDTO.getId().equals(movieActor.getId())
+                )
+        );
+    }
+
+    public void updateExistingActors(List<MovieActorDTO> movieActorsDTOList) {
+        movieActors.forEach(movieActor ->
+                movieActorsDTOList.stream()
+                        .filter(dto -> Objects.equals(dto.getId(), movieActor.getId()))
+                        .findFirst()
+                        .ifPresent(dto -> {
+                            if (!Objects.equals(movieActor.getRole(), dto.getRole())) {
+                                movieActor.setRole(dto.getRole());
+                            }
+                            if (!Objects.equals(movieActor.getRank(), dto.getRank())) {
+                                movieActor.setRank(dto.getRank());
                             }
                         })
+        );
+    }
+
+    public Uni<Boolean> addMovieActors(List<MovieActorDTO> movieActorsDTOList, BiFunction<Movie, MovieActorDTO, Uni<MovieActor>> asyncActorFactory) {
+        List<Uni<MovieActor>> newActorsUnis = movieActorsDTOList.stream()
+                .filter(dto -> Objects.isNull(dto.getId()))
+                .map(dto -> asyncActorFactory.apply(this, dto)) // async creation
+                .toList();
+
+        return
+                newActorsUnis.isEmpty()
+                        ? Uni.createFrom().item(false)
+                        :
+                        Uni.join().all(newActorsUnis)
+                                .usingConcurrencyOf(1)
+                                .andCollectFailures()
+                                .map(movieActors::addAll)
                 ;
     }
 
@@ -375,17 +324,17 @@ public class Movie extends PanacheEntityBase {
     /**
      * Retire une personne de la collection existante de personnes en fonction de son identifiant.
      *
-     * @param persons      L'ensemble des personnes dans lequel rechercher.
-     * @param id           L'identifiant de la personne à retirer.
-     * @param errorMessage Le message d'erreur à retourner si l'ensemble des personnes est null.
+     * @param techniciansGetter L'ensemble des personnes dans lequel rechercher.
+     * @param id                L'identifiant de la personne à retirer.
+     * @param errorMessage      Le message d'erreur à retourner si l'ensemble des personnes est null.
      * @return Une {@link Uni} contenant l'ensemble mis à jour des personnes après suppression.
      * @throws IllegalStateException Si la collection existante des personnes n'est pas initialisée.
      */
-    public Uni<Set<Person>> removePerson(Set<Person> persons, Long id, String errorMessage) {
+    public <T extends MovieTechnician> Uni<List<T>> removeTechnician(Function<Movie, List<T>> techniciansGetter, Long id, String errorMessage) {
         return
-                Mutiny.fetch(persons)
+                Mutiny.fetch(techniciansGetter.apply(this))
                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                        .invoke(personSet -> personSet.removeIf(person -> Objects.equals(person.id, id)))
+                        .invoke(tList -> tList.removeIf(person -> Objects.equals(person.id, id)))
                 ;
     }
 
@@ -402,10 +351,6 @@ public class Movie extends PanacheEntityBase {
                         .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
                         .invoke(movieActorList -> movieActorList.removeIf(movieActor -> Objects.equals(movieActor.getId(), id)))
                 ;
-    }
-
-    public void removeMovieActors(List<MovieActor> movieActorList) {
-        movieActors.removeAll(movieActorList);
     }
 
     /**
@@ -464,20 +409,19 @@ public class Movie extends PanacheEntityBase {
      * si l'ensemble est initialisé (non nul). Si l'ensemble est nul, une exception est levée avec le message d'erreur
      * fourni. Après validation, l'ensemble est vidé à l'aide de la méthode {@link Set#clear()}.
      *
-     * @param persons      L'ensemble des personnes à vider.
-     * @param errorMessage Le message d'erreur à utiliser dans le cas où l'ensemble des personnes n'est pas initialisé.
-     * @param <T>          Le type des éléments dans l'ensemble des personnes.
+     * @param techniciansGetter L'ensemble des personnes à vider.
+     * @param errorMessage      Le message d'erreur à utiliser dans le cas où l'ensemble des personnes n'est pas initialisé.
+     * @param <T>               Le type des éléments dans l'ensemble des personnes.
      * @return Un {@link Uni} contenant un ensemble vide après que l'opération a été effectuée.
      * @throws IllegalStateException Si l'ensemble des personnes n'est pas initialisé (null).
      */
-    public <T> Uni<Set<T>> clearPersons(Set<T> persons, String errorMessage) {
+    public <T> Uni<List<T>> clearPersons(List<T> techniciansGetter, String errorMessage) {
         return
-                Mutiny.fetch(persons)
+                Mutiny.fetch(techniciansGetter)
                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                        .invoke(Set::clear)
+                        .invoke(List::clear)
                 ;
     }
-
 
     /**
      * Vide l'ensemble des genres associés à un objet.
@@ -530,6 +474,33 @@ public class Movie extends PanacheEntityBase {
                 Mutiny.fetch(awards)
                         .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
                         .invoke(Set::clear)
+                ;
+    }
+
+    public Uni<List<MovieActorDTO>> fetchAndMapActorList() {
+        return
+                Mutiny.fetch(movieActors)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                        .map(movieActorList ->
+                                movieActorList
+                                        .stream()
+                                        .map(MovieActorDTO::of)
+                                        .sorted(MovieActorDTO::compareTo)
+                                        .toList()
+                        )
+                ;
+    }
+
+    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> fetchAndMapTechniciansList(Function<Movie, List<T>> techniciansGetter, String errorMessage) {
+        return
+                Mutiny.fetch(techniciansGetter.apply(this))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                        .map(tList ->
+                                tList
+                                        .stream()
+                                        .map(MovieTechnicianDTO::of)
+                                        .toList()
+                        )
                 ;
     }
 }

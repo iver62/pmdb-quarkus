@@ -14,7 +14,6 @@ import org.desha.app.repository.GenreRepository;
 import org.desha.app.repository.MovieRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class GenreService {
@@ -75,7 +74,7 @@ public class GenreService {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(MovieDTO::fromEntity)
+                                        .map(MovieDTO::of)
                                         .toList()
 
                         )

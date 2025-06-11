@@ -9,12 +9,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Subselect;
 
 @Entity
 @Getter
 @Builder
 @Immutable
 @Table(name = "personne_nombre_films_vue")
+@Subselect("SELECT * FROM personne_nombre_films_vue")
 @NoArgsConstructor
 @AllArgsConstructor
 public class PersonMoviesNumber {

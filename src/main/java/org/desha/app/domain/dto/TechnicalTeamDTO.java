@@ -4,47 +4,48 @@ import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Movie;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Getter
 @Builder
 public class TechnicalTeamDTO {
 
-    private Set<PersonDTO> producers;
-    private Set<PersonDTO> directors;
-    private Set<PersonDTO> screenwriters;
-    private Set<PersonDTO> dialogueWriters;
-    private Set<PersonDTO> musicians;
-    private Set<PersonDTO> photographers;
-    private Set<PersonDTO> costumiers;
-    private Set<PersonDTO> decorators;
-    private Set<PersonDTO> editors;
-    private Set<PersonDTO> casters;
-    private Set<PersonDTO> artDirectors;
-    private Set<PersonDTO> soundEditors;
-    private Set<PersonDTO> visualEffectsSupervisors;
-    private Set<PersonDTO> makeupArtists;
-    private Set<PersonDTO> hairDressers;
-    private Set<PersonDTO> stuntmen;
+    private List<MovieTechnicianDTO> producers;
+    private List<MovieTechnicianDTO> directors;
+    private List<MovieTechnicianDTO> screenwriters;
+    private List<MovieTechnicianDTO> dialogueWriters;
+    private List<MovieTechnicianDTO> musicians;
+    private List<MovieTechnicianDTO> photographers;
+    private List<MovieTechnicianDTO> costumiers;
+    private List<MovieTechnicianDTO> decorators;
+    private List<MovieTechnicianDTO> editors;
+    private List<MovieTechnicianDTO> casters;
+    private List<MovieTechnicianDTO> artists;
+    private List<MovieTechnicianDTO> soundEditors;
+    private List<MovieTechnicianDTO> vfxSupervisors;
+    private List<MovieTechnicianDTO> sfxSupervisors;
+    private List<MovieTechnicianDTO> makeupArtists;
+    private List<MovieTechnicianDTO> hairDressers;
+    private List<MovieTechnicianDTO> stuntmen;
 
     public static TechnicalTeamDTO build(
-            final Set<PersonDTO> producers,
-            final Set<PersonDTO> directors,
-            final Set<PersonDTO> screenwriters,
-            final Set<PersonDTO> dialogueWriters,
-            final Set<PersonDTO> musicians,
-            final Set<PersonDTO> photographers,
-            final Set<PersonDTO> costumiers,
-            final Set<PersonDTO> decorators,
-            final Set<PersonDTO> editors,
-            final Set<PersonDTO> casters,
-            final Set<PersonDTO> artDirectors,
-            final Set<PersonDTO> soundEditors,
-            final Set<PersonDTO> visualEffectsSupervisors,
-            final Set<PersonDTO> makeupArtists,
-            final Set<PersonDTO> hairDressers,
-            final Set<PersonDTO> stuntmen
+            final List<MovieTechnicianDTO> producers,
+            final List<MovieTechnicianDTO> directors,
+            final List<MovieTechnicianDTO> screenwriters,
+            final List<MovieTechnicianDTO> dialogueWriters,
+            final List<MovieTechnicianDTO> musicians,
+            final List<MovieTechnicianDTO> photographers,
+            final List<MovieTechnicianDTO> costumiers,
+            final List<MovieTechnicianDTO> decorators,
+            final List<MovieTechnicianDTO> editors,
+            final List<MovieTechnicianDTO> casters,
+            final List<MovieTechnicianDTO> artists,
+            final List<MovieTechnicianDTO> soundEditors,
+            final List<MovieTechnicianDTO> vfxSupervisors,
+            final List<MovieTechnicianDTO> sfxSupervisors,
+            final List<MovieTechnicianDTO> makeupArtists,
+            final List<MovieTechnicianDTO> hairDressers,
+            final List<MovieTechnicianDTO> stuntmen
     ) {
         return TechnicalTeamDTO.builder()
                 .producers(producers)
@@ -57,34 +58,36 @@ public class TechnicalTeamDTO {
                 .decorators(decorators)
                 .editors(editors)
                 .casters(casters)
-                .artDirectors(artDirectors)
+                .artists(artists)
                 .soundEditors(soundEditors)
-                .visualEffectsSupervisors(visualEffectsSupervisors)
+                .vfxSupervisors(vfxSupervisors)
+                .sfxSupervisors(sfxSupervisors)
                 .makeupArtists(makeupArtists)
                 .hairDressers(hairDressers)
                 .stuntmen(stuntmen)
                 .build();
     }
 
-    public static TechnicalTeamDTO fromEntity(Movie movie) {
+    public static TechnicalTeamDTO of(Movie movie) {
         return
                 TechnicalTeamDTO.build(
-                        movie.getProducers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getScreenwriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getDialogueWriters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getMusicians().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getPhotographers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getCostumiers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getDecorators().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getCasters().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getArtDirectors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getSoundEditors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getVisualEffectsSupervisors().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getMakeupArtists().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getHairDressers().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet()),
-                        movie.getStuntmen().stream().map(PersonDTO::fromEntity).collect(Collectors.toSet())
+                        movie.getMovieProducers().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieDirectors().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieScreenwriters().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieDialogueWriters().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieMusicians().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMoviePhotographers().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieCostumiers().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieDecorators().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieEditors().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieCasters().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieArtists().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieSoundEditors().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieVfxSupervisors().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieSfxSupervisors().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieMakeupArtists().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieHairDressers().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieStuntmen().stream().map(MovieTechnicianDTO::of).toList()
                 );
     }
 

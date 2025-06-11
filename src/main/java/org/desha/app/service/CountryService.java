@@ -17,7 +17,6 @@ import org.desha.app.repository.PersonRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class CountryService {
@@ -149,7 +148,7 @@ public class CountryService {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
+                                        .map(MovieDTO::of)
                                         .toList()
                         )
                 ;
@@ -161,7 +160,7 @@ public class CountryService {
                         .map(movieList ->
                                 movieList
                                         .stream()
-                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
+                                        .map(MovieDTO::of)
                                         .toList()
                         )
                 ;

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.MovieActor;
+import org.desha.app.domain.entity.MovieTechnician;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
@@ -22,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -40,7 +42,6 @@ public class PersonService implements PersonServiceInterface {
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final PersonRepository personRepository;
-
 
     @Inject
     protected PersonService(
@@ -74,6 +75,10 @@ public class PersonService implements PersonServiceInterface {
         return countryRepository.countPersonCountries(term, lang);
     }
 
+    public Uni<Long> countMovieCountriesByPerson(Long id, String term, String lang) {
+        return countryRepository.countMovieCountriesByPerson(id, term, lang);
+    }
+
     public Uni<PersonDTO> getById(Long id) {
         return
                 personRepository.findById(id)
@@ -104,15 +109,15 @@ public class PersonService implements PersonServiceInterface {
                 ;
     }*/
 
-    public Uni<Set<Person>> getByIds(Set<PersonDTO> persons) {
+    /*public Uni<List<Person>> getByIds(List<PersonDTO> personDTOList) {
         return
                 personRepository.findByIds(
-                        Optional.ofNullable(persons).orElse(Collections.emptySet())
+                        Optional.ofNullable(personDTOList).orElse(Collections.emptyList())
                                 .stream()
                                 .map(PersonDTO::getId)
                                 .toList()
-                ).map(HashSet::new);
-    }
+                );
+    }*/
 
     public Uni<List<Person>> getByIds(List<Long> ids) {
         return personRepository.findByIds(ids);
@@ -166,7 +171,7 @@ public class PersonService implements PersonServiceInterface {
                                         .map(movieList ->
                                                 movieList
                                                         .stream()
-                                                        .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards().size()))
+                                                        .map(movie -> MovieDTO.of(movie, movie.getAwards().size()))
                                                         .toList()
                                         )
                         )
@@ -177,6 +182,19 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findPersonCountries(page, sort, direction, term, lang)
+                        .map(
+                                countryList ->
+                                        countryList
+                                                .stream()
+                                                .map(CountryDTO::fromEntity)
+                                                .toList()
+                        )
+                ;
+    }
+
+    public Uni<List<CountryDTO>> getMovieCountriesByPerson(Long id, Page page, String sort, Sort.Direction direction, String term, String lang) {
+        return
+                countryRepository.findMovieCountriesByPerson(id, page, sort, direction, term, lang)
                         .map(
                                 countryList ->
                                         countryList
@@ -311,19 +329,6 @@ public class PersonService implements PersonServiceInterface {
                         );
     }
 
-    public Uni<PersonDTO> addPersonType(Long id, PersonType personType) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable introuvable"))
-                                        .flatMap(person -> person.addType(personType).replaceWith(person))
-                                        .chain(personRepository::persist)
-                                        .map(PersonDTO::fromEntity)
-                        )
-                ;
-    }
-
     public Uni<Set<CountryDTO>> addCountries(Long id, Set<CountryDTO> countryDTOSet) {
         return
                 Panache
@@ -380,12 +385,28 @@ public class PersonService implements PersonServiceInterface {
                         });
     }
 
-    public List<MovieActorDTO> fromMovieActorListEntity(List<MovieActor> movieActorSet) {
+    public Uni<Person> prepareAndPersistPerson(PersonDTO personDTO, PersonType type) {
         return
-                movieActorSet
+                personRepository.findById(personDTO.getId())
+                        .invoke(person -> person.addType(type))
+                        .call(personRepository::persist);
+    }
+
+    public List<MovieActorDTO> fromMovieActorListEntity(List<MovieActor> movieActorList) {
+        return
+                movieActorList
                         .stream()
-                        .map(MovieActorDTO::fromEntity)
+                        .map(MovieActorDTO::of)
                         .sorted(MovieActorDTO::compareTo)
+                        .toList()
+                ;
+    }
+
+    public <T extends MovieTechnician> List<MovieTechnicianDTO> fromMovieTechnicianListEntity(Supplier<List<T>> getTechnicians) {
+        return
+                getTechnicians.get()
+                        .stream()
+                        .map(MovieTechnicianDTO::of)
                         .toList()
                 ;
     }
@@ -395,6 +416,15 @@ public class PersonService implements PersonServiceInterface {
                 personList
                         .stream()
                         .map(PersonDTO::fromEntity)
+                        .toList()
+                ;
+    }
+
+    public <T extends MovieTechnician> List<MovieTechnicianDTO> fromMovieTechnicianListEntity(List<T> movieTechnicians) {
+        return
+                movieTechnicians
+                        .stream()
+                        .map(MovieTechnicianDTO::of)
                         .toList()
                 ;
     }

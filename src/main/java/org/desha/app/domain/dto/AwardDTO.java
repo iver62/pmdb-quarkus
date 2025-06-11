@@ -28,7 +28,7 @@ public class AwardDTO {
                         .id(award.getId())
                         .ceremony(award.getCeremony())
                         .name(award.getName())
-                        .movie(MovieDTO.fromEntity(award.getMovie()))
+                        .movie(MovieDTO.of(award.getMovie()))
                         .persons(PersonDTO.fromEntitySet(award.getPersonSet()))
                         .year(award.getYear())
                         .build();

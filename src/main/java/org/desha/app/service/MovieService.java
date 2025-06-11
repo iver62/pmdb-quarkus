@@ -10,7 +10,6 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.domain.record.Repartition;
@@ -23,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -92,7 +92,7 @@ public class MovieService {
         return
                 movieRepository.findByIdWithCountriesAndGenres(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .map(movie -> MovieDTO.fromEntity(movie, movie.getGenres(), movie.getCountries()))
+                        .map(movie -> MovieDTO.of(movie, movie.getGenres(), movie.getCountries()))
                 ;
     }
 
@@ -104,7 +104,7 @@ public class MovieService {
                                 movieList ->
                                         movieList
                                                 .stream()
-                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards().size()))
+                                                .map(movie -> MovieDTO.of(movie, movie.getAwards().size()))
                                                 .toList()
                         )
                 ;
@@ -118,7 +118,7 @@ public class MovieService {
                                 movieList ->
                                         movieList
                                                 .stream()
-                                                .map(movie -> MovieDTO.fromEntity(movie, movie.getAwards().size()))
+                                                .map(movie -> MovieDTO.of(movie, movie.getAwards().size()))
                                                 .toList()
                         )
                 ;
@@ -134,7 +134,7 @@ public class MovieService {
                         .onItem().ifNotNull()
                         .transform(movieList ->
                                 movieList.stream()
-                                        .map(movie -> MovieDTO.fromEntity(movie, null, null, null))
+                                        .map(MovieDTO::of)
                                         .toList()
                         )
                         .onFailure().recoverWithItem(Collections.emptyList())
@@ -178,23 +178,27 @@ public class MovieService {
     }
 
     /**
-     * Récupère un ensemble de personnes associées à un film spécifique.
+     * Récupère un ensemble de techniciens associés à un film spécifique.
      *
-     * @param id           L'identifiant du film.
-     * @param peopleGetter Fonction permettant de récupérer le bon ensemble de personnes depuis l'entité {@link Movie}.
-     * @param errorMessage Message d'erreur en cas de liste non initialisée.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link PersonDTO} correspondant aux personnes du film.
+     * @param id                L'identifiant du film.
+     * @param techniciansGetter Fonction permettant de récupérer le bon ensemble de techniciens depuis l'entité {@link Movie}.
+     * @param errorMessage      Message d'erreur en cas de liste non initialisée.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link PersonDTO} correspondant aux techniciens du film.
      * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si l'ensemble des personnes n'est pas initialisé pour ce film.
+     * @throws IllegalStateException    Si la liste des techniciens n'est pas initialisée pour ce film.
      */
-    public Uni<Set<PersonDTO>> getPeopleByMovie(Long id, Function<Movie, Set<Person>> peopleGetter, String errorMessage) {
+    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> getMovieTechniciansByMovie(Long id, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                         .flatMap(movie ->
-                                Mutiny.fetch(peopleGetter.apply(movie))
+                                Mutiny.fetch(techniciansGetter.apply(movie))
                                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                                        .map(personService::fromPersonSetEntity)
+                                        .map(ts ->
+                                                ts.stream()
+                                                        .map(MovieTechnicianDTO::of)
+                                                        .toList()
+                                        )
                         )
                 ;
     }
@@ -243,22 +247,23 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .map(movie ->
                                                 TechnicalTeamDTO.build(
-                                                        personService.fromPersonSetEntity(movie.getProducers()),
-                                                        personService.fromPersonSetEntity(movie.getDirectors()),
-                                                        personService.fromPersonSetEntity(movie.getScreenwriters()),
-                                                        personService.fromPersonSetEntity(movie.getDialogueWriters()),
-                                                        personService.fromPersonSetEntity(movie.getMusicians()),
-                                                        personService.fromPersonSetEntity(movie.getPhotographers()),
-                                                        personService.fromPersonSetEntity(movie.getCostumiers()),
-                                                        personService.fromPersonSetEntity(movie.getDecorators()),
-                                                        personService.fromPersonSetEntity(movie.getEditors()),
-                                                        personService.fromPersonSetEntity(movie.getCasters()),
-                                                        personService.fromPersonSetEntity(movie.getArtDirectors()),
-                                                        personService.fromPersonSetEntity(movie.getSoundEditors()),
-                                                        personService.fromPersonSetEntity(movie.getVisualEffectsSupervisors()),
-                                                        personService.fromPersonSetEntity(movie.getMakeupArtists()),
-                                                        personService.fromPersonSetEntity(movie.getHairDressers()),
-                                                        personService.fromPersonSetEntity(movie.getStuntmen())
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieProducers),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieDirectors),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieScreenwriters),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieDialogueWriters),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieMusicians),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMoviePhotographers),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieCostumiers),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieDecorators),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieEditors),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieCasters),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieArtists),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieSoundEditors),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieVfxSupervisors),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieSfxSupervisors),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieMakeupArtists),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieHairDressers),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieStuntmen)
                                                 )
                                         )
                         )
@@ -328,7 +333,7 @@ public class MovieService {
                                 return Uni.createFrom().failure(new WebApplicationException("Le film existe déjà.", 409));
                             }
 
-                            Movie movie = Movie.fromDTO(movieDTO);
+                            Movie movie = Movie.of(movieDTO);
 
                             return Panache.withTransaction(() ->
                                     // Récupérer les pays et les genres en parallèle
@@ -371,188 +376,49 @@ public class MovieService {
                         });
     }
 
-    public Uni<TechnicalTeamDTO> saveTechnicalTeam(Long id, TechnicalTeamDTO technicalTeam) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(
-                                                movie ->
-                                                        personService.getByIds(technicalTeam.getProducers())
-                                                                .invoke(personSet -> {
-                                                                    personSet.forEach(person -> person.getTypes().add(PersonType.PRODUCER));
-                                                                    movie.setProducers(personSet);
-                                                                })
-                                                                .chain(() -> personService.getByIds(technicalTeam.getDirectors())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.DIRECTOR));
-                                                                            movie.setDirectors(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getScreenwriters())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.SCREENWRITER));
-                                                                            movie.setScreenwriters(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getDialogueWriters())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.DIALOGUE_WRITER));
-                                                                            movie.setDialogueWriters(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getMusicians())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.MUSICIAN));
-                                                                            movie.setMusicians(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getPhotographers())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.PHOTOGRAPHER));
-                                                                            movie.setPhotographers(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getCostumiers())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.COSTUMIER));
-                                                                            movie.setCostumiers(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getDecorators())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.DECORATOR));
-                                                                            movie.setDecorators(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getEditors())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.EDITOR));
-                                                                            movie.setEditors(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getCasters())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.CASTER));
-                                                                            movie.setCasters(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getArtDirectors())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.ART_DIRECTOR));
-                                                                            movie.setArtDirectors(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getSoundEditors())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.SOUND_EDITOR));
-                                                                            movie.setSoundEditors(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getVisualEffectsSupervisors())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.VISUAL_EFFECTS_SUPERVISOR));
-                                                                            movie.setVisualEffectsSupervisors(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getMakeupArtists())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.MAKEUP_ARTIST));
-                                                                            movie.setMakeupArtists(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getHairDressers())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.HAIR_DRESSER));
-                                                                            movie.setHairDressers(personSet);
-                                                                        })
-                                                                )
-                                                                .chain(() -> personService.getByIds(technicalTeam.getStuntmen())
-                                                                        .invoke(personSet -> {
-                                                                            personSet.forEach(person -> person.getTypes().add(PersonType.STUNT_MAN));
-                                                                            movie.setStuntmen(personSet);
-                                                                        })
-                                                                )
-                                                                .invoke(() -> movie.setLastUpdate(LocalDateTime.now()))
-                                        )
-                                        .map(TechnicalTeamDTO::fromEntity)
+    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> saveTechnicians(
+            Long id,
+            List<MovieTechnicianDTO> movieTechnicianDTOList,
+            Function<Movie, List<T>> techniciansGetter,
+            BiFunction<Movie, MovieTechnicianDTO, Uni<T>> asyncTechnicianFactory,
+            String errorMessage
+    ) {
+        return Panache.withTransaction(() ->
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                        .chain(movie ->
+                                Mutiny.fetch(techniciansGetter.apply(movie))
+                                        .invoke(existingTechnicians -> movie.removeObsoleteTechnicians(existingTechnicians, movieTechnicianDTOList)) // Supprimer les techniciens obsolètes
+                                        .invoke(existingTechnicians -> movie.updateExistingTechnicians(existingTechnicians, movieTechnicianDTOList)) // Mettre à jour les techniciens existants
+                                        .chain(existingTechnicians -> movie.addTechnicians(movieTechnicianDTOList, techniciansGetter, asyncTechnicianFactory)) // Ajouter les nouveaux techniciens
+                                        .replaceWith(movie)
                         )
-                ;
+                        .chain(movieRepository::persist)
+                        .call(movieActorRepository::flush) // Force la génération des IDs
+                        .flatMap(movie -> movie.fetchAndMapTechniciansList(techniciansGetter, errorMessage))
+        );
     }
 
-    public Uni<List<MovieActorDTO>> saveCast(Long id, List<MovieActorDTO> movieActorsList) {
-        Map<Long, String> roleMap = movieActorsList.stream()
-                .collect(Collectors.toMap(dto -> dto.getActor().getId(), MovieActorDTO::getRole));
-        Map<Long, Integer> rankMap = movieActorsList.stream()
-                .collect(Collectors.toMap(dto -> dto.getActor().getId(), MovieActorDTO::getRank));
-
+    public Uni<List<MovieActorDTO>> saveCast(
+            Long id,
+            List<MovieActorDTO> movieActorsDTOList,
+            BiFunction<Movie, MovieActorDTO, Uni<MovieActor>> asyncActorFactory
+    ) {
         return
                 Panache.withTransaction(() ->
                         movieRepository.findById(id)
                                 .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                .flatMap(movie ->
+                                .chain(movie ->
                                         Mutiny.fetch(movie.getMovieActors())
-                                                .flatMap(existingMovieActors -> {
-                                                    // Map existants
-                                                    Map<Long, MovieActor> existingActorMap = existingMovieActors.stream()
-                                                            .collect(Collectors.toMap(ma -> ma.getActor().getId(), ma -> ma));
-
-                                                    // IDs des nouveaux acteurs à ajouter
-                                                    List<Long> newActorIds = new ArrayList<>();
-
-                                                    // MàJ des acteurs existants ou ajout à la liste des nouveaux
-                                                    for (MovieActorDTO dto : movieActorsList) {
-                                                        if (Objects.isNull(dto.getActor()) || Objects.isNull(dto.getActor().getId())) {
-                                                            continue;
-                                                        }
-                                                        Long actorId = dto.getActor().getId();
-
-                                                        if (existingActorMap.containsKey(actorId)) {
-                                                            MovieActor existing = existingActorMap.get(actorId);
-                                                            existing.setRole(dto.getRole().trim());
-                                                            existing.setRank(dto.getRank());
-                                                        } else {
-                                                            newActorIds.add(actorId);
-                                                        }
-                                                    }
-
-                                                    // Supprimer les acteurs absents de la nouvelle liste
-                                                    movie.removeMovieActors(
-                                                            existingMovieActors.stream()
-                                                                    .filter(ma -> movieActorsList.stream()
-                                                                            .noneMatch(dto -> dto.getActor().getId().equals(ma.getActor().getId())))
-                                                                    .toList()
-                                                    );
-
-                                                    return
-                                                            personService.getByIds(newActorIds)
-                                                                    .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs acteurs sont introuvables"))
-                                                                    .map(actorList ->
-                                                                            actorList.stream()
-                                                                                    .map(actor ->
-                                                                                            MovieActor.build(
-                                                                                                    movie,
-                                                                                                    actor,
-                                                                                                    roleMap.getOrDefault(actor.getId(), "Inconnu").trim(),
-                                                                                                    rankMap.getOrDefault(actor.getId(), 0)
-                                                                                            )
-                                                                                    )
-                                                                                    .toList()
-                                                                    )
-                                                                    .call(movie::addMovieActors)
-                                                                    .call(statsService::updateActorsStats)
-                                                                    .replaceWith(movie)
-                                                            ;
-                                                })
+                                                .invoke(existingActors -> movie.removeObsoleteActors(movieActorsDTOList)) // Supprimer les acteurs obsolètes
+                                                .invoke(existingActors -> movie.updateExistingActors(movieActorsDTOList)) // Mettre à jour les acteurs existants
+                                                .chain(existingActors -> movie.addMovieActors(movieActorsDTOList, asyncActorFactory)) // Ajouter les nouveaux acteurs
+                                                .replaceWith(movie)
                                 )
                                 .chain(movieRepository::persist)
                                 .call(movieActorRepository::flush) // Force la génération des IDs
-                                .flatMap(movie ->
-                                        Mutiny.fetch(movie.getMovieActors())
-                                                .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
-                                                .map(personService::fromMovieActorListEntity)
-                                )
+                                .call(statsService::updateActorsStats)
+                                .flatMap(Movie::fetchAndMapActorList) // Convertit les entités en DTO
                 );
     }
 
@@ -748,97 +614,38 @@ public class MovieService {
     }
 
     /**
-     * Met à jour la liste des personnes associées à un film en supprimant les anciennes entrées,
-     * en ajoutant de nouvelles personnes et en récupérant celles existantes.
-     *
-     * @param id           L'identifiant du film.
-     * @param personDTOSet L'ensemble des personnes à enregistrer sous forme de {@link PersonDTO}.
-     * @param getPeople    Fonction permettant de récupérer la liste des personnes associées au film (ex: Movie::getProducers).
-     * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} mis à jour des personnes associées au film.
-     * @throws IllegalArgumentException si le film n'est pas trouvé.
-     */
-    public Uni<Set<PersonDTO>> savePeople(Long
-                                                  id, Set<PersonDTO> personDTOSet, Function<Movie, Set<Person>> getPeople) {
-        return Panache.withTransaction(() ->
-                movieRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .chain(movie ->
-                                Mutiny.fetch(getPeople.apply(movie))
-                                        .chain(existingPeople -> {
-                                            Set<Person> updatedPeople = new HashSet<>(existingPeople);
-
-                                            // Supprimer les personnes obsolètes
-                                            updatedPeople.removeIf(existing ->
-                                                    personDTOSet.stream().noneMatch(personDTO ->
-                                                            Objects.nonNull(personDTO.getId()) && personDTO.getId().equals(existing.getId())
-                                                    )
-                                            );
-
-                                            // Ajouter les nouvelles personnes
-                                            personDTOSet.stream()
-                                                    .filter(personDTO -> Objects.isNull(personDTO.getId()))
-                                                    .forEach(personDTO -> {
-                                                        Person newPerson = Person.build(personDTO);
-                                                        updatedPeople.add(newPerson);
-                                                    });
-
-                                            // Récupérer et ajouter les personnes existantes
-                                            return personService.getByIds(
-                                                            personDTOSet.stream()
-                                                                    .map(PersonDTO::getId)
-                                                                    .filter(Objects::nonNull)
-                                                                    .filter(idToCheck -> existingPeople.stream()
-                                                                            .noneMatch(person -> person.getId().equals(idToCheck)))
-                                                                    .toList()
-                                                    )
-                                                    .invoke(updatedPeople::addAll)
-                                                    .map(foundPeople -> {
-                                                        updatedPeople.addAll(foundPeople);
-                                                        getPeople.apply(movie).clear();
-                                                        getPeople.apply(movie).addAll(updatedPeople);
-                                                        return updatedPeople;
-                                                    });
-                                        })
-                        )
-                        .map(updatedPeople ->
-                                updatedPeople.stream()
-                                        .map(PersonDTO::fromEntity)
-                                        .collect(Collectors.toSet())
-                        )
-        );
-    }
-
-    /**
      * Ajoute des personnes à un film en fonction d'un ensemble de DTO et d'un service associé.
      *
-     * @param id           L'identifiant du film auquel les personnes doivent être ajoutées.
-     * @param personDTOSet L'ensemble des personnes à ajouter, sous forme de DTO.
-     * @param getPeople    Une fonction permettant de récupérer l'ensemble des personnes déjà associées au film.
-     * @param errorMessage Le message d'erreur à utiliser en cas d'échec de l'opération.
+     * @param id                     L'identifiant du film auquel les personnes doivent être ajoutées.
+     * @param movieTechnicianDTOList L'ensemble des personnes à ajouter, sous forme de DTO.
+     * @param techniciansGetter      Une fonction permettant de récupérer l'ensemble des personnes déjà associées au film.
+     * @param errorMessage           Le message d'erreur à utiliser en cas d'échec de l'opération.
      * @return Une instance de {@link Uni} contenant l'ensemble des personnes ajoutées sous forme de {@link PersonDTO}.
      * En cas d'erreur, une exception est levée avec un message approprié.
      * @throws IllegalArgumentException Si le film n'est pas trouvé ou si certaines personnes sont introuvables.
      * @throws IllegalStateException    Si une erreur se produit lors de la récupération des personnes après la mise à jour.
      */
-    public Uni<Set<PersonDTO>> addPeople(Long
-                                                 id, Set<PersonDTO> personDTOSet, Function<Movie, Set<Person>> getPeople, String errorMessage) {
+    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> addTechnicians(
+            Long id,
+            List<MovieTechnicianDTO> movieTechnicianDTOList,
+            Function<Movie, List<T>> techniciansGetter,
+            BiFunction<Movie, MovieTechnicianDTO, Uni<T>> asyncTechnicianFactory,
+            String errorMessage
+    ) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .flatMap(movie ->
-                                                personService.getByIds(personDTOSet)
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Une ou plusieurs personnes sont introuvables"))
-                                                        .call(personSet -> movie.addPeople(getPeople.apply(movie), personSet, errorMessage))
+                                        .chain(movie ->
+                                                Mutiny.fetch(techniciansGetter.apply(movie))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                                                        .chain(existingTechnicians -> movie.addTechnicians(movieTechnicianDTOList, techniciansGetter, asyncTechnicianFactory)) // Ajouter les nouveaux techniciens
                                                         .replaceWith(movie)
                                         )
-                                        .flatMap(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(getPeople.apply(movie))
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                                                        .map(personService::fromPersonSetEntity)
-                                        )
+                                        .chain(movieRepository::persist)
+                                        .call(movieActorRepository::flush) // Force la génération des IDs
+                                        .flatMap(movie -> movie.fetchAndMapTechniciansList(techniciansGetter, errorMessage))
                         )
                 ;
     }
@@ -846,19 +653,38 @@ public class MovieService {
     /**
      * Ajoute une liste d'acteurs à un film existant.
      *
-     * @param movieId          L'identifiant du film auquel les acteurs doivent être ajoutés.
-     * @param movieActorDTOSet Un ensemble d'objets {@link MovieActorDTO} représentant les acteurs à ajouter.
+     * @param id                L'identifiant du film auquel les acteurs doivent être ajoutés.
+     * @param movieActorDTOList Un ensemble d'objets {@link MovieActorDTO} représentant les acteurs à ajouter.
      * @return Un {@link Uni} contenant un {@link List} de {@link MovieActorDTO} mis à jour après l'ajout des acteurs.
      * @throws IllegalArgumentException si le film ou certains acteurs ne sont pas trouvés.
      * @throws IllegalStateException    si la liste des acteurs n'est pas initialisée pour ce film.
      */
-    public Uni<List<MovieActorDTO>> addMovieActors(Long movieId, Set<MovieActorDTO> movieActorDTOSet) {
+    public Uni<List<MovieActorDTO>> addMovieActors(
+            Long id,
+            List<MovieActorDTO> movieActorDTOList,
+            BiFunction<Movie, MovieActorDTO, Uni<MovieActor>> asyncActorFactory
+    ) {
         // Création d'une map pour récupérer directement les DTO associés aux IDs des acteurs
-        Map<Long, MovieActorDTO> actorDTOMap = movieActorDTOSet.stream()
-                .collect(Collectors.toMap(dto -> dto.getActor().getId(), dto -> dto));
+//        Map<Long, MovieActorDTO> actorDTOMap = movieActorDTOSet.stream()
+//                .collect(Collectors.toMap(dto -> dto.getPerson().getId(), dto -> dto));
 
         return
-                Panache
+                Panache.withTransaction(() ->
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                        .chain(movie ->
+                                                        Mutiny.fetch(movie.getMovieActors())
+//                                                .invoke(existingActors -> movie.removeObsoleteActors(movieActorsDTOList)) // Supprimer les acteurs obsolètes
+//                                                .invoke(existingActors -> movie.updateExistingActors(movieActorsDTOList)) // Mettre à jour les acteurs existants
+                                                                .chain(existingActors -> movie.addMovieActors(movieActorDTOList, asyncActorFactory)) // Ajouter les nouveaux acteurs
+                                                                .replaceWith(movie)
+                                        )
+                                        .chain(movieRepository::persist)
+                                        .call(movieActorRepository::flush) // Force la génération des IDs
+                                        .call(statsService::updateActorsStats)
+                                        .flatMap(Movie::fetchAndMapActorList) // Convertit les entités en DTO
+                );
+                /*Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
@@ -866,7 +692,7 @@ public class MovieService {
                                                 personService.getByIds(
                                                                 movieActorDTOSet
                                                                         .stream()
-                                                                        .map(movieActorDTO -> movieActorDTO.getActor().getId())
+                                                                        .map(movieActorDTO -> movieActorDTO.getPerson().getId())
                                                                         .toList()
                                                         )
                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs acteurs sont introuvables"))
@@ -874,7 +700,7 @@ public class MovieService {
                                                                 actorList.stream()
                                                                         .map(actor -> {
                                                                                     MovieActorDTO dto = actorDTOMap.get(actor.getId());
-                                                                                    return MovieActor.build(movie, actor, dto.getRole().trim(), dto.getRank());
+                                                                                    return MovieActor.of(movie, actor, dto.getRole().trim(), dto.getRank());
                                                                                 }
                                                                         )
                                                                         .toList()
@@ -890,7 +716,7 @@ public class MovieService {
                                                         .map(personService::fromMovieActorListEntity)
                                         )
                         )
-                ;
+                ;*/
     }
 
     /**
@@ -987,27 +813,31 @@ public class MovieService {
     /**
      * Retire une personne spécifique d'un film.
      *
-     * @param movieId      L'identifiant du film.
-     * @param personId     L'identifiant de la personne à retirer.
-     * @param peopleGetter Fonction permettant d'obtenir la liste des personnes à modifier depuis l'entité {@link Movie}.
-     * @param errorMessage Message d'erreur si la liste des personnes n'est pas initialisée.
+     * @param movieId           L'identifiant du film.
+     * @param personId          L'identifiant de la personne à retirer.
+     * @param techniciansGetter Fonction permettant d'obtenir la liste des personnes à modifier depuis l'entité {@link Movie}.
+     * @param errorMessage      Message d'erreur si la liste des personnes n'est pas initialisée.
      * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} :
      * @throws IllegalArgumentException Si le film n'est pas trouvé.
      * @throws IllegalStateException    si la collection de personnes n'est pas initialisée pour ce film.
      */
-    public Uni<Set<PersonDTO>> removePerson(Long movieId, Long
-            personId, Function<Movie, Set<Person>> peopleGetter, String errorMessage) {
+    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> removeTechnician(
+            Long movieId,
+            Long personId,
+            Function<Movie, List<T>> techniciansGetter,
+            String errorMessage
+    ) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(movie -> movie.removePerson(peopleGetter.apply(movie), personId, errorMessage))
+                                        .call(movie -> movie.removeTechnician(techniciansGetter, personId, errorMessage))
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
-                                                Mutiny.fetch(peopleGetter.apply(movie))
+                                                Mutiny.fetch(techniciansGetter.apply(movie))
                                                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                                                        .map(personService::fromPersonSetEntity)
+                                                        .map(personService::fromMovieTechnicianListEntity)
                                         )
                         )
                 ;
@@ -1113,7 +943,7 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Movie> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
+    public Uni<MovieDTO> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1181,6 +1011,7 @@ public class MovieService {
                                                                                         Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();
                                                                                         return releaseDateUpdate.chain(() -> genreUpdate.chain(() -> countryUpdate)).replaceWith(entity);
                                                                                     })
+                                                                                    .map(entity -> MovieDTO.of(movie, movie.getGenres(), movie.getCountries()))
                                                                     );
                                                 })
                         );
@@ -1217,20 +1048,20 @@ public class MovieService {
      * elle appelle la méthode `clearPersons` sur le film pour le vider. Si l'ensemble est nul ou si le film n'est pas trouvé,
      * une exception est levée. Enfin, le film est persisté après l'opération.
      *
-     * @param id           L'identifiant du film dont les personnes associées doivent être supprimées.
-     * @param peopleGetter Une fonction permettant d'obtenir l'ensemble des personnes à partir du film (par exemple, acteurs ou réalisateurs).
-     * @param errorMessage Le message d'erreur à utiliser si l'ensemble des personnes est nul.
+     * @param id                L'identifiant du film dont les personnes associées doivent être supprimées.
+     * @param techniciansGetter Une fonction permettant d'obtenir l'ensemble des personnes à partir du film (par exemple, acteurs ou réalisateurs).
+     * @param errorMessage      Le message d'erreur à utiliser si l'ensemble des personnes est nul.
      * @return Un {@link Uni} contenant `true` si l'opération a été réalisée avec succès.
      * @throws IllegalArgumentException Si le film n'est pas trouvé.
      * @throws WebApplicationException  Si une erreur se produit lors de la suppression des personnes.
      */
-    public Uni<Boolean> clearPersons(Long id, Function<Movie, Set<Person>> peopleGetter, String errorMessage) {
+    public <T extends MovieTechnician> Uni<Boolean> clearTechnicians(Long id, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(movie -> movie.clearPersons(peopleGetter.apply(movie), errorMessage))
+                                        .call(movie -> movie.clearPersons(techniciansGetter.apply(movie), errorMessage))
                                         .call(movieRepository::persist)
                                         .map(movie -> true)
                         )
