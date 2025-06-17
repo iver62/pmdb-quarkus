@@ -90,7 +90,13 @@ public class Movie extends PanacheEntityBase {
     private List<MovieDirector> movieDirectors = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieAssistantDirector> movieAssistantDirectors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieScreenwriter> movieScreenwriters = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieComposer> movieComposers = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieMusician> movieMusicians = new ArrayList<>();

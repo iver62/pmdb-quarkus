@@ -293,6 +293,20 @@ public class MovieResource {
     }
 
     @GET
+    @Path("/{id}/composers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getComposers(@RestPath Long id) {
+        return
+                movieService.getMovieTechniciansByMovie(id, Movie::getMovieComposers, "La liste des compositeurs n'est pas initialisée pour ce film")
+                        .map(movieTechnicianDTOList ->
+                                movieTechnicianDTOList.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOList).build()
+                        )
+                ;
+    }
+
+    @GET
     @Path("/{id}/musicians")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMusicians(@RestPath Long id) {
@@ -823,6 +837,35 @@ public class MovieResource {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                             .entity("Erreur lors de la mise à jour des scénaristes")
+                                            .build();
+                                }
+                        )
+                ;
+    }
+
+    @PUT
+    @Path("/{id}/composers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> saveComposers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        if (Objects.isNull(movieTechnicianDTOList)) {
+            throw new BadRequestException("La liste des compositeurs ne peut pas être nulle.");
+        }
+
+        return
+                movieService.saveTechnicians(
+                                id,
+                                movieTechnicianDTOList,
+                                Movie::getMovieComposers,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COMPOSER)
+                                        .map(person -> MovieComposer.of(movie, person, dto.getRole())),
+                                "La liste des compositeurs n'est pas initialisée"
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                        .onFailure().recoverWithItem(e -> {
+                                    log.error(e.getMessage());
+                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity("Erreur lors de la mise à jour des compositeurs")
                                             .build();
                                 }
                         )
@@ -1397,6 +1440,41 @@ public class MovieResource {
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SCREENWRITER)
                                         .map(person -> MovieScreenwriter.of(movie, person, dto.getRole())),
                                 "La liste des scénaristes n'est pas initialisée"
+                        )
+                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                                movieTechnicianDTOs.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOs).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute une liste de compositeurs à un film spécifique.
+     *
+     * @param id                     L'identifiant du film auquel les compositeurs doivent être ajoutés.
+     * @param movieTechnicianDTOList La liste des compositeurs à ajouter sous forme de {@link MovieTechnicianDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des compositeurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("/{id}/composers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> addComposers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        if (Objects.isNull(movieTechnicianDTOList)) {
+            throw new BadRequestException("La liste des compositeurs ne peut pas être nulle.");
+        }
+
+        return
+                movieService.addTechnicians(
+                                id,
+                                movieTechnicianDTOList,
+                                Movie::getMovieComposers,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COMPOSER)
+                                        .map(person -> MovieComposer.of(movie, person, dto.getRole())),
+                                "La liste des compositeurs n'est pas initialisée"
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
@@ -2055,6 +2133,34 @@ public class MovieResource {
     }
 
     /**
+     * Supprime un compositeur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId    L'identifiant du film concerné.
+     * @param composerId L'identifiant du compositeur à supprimer du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des compositeurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
+    @Path("/{movieId}/composers/{composerId}")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> removeComposer(@RestPath Long movieId, @RestPath Long composerId) {
+        return
+                movieService.removeTechnician(movieId, composerId, Movie::getMovieComposers, "La liste des compositeurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                                movieTechnicianDTOs.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOs).build()
+                        )
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression du compositeur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
+                ;
+    }
+
+    /**
      * Supprime un musicien d'un film spécifique et retourne une réponse HTTP appropriée.
      *
      * @param movieId    L'identifiant du film concerné.
@@ -2577,6 +2683,26 @@ public class MovieResource {
     public Uni<Response> deleteScreenwriters(@RestPath Long id) {
         return
                 movieService.clearTechnicians(id, Movie::getMovieScreenwriters, "La liste des scénaristes n'est pas initialisée")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les compositeurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les compositeurs associés à un film en appelant la méthode
+     * {@link MovieService#clearTechnicians(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les compositeurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les compositeurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des compositeurs.
+     */
+    @DELETE
+    @Path("/{id}/composers")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> deleteComposers(@RestPath Long id) {
+        return
+                movieService.clearTechnicians(id, Movie::getMovieComposers, "La liste des compositeurs n'est pas initialisée")
                         .map(deleted -> Response.ok(deleted).build())
                 ;
     }
