@@ -138,7 +138,6 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                                 Mutiny.fetch(movie.getMovieProducers()).invoke(movie::setMovieProducers)
                                         .call(() -> Mutiny.fetch(movie.getMovieDirectors()).invoke(movie::setMovieDirectors))
                                         .call(() -> Mutiny.fetch(movie.getMovieScreenwriters()).invoke(movie::setMovieScreenwriters))
-                                        .call(() -> Mutiny.fetch(movie.getMovieDialogueWriters()).invoke(movie::setMovieDialogueWriters))
                                         .call(() -> Mutiny.fetch(movie.getMovieMusicians()).invoke(movie::setMovieMusicians))
                                         .call(() -> Mutiny.fetch(movie.getMoviePhotographers()).invoke(movie::setMoviePhotographers))
                                         .call(() -> Mutiny.fetch(movie.getMovieCostumiers()).invoke(movie::setMovieCostumiers))
