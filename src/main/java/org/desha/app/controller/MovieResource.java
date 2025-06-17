@@ -560,23 +560,23 @@ public class MovieResource {
     }
 
     /**
-     * Récupère les genres associés à un film donné.
+     * Récupère les catégories associées à un film donné.
      *
      * @param id L'ID du film.
      * @return Une réponse HTTP :
-     * - 200 (OK) avec la liste des genres si elle n'est pas vide.
-     * - 204 si la liste des genres est vide.
+     * - 200 (OK) avec la liste des catégories si elle n'est pas vide.
+     * - 204 si la liste des catégories est vide.
      */
     @GET
-    @Path("/{id}/genres")
+    @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getGenres(@RestPath Long id) {
+    public Uni<Response> getCategories(@RestPath Long id) {
         return
-                movieService.getGenresByMovie(id)
-                        .map(genreDTOS ->
-                                genreDTOS.isEmpty()
+                movieService.getCategoriesByMovie(id)
+                        .map(categoryDTOSet ->
+                                categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(genreDTOS).build()
+                                        : Response.ok(categoryDTOSet).build()
                         )
                 ;
     }
@@ -1207,33 +1207,33 @@ public class MovieResource {
     }
 
     /**
-     * Met à jour les genres associés à un film donné.
+     * Met à jour les catégories associées à un film donné.
      * <p>
-     * Cette méthode permet d'ajouter ou de mettre à jour les genres d'un film
+     * Cette méthode permet d'ajouter ou de mettre à jour les catégories d'un film
      * en fonction des identifiants fournis.
      *
-     * @param id        L'identifiant du film dont les genres doivent être mis à jour.
-     * @param genreDTOS Un ensemble de {@link GenreDTO} représentant les genres à associer.
+     * @param id           L'identifiant du film dont les catégories doivent être mises à jour.
+     * @param categoryDTOS Un ensemble de {@link CategoryDTO} représentant les catégories à associer.
      * @return Un {@link Uni} contenant une réponse HTTP :
-     * - `200 OK` avec la liste des genres mise à jour.
-     * - `204 No Content` si aucun genre n'est associé.
+     * - `200 OK` avec la liste des catégories mises à jour.
+     * - `204 No Content` si aucune catégorie n'est associée.
      * - `500 Server Error` si la mise à jour échoue.
-     * @throws BadRequestException si la liste des genres est `null`.
+     * @throws BadRequestException si la liste des catégories est `null`.
      */
     @PUT
-    @Path("/{id}/genres")
+    @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> saveGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
-        if (Objects.isNull(genreDTOS)) {
-            throw new BadRequestException("La liste des genres ne peut pas être nulle.");
+    public Uni<Response> saveCategories(@RestPath Long id, Set<CategoryDTO> categoryDTOS) {
+        if (Objects.isNull(categoryDTOS)) {
+            throw new BadRequestException("La liste des catégories ne peut pas être nulle.");
         }
 
         return
-                movieService.saveGenres(id, genreDTOS)
-                        .onItem().ifNotNull().transform(genreDTOSet ->
-                                genreDTOSet.isEmpty()
+                movieService.saveCategories(id, categoryDTOS)
+                        .onItem().ifNotNull().transform(categoryDTOSet ->
+                                categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(genreDTOSet).build()
+                                        : Response.ok(categoryDTOSet).build()
                         )
                         .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
                 ;
@@ -1887,28 +1887,28 @@ public class MovieResource {
     }
 
     /**
-     * Ajoute un ensemble de genres à un film spécifique.
+     * Ajoute un ensemble de catégories à un film spécifique.
      *
-     * @param id        L'identifiant du film auquel les genres doivent être ajoutés.
-     * @param genreDTOS L'ensemble des genres à ajouter, représentés sous forme de DTO.
-     * @return Une réponse HTTP contenant le film mis à jour avec ses nouveaux genres :
+     * @param id           L'identifiant du film auquel les catégories doivent être ajoutées.
+     * @param categoryDTOS L'ensemble des catégories à ajouter, représentées sous forme de DTO.
+     * @return Une réponse HTTP contenant le film mis à jour avec ses nouvelles catégories :
      * - 200 OK si l'opération réussit et retourne l'entité mise à jour.
      * - 500 Server Error si l'ajout échoue.
      */
     @PATCH
-    @Path("/{id}/genres")
+    @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> addGenres(@RestPath Long id, Set<GenreDTO> genreDTOS) {
-        if (Objects.isNull(genreDTOS)) {
-            throw new BadRequestException("La liste des genres ne peut pas être nulle.");
+    public Uni<Response> addCategories(@RestPath Long id, Set<CategoryDTO> categoryDTOS) {
+        if (Objects.isNull(categoryDTOS)) {
+            throw new BadRequestException("La liste des catégories ne peut pas être nulle.");
         }
 
         return
-                movieService.addGenres(id, genreDTOS)
-                        .onItem().ifNotNull().transform(genreDTOSet ->
-                                genreDTOSet.isEmpty()
+                movieService.addCategories(id, categoryDTOS)
+                        .onItem().ifNotNull().transform(categoryDTOSet ->
+                                categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(genreDTOSet).build()
+                                        : Response.ok(categoryDTOSet).build()
                         )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -2443,24 +2443,24 @@ public class MovieResource {
     }
 
     /**
-     * Supprime un genre spécifique d'un film donné.
+     * Supprime une catégorie spécifique d'un film donné.
      *
-     * @param movieId L'identifiant du film dont le genre doit être supprimé.
-     * @param genreId L'identifiant du genre à supprimer.
-     * @return Une réponse HTTP contenant le film mis à jour après la suppression du genre :
+     * @param movieId    L'identifiant du film dont la catégorie doit être supprimée.
+     * @param categoryId L'identifiant de la catégorie à supprimer.
+     * @return Une réponse HTTP contenant le film mis à jour après la suppression de la catégorie :
      * - 200 OK si la suppression est réussie et retourne l'entité mise à jour.
      * - 500 Internal Server Error en cas d'erreur interne.
      */
     @PATCH
-    @Path("/{movieId}/genres/{genreId}")
+    @Path("/{movieId}/categories/{categoryId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeGenre(@RestPath Long movieId, @RestPath Long genreId) {
+    public Uni<Response> removeCategory(@RestPath Long movieId, @RestPath Long categoryId) {
         return
-                movieService.removeGenre(movieId, genreId)
-                        .onItem().ifNotNull().transform(genreDTOSet ->
-                                genreDTOSet.isEmpty()
+                movieService.removeCategory(movieId, categoryId)
+                        .onItem().ifNotNull().transform(categoryDTOSet ->
+                                categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(genreDTOSet).build()
+                                        : Response.ok(categoryDTOSet).build()
                         )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -2842,20 +2842,20 @@ public class MovieResource {
     }
 
     /**
-     * Supprime tous les genres associés à un film donné.
+     * Supprime toutes les catégories associées à un film donné.
      * <p>
-     * Cette méthode permet de supprimer tous les genres associés à un film en appelant la méthode
-     * {@link MovieService#clearGenres(Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     * Cette méthode permet de supprimer toutes les catégories associées à un film en appelant la méthode
+     * {@link MovieService#clearCategories(Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
      *
-     * @param id L'identifiant du film dont les genres doivent être supprimés.
-     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les genres ont été supprimés avec succès.
-     * @throws WebApplicationException Si une erreur survient lors de la suppression des genres.
+     * @param id L'identifiant du film dont les catégories doivent être supprimées.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les catégories ont été supprimées avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des catégories.
      */
     @DELETE
-    @Path("/{id}/genres")
+    @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> deleteGenres(@RestPath Long id) {
-        return movieService.clearGenres(id).map(deleted -> Response.ok(deleted).build());
+    public Uni<Response> deleteCategories(@RestPath Long id) {
+        return movieService.clearCategories(id).map(deleted -> Response.ok(deleted).build());
     }
 
     /**

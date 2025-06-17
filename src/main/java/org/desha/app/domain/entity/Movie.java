@@ -10,9 +10,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.dto.MovieActorDTO;
-import org.desha.app.domain.dto.MovieDTO;
-import org.desha.app.domain.dto.MovieTechnicianDTO;
+import org.desha.app.domain.dto.*;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
@@ -153,7 +151,7 @@ public class Movie extends PanacheEntityBase {
             joinColumns = @JoinColumn(name = "fk_film"),
             inverseJoinColumns = @JoinColumn(name = "fk_genre")
     )
-    private Set<Genre> genres = new HashSet<>();
+    private Set<Category> categories = new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -178,7 +176,9 @@ public class Movie extends PanacheEntityBase {
                 .synopsis(StringUtils.defaultString(movieDTO.getSynopsis()).trim())
                 .runningTime(movieDTO.getRunningTime())
                 .budget(movieDTO.getBudget())
+                .budgetCurrency(movieDTO.getBudgetCurrency())
                 .boxOffice(movieDTO.getBoxOffice())
+                .boxOfficeCurrency(movieDTO.getBoxOfficeCurrency())
                 .posterFileName(movieDTO.getPosterFileName())
                 .user(User.fromDTO(movieDTO.getUser()))
                 .build();
@@ -265,19 +265,19 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Ajoute un ensemble de genres à la collection existante.
+     * Ajoute un ensemble de catégories à la collection existante.
      *
-     * @param genreSet L'ensemble des genres à ajouter.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des genres après l'ajout.
-     * @throws IllegalStateException Si la collection existante des genres est null.
+     * @param categorySet L'ensemble des catégories à ajouter.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des catégories après l'ajout.
+     * @throws IllegalStateException Si la collection existante des catégories est nulle.
      */
-    public Uni<Set<Genre>> addGenres(Set<Genre> genreSet) {
+    public Uni<Set<Category>> addCategories(Set<Category> categorySet) {
         return
-                Mutiny.fetch(genres)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("Genres non initialisés"))
-                        .invoke(fetchGenres -> {
-                            if (Objects.nonNull(genreSet)) {
-                                fetchGenres.addAll(genreSet);
+                Mutiny.fetch(categories)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des catégories n'est pas initialisé"))
+                        .invoke(fetchCategories -> {
+                            if (Objects.nonNull(categorySet)) {
+                                fetchCategories.addAll(categorySet);
                             }
                         })
                 ;
@@ -293,7 +293,7 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
         return
                 Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés"))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
                         .invoke(fetchCountries -> {
                             if (Objects.nonNull(countrySet)) {
                                 fetchCountries.addAll(countrySet);
@@ -312,7 +312,7 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<Award>> addAwards(Set<Award> awardSet) {
         return
                 Mutiny.fetch(awards)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La collection des récompenses n'est pas initialisés"))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
                         .invoke(fetchAwards -> {
                             if (Objects.nonNull(awardSet)) {
                                 fetchAwards.addAll(awardSet);
@@ -354,17 +354,17 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Retire un genre de la collection existante en fonction de son ID.
+     * Retire une catégorie de la collection existante en fonction de son ID.
      *
-     * @param id L'ID du genre à supprimer.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des genres après la suppression.
-     * @throws IllegalStateException Si la collection existante des genres est null.
+     * @param id L'ID de la catégorie à supprimer.
+     * @return Un {@link Uni} contenant l'ensemble mis à jour des catégories après la suppression.
+     * @throws IllegalStateException Si la collection existante des catégories est null.
      */
-    public Uni<Set<Genre>> removeGenre(Long id) {
+    public Uni<Set<Category>> removeCategory(Long id) {
         return
-                Mutiny.fetch(genres)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des genres n'est pas initialisé"))
-                        .invoke(fetchGenres -> fetchGenres.removeIf(genre -> Objects.equals(genre.getId(), id)))
+                Mutiny.fetch(categories)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des catégories n'est pas initialisé"))
+                        .invoke(fetchCategories -> fetchCategories.removeIf(category -> Objects.equals(category.getId(), id)))
                 ;
     }
 
@@ -424,19 +424,19 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Vide l'ensemble des genres associés à un objet.
+     * Vide l'ensemble des catégories associées à un objet.
      * <p>
-     * Cette méthode permet de vider la collection des genres associés à l'objet en utilisant la méthode
-     * {@link Set#clear()}. Elle vérifie également si l'ensemble des genres est correctement initialisé.
-     * Si la collection des genres est nulle, une exception est levée.
+     * Cette méthode permet de vider la collection des catégories associées à l'objet en utilisant la méthode
+     * {@link Set#clear()}. Elle vérifie également si l'ensemble des catégories est correctement initialisé.
+     * Si la collection des catégories est nulle, une exception est levée.
      *
-     * @return Un {@link Uni} contenant un ensemble vide de genres après avoir vidé la collection.
-     * @throws IllegalStateException Si l'ensemble des genres n'est pas initialisé (null).
+     * @return Un {@link Uni} contenant un ensemble vide de catégories après avoir vidé la collection.
+     * @throws IllegalStateException Si l'ensemble des catégories n'est pas initialisé (null).
      */
-    public Uni<Set<Genre>> clearGenres() {
+    public Uni<Set<Category>> clearCategories() {
         return
-                Mutiny.fetch(genres)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des genres n'est pas initialisé"))
+                Mutiny.fetch(categories)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des catégories n'est pas initialisé"))
                         .invoke(Set::clear)
                 ;
     }
@@ -501,6 +501,60 @@ public class Movie extends PanacheEntityBase {
                                         .map(MovieTechnicianDTO::of)
                                         .toList()
                         )
+                ;
+    }
+
+    /**
+     * Récupère et convertit les catégories associées à un film en objets {@link CategoryDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les catégories d'un film
+     * et les transformer en un ensemble de DTOs. Si la liste des catégories est `null`,
+     * une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble de {@link CategoryDTO}.
+     * @throws IllegalStateException si l'ensemble des catégories n'est pas initialisé.
+     */
+    public Uni<Set<CategoryDTO>> fetchAndMapCategorySet() {
+        return
+                Mutiny.fetch(categories)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des catégories n'est pas initialisé"))
+                        .map(CategoryDTO::fromCategorySetEntity)
+                ;
+    }
+
+    /**
+     * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
+     * et les transformer en un ensemble de DTOs. Si la liste des pays est `null`,
+     * une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.
+     * @throws IllegalStateException si la liste des pays n'est pas initialisée.
+     */
+    public Uni<Set<CountryDTO>> fetchAndMapCountrySet() {
+        return
+                Mutiny.fetch(countries)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
+                        .map(CountryDTO::fromCountryEntitySet)
+                ;
+    }
+
+    /**
+     * Récupère et convertit les récompenses associées à un film en objets {@link AwardDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les récompenses liées à un film
+     * et les transformer en un ensemble de DTOs. Si la liste des récompenses est `null`,
+     * une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble de {@link AwardDTO}.
+     * @throws IllegalStateException si la liste des récompenses n'est pas initialisée.
+     */
+    public Uni<Set<AwardDTO>> fetchAndMapAwardSet() {
+        return
+                Mutiny.fetch(awards)
+                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des récompenses n'est pas initialisé"))
+                        .map(AwardDTO::fromEntitySet)
                 ;
     }
 }

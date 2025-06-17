@@ -7,8 +7,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.AuditGenreListener;
-import org.desha.app.domain.dto.GenreDTO;
+import org.desha.app.domain.AuditCategoryListener;
+import org.desha.app.domain.dto.CategoryDTO;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -23,9 +23,9 @@ import java.util.Set;
 @Getter
 @Setter
 @Table(name = "genre")
-@EntityListeners(AuditGenreListener.class)
+@EntityListeners(AuditCategoryListener.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Genre extends PanacheEntityBase {
+public class Category extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "name";
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "name", "creationDate", "lastUpdate");
@@ -45,14 +45,14 @@ public class Genre extends PanacheEntityBase {
     private LocalDateTime lastUpdate;
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "genres")
+    @ManyToMany(mappedBy = "categories")
     private Set<Movie> movies = new HashSet<>();
 
-    public static Genre fromDTO(GenreDTO genreDTO) {
+    public static Category of(CategoryDTO categoryDTO) {
         return
-                Genre.builder()
-                        .id(genreDTO.getId())
-                        .name(genreDTO.getName())
+                Category.builder()
+                        .id(categoryDTO.getId())
+                        .name(categoryDTO.getName())
                         .build()
                 ;
     }

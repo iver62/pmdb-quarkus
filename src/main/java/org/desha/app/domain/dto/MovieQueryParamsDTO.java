@@ -16,8 +16,8 @@ public class MovieQueryParamsDTO extends QueryParamsDTO {
     @QueryParam("country")
     private List<Integer> countryIds;
 
-    @QueryParam("genre")
-    private List<Integer> genreIds;
+    @QueryParam("category")
+    private List<Integer> categoryIds;
 
     @QueryParam("user")
     private List<UUID> userIds;

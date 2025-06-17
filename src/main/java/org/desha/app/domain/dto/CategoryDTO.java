@@ -2,7 +2,7 @@ package org.desha.app.domain.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Genre;
+import org.desha.app.domain.entity.Category;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -11,28 +11,28 @@ import java.util.stream.Collectors;
 
 @Getter
 @Builder
-public class GenreDTO {
+public class CategoryDTO {
 
     private Long id;
     private String name;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
 
-    public static GenreDTO fromEntity(Genre genre) {
+    public static CategoryDTO of(Category category) {
         return
-                GenreDTO.builder()
-                        .id(genre.getId())
-                        .name(genre.getName())
-                        .creationDate(genre.getCreationDate())
-                        .lastUpdate(genre.getLastUpdate())
+                CategoryDTO.builder()
+                        .id(category.getId())
+                        .name(category.getName())
+                        .creationDate(category.getCreationDate())
+                        .lastUpdate(category.getLastUpdate())
                         .build();
     }
 
-    public static Set<GenreDTO> fromGenreSetEntity(Set<Genre> genreSet) {
+    public static Set<CategoryDTO> fromCategorySetEntity(Set<Category> categorySet) {
         return
-                Optional.ofNullable(genreSet).orElse(Set.of())
+                Optional.ofNullable(categorySet).orElse(Set.of())
                         .stream()
-                        .map(GenreDTO::fromEntity)
+                        .map(CategoryDTO::of)
                         .collect(Collectors.toSet())
                 ;
     }

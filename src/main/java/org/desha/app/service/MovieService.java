@@ -36,7 +36,7 @@ public class MovieService {
     private final AwardService awardService;
     private final CountryService countryService;
     private final FileService fileService;
-    private final GenreService genreService;
+    private final CategoryService categoryService;
     private final PersonService personService;
     private final StatsService statsService;
 
@@ -54,7 +54,7 @@ public class MovieService {
             CountryService countryService,
             CountryRepository countryRepository,
             FileService fileService,
-            GenreService genreService,
+            CategoryService categoryService,
             PersonService personService,
             StatsService statsService,
             MovieRepository movieRepository,
@@ -67,7 +67,7 @@ public class MovieService {
         this.countryService = countryService;
         this.countryRepository = countryRepository;
         this.fileService = fileService;
-        this.genreService = genreService;
+        this.categoryService = categoryService;
         this.movieRepository = movieRepository;
         this.movieActorRepository = movieActorRepository;
         this.userRepository = userRepository;
@@ -90,9 +90,9 @@ public class MovieService {
 
     public Uni<MovieDTO> getById(Long id) {
         return
-                movieRepository.findByIdWithCountriesAndGenres(id)
+                movieRepository.findByIdWithCountriesAndCategories(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .map(movie -> MovieDTO.of(movie, movie.getGenres(), movie.getCountries()))
+                        .map(movie -> MovieDTO.of(movie, movie.getCategories(), movie.getCountries()))
                 ;
     }
 
@@ -169,11 +169,7 @@ public class MovieService {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .flatMap(movie ->
-                                Mutiny.fetch(movie.getMovieActors())
-                                        .onItem().ifNull().failWith(() -> new IllegalStateException("Acteurs non initialisés pour ce film"))
-                                        .map(personService::fromMovieActorListEntity)
-                        )
+                        .flatMap(Movie::fetchAndMapActorList)
                 ;
     }
 
@@ -204,18 +200,18 @@ public class MovieService {
     }
 
     /**
-     * Récupère la liste des genres associés à un film donné.
+     * Récupère la liste des catégories associées à un film donné.
      *
-     * @param id L'ID du film pour lequel récupérer les genres.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link GenreDTO} représentant les genres du film.
+     * @param id L'ID du film pour lequel récupérer les catégories.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link CategoryDTO} représentant les catégories du film.
      * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si l'ensemble des genres n'est pas initialisé pour ce film.
+     * @throws IllegalStateException    Si l'ensemble des catégories n'est pas initialisé pour ce film.
      */
-    public Uni<Set<GenreDTO>> getGenresByMovie(Long id) {
+    public Uni<Set<CategoryDTO>> getCategoriesByMovie(Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .flatMap(this::fetchAndMapGenres)
+                        .flatMap(Movie::fetchAndMapCategorySet)
                 ;
     }
 
@@ -336,15 +332,16 @@ public class MovieService {
                             Movie movie = Movie.of(movieDTO);
 
                             return Panache.withTransaction(() ->
-                                    // Récupérer les pays et les genres en parallèle
+                                    // Récupérer les pays et les catégories
                                     countryService.getByIds(movieDTO.getCountries())
                                             .invoke(movie::setCountries)
-                                            .chain(() -> genreService.getByIds(movieDTO.getGenres()).invoke(movie::setGenres))
+                                            .chain(() -> categoryService.getByIds(movieDTO.getCategories()))
+                                            .invoke(movie::setCategories)
                                             .chain(() ->
                                                     userRepository.findById(movieDTO.getUser().getId())
                                                             .invoke(user -> log.info("Movie created by {}", user.getUsername()))
-                                                            .invoke(movie::setUser)
                                             )
+                                            .invoke(movie::setUser)
                                             .chain(() -> {
                                                 if (Objects.nonNull(file)) {
                                                     return uploadPoster(file)
@@ -365,8 +362,8 @@ public class MovieService {
                                                                 return Uni.createFrom().voidItem();
                                                             })
                                                             .chain(() -> {
-                                                                if (Objects.nonNull(movie.getGenres()) && !movie.getGenres().isEmpty()) {
-                                                                    return statsService.updateMoviesByGenreRepartition();
+                                                                if (Objects.nonNull(movie.getCategories()) && !movie.getCategories().isEmpty()) {
+                                                                    return statsService.updateMoviesByCategoryRepartition();
                                                                 }
                                                                 return Uni.createFrom().voidItem();
                                                             })
@@ -523,58 +520,59 @@ public class MovieService {
     }
 
     /**
-     * Met à jour les genres associés à un film donné.
+     * Met à jour les catégories associés à un film donné.
      * <p>
-     * Cette méthode associe de nouveaux genres ou met à jour les genres existants
-     * d'un film en fonction des identifiants fournis dans {@code genreDTOSet}.
-     * Les genres sans identifiant sont créés avant d'être associés au film.
+     * Cette méthode associe de nouvelles catégories ou met à jour les catégories existantes
+     * d'un film en fonction des identifiants fournis dans {@code categoryDTOSet}.
+     * Les catégories sans identifiant sont créées avant d'être associées au film.
      *
-     * @param id          L'identifiant du film dont les genres doivent être mis à jour.
-     * @param genreDTOSet Un ensemble de {@link GenreDTO} représentant les genres à associer.
-     * @return Un {@link Uni} contenant l'ensemble des genres mis à jour sous forme de {@link GenreDTO}.
+     * @param id             L'identifiant du film dont les catégories doivent être mises à jour.
+     * @param categoryDTOSet Un ensemble de {@link CategoryDTO} représentant les catégories à associer.
+     * @return Un {@link Uni} contenant l'ensemble des catégories mises à jour sous forme de {@link CategoryDTO}.
      * @throws IllegalArgumentException si le film n'est pas trouvé.
      */
-    public Uni<Set<GenreDTO>> saveGenres(Long id, Set<GenreDTO> genreDTOSet) {
+    public Uni<Set<CategoryDTO>> saveCategories(Long id, Set<CategoryDTO> categoryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .chain(movie -> {
-                                            // Les genres existants
-                                            List<Long> existingGenreIds = genreDTOSet.stream()
-                                                    .map(GenreDTO::getId)
+                                            // Les catégories existantes
+                                            List<Long> existingCategoryIds = categoryDTOSet.stream()
+                                                    .map(CategoryDTO::getId)
                                                     .filter(Objects::nonNull)
                                                     .toList();
 
-                                            // Les nouveaux genres persistés
-                                            List<Uni<Genre>> newGenreUnis = genreDTOSet.stream()
-                                                    .filter(genreDTO -> Objects.isNull(genreDTO.getId()))
-                                                    .map(genreService::create)
+                                            // Les nouvelles catégories persistées
+                                            List<Uni<Category>> newCategoryUnis = categoryDTOSet.stream()
+                                                    .filter(categoryDTO -> Objects.isNull(categoryDTO.getId()))
+                                                    .map(categoryService::create)
                                                     .toList();
 
-                                            Uni<Set<Genre>> newGenresUni = newGenreUnis.isEmpty()
-                                                    ? Uni.createFrom().item(new HashSet<>())  // Retourne un empty set s'il n'y pas de nouveaux genres
-                                                    : Uni.join().all(newGenreUnis).andCollectFailures()
-                                                    .map(HashSet::new); // Convertit List<Genre> en Set<Genre>
+                                            Uni<Set<Category>> newCategoriesUni = newCategoryUnis.isEmpty()
+                                                    ? Uni.createFrom().item(new HashSet<>())  // Retourne un empty set s'il n'y pas de nouvelles catégories
+                                                    : Uni.join().all(newCategoryUnis).andCollectFailures()
+                                                    .map(HashSet::new); // Convertit List<Category> en Set<Category>
 
-                                            return newGenresUni
-                                                    .chain(newGenres ->
-                                                            genreService.getByIds(existingGenreIds)
-                                                                    .map(existingGenres -> {
-                                                                        newGenres.addAll(existingGenres);
-                                                                        return newGenres;
+                                            return newCategoriesUni
+                                                    .chain(newCategories ->
+                                                            categoryService.getByIds(existingCategoryIds)
+                                                                    .map(existingCategories -> {
+                                                                        newCategories.addAll(existingCategories);
+                                                                        return newCategories;
                                                                     })
-                                                                    .invoke(finalGenreSet -> {
-                                                                        movie.setGenres(new HashSet<>(finalGenreSet));
+                                                                    .invoke(finalCategorySet -> {
+                                                                        movie.setCategories(new HashSet<>(finalCategorySet));
                                                                         movie.setLastUpdate(LocalDateTime.now());
                                                                     })
-                                                                    .replaceWith(movie)
-                                                    );
+
+                                                    )
+                                                    .replaceWith(movie);
                                         })
-                                        .flatMap(movieRepository::persist)
-                                        .flatMap(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
-                                        .flatMap(this::fetchAndMapGenres)
+                                        .chain(movieRepository::persist)
+                                        .call(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
+                                        .flatMap(Movie::fetchAndMapCategorySet)
                         );
     }
 
@@ -607,9 +605,9 @@ public class MovieService {
                                                         })
                                                         .replaceWith(movie)
                                         )
-                                        .flatMap(movieRepository::persist)
-                                        .flatMap(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
-                                        .flatMap(this::fetchAndMapCountries)
+                                        .chain(movieRepository::persist)
+                                        .call(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
+                                        .flatMap(Movie::fetchAndMapCountrySet)
                         );
     }
 
@@ -664,88 +662,49 @@ public class MovieService {
             List<MovieActorDTO> movieActorDTOList,
             BiFunction<Movie, MovieActorDTO, Uni<MovieActor>> asyncActorFactory
     ) {
-        // Création d'une map pour récupérer directement les DTO associés aux IDs des acteurs
-//        Map<Long, MovieActorDTO> actorDTOMap = movieActorDTOSet.stream()
-//                .collect(Collectors.toMap(dto -> dto.getPerson().getId(), dto -> dto));
-
         return
                 Panache.withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .chain(movie ->
-                                                        Mutiny.fetch(movie.getMovieActors())
-//                                                .invoke(existingActors -> movie.removeObsoleteActors(movieActorsDTOList)) // Supprimer les acteurs obsolètes
-//                                                .invoke(existingActors -> movie.updateExistingActors(movieActorsDTOList)) // Mettre à jour les acteurs existants
-                                                                .chain(existingActors -> movie.addMovieActors(movieActorDTOList, asyncActorFactory)) // Ajouter les nouveaux acteurs
-                                                                .replaceWith(movie)
-                                        )
-                                        .chain(movieRepository::persist)
-                                        .call(movieActorRepository::flush) // Force la génération des IDs
-                                        .call(statsService::updateActorsStats)
-                                        .flatMap(Movie::fetchAndMapActorList) // Convertit les entités en DTO
+                        movieRepository.findById(id)
+                                .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                .chain(movie ->
+                                        Mutiny.fetch(movie.getMovieActors())
+                                                .chain(existingActors -> movie.addMovieActors(movieActorDTOList, asyncActorFactory)) // Ajouter les nouveaux acteurs
+                                                .replaceWith(movie)
+                                )
+                                .chain(movieRepository::persist)
+                                .call(movieActorRepository::flush) // Force la génération des IDs
+                                .call(statsService::updateActorsStats)
+                                .flatMap(Movie::fetchAndMapActorList) // Convertit les entités en DTO
                 );
-                /*Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .flatMap(movie ->
-                                                personService.getByIds(
-                                                                movieActorDTOSet
-                                                                        .stream()
-                                                                        .map(movieActorDTO -> movieActorDTO.getPerson().getId())
-                                                                        .toList()
-                                                        )
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs acteurs sont introuvables"))
-                                                        .map(actorList ->
-                                                                actorList.stream()
-                                                                        .map(actor -> {
-                                                                                    MovieActorDTO dto = actorDTOMap.get(actor.getId());
-                                                                                    return MovieActor.of(movie, actor, dto.getRole().trim(), dto.getRank());
-                                                                                }
-                                                                        )
-                                                                        .toList()
-                                                        )
-                                                        .call(movie::addMovieActors)
-                                                        .replaceWith(movie)
-                                        )
-                                        .chain(movieRepository::persist)
-                                        .call(movieActorRepository::flush) // Force la génération des IDs
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getMovieActors())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
-                                                        .map(personService::fromMovieActorListEntity)
-                                        )
-                        )
-                ;*/
     }
 
     /**
-     * Ajoute un ou plusieurs genres à un film existant.
+     * Ajoute une ou plusieurs catégories à un film existant.
      *
-     * @param movieId     L'identifiant du film auquel les genres doivent être ajoutés.
-     * @param genreDTOSet Un ensemble d'objets {@link GenreDTO} représentant les genres à ajouter.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link GenreDTO} mis à jour après l'ajout des genres.
-     * @throws IllegalArgumentException si le film ou certains genres ne sont pas trouvés.
-     * @throws IllegalStateException    si l'ensemble des genres n'est pas initialisé pour ce film.
+     * @param movieId        L'identifiant du film auquel les catégories doivent être ajoutées.
+     * @param categoryDTOSet Un ensemble d'objets {@link CategoryDTO} représentant les catégories à ajouter.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link CategoryDTO} mis à jour après l'ajout des catégories.
+     * @throws IllegalArgumentException si le film ou certaines catégories ne sont pas trouvés.
+     * @throws IllegalStateException    si l'ensemble des catégories n'est pas initialisé pour ce film.
      */
-    public Uni<Set<GenreDTO>> addGenres(Long movieId, Set<GenreDTO> genreDTOSet) {
+    public Uni<Set<CategoryDTO>> addCategories(Long movieId, Set<CategoryDTO> categoryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .flatMap(movie ->
-                                                genreService.getByIds(genreDTOSet.stream().map(GenreDTO::getId).toList())
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs genres sont introuvables"))
-                                                        .flatMap(movie::addGenres)
+                                                categoryService.getByIds(categoryDTOSet.stream().map(CategoryDTO::getId).toList())
+                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Une ou plusieurs catégories sont introuvables"))
+                                                        .flatMap(movie::addCategories)
                                                         .replaceWith(movie)
                                         )
                                         .chain(movieRepository::persist)
-                                        .chain(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
-                                        .flatMap(this::fetchAndMapGenres)
-                                        .invoke(() -> log.info("Genres ajoutés au film {}", movieId))
+                                        .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
+                                        .flatMap(Movie::fetchAndMapCategorySet)
+                                        .invoke(() -> log.info("Catégories ajoutées au film {}", movieId))
                         )
-                        .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des genres au film {} : {}", movieId, e.getMessage()))
+                        .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des catégories au film {} : {}", movieId, e.getMessage()))
                 ;
     }
 
@@ -772,7 +731,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
-                                        .flatMap(this::fetchAndMapCountries)
+                                        .flatMap(Movie::fetchAndMapCountrySet)
                                         .invoke(() -> log.info("Pays ajoutés au film {}", movieId))
                         )
                         .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des pays au film {} : {}", movieId, e.getMessage()))
@@ -805,7 +764,7 @@ public class MovieService {
                                                         .replaceWith(movie)
                                         )
                                         .flatMap(movieRepository::persist)
-                                        .flatMap(this::fetchAndMapAwards)
+                                        .flatMap(Movie::fetchAndMapAwardSet)
                         )
                 ;
     }
@@ -870,26 +829,26 @@ public class MovieService {
     }
 
     /**
-     * Supprime un genre d'un film existant.
+     * Supprime une catégorie d'un film existant.
      *
-     * @param movieId L'identifiant du film dont le genre doit être supprimé.
-     * @param genreId L'identifiant du genre à supprimer du film.
-     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après la suppression du genre.
-     * - Provoque une erreur avec un message explicite si le film ou certains pays ne sont pas trouvés.
+     * @param movieId    L'identifiant du film dont la catégorie doit être supprimée.
+     * @param categoryId L'identifiant de la catégorie à supprimer du film.
+     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après la suppression de la catégorie.
+     * - Provoque une erreur avec un message explicite si le film ou certaines catégories ne sont pas trouvés.
      */
-    public Uni<Set<GenreDTO>> removeGenre(Long movieId, Long genreId) {
+    public Uni<Set<CategoryDTO>> removeCategory(Long movieId, Long categoryId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(movie -> movie.removeGenre(genreId))
+                                        .call(movie -> movie.removeCategory(categoryId))
                                         .chain(movieRepository::persist)
-                                        .chain(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
-                                        .flatMap(this::fetchAndMapGenres)
-                                        .invoke(() -> log.info("Category {} removed from movie {}", genreId, movieId))
+                                        .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
+                                        .flatMap(Movie::fetchAndMapCategorySet)
+                                        .invoke(() -> log.info("Category {} removed from movie {}", categoryId, movieId))
                         )
-                        .onFailure().invoke(e -> log.error("Failed to remove genre from movie {}: {}", movieId, e.getMessage()))
+                        .onFailure().invoke(e -> log.error("Failed to remove category from movie {}: {}", movieId, e.getMessage()))
                 ;
     }
 
@@ -910,7 +869,7 @@ public class MovieService {
                                         .call(movie -> movie.removeCountry(countryId))
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
-                                        .flatMap(this::fetchAndMapCountries)
+                                        .flatMap(Movie::fetchAndMapCountrySet)
                                         .invoke(() -> log.info("Country {} removed from movie {}", countryId, movieId))
                         )
                         .onFailure().invoke(e -> log.error("Failed to remove country from movie {}: {}", movieId, e.getMessage()))
@@ -938,7 +897,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(movie -> movie.removeAward(awardId))
                                         .chain(movieRepository::persist)
-                                        .flatMap(this::fetchAndMapAwards)
+                                        .flatMap(Movie::fetchAndMapAwardSet)
                         )
                 ;
     }
@@ -952,11 +911,11 @@ public class MovieService {
                                         .flatMap(
                                                 movie -> {
                                                     List<Long> newCountryIds = movieDTO.getCountries().stream().map(CountryDTO::getId).toList();
-                                                    List<Long> newGenreIds = movieDTO.getGenres().stream().map(GenreDTO::getId).toList();
+                                                    List<Long> newCategoryIds = movieDTO.getCategories().stream().map(CategoryDTO::getId).toList();
 
-                                                    boolean shouldUpdateReleaseDate = !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
+                                                    boolean shouldUpdateReleaseDate = Objects.nonNull(movieDTO.getReleaseDate()) && !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
                                                     AtomicBoolean shouldUpdateCountries = new AtomicBoolean(false);
-                                                    AtomicBoolean shouldUpdateGenres = new AtomicBoolean(false);
+                                                    AtomicBoolean shouldUpdateCategories = new AtomicBoolean(false);
 
                                                     return
                                                             Mutiny.fetch(movie.getCountries())
@@ -969,11 +928,11 @@ public class MovieService {
                                                                             )
                                                                     )
                                                                     .chain(() ->
-                                                                            Mutiny.fetch(movie.getGenres())
-                                                                                    .invoke(genres -> shouldUpdateGenres.set(!new HashSet<>(newGenreIds)
+                                                                            Mutiny.fetch(movie.getCategories())
+                                                                                    .invoke(categories -> shouldUpdateCategories.set(!new HashSet<>(newCategoryIds)
                                                                                                     .equals(
-                                                                                                            new HashSet<>(genres.stream()
-                                                                                                                    .map(Genre::getId)
+                                                                                                            new HashSet<>(categories.stream()
+                                                                                                                    .map(Category::getId)
                                                                                                                     .toList())
                                                                                                     )
                                                                                             )
@@ -981,7 +940,7 @@ public class MovieService {
                                                                     )
                                                                     .chain(ignore ->
                                                                             countryService.getByIds(newCountryIds).invoke(movie::setCountries)
-                                                                                    .chain(() -> genreService.getByIds(newGenreIds).invoke(movie::setGenres))
+                                                                                    .chain(() -> categoryService.getByIds(newCategoryIds).invoke(movie::setCategories))
                                                                                     .invoke(() -> {
                                                                                                 movie.setTitle(movieDTO.getTitle());
                                                                                                 movie.setOriginalTitle(movieDTO.getOriginalTitle());
@@ -995,7 +954,7 @@ public class MovieService {
                                                                                                 movie.setBoxOfficeCurrency(movieDTO.getBoxOfficeCurrency());
                                                                                             }
                                                                                     )
-                                                                                    .flatMap(genres -> {
+                                                                                    .flatMap(categorySet -> {
                                                                                                 if (Objects.nonNull(file)) {
                                                                                                     return uploadPoster(file)
                                                                                                             .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
@@ -1007,11 +966,11 @@ public class MovieService {
                                                                                     )
                                                                                     .flatMap(entity -> {
                                                                                         Uni<Void> releaseDateUpdate = shouldUpdateReleaseDate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem();
-                                                                                        Uni<Void> genreUpdate = shouldUpdateGenres.get() ? statsService.updateMoviesByGenreRepartition() : Uni.createFrom().voidItem();
+                                                                                        Uni<Void> categoryUpdate = shouldUpdateCategories.get() ? statsService.updateMoviesByCategoryRepartition() : Uni.createFrom().voidItem();
                                                                                         Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();
-                                                                                        return releaseDateUpdate.chain(() -> genreUpdate.chain(() -> countryUpdate)).replaceWith(entity);
+                                                                                        return releaseDateUpdate.chain(() -> categoryUpdate.chain(() -> countryUpdate)).replaceWith(entity);
                                                                                     })
-                                                                                    .map(entity -> MovieDTO.of(movie, movie.getGenres(), movie.getCountries()))
+                                                                                    .map(entity -> MovieDTO.of(movie, movie.getCategories(), movie.getCountries()))
                                                                     );
                                                 })
                         );
@@ -1072,32 +1031,32 @@ public class MovieService {
     }
 
     /**
-     * Supprime tous les genres associés à un film donné.
+     * Supprime toutes les catégories associées à un film donné.
      * <p>
-     * Cette méthode permet de vider la collection des genres associés à un film en supprimant toutes les entrées
+     * Cette méthode permet de vider la collection des catégories associée à un film en supprimant toutes les entrées
      * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
      * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
      *
-     * @param id L'identifiant du film pour lequel les genres doivent être supprimés.
-     * @return Un {@link Uni} contenant {@code true} si la suppression des genres a réussi,
+     * @param id L'identifiant du film pour lequel les catégories doivent être supprimées.
+     * @return Un {@link Uni} contenant {@code true} si la suppression des catégories a réussi,
      * ou une exception sera levée en cas d'erreur.
-     * @throws WebApplicationException Si une erreur survient lors de la suppression des genres (par exemple,
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des catégories (par exemple,
      *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> clearGenres(Long id) {
+    public Uni<Boolean> clearCategories(Long id) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(Movie::clearGenres)
+                                        .call(Movie::clearCategories)
                                         .chain(movieRepository::persist)
-                                        .chain(movie -> statsService.updateMoviesByGenreRepartition().replaceWith(movie))
+                                        .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
                                         .map(movie -> true)
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
-                            throw new WebApplicationException("Erreur lors de la suppression des genres", throwable);
+                            throw new WebApplicationException("Erreur lors de la suppression des catégories", throwable);
                         });
     }
 
@@ -1151,69 +1110,12 @@ public class MovieService {
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
                                         .call(Movie::clearAwards)
-                                        .call(movieRepository::persist)
+                                        .chain(movieRepository::persist)
                                         .map(movie -> true)
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
                             throw new WebApplicationException("Erreur lors de la suppression des pays", throwable);
                         });
-    }
-
-    /**
-     * Récupère et convertit les genres associés à un film en objets {@link GenreDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les genres d'un film
-     * et les transformer en un ensemble de DTOs. Si la liste des genres est `null`,
-     * une exception est levée.
-     *
-     * @param movie Le film dont les genres doivent être récupérés.
-     * @return Un {@link Uni} contenant un ensemble de {@link GenreDTO}.
-     * @throws IllegalStateException si la liste des genres n'est pas initialisée.
-     */
-    private Uni<Set<GenreDTO>> fetchAndMapGenres(Movie movie) {
-        return
-                Mutiny.fetch(movie.getGenres())
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des genres n'est pas initialisée"))
-                        .map(GenreDTO::fromGenreSetEntity)
-                ;
-    }
-
-    /**
-     * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des pays est `null`,
-     * une exception est levée.
-     *
-     * @param movie Le film dont les pays doivent être récupérés.
-     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.
-     * @throws IllegalStateException si la liste des pays n'est pas initialisée.
-     */
-    private Uni<Set<CountryDTO>> fetchAndMapCountries(Movie movie) {
-        return
-                Mutiny.fetch(movie.getCountries())
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
-                        .map(CountryDTO::fromCountryEntitySet)
-                ;
-    }
-
-    /**
-     * Récupère et convertit les récompenses associées à un film en objets {@link AwardDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les récompenses liées à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des récompenses est `null`,
-     * une exception est levée.
-     *
-     * @param movie Le film dont les récompenses doivent être récupérées.
-     * @return Un {@link Uni} contenant un ensemble de {@link AwardDTO}.
-     * @throws IllegalStateException si la liste des récompenses n'est pas initialisée.
-     */
-    private Uni<Set<AwardDTO>> fetchAndMapAwards(Movie movie) {
-        return
-                Mutiny.fetch(movie.getAwards())
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des récompenses n'est pas initialisée"))
-                        .map(AwardDTO::fromEntitySet)
-                ;
     }
 }

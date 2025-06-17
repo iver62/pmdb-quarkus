@@ -3,10 +3,7 @@ package org.desha.app.helper;
 import io.quarkus.panache.common.Parameters;
 import org.desha.app.domain.dto.CriteriasDTO;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public class SqlHelper {
 
@@ -25,7 +22,7 @@ public class SqlHelper {
                 Map.entry("toBirthDate", criteriasDTO::getToBirthDate),
                 Map.entry("fromDeathDate", criteriasDTO::getFromDeathDate),
                 Map.entry("toDeathDate", criteriasDTO::getToDeathDate),
-                Map.entry("genreIds", criteriasDTO::getGenreIds),
+                Map.entry("categoryIds", criteriasDTO::getCategoryIds),
                 Map.entry("countryIds", criteriasDTO::getCountryIds),
                 Map.entry("userIds", criteriasDTO::getUserIds),
                 Map.entry("personTypes", criteriasDTO::getPersonTypes)
@@ -72,8 +69,8 @@ public class SqlHelper {
         if (Objects.nonNull(criteriasDTO.getToLastUpdate())) {
             params.and("toLastUpdate", criteriasDTO.getToLastUpdate());
         }
-        if (Objects.nonNull(criteriasDTO.getGenreIds()) && !criteriasDTO.getGenreIds().isEmpty()) {
-            params.and("genreIds", criteriasDTO.getGenreIds());
+        if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
+            params.and("categoryIds", criteriasDTO.getCategoryIds());
         }
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             params.and("countryIds", criteriasDTO.getCountryIds());

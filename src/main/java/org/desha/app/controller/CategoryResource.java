@@ -8,12 +8,12 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.dto.GenreDTO;
+import org.desha.app.domain.dto.CategoryDTO;
 import org.desha.app.domain.dto.MovieQueryParamsDTO;
 import org.desha.app.domain.dto.QueryParamsDTO;
-import org.desha.app.domain.entity.Genre;
+import org.desha.app.domain.entity.Category;
 import org.desha.app.domain.entity.Movie;
-import org.desha.app.service.GenreService;
+import org.desha.app.service.CategoryService;
 import org.jboss.resteasy.reactive.RestPath;
 
 import java.util.Objects;
@@ -21,15 +21,15 @@ import java.util.Optional;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
-@Path("genres")
+@Path("categories")
 @ApplicationScoped
-public class GenreResource {
+public class CategoryResource {
 
-    private final GenreService genreService;
+    private final CategoryService categoryService;
 
     @Inject
-    public GenreResource(GenreService genreService) {
-        this.genreService = genreService;
+    public CategoryResource(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @GET
@@ -37,7 +37,7 @@ public class GenreResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         return
-                genreService.count(queryParams.getTerm())
+                categoryService.count(queryParams.getTerm())
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                         .onFailure().recoverWithItem(err ->
@@ -49,10 +49,10 @@ public class GenreResource {
     @GET
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getGenre(@RestPath Long id) {
+    public Uni<Response> getCategory(@RestPath Long id) {
         return
-                genreService.getById(id)
-                        .onItem().ifNotNull().transform(genre -> Response.ok(genre).build())
+                categoryService.getById(id)
+                        .onItem().ifNotNull().transform(category -> Response.ok(category).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
@@ -62,18 +62,18 @@ public class GenreResource {
 
     @GET
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getGenres(@BeanParam MovieQueryParamsDTO queryParams) {
-        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Genre.DEFAULT_SORT);
-        queryParams.validateSortField(finalSort, Genre.ALLOWED_SORT_FIELDS);
+    public Uni<Response> getCategories(@BeanParam MovieQueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
         String term = queryParams.getTerm();
 
         return
-                genreService.getGenres(finalSort, queryParams.validateSortDirection(), term)
-                        .flatMap(genreDTOS -> genreService.count(term)
+                categoryService.getCategories(finalSort, queryParams.validateSortDirection(), term)
+                        .flatMap(categoryDTOS -> categoryService.count(term)
                                 .map(aLong ->
-                                        genreDTOS.isEmpty()
+                                        categoryDTOS.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, aLong).build()
-                                                : Response.ok(genreDTOS).header(CustomHttpHeaders.X_TOTAL_COUNT, aLong).build()
+                                                : Response.ok(categoryDTOS).header(CustomHttpHeaders.X_TOTAL_COUNT, aLong).build()
                                 )
                         )
                 ;
@@ -82,14 +82,14 @@ public class GenreResource {
     @GET
     @Path("{id}/movies")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getMoviesByGenre(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+    public Uni<Response> getMoviesByCategory(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
         return
-                genreService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                categoryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
                         .flatMap(movieList ->
-                                genreService.countMovies(id, queryParams.getTerm()).map(total ->
+                                categoryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -103,14 +103,14 @@ public class GenreResource {
 
     @POST
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> createGenre(GenreDTO genreDTO) {
-        if (Objects.isNull(genreDTO) || Objects.nonNull(genreDTO.getId())) {
+    public Uni<Response> createCategory(CategoryDTO categoryDTO) {
+        if (Objects.isNull(categoryDTO) || Objects.nonNull(categoryDTO.getId())) {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
         }
 
         return
-                genreService.create(genreDTO)
-                        .map(genre -> Response.status(CREATED).entity(genre).build())
+                categoryService.create(categoryDTO)
+                        .map(category -> Response.status(CREATED).entity(category).build())
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
                         )
@@ -120,14 +120,14 @@ public class GenreResource {
     @PUT
     @Path("{id}")
     @RolesAllowed("admin")
-    public Uni<Response> updateGenre(@RestPath Long id, GenreDTO genreDTO) {
-        if (Objects.isNull(genreDTO) || Objects.isNull(genreDTO.getName())) {
-            throw new WebApplicationException("Genre name was not set on request.", 422);
+    public Uni<Response> updateCategory(@RestPath Long id, CategoryDTO categoryDTO) {
+        if (Objects.isNull(categoryDTO) || Objects.isNull(categoryDTO.getName())) {
+            throw new WebApplicationException("Category name was not set on request.", 422);
         }
 
         return
-                genreService.update(id, genreDTO)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
+                categoryService.update(id, categoryDTO)
+                        .onItem().ifNotNull().transform(category -> Response.ok(category).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
                         .onFailure().recoverWithItem(err ->
                                 Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
@@ -138,9 +138,9 @@ public class GenreResource {
     @DELETE
     @Path("{id}")
     @RolesAllowed("admin")
-    public Uni<Response> deleteGenre(@RestPath Long id) {
+    public Uni<Response> deleteCategory(@RestPath Long id) {
         return
-                genreService.deleteGenre(id)
+                categoryService.deleteCategory(id)
                         .map(deleted -> Boolean.TRUE.equals(deleted)
                                 ? Response.status(NO_CONTENT).build()
                                 : Response.status(NOT_FOUND).build())

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Award;
+import org.desha.app.domain.entity.Category;
 import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Genre;
 import org.desha.app.domain.entity.Movie;
 
 import java.time.LocalDate;
@@ -34,7 +34,7 @@ public class MovieDTO {
     private TechnicalTeamDTO technicalTeam;
     private List<MovieActorDTO> movieActors;
     private Set<CountryDTO> countries;
-    private Set<GenreDTO> genres;
+    private Set<CategoryDTO> categories;
     private Set<AwardDTO> awards;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
@@ -54,7 +54,7 @@ public class MovieDTO {
                 .posterFileName(movie.getPosterFileName())
                 .user(UserDTO.fromEntity(movie.getUser()))
                 .countries(CountryDTO.fromCountryEntitySet(movie.getCountries()))
-                .genres(GenreDTO.fromGenreSetEntity(movie.getGenres()))
+                .categories(CategoryDTO.fromCategorySetEntity(movie.getCategories()))
                 .awards(AwardDTO.fromEntitySet(movie.getAwards()))
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
@@ -79,7 +79,7 @@ public class MovieDTO {
                 .build();
     }
 
-    public static MovieDTO of(Movie movie, Set<Genre> genreSet, Set<Country> countrySet) {
+    public static MovieDTO of(Movie movie, Set<Category> categorySet, Set<Country> countrySet) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
@@ -94,13 +94,13 @@ public class MovieDTO {
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
-                .genres(GenreDTO.fromGenreSetEntity(genreSet))
+                .categories(CategoryDTO.fromCategorySetEntity(categorySet))
                 .countries(CountryDTO.fromCountryEntitySet(countrySet))
                 .user(UserDTO.fromEntity(movie.getUser()))
                 .build();
     }
 
-    public static MovieDTO of(Movie movie, Set<Genre> genreSet, Set<Country> countrySet, Set<Award> awardSet) {
+    public static MovieDTO of(Movie movie, Set<Category> categorySet, Set<Country> countrySet, Set<Award> awardSet) {
         return MovieDTO.builder()
                 .id(movie.getId())
                 .title(movie.getTitle())
@@ -114,7 +114,7 @@ public class MovieDTO {
                 .posterFileName(movie.getPosterFileName())
                 .creationDate(movie.getCreationDate())
                 .lastUpdate(movie.getLastUpdate())
-                .genres(GenreDTO.fromGenreSetEntity(genreSet))
+                .categories(CategoryDTO.fromCategorySetEntity(categorySet))
                 .countries(CountryDTO.fromCountryEntitySet(countrySet))
                 .awards(AwardDTO.fromEntitySet(awardSet))
                 .user(UserDTO.fromEntity(movie.getUser()))

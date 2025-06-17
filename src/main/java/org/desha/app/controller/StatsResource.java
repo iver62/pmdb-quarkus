@@ -37,7 +37,7 @@ public class StatsResource {
                                         sse.newEventBuilder().name("actor-count").mediaType(MediaType.APPLICATION_JSON_TYPE).data(stats.getActorCount()).build(),
                                         sse.newEventBuilder().name("movies-by-release-date").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByReleaseDate()).build(),
                                         sse.newEventBuilder().name("movies-by-country").mediaType(MediaType.APPLICATION_JSON_TYPE).data(CountryRepartition.class, stats.getByCountry()).build(),
-                                        sse.newEventBuilder().name("movies-by-category").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByGenre()).build(),
+                                        sse.newEventBuilder().name("movies-by-category").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByCategory()).build(),
                                         sse.newEventBuilder().name("movies-by-user").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByUser()).build(),
                                         sse.newEventBuilder().name("movies-number-by-creation-date").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getByCreationDate()).build(),
                                         sse.newEventBuilder().name("movies-number-evolution").mediaType(MediaType.APPLICATION_JSON_TYPE).data(Repartition.class, stats.getMoviesNumberEvolution()).build(),

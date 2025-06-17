@@ -78,13 +78,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 );
     }
 
-    public Uni<Long> countMoviesByGenre(Long id, String term) {
+    public Uni<Long> countMoviesByCategory(Long id, String term) {
         return
                 count("""
                                 SELECT COUNT(m)
                                 FROM Movie m
-                                JOIN m.genres g
-                                WHERE g.id = :id
+                                JOIN m.categories c
+                                WHERE c.id = :id
                                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                                 """,
                         Parameters.with("id", id)
@@ -120,12 +120,12 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return list(query, Sort.by("title"), "%" + term + "%");
     }
 
-    public Uni<Movie> findByIdWithCountriesAndGenres(Long id) {
+    public Uni<Movie> findByIdWithCountriesAndCategories(Long id) {
         return
                 find("""
                         FROM Movie m
                         LEFT JOIN FETCH m.countries
-                        LEFT JOIN FETCH m.genres
+                        LEFT JOIN FETCH m.categories
                         WHERE m.id = ?1
                         """, id
                 ).firstResult();
@@ -254,13 +254,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         .list();
     }
 
-    public Uni<List<Movie>> findMoviesByGenre(Long id, Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<Movie>> findMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 find("""
                                 FROM Movie m
-                                JOIN m.genres g
+                                JOIN m.categories c
                                 LEFT JOIN FETCH m.awards
-                                WHERE g.id = :id
+                                WHERE c.id = :id
                                     AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                                 """,
                         Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST),
@@ -334,13 +334,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Repartition>> findMoviesByGenreRepartition() {
+    public Uni<List<Repartition>> findMoviesByCategoryRepartition() {
         return
                 find("""
-                        SELECT g.name, COUNT(m)
+                        SELECT c.name, COUNT(m)
                         FROM Movie m
-                        JOIN m.genres g
-                        GROUP BY g.name
+                        JOIN m.categories c
+                        GROUP BY c.name
                         ORDER BY COUNT(m) DESC
                         """
                 )
@@ -409,8 +409,8 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         Optional.ofNullable(criteriasDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
         Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
 
-        if (Objects.nonNull(criteriasDTO.getGenreIds()) && !criteriasDTO.getGenreIds().isEmpty()) {
-            query.append(" AND EXISTS (SELECT 1 FROM m.genres g WHERE g.id IN :genreIds)");
+        if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
+            query.append(" AND EXISTS (SELECT 1 FROM m.categories g WHERE c.id IN :categoryIds)");
         }
 
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
@@ -444,8 +444,8 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
             params.and("toLastUpdate", criteriasDTO.getToLastUpdate());
         }
 
-        if (Objects.nonNull(criteriasDTO.getGenreIds()) && !criteriasDTO.getGenreIds().isEmpty()) {
-            params.and("genreIds", criteriasDTO.getGenreIds());
+        if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
+            params.and("categoryIds", criteriasDTO.getCategoryIds());
         }
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
             params.and("countryIds", criteriasDTO.getCountryIds());

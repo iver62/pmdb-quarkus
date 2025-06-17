@@ -31,7 +31,7 @@ public class StatsService {
     private final AtomicLong movieCount = new AtomicLong(0);
     private final AtomicLong actorCount = new AtomicLong(0);
     private List<Repartition> moviesByReleaseDateRepartition = new ArrayList<>();
-    private List<Repartition> moviesByGenreRepartition = new ArrayList<>();
+    private List<Repartition> moviesByCategoryRepartition = new ArrayList<>();
     private List<CountryRepartition> moviesByCountryRepartition = new ArrayList<>();
     private List<Repartition> moviesByUserRepartition = new ArrayList<>();
     private List<Repartition> moviesByCreationDateRepartition = new ArrayList<>();
@@ -59,8 +59,8 @@ public class StatsService {
                                         .invoke(actorCount::set))
                                 .chain(() -> movieRepository.findMoviesByReleaseDateRepartition()
                                         .invoke(repartition -> moviesByReleaseDateRepartition = repartition))
-                                .chain(() -> movieRepository.findMoviesByGenreRepartition()
-                                        .invoke(repartition -> moviesByGenreRepartition = repartition))
+                                .chain(() -> movieRepository.findMoviesByCategoryRepartition()
+                                        .invoke(repartition -> moviesByCategoryRepartition = repartition))
                                 .chain(() -> movieRepository.findMoviesByCountryRepartition()
                                         .invoke(repartition -> moviesByCountryRepartition = repartition))
                                 .chain(() -> movieRepository.findMoviesByUserRepartition()
@@ -90,7 +90,7 @@ public class StatsService {
                         movieCount.get(),
                         actorCount.get(),
                         moviesByReleaseDateRepartition,
-                        moviesByGenreRepartition,
+                        moviesByCategoryRepartition,
                         moviesByCountryRepartition,
                         moviesByUserRepartition,
                         moviesByCreationDateRepartition,
@@ -163,14 +163,14 @@ public class StatsService {
                 );
     }
 
-    public Uni<Void> updateMoviesByGenreRepartition() {
+    public Uni<Void> updateMoviesByCategoryRepartition() {
         return
                 Panache.withTransaction(() ->
-                        movieRepository.findMoviesByGenreRepartition()
+                        movieRepository.findMoviesByCategoryRepartition()
                                 .invoke(repartition -> {
-                                            moviesByGenreRepartition = repartition; // ← mise à jour locale
+                                            moviesByCategoryRepartition = repartition; // ← mise à jour locale
                                             updateAndEmitStats();
-                                            log.info("Movies by genre repartition updated: {}", repartition);
+                                            log.info("Movies by category repartition updated: {}", repartition);
                                         }
                                 ).replaceWithVoid()
                 );
