@@ -150,9 +150,9 @@ public class Movie extends PanacheEntityBase {
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
-            name = "lnk_film_genre",
+            name = "lnk_film_categorie",
             joinColumns = @JoinColumn(name = "fk_film"),
-            inverseJoinColumns = @JoinColumn(name = "fk_genre")
+            inverseJoinColumns = @JoinColumn(name = "fk_categorie")
     )
     private Set<Category> categories = new HashSet<>();
 

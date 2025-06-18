@@ -64,6 +64,9 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     private List<MovieDirector> directedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
+    private List<MovieAssistantDirector> assistantDirectedMovies = new ArrayList<>();
+
+    @OneToMany(mappedBy = "person")
     private List<MovieScreenwriter> writtenMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
@@ -174,6 +177,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                         .chain(set -> Mutiny.fetch(playedMovies).map(movieActors -> movieActors.stream().map(MovieActor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
                         .chain(set -> Mutiny.fetch(producedMovies).map(movieProducers -> movieProducers.stream().map(MovieProducer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
                         .chain(set -> Mutiny.fetch(directedMovies).map(movieDirectors -> movieDirectors.stream().map(MovieDirector::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> Mutiny.fetch(assistantDirectedMovies).map(movieAssistantDirectors -> movieAssistantDirectors.stream().map(MovieAssistantDirector::getMovie).toList()).invoke(set::addAll).replaceWith(set))
                         .chain(set -> Mutiny.fetch(writtenMovies).map(movieScreenwriters -> movieScreenwriters.stream().map(MovieScreenwriter::getMovie).toList()).invoke(set::addAll).replaceWith(set))
                         .chain(set -> Mutiny.fetch(composedMovies).map(movieComposers -> movieComposers.stream().map(MovieComposer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
                         .chain(set -> Mutiny.fetch(musicalMovies).map(movieMusicians -> movieMusicians.stream().map(MovieMusician::getMovie).toList()).invoke(set::addAll).replaceWith(set))

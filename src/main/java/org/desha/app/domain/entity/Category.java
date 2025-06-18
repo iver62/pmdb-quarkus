@@ -22,7 +22,7 @@ import java.util.Set;
 @Builder
 @Getter
 @Setter
-@Table(name = "genre")
+@Table(name = "categorie")
 @EntityListeners(AuditCategoryListener.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Category extends PanacheEntityBase {

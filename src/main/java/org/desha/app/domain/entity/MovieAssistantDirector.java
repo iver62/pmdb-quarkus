@@ -10,12 +10,12 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Entity
 @NoArgsConstructor
-@Table(name = "lnk_film_dialoguiste")
+@Table(name = "lnk_film_assistant_realisateur")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MovieDialogueWriter extends MovieTechnician {
+public class MovieAssistantDirector extends MovieTechnician {
 
-    public static MovieDialogueWriter of(Long id, Movie movie, Person person, String role) {
-        return MovieDialogueWriter.builder()
+    public static MovieAssistantDirector of(Long id, Movie movie, Person person, String role) {
+        return MovieAssistantDirector.builder()
                 .id(id)
                 .movie(movie)
                 .person(person)
@@ -23,11 +23,12 @@ public class MovieDialogueWriter extends MovieTechnician {
                 .build();
     }
 
-    public static MovieDialogueWriter of(Movie movie, Person person, String role) {
-        return MovieDialogueWriter.builder()
+    public static MovieAssistantDirector of(Movie movie, Person person, String role) {
+        return MovieAssistantDirector.builder()
                 .movie(movie)
                 .person(person)
                 .role(role)
                 .build();
     }
+
 }

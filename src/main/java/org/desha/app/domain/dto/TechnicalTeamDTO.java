@@ -12,6 +12,7 @@ public class TechnicalTeamDTO {
 
     private List<MovieTechnicianDTO> producers;
     private List<MovieTechnicianDTO> directors;
+    private List<MovieTechnicianDTO> assistantDirectors;
     private List<MovieTechnicianDTO> screenwriters;
     private List<MovieTechnicianDTO> composers;
     private List<MovieTechnicianDTO> musicians;
@@ -31,6 +32,7 @@ public class TechnicalTeamDTO {
     public static TechnicalTeamDTO build(
             final List<MovieTechnicianDTO> producers,
             final List<MovieTechnicianDTO> directors,
+            final List<MovieTechnicianDTO> assistantDirectors,
             final List<MovieTechnicianDTO> screenwriters,
             final List<MovieTechnicianDTO> composers,
             final List<MovieTechnicianDTO> musicians,
@@ -50,6 +52,7 @@ public class TechnicalTeamDTO {
         return TechnicalTeamDTO.builder()
                 .producers(producers)
                 .directors(directors)
+                .assistantDirectors(assistantDirectors)
                 .screenwriters(screenwriters)
                 .composers(composers)
                 .musicians(musicians)
@@ -73,6 +76,7 @@ public class TechnicalTeamDTO {
                 TechnicalTeamDTO.build(
                         movie.getMovieProducers().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieDirectors().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieAssistantDirectors().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieScreenwriters().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieComposers().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieMusicians().stream().map(MovieTechnicianDTO::of).toList(),

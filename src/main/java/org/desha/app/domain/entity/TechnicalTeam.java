@@ -13,6 +13,7 @@ public class TechnicalTeam {
 
     private List<MovieTechnician> producers;
     private List<MovieTechnician> directors;
+    private List<MovieTechnician> assistantDirectors;
     private List<MovieTechnician> screenwriters;
     private List<MovieTechnician> composers;
     private List<MovieTechnician> musicians;
@@ -32,6 +33,7 @@ public class TechnicalTeam {
     public static TechnicalTeam build(
             final List<MovieTechnician> producers,
             final List<MovieTechnician> directors,
+            final List<MovieTechnician> assistantDirectors,
             final List<MovieTechnician> screenwriters,
             final List<MovieTechnician> composers,
             final List<MovieTechnician> musicians,
@@ -51,6 +53,7 @@ public class TechnicalTeam {
         return TechnicalTeam.builder()
                 .producers(producers)
                 .directors(directors)
+                .assistantDirectors(assistantDirectors)
                 .screenwriters(screenwriters)
                 .composers(composers)
                 .musicians(musicians)

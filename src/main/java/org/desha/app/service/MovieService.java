@@ -33,7 +33,6 @@ public class MovieService {
     private static final String POSTERS_DIR = "posters/";
     private static final String DEFAULT_POSTER = "default-poster.jpg";
 
-    private final AwardService awardService;
     private final CountryService countryService;
     private final FileService fileService;
     private final CategoryService categoryService;
@@ -50,7 +49,6 @@ public class MovieService {
     @Inject
     public MovieService(
             AwardRepository awardRepository,
-            AwardService awardService,
             CountryService countryService,
             CountryRepository countryRepository,
             FileService fileService,
@@ -63,7 +61,6 @@ public class MovieService {
             UserRepository userRepository
     ) {
         this.awardRepository = awardRepository;
-        this.awardService = awardService;
         this.countryService = countryService;
         this.countryRepository = countryRepository;
         this.fileService = fileService;
@@ -245,6 +242,7 @@ public class MovieService {
                                                 TechnicalTeamDTO.build(
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieProducers),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieDirectors),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieAssistantDirectors),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieScreenwriters),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieComposers),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieMusicians),

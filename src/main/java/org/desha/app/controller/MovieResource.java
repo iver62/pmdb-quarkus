@@ -279,6 +279,20 @@ public class MovieResource {
     }
 
     @GET
+    @Path("/{id}/assistant-directors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getAssistantDirectors(@RestPath Long id) {
+        return
+                movieService.getMovieTechniciansByMovie(id, Movie::getMovieAssistantDirectors, "La liste des assistants réalisateurs n'est pas initialisée pour ce film")
+                        .map(movieTechnicianDTOList ->
+                                movieTechnicianDTOList.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOList).build()
+                        )
+                ;
+    }
+
+    @GET
     @Path("/{id}/screenwriters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getScreenwriters(@RestPath Long id) {
@@ -807,7 +821,36 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour  des réalisateurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des réalisateurs: " + e.getMessage())
+                                            .build();
+                                }
+                        )
+                ;
+    }
+
+    @PUT
+    @Path("/{id}/assistant-directors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> saveAssistantDirectors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        if (Objects.isNull(movieTechnicianDTOList)) {
+            throw new BadRequestException("La liste des assistants réalisateurs ne peut pas être nulle.");
+        }
+
+        return
+                movieService.saveTechnicians(
+                                id,
+                                movieTechnicianDTOList,
+                                Movie::getMovieAssistantDirectors,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ASSISTANT_DIRECTOR)
+                                        .map(person -> MovieAssistantDirector.of(movie, person, dto.getRole())),
+                                "La liste des réalisateurs n'est pas initialisée"
+                        )
+                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
+                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                        .onFailure().recoverWithItem(e -> {
+                                    log.error(e.getMessage());
+                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity("Erreur lors de la mise à jour des assistants réalisateurs: " + e.getMessage())
                                             .build();
                                 }
                         )
@@ -1405,6 +1448,41 @@ public class MovieResource {
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DIRECTOR)
                                         .map(person -> MovieDirector.of(movie, person, dto.getRole())),
                                 "La liste des réalisateurs n'est pas initialisée"
+                        )
+                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                                movieTechnicianDTOs.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOs).build()
+                        )
+                        .onItem().ifNull().continueWith(Response.serverError().build())
+                ;
+    }
+
+    /**
+     * Ajoute une liste d'assistants réalisateurs à un film spécifique.
+     *
+     * @param id                     L'identifiant du film auquel les assistants réalisateurs doivent être ajoutés.
+     * @param movieTechnicianDTOList La liste des assistants réalisateurs à ajouter sous forme de {@link MovieTechnicianDTO}.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des assistants réalisateurs si l'ajout est réussi.
+     * - 500 Server Error si l'ajout a échoué.
+     */
+    @PATCH
+    @Path("/{id}/assistant-directors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> addAssistantDirectors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        if (Objects.isNull(movieTechnicianDTOList)) {
+            throw new BadRequestException("La liste des assistants réalisateurs ne peut pas être nulle.");
+        }
+
+        return
+                movieService.addTechnicians(
+                                id,
+                                movieTechnicianDTOList,
+                                Movie::getMovieAssistantDirectors,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ASSISTANT_DIRECTOR)
+                                        .map(person -> MovieAssistantDirector.of(movie, person, dto.getRole())),
+                                "La liste des assistants réalisateurs n'est pas initialisée"
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
@@ -2062,7 +2140,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long producerId) {
         return
-                movieService.removeTechnician(movieId, producerId, Movie::getMovieProducers, "La collection des producteurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, producerId, Movie::getMovieProducers, "La liste des producteurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2090,7 +2168,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long directorId) {
         return
-                movieService.removeTechnician(movieId, directorId, Movie::getMovieDirectors, "La collection des réalisateurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, directorId, Movie::getMovieDirectors, "La liste des réalisateurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2098,6 +2176,34 @@ public class MovieResource {
                         )
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la suppression du réalisateur: {}", err.getMessage());
+                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                }
+                        )
+                ;
+    }
+
+    /**
+     * Supprime un assistant réalisateur d'un film spécifique et retourne une réponse HTTP appropriée.
+     *
+     * @param movieId    L'identifiant du film concerné.
+     * @param assistantDirectorId L'identifiant de l'assistant réalisateur à supprimer du film.
+     * @return Une {@link Uni} contenant une {@link Response} :
+     * - 200 OK avec la liste mise à jour des assistants réalisateurs si la suppression est réussie.
+     * - 500 Server Error si la suppression échoue.
+     */
+    @PATCH
+    @Path("/{movieId}/assistant-directors/{assistantDirectorId}")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> removeAssistantDirector(@RestPath Long movieId, @RestPath Long assistantDirectorId) {
+        return
+                movieService.removeTechnician(movieId, assistantDirectorId, Movie::getMovieDirectors, "La liste des assistants réalisateurs n'est pas initialisée")
+                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                                movieTechnicianDTOs.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOs).build()
+                        )
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression de l'assistant réalisateur: {}", err.getMessage());
                                     return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
                                 }
                         )
@@ -2118,7 +2224,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long screenwriterId) {
         return
-                movieService.removeTechnician(movieId, screenwriterId, Movie::getMovieScreenwriters, "La collection des scénaristes n'est pas initialisée")
+                movieService.removeTechnician(movieId, screenwriterId, Movie::getMovieScreenwriters, "La liste des scénaristes n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2174,7 +2280,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long musicianId) {
         return
-                movieService.removeTechnician(movieId, musicianId, Movie::getMovieMusicians, "La collection des musiciens n'est pas initialisée")
+                movieService.removeTechnician(movieId, musicianId, Movie::getMovieMusicians, "La liste des musiciens n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2202,7 +2308,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long photographerId) {
         return
-                movieService.removeTechnician(movieId, photographerId, Movie::getMoviePhotographers, "La collection des photographes n'est pas initialisée")
+                movieService.removeTechnician(movieId, photographerId, Movie::getMoviePhotographers, "La liste des photographes n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2230,7 +2336,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCostumier(@RestPath Long movieId, @RestPath Long costumierId) {
         return
-                movieService.removeTechnician(movieId, costumierId, Movie::getMovieCostumiers, "La collection des costumiers n'est pas initialisée")
+                movieService.removeTechnician(movieId, costumierId, Movie::getMovieCostumiers, "La liste des costumiers n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2258,7 +2364,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeDecorator(@RestPath Long movieId, @RestPath Long decoratorId) {
         return
-                movieService.removeTechnician(movieId, decoratorId, Movie::getMovieDecorators, "La collection des décorateurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, decoratorId, Movie::getMovieDecorators, "La liste des décorateurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2286,7 +2392,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeEditor(@RestPath Long movieId, @RestPath Long editorId) {
         return
-                movieService.removeTechnician(movieId, editorId, Movie::getMovieEditors, "La collection des monteurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, editorId, Movie::getMovieEditors, "La liste des monteurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2314,7 +2420,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCaster(@RestPath Long movieId, @RestPath Long casterId) {
         return
-                movieService.removeTechnician(movieId, casterId, Movie::getMovieCasters, "La collection des casteurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, casterId, Movie::getMovieCasters, "La liste des casteurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2342,7 +2448,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeArtist(@RestPath Long movieId, @RestPath Long artistId) {
         return
-                movieService.removeTechnician(movieId, artistId, Movie::getMovieArtists, "La collection des artistes n'est pas initialisée")
+                movieService.removeTechnician(movieId, artistId, Movie::getMovieArtists, "La liste des artistes n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2370,7 +2476,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeSoundEditors(@RestPath Long movieId, @RestPath Long soundDirectorId) {
         return
-                movieService.removeTechnician(movieId, soundDirectorId, Movie::getMovieSoundEditors, "La collection des ingénieurs du son n'est pas initialisée")
+                movieService.removeTechnician(movieId, soundDirectorId, Movie::getMovieSoundEditors, "La liste des ingénieurs du son n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2398,7 +2504,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeVfxSupervisor(@RestPath Long movieId, @RestPath Long vfxSupervisorId) {
         return
-                movieService.removeTechnician(movieId, vfxSupervisorId, Movie::getMovieVfxSupervisors, "La collection des spécialistes des effets visuels n'est pas initialisée")
+                movieService.removeTechnician(movieId, vfxSupervisorId, Movie::getMovieVfxSupervisors, "La liste des spécialistes des effets visuels n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2426,7 +2532,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeSfxSupervisor(@RestPath Long movieId, @RestPath Long sfxSupervisorId) {
         return
-                movieService.removeTechnician(movieId, sfxSupervisorId, Movie::getMovieSfxSupervisors, "La collection des spécialistes des effets spéciaux n'est pas initialisée")
+                movieService.removeTechnician(movieId, sfxSupervisorId, Movie::getMovieSfxSupervisors, "La liste des spécialistes des effets spéciaux n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2454,7 +2560,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeMakeupArtists(@RestPath Long movieId, @RestPath Long makeupArtistId) {
         return
-                movieService.removeTechnician(movieId, makeupArtistId, Movie::getMovieMakeupArtists, "La collection des maquilleurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, makeupArtistId, Movie::getMovieMakeupArtists, "La liste des maquilleurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2482,7 +2588,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeHairDressers(@RestPath Long movieId, @RestPath Long hairDresserId) {
         return
-                movieService.removeTechnician(movieId, hairDresserId, Movie::getMovieHairDressers, "La collection des coiffeurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, hairDresserId, Movie::getMovieHairDressers, "La liste des coiffeurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2510,7 +2616,7 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeStuntman(@RestPath Long movieId, @RestPath Long stuntmanId) {
         return
-                movieService.removeTechnician(movieId, stuntmanId, Movie::getMovieStuntmen, "La collection des cascadeurs n'est pas initialisée")
+                movieService.removeTechnician(movieId, stuntmanId, Movie::getMovieStuntmen, "La liste des cascadeurs n'est pas initialisée")
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2663,6 +2769,26 @@ public class MovieResource {
     public Uni<Response> deleteDirectors(@RestPath Long id) {
         return
                 movieService.clearTechnicians(id, Movie::getMovieDirectors, "la liste des réalisateurs n'est pas initialisée")
+                        .map(deleted -> Response.ok(deleted).build())
+                ;
+    }
+
+    /**
+     * Supprime tous les assistants réalisateurs associés à un film donné.
+     * <p>
+     * Cette méthode permet de supprimer tous les assistants réalisateurs associés à un film en appelant la méthode
+     * {@link MovieService#clearTechnicians(Long, Function, String)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     *
+     * @param id L'identifiant du film dont les assistants réalisateurs doivent être supprimés.
+     * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les assistants réalisateurs ont été supprimés avec succès.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des assistants réalisateurs.
+     */
+    @DELETE
+    @Path("/{id}/assistant-directors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> deleteAssistantDirectors(@RestPath Long id) {
+        return
+                movieService.clearTechnicians(id, Movie::getMovieDirectors, "la liste des assistants réalisateurs n'est pas initialisée")
                         .map(deleted -> Response.ok(deleted).build())
                 ;
     }
