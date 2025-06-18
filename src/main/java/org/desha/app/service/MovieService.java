@@ -945,11 +945,11 @@ public class MovieService {
                                                                                                 movie.setSynopsis(movieDTO.getSynopsis());
                                                                                                 movie.setReleaseDate(movieDTO.getReleaseDate());
                                                                                                 movie.setRunningTime(movieDTO.getRunningTime());
-                                                                                                movie.setBudget(movieDTO.getBudget());
-                                                                                                movie.setBudgetCurrency(movieDTO.getBudgetCurrency());
+                                                                                                movie.setBudget(movieDTO.getBudget().getValue());
+                                                                                                movie.setBudgetCurrency(movieDTO.getBudget().getCurrency());
                                                                                                 movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                                                                                movie.setBoxOffice(movieDTO.getBoxOffice());
-                                                                                                movie.setBoxOfficeCurrency(movieDTO.getBoxOfficeCurrency());
+                                                                                                movie.setBoxOffice(movieDTO.getBoxOffice().getValue());
+                                                                                                movie.setBoxOfficeCurrency(movieDTO.getBoxOffice().getCurrency());
                                                                                             }
                                                                                     )
                                                                                     .flatMap(categorySet -> {
