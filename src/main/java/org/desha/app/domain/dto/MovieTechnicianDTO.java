@@ -20,7 +20,7 @@ public class MovieTechnicianDTO {
         return
                 MovieTechnicianDTO.builder()
                         .id(movieTechnician.getId())
-                        .person(PersonDTO.fromEntity(movieTechnician.getPerson()))
+                        .person(PersonDTO.of(movieTechnician.getPerson()))
                         .role(movieTechnician.getRole())
                         .build()
                 ;

@@ -565,7 +565,7 @@ public class PersonResource {
     @GET
     @Path("/{id}/awards")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getAwardsByPerson(@RestPath Long id, @BeanParam QueryParamsDTO queryParams) {
+    public Uni<Response> getAwardsByPerson(@RestPath Long id) {
         return
                 personService.getAwardsByPerson(id).map(awardDTOS ->
                         awardDTOS.isEmpty()

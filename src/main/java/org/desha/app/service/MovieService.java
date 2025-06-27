@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.domain.record.Repartition;
@@ -33,13 +32,15 @@ public class MovieService {
     private static final String POSTERS_DIR = "posters/";
     private static final String DEFAULT_POSTER = "default-poster.jpg";
 
+    private final AwardService awardService;
+    private final CeremonyAwardsService ceremonyAwardsService;
     private final CountryService countryService;
     private final FileService fileService;
     private final CategoryService categoryService;
     private final PersonService personService;
     private final StatsService statsService;
 
-    private final AwardRepository awardRepository;
+    private final CeremonyAwardsRepository ceremonyAwardsRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
@@ -48,7 +49,9 @@ public class MovieService {
 
     @Inject
     public MovieService(
-            AwardRepository awardRepository,
+            CeremonyAwardsRepository ceremonyAwardsRepository,
+            AwardService awardService,
+            CeremonyAwardsService ceremonyAwardsService,
             CountryService countryService,
             CountryRepository countryRepository,
             FileService fileService,
@@ -60,7 +63,9 @@ public class MovieService {
             PersonRepository personRepository,
             UserRepository userRepository
     ) {
-        this.awardRepository = awardRepository;
+        this.ceremonyAwardsRepository = ceremonyAwardsRepository;
+        this.awardService = awardService;
+        this.ceremonyAwardsService = ceremonyAwardsService;
         this.countryService = countryService;
         this.countryRepository = countryRepository;
         this.fileService = fileService;
@@ -97,12 +102,16 @@ public class MovieService {
         return
                 movieRepository
                         .findMovies(page, sort, direction, criteriasDTO)
-                        .map(
-                                movieList ->
-                                        movieList
-                                                .stream()
-                                                .map(movie -> MovieDTO.of(movie, movie.getAwards().size()))
-                                                .toList()
+                        .map(movieWithAwardsNumberList ->
+                                movieWithAwardsNumberList
+                                        .stream()
+                                        .map(movieWithAwardsNumber ->
+                                                MovieDTO.of(
+                                                        movieWithAwardsNumber.movie(),
+                                                        movieWithAwardsNumber.awardsNumber()
+                                                )
+                                        )
+                                        .toList()
                         )
                 ;
     }
@@ -112,10 +121,15 @@ public class MovieService {
                 movieRepository
                         .findMovies(sort, direction, criteriasDTO)
                         .map(
-                                movieList ->
-                                        movieList
+                                movieWithAwardsNumberList ->
+                                        movieWithAwardsNumberList
                                                 .stream()
-                                                .map(movie -> MovieDTO.of(movie, movie.getAwards().size()))
+                                                .map(movieWithAwardsNumber ->
+                                                        MovieDTO.of(
+                                                                movieWithAwardsNumber.movie(),
+                                                                movieWithAwardsNumber.awardsNumber()
+                                                        )
+                                                )
                                                 .toList()
                         )
                 ;
@@ -264,33 +278,40 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Set<AwardDTO>> getAwardsByMovie(Long id) {
+    public Uni<Set<CeremonyAwardsDTO>> getCeremoniesAwardsByMovie(Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException("Ce film n'existe pas")) // 404 si le film n'existe pas
-                        .flatMap(movie -> Mutiny.fetch(movie.getAwards()))
-                        .map(AwardDTO::fromEntitySet);
+                        .flatMap(movie -> ceremonyAwardsRepository.findCeremoniesAwardsByMovie(movie.getId()))
+                        .map(CeremonyAwardsDTO::fromEntityList)
+                ;
     }
 
     public Uni<List<Repartition>> getMoviesCreationDateEvolution() {
-        return movieRepository.findMoviesCreationDateEvolution()
-                .onFailure().invoke(failure ->
-                        log.error("Erreur lors de la récupération de l'évolution des films", failure)
-                );
+        return
+                movieRepository.findMoviesCreationDateEvolution()
+                        .onFailure().invoke(failure ->
+                                log.error("Erreur lors de la récupération de l'évolution des films", failure)
+                        )
+                ;
     }
 
     public Uni<List<Repartition>> getMoviesCreationDateRepartition() {
-        return movieRepository.findMoviesByCreationDateRepartition()
-                .onFailure().invoke(failure ->
-                        log.error("Erreur lors de la récupération de la répartition des films par date de création", failure)
-                );
+        return
+                movieRepository.findMoviesByCreationDateRepartition()
+                        .onFailure().invoke(failure ->
+                                log.error("Erreur lors de la récupération de la répartition des films par date de création", failure)
+                        )
+                ;
     }
 
     public Uni<List<Repartition>> getMoviesReleaseDateRepartition() {
-        return movieRepository.findMoviesByReleaseDateRepartition()
-                .onFailure().invoke(failure ->
-                        log.error("Erreur lors de la récupération de la répartition des films par date de sortie", failure)
-                );
+        return
+                movieRepository.findMoviesByReleaseDateRepartition()
+                        .onFailure().invoke(failure ->
+                                log.error("Erreur lors de la récupération de la répartition des films par date de sortie", failure)
+                        )
+                ;
     }
 
     public Uni<File> getPoster(String fileName) {
@@ -417,104 +438,38 @@ public class MovieService {
                 );
     }
 
-    /**
-     * Met à jour la liste des récompenses à un film spécifique.
-     * <p>
-     * Cette méthode récupère un film par son identifiant et met à jour ses récompenses :
-     * - Les récompenses existantes sont mises à jour si elles correspondent à un ID dans la liste fournie.
-     * - Les récompenses qui ne sont plus présentes dans la liste fournie sont supprimées.
-     * - Les nouvelles récompenses (sans ID) sont ajoutées au film.
-     * <p>
-     * La transaction est gérée via Panache. Après modification, la liste mise à jour
-     * des récompenses est récupérée et convertie en objets {@link AwardDTO}.
-     *
-     * @param id          L'identifiant du film.
-     * @param awardDTOSet L'ensemble des récompenses à sauvegarder.
-     * @return Un {@link Uni} contenant la liste mise à jour des {@link AwardDTO}.
-     * @throws IllegalArgumentException si le film est introuvable.
-     */
-    public Uni<Set<AwardDTO>> saveAwards(Long id, Set<AwardDTO> awardDTOSet) {
+    public Uni<CeremonyAwardsDTO> saveCeremonyAwards(Long movieId, CeremonyAwardsDTO ceremonyAwardsDTO) {
         return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .chain(
-                                                movie ->
-                                                        Mutiny.fetch(movie.getAwards())
-                                                                .chain(existingAwards -> {
-                                                                            // Récupérer toutes les personnes liées aux DTO (même si dupliquées, on fera le set plus tard)
-                                                                            List<Long> allPersonIds = awardDTOSet.stream()
-                                                                                    .filter(dto -> Objects.nonNull(dto.getPersons()))
-                                                                                    .flatMap(dto -> dto.getPersons().stream())
-                                                                                    .map(PersonDTO::getId)
-                                                                                    .filter(Objects::nonNull)
-                                                                                    .distinct()
-                                                                                    .toList();
-
-                                                                            return personService.getByIds(allPersonIds)
-                                                                                    .map(personList -> {
-                                                                                                Map<Long, Person> personMap = personList.stream()
-                                                                                                        .collect(Collectors.toMap(Person::getId, p -> p));
-
-                                                                                                // Mise à jour des récompenses existantes
-                                                                                                existingAwards.forEach(award ->
-                                                                                                        awardDTOSet.stream()
-                                                                                                                .filter(a -> Objects.nonNull(a.getId()) && a.getId().equals(award.getId()))
-                                                                                                                .findFirst()
-                                                                                                                .ifPresent(dto -> {
-                                                                                                                    award.setCeremony(StringUtils.capitalize(StringUtils.defaultString(dto.getCeremony()).trim()));
-                                                                                                                    award.setName(StringUtils.capitalize(StringUtils.defaultString(dto.getName()).trim()));
-                                                                                                                    award.setYear(dto.getYear());
-
-                                                                                                                    Set<Person> linkedPersons = dto.getPersons().stream()
-                                                                                                                            .map(PersonDTO::getId)
-                                                                                                                            .map(personMap::get)
-                                                                                                                            .filter(Objects::nonNull)
-                                                                                                                            .collect(Collectors.toSet());
-
-                                                                                                                    award.setPersonSet(linkedPersons);
-                                                                                                                })
-                                                                                                );
-
-                                                                                                // Suppression des récompenses obsolètes
-                                                                                                existingAwards.removeIf(existing ->
-                                                                                                        awardDTOSet.stream().noneMatch(updated ->
-                                                                                                                Objects.nonNull(updated.getId()) && updated.getId().equals(existing.getId())
-                                                                                                        )
-                                                                                                );
-
-                                                                                                // Ajout des nouvelles récompenses
-                                                                                                awardDTOSet.stream()
-                                                                                                        .filter(dto -> Objects.isNull(dto.getId()))
-                                                                                                        .forEach(dto -> {
-                                                                                                            Award newAward = Award.fromDTO(dto);
-                                                                                                            newAward.setMovie(movie);
-
-                                                                                                            if (Objects.nonNull(dto.getPersons())) {
-                                                                                                                Set<Person> linkedPersons = dto.getPersons().stream()
-                                                                                                                        .map(PersonDTO::getId)
-                                                                                                                        .map(personMap::get)
-                                                                                                                        .filter(Objects::nonNull)
-                                                                                                                        .collect(Collectors.toSet());
-
-                                                                                                                newAward.setPersonSet(linkedPersons);
-                                                                                                            }
-                                                                                                            existingAwards.add(newAward);
-                                                                                                        });
-
-                                                                                                return movie.getAwards();
-                                                                                            }
-
-                                                                                    )
-                                                                                    .call(awardRepository::persist)
-                                                                                    .call(awardRepository::flush)
-                                                                                    .map(AwardDTO::fromEntitySet);
-                                                                        }
+                Panache.withTransaction(() ->
+                        movieRepository.findById(movieId)
+                                .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
+                                .chain(movie ->
+                                        awardService.getPersonsByAwards(ceremonyAwardsDTO.getAwards())
+                                                .map(personList ->
+                                                        personList.stream()
+                                                                .collect(Collectors.toMap(Person::getId, p -> p))
+                                                )
+                                                .chain(personMap ->
+                                                        Mutiny.fetch(movie.getCeremoniesAwards()) // Récupération de l'ensemble des ceremony awards
+                                                                // Récupération de l'objet des ceremony awards à mettre à jour
+                                                                .map(ceremonyAwardsSet ->
+                                                                        ceremonyAwardsSet.stream()
+                                                                                .filter(ca -> Objects.equals(ca.getCeremony().getId(), ceremonyAwardsDTO.getCeremony().getId()))
+                                                                                .findFirst()
                                                                 )
-                                        )
-                        )
-                ;
+                                                                .chain(optionalCA -> optionalCA
+                                                                        .map(existingCA -> existingCA.updateExistingCeremonyAwards(ceremonyAwardsDTO, personMap)) // S'il existe on le met à jour
+                                                                        .orElseGet(() -> ceremonyAwardsService.createNewCeremonyAwards(movie, ceremonyAwardsDTO, personMap) // Sinon on le crée et on l'ajoute à l'ensemble
+                                                                                .invoke(ceremonyAwards -> movie.getCeremoniesAwards().add(ceremonyAwards))
+                                                                        )
+                                                                )
+                                                )
+                                                .call(ceremonyAwardsRepository::persist)
+                                                .call(ceremonyAwardsRepository::flush)
+                                                .call(() -> movieRepository.persist(movie))
+                                                .map(ceremonyAwards -> CeremonyAwardsDTO.of(ceremonyAwards, ceremonyAwards.getAwards()))
+                                )
+                );
     }
 
     /**
@@ -739,30 +694,40 @@ public class MovieService {
     /**
      * Ajoute un ensemble de récompenses à un film spécifique.
      *
-     * @param id          L'identifiant du film auquel les récompenses doivent être ajoutées.
-     * @param awardDTOSet L'ensemble des récompenses à ajouter sous forme de {@link AwardDTO}.
+     * @param idMovie      L'identifiant du film auquel les récompenses doivent être ajoutées.
+     * @param awardDTOList La liste des récompenses à ajouter sous forme de {@link AwardDTO}.
      * @return Une {@link Uni} contenant un {@link Set} de {@link AwardDTO} :
      * @throws IllegalArgumentException si le film n'est pas trouvé.
      * @throws IllegalStateException    si l'ensemble des récompenses n'est pas initialisé pour ce film.
      */
-    public Uni<Set<AwardDTO>> addAwards(Long id, Set<AwardDTO> awardDTOSet) {
+    public Uni<CeremonyAwardsDTO> addAwards(Long idMovie, Long idCeremonyAwards, List<AwardDTO> awardDTOList) {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(id)
+                                movieRepository.findById(idMovie)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .flatMap(movie ->
-                                                movie.addAwards(
-                                                                awardDTOSet
-                                                                        .stream()
-                                                                        .map(Award::fromDTO)
-                                                                        .collect(Collectors.toSet())
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCeremoniesAwards())
+                                                        .map(ceremonyAwardsSet ->
+                                                                ceremonyAwardsSet.stream()
+                                                                        .filter(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), idCeremonyAwards))
+                                                                        .findFirst()
+                                                                        .orElseThrow(() -> new IllegalArgumentException("Cérémonie inexistante pour ce film"))
                                                         )
-                                                        .invoke(awardSet -> awardSet.forEach(award -> award.setMovie(movie)))
-                                                        .replaceWith(movie)
+                                                        .flatMap(ceremonyAwards ->
+                                                                ceremonyAwards.addAwards(
+                                                                                awardDTOList
+                                                                                        .stream()
+                                                                                        .filter(awardDTO -> Objects.isNull(awardDTO.getId()))
+                                                                                        .map(Award::of)
+                                                                                        .toList()
+                                                                        )
+                                                                        .replaceWith(ceremonyAwards)
+                                                        )
                                         )
-                                        .flatMap(movieRepository::persist)
-                                        .flatMap(Movie::fetchAndMapAwardSet)
+                                        .call(ceremonyAwardsRepository::persist)
+                                        .call(ceremonyAwardsRepository::flush)
+                                        .map(CeremonyAwardsDTO::of)
                         )
                 ;
     }
@@ -887,15 +852,24 @@ public class MovieService {
      * @return Un {@link Uni} contenant l'ensemble mis à jour des {@link AwardDTO} du film.
      * @throws IllegalArgumentException si le film est introuvable.
      */
-    public Uni<Set<AwardDTO>> removeAward(Long movieId, Long awardId) {
+    public Uni<CeremonyAwardsDTO> removeAward(Long movieId, Long ceremonyAwardsId, Long awardId) {
         return
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(movie -> movie.removeAward(awardId))
-                                        .chain(movieRepository::persist)
-                                        .flatMap(Movie::fetchAndMapAwardSet)
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCeremoniesAwards())
+                                                        .map(ceremonyAwardsSet ->
+                                                                ceremonyAwardsSet.stream()
+                                                                        .filter(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), ceremonyAwardsId))
+                                                                        .findFirst()
+                                                                        .orElseThrow(() -> new IllegalArgumentException("Cérémonie inexistante pour ce film"))
+                                                        )
+                                        )
+                                        .call(ceremonyAwards -> ceremonyAwards.removeAward(awardId))
+                                        .call(ceremonyAwardsRepository::persist)
+                                        .map(CeremonyAwardsDTO::of)
                         )
                 ;
     }
@@ -904,73 +878,82 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable"))
-                                        .flatMap(
-                                                movie -> {
-                                                    List<Long> newCountryIds = movieDTO.getCountries().stream().map(CountryDTO::getId).toList();
+                                        movieRepository.findById(id)
+                                                .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable"))
+                                                /*.chain(movie -> {
                                                     List<Long> newCategoryIds = movieDTO.getCategories().stream().map(CategoryDTO::getId).toList();
-
-                                                    boolean shouldUpdateReleaseDate = Objects.nonNull(movieDTO.getReleaseDate()) && !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
-                                                    AtomicBoolean shouldUpdateCountries = new AtomicBoolean(false);
                                                     AtomicBoolean shouldUpdateCategories = new AtomicBoolean(false);
-
                                                     return
-                                                            Mutiny.fetch(movie.getCountries())
-                                                                    .invoke(countries -> shouldUpdateCountries.set(!new HashSet<>(newCountryIds)
+                                                            Mutiny.fetch(movie.getCategories())
+                                                                    .chain(categories -> Uni.createFrom().item( !new HashSet<>(newCategoryIds)
                                                                                     .equals(
-                                                                                            new HashSet<>(countries.stream()
-                                                                                                    .map(Country::getId)
+                                                                                            new HashSet<>(categories.stream()
+                                                                                                    .map(Category::getId)
                                                                                                     .toList())
-                                                                                    )
-                                                                            )
+                                                                                    ))
                                                                     )
-                                                                    .chain(() ->
-                                                                            Mutiny.fetch(movie.getCategories())
-                                                                                    .invoke(categories -> shouldUpdateCategories.set(!new HashSet<>(newCategoryIds)
-                                                                                                    .equals(
-                                                                                                            new HashSet<>(categories.stream()
-                                                                                                                    .map(Category::getId)
-                                                                                                                    .toList())
-                                                                                                    )
+                                                                    .chain(bool -> {
+                                                                        if(Boolean.TRUE.equals(bool)) {
+                                                                            categoryService.getByIds(newCategoryIds).call(movie::setCategories);
+                                                                            statsService.updateMoviesByCategoryRepartition();
+                                                                        }
+                                                                    })
+                                                                    .replaceWith(movie);
+                                                })*/
+                                                .flatMap(
+                                                        movie -> {
+                                                            List<Long> newCountryIds = movieDTO.getCountries().stream().map(CountryDTO::getId).toList();
+                                                            List<Long> newCategoryIds = movieDTO.getCategories().stream().map(CategoryDTO::getId).toList();
+
+                                                            boolean shouldUpdateReleaseDate = Objects.nonNull(movieDTO.getReleaseDate()) && !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
+                                                            AtomicBoolean shouldUpdateCountries = new AtomicBoolean(false);
+                                                            AtomicBoolean shouldUpdateCategories = new AtomicBoolean(false);
+
+                                                            return
+                                                                    Mutiny.fetch(movie.getCountries())
+                                                                            .invoke(countries -> shouldUpdateCountries.set(!new HashSet<>(newCountryIds)
+                                                                                            .equals(
+                                                                                                    new HashSet<>(countries.stream()
+                                                                                                            .map(Country::getId)
+                                                                                                            .toList())
                                                                                             )
                                                                                     )
-                                                                    )
-                                                                    .chain(ignore ->
-                                                                            countryService.getByIds(newCountryIds).invoke(movie::setCountries)
-                                                                                    .chain(() -> categoryService.getByIds(newCategoryIds).invoke(movie::setCategories))
-                                                                                    .invoke(() -> {
-                                                                                                movie.setTitle(movieDTO.getTitle());
-                                                                                                movie.setOriginalTitle(movieDTO.getOriginalTitle());
-                                                                                                movie.setSynopsis(movieDTO.getSynopsis());
-                                                                                                movie.setReleaseDate(movieDTO.getReleaseDate());
-                                                                                                movie.setRunningTime(movieDTO.getRunningTime());
-                                                                                                movie.setBudget(movieDTO.getBudget().getValue());
-                                                                                                movie.setBudgetCurrency(movieDTO.getBudget().getCurrency());
-                                                                                                movie.setPosterFileName(Optional.ofNullable(movie.getPosterFileName()).orElse(DEFAULT_POSTER));
-                                                                                                movie.setBoxOffice(movieDTO.getBoxOffice().getValue());
-                                                                                                movie.setBoxOfficeCurrency(movieDTO.getBoxOffice().getCurrency());
-                                                                                            }
-                                                                                    )
-                                                                                    .flatMap(categorySet -> {
-                                                                                                if (Objects.nonNull(file)) {
-                                                                                                    return uploadPoster(file)
-                                                                                                            .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                                                                            .invoke(movie::setPosterFileName)
-                                                                                                            .replaceWith(movie);
-                                                                                                }
-                                                                                                return Uni.createFrom().item(movie);
-                                                                                            }
-                                                                                    )
-                                                                                    .flatMap(entity -> {
-                                                                                        Uni<Void> releaseDateUpdate = shouldUpdateReleaseDate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem();
-                                                                                        Uni<Void> categoryUpdate = shouldUpdateCategories.get() ? statsService.updateMoviesByCategoryRepartition() : Uni.createFrom().voidItem();
-                                                                                        Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();
-                                                                                        return releaseDateUpdate.chain(() -> categoryUpdate.chain(() -> countryUpdate)).replaceWith(entity);
-                                                                                    })
-                                                                                    .map(entity -> MovieDTO.of(movie, movie.getCategories(), movie.getCountries()))
-                                                                    );
-                                                })
+                                                                            )
+                                                                            .chain(() ->
+                                                                                    Mutiny.fetch(movie.getCategories())
+                                                                                            .invoke(categories -> shouldUpdateCategories.set(!new HashSet<>(newCategoryIds)
+                                                                                                            .equals(
+                                                                                                                    new HashSet<>(categories.stream()
+                                                                                                                            .map(Category::getId)
+                                                                                                                            .toList())
+                                                                                                            )
+                                                                                                    )
+                                                                                            )
+                                                                            )
+                                                                            .chain(ignore ->
+                                                                                            countryService.getByIds(newCountryIds).invoke(movie::setCountries)
+                                                                                            .chain(() -> categoryService.getByIds(newCategoryIds).invoke(movie::setCategories))
+                                                                                                    .invoke(() -> movie.updateGeneralInfos(movieDTO))
+                                                                                                    .flatMap(categorySet -> {
+                                                                                                                if (Objects.nonNull(file)) {
+                                                                                                                    return uploadPoster(file)
+                                                                                                                            .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                                                                                            .invoke(movie::setPosterFileName)
+                                                                                                                            .replaceWith(movie);
+                                                                                                                }
+                                                                                                                return Uni.createFrom().item(movie);
+                                                                                                            }
+                                                                                                    )
+                                                                                                    .flatMap(entity -> {
+                                                                                                        Uni<Void> releaseDateUpdate = shouldUpdateReleaseDate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem();
+                                                                                                        Uni<Void> categoryUpdate = shouldUpdateCategories.get() ? statsService.updateMoviesByCategoryRepartition() : Uni.createFrom().voidItem();
+                                                                                                        Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();
+                                                                                                        return releaseDateUpdate.chain(() -> categoryUpdate.chain(() -> countryUpdate)).replaceWith(entity);
+                                                                                                    })
+                                                                                                    .map(entity -> MovieDTO.of(movie, movie.getCategories(), movie.getCountries()))
+                                                                            );
+                                                        }
+                                                )
                         );
     }
 
@@ -1095,25 +1078,31 @@ public class MovieService {
      * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
      * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
      *
-     * @param id L'identifiant du film pour lequel les récompenses doivent être supprimées.
+     * @param movieId L'identifiant du film pour lequel les récompenses doivent être supprimées.
      * @return Un {@link Uni} contenant {@code true} si la suppression des récompenses a réussi,
      * ou une exception sera levée en cas d'erreur.
      * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
      *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> clearAwards(Long id) {
+    public Uni<Boolean> deleteCeremonyAwards(Long movieId, Long ceremonyAwardsId) {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(id)
+                                movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .call(Movie::clearAwards)
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCeremoniesAwards())
+                                                        .invoke(ceremonyAwardsSet ->
+                                                                ceremonyAwardsSet.removeIf(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), ceremonyAwardsId))
+                                                        )
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .map(movie -> true)
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
-                            throw new WebApplicationException("Erreur lors de la suppression des pays", throwable);
+                            throw new WebApplicationException("Erreur lors de la suppression de la cérémonie", throwable);
                         });
     }
 }

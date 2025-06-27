@@ -7,9 +7,16 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
+import org.desha.app.domain.dto.LightPersonDTO;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.time.Year;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Builder
@@ -25,9 +32,9 @@ public class Award extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @NotBlank(message = "La cérémonie ne peut pas être vide")
-    @Column(name = "ceremonie", nullable = false)
-    private String ceremony;
+    @ManyToOne
+    @JoinColumn(name = "fk_ceremonie_recompenses")
+    private CeremonyAwards ceremonyAwards;
 
     @NotBlank(message = "Le nom ne peut pas être vide")
     @Column(name = "nom", nullable = false)
@@ -36,26 +43,66 @@ public class Award extends PanacheEntityBase {
     @Column(name = "annee")
     private Year year;
 
-    @ManyToOne
-    @JoinColumn(name = "fk_film", nullable = false)
-    private Movie movie;
-
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany
     @JoinTable(
             name = "lnk_recompense_personne",
             joinColumns = @JoinColumn(name = "fk_recompense"),
             inverseJoinColumns = @JoinColumn(name = "fk_personne")
     )
+    @Fetch(FetchMode.JOIN)
     private Set<Person> personSet;
 
-    public static Award fromDTO(AwardDTO awardDTO) {
+    public static Award build(Long id, String name, Year year) {
         return
                 Award.builder()
-                        .id(awardDTO.getId())
-                        .ceremony(StringUtils.capitalize(awardDTO.getCeremony().trim()))
-                        .name(StringUtils.capitalize(awardDTO.getName().trim()))
-                        .year(awardDTO.getYear())
-                        .build();
+                        .id(id)
+                        .name(StringUtils.capitalize(name).trim())
+                        .year(year)
+                        .build()
+                ;
+    }
+
+    public static Award of(AwardDTO awardDTO) {
+        return Award.build(awardDTO.getId(), awardDTO.getName(), awardDTO.getYear());
+    }
+
+    public static List<Award> of(List<AwardDTO> awardDTOList) {
+        return
+                awardDTOList.stream()
+                        .map(Award::of)
+                        .toList()
+                ;
+    }
+
+    public static Award createAward(AwardDTO awardDTO, CeremonyAwards ceremonyAwards, Map<Long, Person> personMap) {
+        Award newAward = Award.of(awardDTO);
+        newAward.setCeremonyAwards(ceremonyAwards);
+
+        if (Objects.nonNull(awardDTO.getPersons())) {
+            Set<Person> linkedPersons = awardDTO.getPersons().stream()
+                    .map(LightPersonDTO::getId)
+                    .map(personMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            newAward.setPersonSet(linkedPersons);
+        }
+
+        return newAward;
+    }
+
+    public void updateAward(AwardDTO awardDTO, Map<Long, Person> personMap) {
+        setName(StringUtils.capitalize(StringUtils.defaultString(awardDTO.getName()).trim()));
+        setYear(awardDTO.getYear());
+
+        if (Objects.nonNull(awardDTO.getPersons())) {
+            Set<Person> linkedPersons = awardDTO.getPersons().stream()
+                    .map(LightPersonDTO::getId)
+                    .map(personMap::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            setPersonSet(linkedPersons);
+        }
     }
 
 }

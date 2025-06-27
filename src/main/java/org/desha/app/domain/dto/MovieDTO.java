@@ -3,10 +3,7 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Award;
-import org.desha.app.domain.entity.Category;
-import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,13 +24,13 @@ public class MovieDTO {
     private Budget budget;
     private BoxOffice boxOffice;
     private String posterFileName;
-    private Integer numberOfAwards;
+    private Long numberOfAwards;
     private UserDTO user;
     private TechnicalTeamDTO technicalTeam;
     private List<MovieActorDTO> movieActors;
     private Set<CountryDTO> countries;
     private Set<CategoryDTO> categories;
-    private Set<AwardDTO> awards;
+    private Set<CeremonyAwardsDTO> ceremonyAwards;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
 
@@ -52,7 +49,7 @@ public class MovieDTO {
                         .user(UserDTO.fromEntity(movie.getUser()))
                         .countries(CountryDTO.fromCountryEntitySet(movie.getCountries()))
                         .categories(CategoryDTO.fromCategorySetEntity(movie.getCategories()))
-                        .awards(AwardDTO.fromEntitySet(movie.getAwards()))
+                        .ceremonyAwards(CeremonyAwardsDTO.fromEntitySet(movie.getCeremoniesAwards()))
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
                         .build()
@@ -98,7 +95,7 @@ public class MovieDTO {
                 ;
     }
 
-    public static MovieDTO of(Movie movie, Set<Category> categorySet, Set<Country> countrySet, Set<Award> awardSet) {
+    public static MovieDTO of(Movie movie, Set<Category> categorySet, Set<Country> countrySet, Set<CeremonyAwards> ceremonyAwardsSet) {
         return
                 MovieDTO.builder()
                         .id(movie.getId())
@@ -113,13 +110,13 @@ public class MovieDTO {
                         .lastUpdate(movie.getLastUpdate())
                         .categories(CategoryDTO.fromCategorySetEntity(categorySet))
                         .countries(CountryDTO.fromCountryEntitySet(countrySet))
-                        .awards(AwardDTO.fromEntitySet(awardSet))
+                        .ceremonyAwards(CeremonyAwardsDTO.fromEntitySet(ceremonyAwardsSet))
                         .user(UserDTO.fromEntity(movie.getUser()))
                         .build()
                 ;
     }
 
-    public static MovieDTO of(Movie movie, Integer numberOfAwards) {
+    public static MovieDTO of(Movie movie, Long numberOfAwards) {
         return
                 MovieDTO.builder()
                         .id(movie.getId())

@@ -643,15 +643,15 @@ public class MovieResource {
      * Sinon, une réponse avec le statut HTTP 200 et la liste des récompenses est renvoyée.
      */
     @GET
-    @Path("/{id}/awards")
+    @Path("/{id}/ceremonies-awards")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getAwards(@RestPath Long id) {
+    public Uni<Response> getCeremoniesAwards(@RestPath Long id) {
         return
-                movieService.getAwardsByMovie(id)
-                        .map(awards ->
-                                awards.isEmpty()
+                movieService.getCeremoniesAwardsByMovie(id)
+                        .map(ceremonyAwardsDTOS ->
+                                ceremonyAwardsDTOS.isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(awards).build()
+                                        : Response.ok(ceremonyAwardsDTOS).build()
                         )
                 ;
     }
@@ -821,7 +821,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des réalisateurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des réalisateurs")
                                             .build();
                                 }
                         )
@@ -850,7 +850,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des assistants réalisateurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des assistants réalisateurs")
                                             .build();
                                 }
                         )
@@ -937,7 +937,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des musiciens: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des musiciens")
                                             .build();
                                 }
                         )
@@ -966,7 +966,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des photographes: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des photographes")
                                             .build();
                                 }
                         )
@@ -995,7 +995,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des costumiers: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des costumiers")
                                             .build();
                                 }
                         )
@@ -1024,7 +1024,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des décorateurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des décorateurs")
                                             .build();
                                 }
                         )
@@ -1053,7 +1053,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des monteurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des monteurs")
                                             .build();
                                 }
                         )
@@ -1082,7 +1082,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des casteurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des casteurs")
                                             .build();
                                 }
                         )
@@ -1111,7 +1111,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des artistes: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des artistes")
                                             .build();
                                 }
                         )
@@ -1140,7 +1140,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des ingénieurs son: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des ingénieurs son")
                                             .build();
                                 }
                         )
@@ -1169,7 +1169,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des spécialistes des effets visuels: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des spécialistes des effets visuels")
                                             .build();
                                 }
                         )
@@ -1198,7 +1198,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des spécialistes des effets spéciaux: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des spécialistes des effets spéciaux")
                                             .build();
                                 }
                         )
@@ -1227,7 +1227,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des maquilleurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des maquilleurs")
                                             .build();
                                 }
                         )
@@ -1256,7 +1256,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des coiffeurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des coiffeurs")
                                             .build();
                                 }
                         )
@@ -1285,7 +1285,7 @@ public class MovieResource {
                         .onFailure().recoverWithItem(e -> {
                                     log.error(e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des cascadeurs: " + e.getMessage())
+                                            .entity("Erreur lors de la mise à jour des cascadeurs")
                                             .build();
                                 }
                         )
@@ -1362,8 +1362,8 @@ public class MovieResource {
      * <p>
      * Cette méthode permet de mettre à jour les récompenses d'un film en fonction des identifiants fournis.
      *
-     * @param id        L'identifiant du film dont les récompenses doivent être mis à jour.
-     * @param awardDTOS Un ensemble de {@link AwardDTO} représentant les récompenses à associer.
+     * @param id                L'identifiant du film dont les récompenses doivent être mis à jour.
+     * @param ceremonyAwardsDTO Un {@link CeremonyAwardsDTO} représentant les récompenses à associer.
      * @return Un {@link Uni} contenant une réponse HTTP :
      * - `200 OK` avec la liste des récompenses mise à jour.
      * - `204 No Content` si aucune récompense n'est associé.
@@ -1371,19 +1371,19 @@ public class MovieResource {
      * @throws BadRequestException si la liste des récompenses est `null`.
      */
     @PUT
-    @Path("/{id}/awards")
+    @Path("/{id}/ceremony-awards")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> saveAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
-        if (Objects.isNull(awardDTOS)) {
+    public Uni<Response> saveCeremonyAwards(@RestPath Long id, CeremonyAwardsDTO ceremonyAwardsDTO) {
+        if (Objects.isNull(ceremonyAwardsDTO)) {
             throw new BadRequestException("La liste des récompenses ne peut pas être nulle.");
         }
 
         return
-                movieService.saveAwards(id, awardDTOS)
-                        .onItem().ifNotNull().transform(awardDTOSet ->
-                                awardDTOSet.isEmpty()
+                movieService.saveCeremonyAwards(id, ceremonyAwardsDTO)
+                        .onItem().ifNotNull().transform(dto ->
+                                Objects.isNull(dto)
                                         ? Response.noContent().build()
-                                        : Response.ok(awardDTOSet).build()
+                                        : Response.ok(dto).build()
                         )
                         .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
                 ;
@@ -2101,28 +2101,38 @@ public class MovieResource {
     /**
      * Ajoute des récompenses à un film donné.
      *
-     * @param id        L'identifiant du film.
-     * @param awardDTOS Un ensemble d'objets {@link AwardDTO} représentant les récompenses à ajouter au film.
+     * @param movieId      L'identifiant du film.
+     * @param awardDTOList Une liste d'objets {@link AwardDTO} représentant les récompenses à ajouter au film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec les récompenses mises à jour si l'ajout est réussi.
      * - 500 Internal Server Error en cas d'erreur interne.
      */
     @PATCH
-    @Path("/{id}/awards")
+    @Path("/{id}/ceremony-awards/{ceremonyAwardsId}/awards")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> addAwards(@RestPath Long id, Set<AwardDTO> awardDTOS) {
-        if (Objects.isNull(awardDTOS)) {
+    public Uni<Response> addAwards(@RestPath Long movieId, @RestPath Long ceremonyAwardsId, List<AwardDTO> awardDTOList) {
+        if (Objects.isNull(awardDTOList)) {
             throw new BadRequestException("La liste des récompenses ne peut pas être nulle.");
         }
 
         return
-                movieService.addAwards(id, awardDTOS)
-                        .onItem().ifNotNull().transform(awardDTOSet ->
-                                awardDTOSet.isEmpty()
+                movieService.addAwards(movieId, ceremonyAwardsId, awardDTOList)
+                        .onItem().ifNotNull().transform(ceremonyAwardsDTO ->
+                                ceremonyAwardsDTO.getAwards().isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(awardDTOSet).build()
+                                        : Response.ok(ceremonyAwardsDTO).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la mise à jour des récompenses: {}", err.getMessage());
+                                    return
+                                            Response
+                                                    .serverError()
+                                                    .entity("Erreur serveur : " + err.getMessage())
+                                                    .build()
+                                            ;
+                                }
+                        )
+
                 ;
     }
 
@@ -2148,7 +2158,12 @@ public class MovieResource {
                         )
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la suppression du producteur: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response
+                                                    .serverError()
+                                                    .entity("Erreur serveur : " + err.getMessage())
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;
@@ -2176,7 +2191,12 @@ public class MovieResource {
                         )
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la suppression du réalisateur: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response
+                                                    .serverError()
+                                                    .entity("Erreur serveur : " + err.getMessage())
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;
@@ -2185,7 +2205,7 @@ public class MovieResource {
     /**
      * Supprime un assistant réalisateur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId    L'identifiant du film concerné.
+     * @param movieId             L'identifiant du film concerné.
      * @param assistantDirectorId L'identifiant de l'assistant réalisateur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des assistants réalisateurs si la suppression est réussie.
@@ -2711,15 +2731,15 @@ public class MovieResource {
      * - 500 Internal Server Error en cas d'erreur interne.
      */
     @PATCH
-    @Path("/{movieId}/awards/{awardId}")
+    @Path("/{movieId}/ceremony-awards/{ceremonyAwardsId}/awards/{awardId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeAward(@RestPath Long movieId, @RestPath Long awardId) {
+    public Uni<Response> removeAward(@RestPath Long movieId, @RestPath Long ceremonyAwardsId, @RestPath Long awardId) {
         return
-                movieService.removeAward(movieId, awardId)
-                        .onItem().ifNotNull().transform(awardDTOSet ->
-                                awardDTOSet.isEmpty()
+                movieService.removeAward(movieId, ceremonyAwardsId, awardId)
+                        .onItem().ifNotNull().transform(ceremonyAwardsDTO ->
+                                ceremonyAwardsDTO.getAwards().isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(awardDTOSet).build()
+                                        : Response.ok(ceremonyAwardsDTO).build()
                         )
                         .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
@@ -3131,17 +3151,19 @@ public class MovieResource {
      * Supprime toutes les récompenses associées à un film donné.
      * <p>
      * Cette méthode permet de supprimer toutes les récompenses associées à un film en appelant la méthode
-     * {@link MovieService#clearAwards(Long)} (Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     * {@link MovieService#deleteCeremonyAwards(Long, Long)} (Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
      *
-     * @param id L'identifiant du film dont les récompenses doivent être supprimées.
+     * @param movieId L'identifiant du film dont les récompenses doivent être supprimées.
      * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les récompenses ont été supprimées avec succès.
      * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses.
      */
     @DELETE
-    @Path("/{id}/awards")
+    @Path("/{movieId}/ceremony-awards/{ceremonyAwardsId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> deleteAwards(@RestPath Long id) {
-        return movieService.clearAwards(id).map(deleted -> Response.ok(deleted).build());
+    public Uni<Response> deleteCeremonyAwards(@RestPath Long movieId, @RestPath Long ceremonyAwardsId) {
+        return
+                movieService.deleteCeremonyAwards(movieId, ceremonyAwardsId)
+                        .map(deleted -> Response.ok(deleted).build());
     }
 
 }

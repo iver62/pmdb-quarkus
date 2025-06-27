@@ -1,14 +1,16 @@
 package org.desha.app.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Award;
+import org.desha.app.domain.entity.Person;
 
 import java.time.Year;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -16,30 +18,84 @@ import java.util.stream.Collectors;
 public class AwardDTO {
 
     private Long id;
-    private String ceremony;
+    @JsonIgnore
+    private CeremonyAwardsDTO ceremonyAwards;
     private String name;
-    private MovieDTO movie;
-    private Set<PersonDTO> persons;
+    private Set<LightPersonDTO> persons;
     private Year year;
 
-    public static AwardDTO fromEntity(Award award) {
+    public static AwardDTO build(Long id, CeremonyAwardsDTO ceremonyAwards, String name, Set<LightPersonDTO> persons, Year year) {
         return
                 AwardDTO.builder()
-                        .id(award.getId())
-                        .ceremony(award.getCeremony())
-                        .name(award.getName())
-                        .movie(MovieDTO.of(award.getMovie()))
-                        .persons(PersonDTO.fromEntitySet(award.getPersonSet()))
-                        .year(award.getYear())
-                        .build();
+                        .id(id)
+                        .ceremonyAwards(ceremonyAwards)
+                        .name(name)
+                        .persons(persons)
+                        .year(year)
+                        .build()
+                ;
     }
 
-    public static Set<AwardDTO> fromEntitySet(Set<Award> awardSet) {
+    public static AwardDTO withoutCeremony(AwardDTO dto) {
+        return AwardDTO.build(
+                dto.getId(),
+                null,
+                dto.getName(),
+                null,
+                dto.getYear()
+        );
+    }
+
+    public static AwardDTO of(Award award) {
         return
-                Optional.ofNullable(awardSet).orElse(Set.of())
+                AwardDTO.build(
+                        award.getId(),
+                        CeremonyAwardsDTO.of(award.getCeremonyAwards()),
+                        award.getName(),
+                        null,
+                        award.getYear()
+                );
+    }
+
+    public static AwardDTO of(Award award, Set<Person> personSet) {
+        return
+                AwardDTO.build(
+                        award.getId(),
+                        null,
+                        award.getName(),
+                        LightPersonDTO.fromEntitySet(personSet),
+                        award.getYear()
+                );
+    }
+
+    public static List<AwardDTO> fromEntityList(List<Award> awardList) {
+        return
+                Optional.ofNullable(awardList).orElse(List.of())
                         .stream()
-                        .map(AwardDTO::fromEntity)
-                        .collect(Collectors.toSet())
+                        .map(AwardDTO::of)
+                        .toList()
                 ;
+    }
+
+    public static List<AwardDTO> fromEntityListWithPersons(List<Award> awards) {
+        return Optional.ofNullable(awards).orElse(List.of())
+                .stream()
+                .map(award -> AwardDTO.of(award, award.getPersonSet()))
+                .toList();
+    }
+
+    @Override
+    public String toString() {
+        return "AwardDTO{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", year=" + year +
+                ", ceremonyAwards=" + (ceremonyAwards != null ? ceremonyAwards : "null") +
+                ", persons=" + (persons != null
+                ? persons.stream()
+                .map(p -> p.getId() + ":" + p.getName())
+                .toList()
+                : "[]") +
+                '}';
     }
 }

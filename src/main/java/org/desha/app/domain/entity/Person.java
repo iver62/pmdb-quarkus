@@ -15,6 +15,7 @@ import org.hibernate.reactive.mutiny.Mutiny;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,7 +80,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     private List<MoviePhotographer> photographedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieCostumier> costumeMovies = new ArrayList<>();
+    private List<MovieCostumier> costumedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
     private List<MovieDecorator> decoratedMovies = new ArrayList<>();
@@ -116,7 +117,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     private Set<Country> countries = new HashSet<>();
 
     @ManyToMany(mappedBy = "personSet")
-    private Set<Award> awardSet = new HashSet<>();
+    private List<Award> awards = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "personne_type", joinColumns = @JoinColumn(name = "fk_personne"))
@@ -172,27 +173,85 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
 
     @JsonIgnore
     public Uni<Set<Movie>> getAllRelatedMovies() {
+        /*return
+                Uni.join().all(
+                                getPlayedMovies(),
+                                getMoviesByType(() -> Mutiny.fetch(producedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(directedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(assistantDirectedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(writtenMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(composedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(musicalMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(photographedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(costumedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(decoratedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(editedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(castedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(artistMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(soundEditedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(vfxSupervisedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(sfxSupervisedMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(makeupMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(hairStyledMovies)),
+                                getMoviesByType(() -> Mutiny.fetch(stuntMovies))
+                        )
+                        .usingConcurrencyOf(1)
+                        .andCollectFailures()
+                        .map(lists ->
+                                lists.stream()
+                                        .map(HashSet::new)
+                                        .reduce(new HashSet<>(), (acc, set) -> {
+                                            acc.addAll(set);
+                                            return acc;
+                                        })
+                        )
+                ;*/
+
         return
                 Uni.createFrom().item(new HashSet<Movie>())
-                        .chain(set -> Mutiny.fetch(playedMovies).map(movieActors -> movieActors.stream().map(MovieActor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(producedMovies).map(movieProducers -> movieProducers.stream().map(MovieProducer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(directedMovies).map(movieDirectors -> movieDirectors.stream().map(MovieDirector::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(assistantDirectedMovies).map(movieAssistantDirectors -> movieAssistantDirectors.stream().map(MovieAssistantDirector::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(writtenMovies).map(movieScreenwriters -> movieScreenwriters.stream().map(MovieScreenwriter::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(composedMovies).map(movieComposers -> movieComposers.stream().map(MovieComposer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(musicalMovies).map(movieMusicians -> movieMusicians.stream().map(MovieMusician::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(photographedMovies).map(moviePhotographers -> moviePhotographers.stream().map(MoviePhotographer::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(costumeMovies).map(movieCostumiers -> movieCostumiers.stream().map(MovieCostumier::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(decoratedMovies).map(movieDecorators -> movieDecorators.stream().map(MovieDecorator::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(editedMovies).map(movieEditors -> movieEditors.stream().map(MovieEditor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(castedMovies).map(movieCasters -> movieCasters.stream().map(MovieCaster::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(artistMovies).map(movieArtDirectors -> movieArtDirectors.stream().map(MovieArtist::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(soundEditedMovies).map(movieSoundEditors -> movieSoundEditors.stream().map(MovieSoundEditor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(vfxSupervisedMovies).map(movieVfxSupervisors -> movieVfxSupervisors.stream().map(MovieVfxSupervisor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(sfxSupervisedMovies).map(movieSfxSupervisors -> movieSfxSupervisors.stream().map(MovieSfxSupervisor::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(makeupMovies).map(movieMakeupArtists -> movieMakeupArtists.stream().map(MovieMakeupArtist::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(hairStyledMovies).map(movieHairDressers -> movieHairDressers.stream().map(MovieHairDresser::getMovie).toList()).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> Mutiny.fetch(stuntMovies).map(movieStuntmen -> movieStuntmen.stream().map(MovieStuntman::getMovie).toList()).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getPlayedMovies().invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(producedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(directedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(assistantDirectedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(writtenMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(composedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(musicalMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(photographedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(costumedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(decoratedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(editedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(castedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(artistMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(soundEditedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(vfxSupervisedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(sfxSupervisedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(makeupMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(hairStyledMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(stuntMovies)).invoke(set::addAll).replaceWith(set))
+                ;
+    }
+
+    private Uni<List<Movie>> getPlayedMovies() {
+        return
+                Mutiny.fetch(playedMovies)
+                        .map(movieActors ->
+                                movieActors
+                                        .stream()
+                                        .map(MovieActor::getMovie)
+                                        .toList()
+                        )
+                ;
+    }
+
+    private <T extends MovieTechnician> Uni<List<Movie>> getMoviesByType(Supplier<Uni<List<T>>> getTechnicians) {
+        return
+                getTechnicians.get()
+                        .map(tList ->
+                                tList
+                                        .stream()
+                                        .map(T::getMovie)
+                                        .toList()
+                        )
                 ;
     }
 

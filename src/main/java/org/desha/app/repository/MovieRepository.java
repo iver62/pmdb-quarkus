@@ -14,6 +14,7 @@ import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.record.CountryRepartition;
+import org.desha.app.domain.record.MovieWithAwardsNumber;
 import org.desha.app.domain.record.Repartition;
 import org.hibernate.reactive.mutiny.Mutiny;
 
@@ -157,10 +158,10 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         final String query = String.format("""
+                       SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                        FROM Movie m
-                       LEFT JOIN FETCH m.awards
                        WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
@@ -172,13 +173,18 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return find(query, params).page(page).list();
+        return
+                find(query, params)
+                        .page(page)
+                        .project(MovieWithAwardsNumber.class)
+                        .list()
+                ;
     }
 
-    public Uni<List<Movie>> findMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         String query = String.format("""
+                SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                 FROM Movie m
-                LEFT JOIN FETCH m.awards
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
@@ -190,13 +196,17 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 criteriasDTO
         );
 
-        return find(query, params).list();
+        return
+                find(query, params)
+                        .project(MovieWithAwardsNumber.class)
+                        .list()
+                ;
     }
 
-    public Uni<List<Movie>> findMoviesByPerson(Person person, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMoviesByPerson(Person person, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         final String query = String.format("""
+                       SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                        FROM Movie m
-                       LEFT JOIN FETCH m.awards
                        WHERE m.id IN :ids
                          AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
@@ -218,9 +228,14 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                                             criteriasDTO
                                     );
 
-                                    return find(query, params).page(page).list();
+                                    return
+                                            find(query, params)
+                                                    .project(MovieWithAwardsNumber.class)
+                                                    .page(page)
+                                                    .list();
                                 }
-                        );
+                        )
+                ;
     }
 
     public Uni<List<Movie>> findMoviesByCountry(Long id, String sort, Sort.Direction direction, String term) {
@@ -386,8 +401,8 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         String dir = (direction == Sort.Direction.Ascending) ? "ASC" : "DESC";
 
         // Si le critère de tri est le nombre de récompenses
-        if ("awardsCount".equals(sort)) {
-            return String.format(" ORDER BY SIZE(m.awards) %s", dir);
+        if (Objects.equals("awardsCount", sort)) {
+            return String.format(" ORDER BY awardsNumber %s", dir);
         }
 
         // Protection basique contre injection ou champ non mappé

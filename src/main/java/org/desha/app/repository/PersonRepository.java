@@ -136,7 +136,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         String query = String.format("""
                 SELECT p, COALESCE((SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id), 0) AS moviesNumber, COUNT(a) AS awardsNumber
                 FROM Person p
-                LEFT JOIN p.awardSet a
+                LEFT JOIN p.awards a
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 GROUP BY p

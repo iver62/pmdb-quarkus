@@ -35,7 +35,7 @@ public class PersonDTO {
     private Set<CountryDTO> countries;
     private Set<Award> awards;
 
-    public static PersonDTO fromEntity(Person person) {
+    public static PersonDTO of(Person person) {
         return PersonDTO.builder()
                 .id(person.getId())
                 .name(person.getName())
@@ -48,7 +48,7 @@ public class PersonDTO {
                 .build();
     }
 
-    public static PersonDTO fromEntity(Person person, long nbMovies, long nbAwards) {
+    public static PersonDTO of(Person person, long nbMovies, long nbAwards) {
         return PersonDTO.builder()
                 .id(person.getId())
                 .name(person.getName())
@@ -63,7 +63,7 @@ public class PersonDTO {
                 .build();
     }
 
-    public static PersonDTO fromEntity(Person person, Set<Country> countries) {
+    public static PersonDTO of(Person person, Set<Country> countries) {
         return PersonDTO.builder()
                 .id(person.getId())
                 .name(person.getName())
@@ -77,7 +77,7 @@ public class PersonDTO {
                 .build();
     }
 
-    public static PersonDTO fromEntity(Person person, List<Movie> movies, Set<Country> countries) {
+    public static PersonDTO of(Person person, List<Movie> movies, Set<Country> countries) {
         return PersonDTO.builder()
                 .id(person.getId())
                 .name(person.getName())
@@ -101,7 +101,7 @@ public class PersonDTO {
         return
                 Optional.ofNullable(personSet).orElse(Set.of())
                         .stream()
-                        .map(PersonDTO::fromEntity)
+                        .map(PersonDTO::of)
                         .collect(Collectors.toSet())
                 ;
     }

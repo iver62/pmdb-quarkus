@@ -18,7 +18,7 @@ public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<Movi
         return
                 MovieActorDTO.builder()
                         .id(movieActor.getId())
-                        .person(PersonDTO.fromEntity(movieActor.getActor()))
+                        .person(PersonDTO.of(movieActor.getActor()))
                         .role(movieActor.getRole())
                         .rank(movieActor.getRank())
                         .build()

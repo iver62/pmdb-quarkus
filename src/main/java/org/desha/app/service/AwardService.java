@@ -1,25 +1,31 @@
 package org.desha.app.service;
 
 import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.panache.common.Page;
-import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
+import org.desha.app.domain.dto.LightPersonDTO;
 import org.desha.app.domain.entity.Award;
+import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.AwardRepository;
 
 import java.util.List;
+import java.util.Objects;
 
 @ApplicationScoped
 public class AwardService {
 
+    private final PersonService personService;
     private final AwardRepository awardRepository;
 
     @Inject
-    public AwardService(AwardRepository awardRepository) {
+    public AwardService(
+            PersonService personService,
+            AwardRepository awardRepository
+    ) {
+        this.personService = personService;
         this.awardRepository = awardRepository;
     }
 
@@ -38,21 +44,21 @@ public class AwardService {
         return
                 awardRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Récompense introuvable"))
-                        .map(AwardDTO::fromEntity)
+                        .map(AwardDTO::of)
                 ;
     }
 
-    /**
-     * Récupère la liste des cérémonies correspondant à un terme de recherche donné,
-     * avec pagination et tri.
-     *
-     * @param page      la pagination à appliquer (index de page, taille de page)
-     * @param direction la direction du tri (ASC ou DESC)
-     * @param term      le terme à rechercher (filtre sur le nom de la cérémonie)
-     * @return un {@link Uni} contenant la liste des noms de cérémonies correspondantes
-     */
-    public Uni<List<String>> getCeremonies(Page page, Sort.Direction direction, String term) {
-        return awardRepository.findCeremonies(page, direction, term);
+    public Uni<List<Person>> getPersonsByAwards(List<AwardDTO> awardDTOList) {
+        return
+                personService.getByIds(
+                        awardDTOList.stream()
+                                .filter(dto -> Objects.nonNull(dto.getPersons()))
+                                .flatMap(dto -> dto.getPersons().stream())
+                                .map(LightPersonDTO::getId)
+                                .filter(Objects::nonNull)
+                                .distinct()
+                                .toList()
+                );
     }
 
     /**
@@ -75,7 +81,6 @@ public class AwardService {
                                 awardRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Récompense introuvable"))
                                         .invoke(entity -> {
-                                            entity.setCeremony(StringUtils.capitalize(awardDTO.getCeremony().trim()));
                                             entity.setName(StringUtils.capitalize(awardDTO.getName().trim()));
                                             entity.setYear(awardDTO.getYear());
                                         })
@@ -104,12 +109,4 @@ public class AwardService {
                 ;
     }
 
-    /*public Set<AwardDTO> fromAwardSetEntity(Set<Award> awardSet) {
-        return
-                awardSet
-                        .stream()
-                        .map(AwardDTO::fromEntity)
-                        .collect(Collectors.toSet())
-                ;
-    }*/
 }
