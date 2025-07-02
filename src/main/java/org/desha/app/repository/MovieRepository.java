@@ -270,20 +270,28 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                         .list();
     }
 
-    public Uni<List<Movie>> findMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieWithAwardsNumber>> findMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        final String query = String.format("""
+                       SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
+                       FROM Movie m
+                       JOIN m.categories c
+                       WHERE c.id = :id
+                         AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriasDTO), addSort(sort, direction)
+        );
+
+        final Parameters params = addParameters(
+                Parameters.with("id", id)
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
+                criteriasDTO
+        );
+
         return
-                find("""
-                                FROM Movie m
-                                JOIN m.categories c
-                                LEFT JOIN FETCH m.awards
-                                WHERE c.id = :id
-                                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                                """,
-                        Sort.by("m." + sort, direction, Sort.NullPrecedence.NULLS_LAST),
-                        Parameters.with("id", id)
-                                .and("term", "%" + term + "%")
-                )
+                find(query, params)
                         .page(page)
+                        .project(MovieWithAwardsNumber.class)
                         .list()
                 ;
     }
@@ -426,7 +434,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
 
         if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
-            query.append(" AND EXISTS (SELECT 1 FROM m.categories g WHERE c.id IN :categoryIds)");
+            query.append(" AND EXISTS (SELECT 1 FROM m.categories ca WHERE ca.id IN :categoryIds)");
         }
 
         if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {

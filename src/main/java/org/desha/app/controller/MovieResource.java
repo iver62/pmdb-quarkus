@@ -405,7 +405,7 @@ public class MovieResource {
     }
 
     @GET
-    @Path("/{id}/art-directors")
+    @Path("/{id}/artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getArtists(@RestPath Long id) {
         return
@@ -743,7 +743,11 @@ public class MovieResource {
         return
                 movieService.updateMovie(id, file, movieDTO)
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build);
+                        .onFailure().recoverWithItem(e -> Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity("Erreur lors de la modification du film: " + e.getMessage())
+                                .build()
+                        )
+                ;
     }
 
     @PUT
@@ -2099,44 +2103,6 @@ public class MovieResource {
     }
 
     /**
-     * Ajoute des récompenses à un film donné.
-     *
-     * @param movieId      L'identifiant du film.
-     * @param awardDTOList Une liste d'objets {@link AwardDTO} représentant les récompenses à ajouter au film.
-     * @return Une {@link Uni} contenant une {@link Response} :
-     * - 200 OK avec les récompenses mises à jour si l'ajout est réussi.
-     * - 500 Internal Server Error en cas d'erreur interne.
-     */
-    @PATCH
-    @Path("/{id}/ceremony-awards/{ceremonyAwardsId}/awards")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> addAwards(@RestPath Long movieId, @RestPath Long ceremonyAwardsId, List<AwardDTO> awardDTOList) {
-        if (Objects.isNull(awardDTOList)) {
-            throw new BadRequestException("La liste des récompenses ne peut pas être nulle.");
-        }
-
-        return
-                movieService.addAwards(movieId, ceremonyAwardsId, awardDTOList)
-                        .onItem().ifNotNull().transform(ceremonyAwardsDTO ->
-                                ceremonyAwardsDTO.getAwards().isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(ceremonyAwardsDTO).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la mise à jour des récompenses: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur serveur : " + err.getMessage())
-                                                    .build()
-                                            ;
-                                }
-                        )
-
-                ;
-    }
-
-    /**
      * Supprime un producteur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
      * @param movieId    L'identifiant du film concerné.
@@ -2721,30 +2687,6 @@ public class MovieResource {
                 ;
     }
 
-    /**
-     * Enlève une récompense d'un film donné.
-     *
-     * @param movieId L'identifiant du film concerné.
-     * @param awardId L'identifiant de la récompense à enlever du film.
-     * @return Un {@link Uni} contenant une réponse HTTP :
-     * - 200 OK avec l'entité mise à jour si la suppression est réussie.
-     * - 500 Internal Server Error en cas d'erreur interne.
-     */
-    @PATCH
-    @Path("/{movieId}/ceremony-awards/{ceremonyAwardsId}/awards/{awardId}")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeAward(@RestPath Long movieId, @RestPath Long ceremonyAwardsId, @RestPath Long awardId) {
-        return
-                movieService.removeAward(movieId, ceremonyAwardsId, awardId)
-                        .onItem().ifNotNull().transform(ceremonyAwardsDTO ->
-                                ceremonyAwardsDTO.getAwards().isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(ceremonyAwardsDTO).build()
-                        )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
-                ;
-    }
-
     @DELETE
     @Path("/{id}")
     @RolesAllowed("admin")
@@ -3151,7 +3093,7 @@ public class MovieResource {
      * Supprime toutes les récompenses associées à un film donné.
      * <p>
      * Cette méthode permet de supprimer toutes les récompenses associées à un film en appelant la méthode
-     * {@link MovieService#deleteCeremonyAwards(Long, Long)} (Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
+     * {@link MovieService#clearCeremonyAwards(Long, Long)} (Long)} (Long)}. Elle répond avec un code HTTP 200 si la suppression a réussi.
      *
      * @param movieId L'identifiant du film dont les récompenses doivent être supprimées.
      * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les récompenses ont été supprimées avec succès.
@@ -3162,8 +3104,16 @@ public class MovieResource {
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCeremonyAwards(@RestPath Long movieId, @RestPath Long ceremonyAwardsId) {
         return
-                movieService.deleteCeremonyAwards(movieId, ceremonyAwardsId)
-                        .map(deleted -> Response.ok(deleted).build());
+                movieService.clearCeremonyAwards(movieId, ceremonyAwardsId)
+                        .map(deleted -> Response.ok(deleted).build())
+                        .onFailure().recoverWithItem(e -> {
+                                    log.error(e.getMessage());
+                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity("Erreur lors de la suppression de la cérémonie")
+                                            .build();
+                                }
+                        )
+                ;
     }
 
 }

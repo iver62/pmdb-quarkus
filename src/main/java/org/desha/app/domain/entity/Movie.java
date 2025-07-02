@@ -30,6 +30,7 @@ import java.util.function.Function;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Movie extends PanacheEntityBase {
 
+    private static final String DEFAULT_POSTER = "default-poster.jpg";
     private static final String COUNTRY_SET_NOT_INITIALIZED = "L'ensemble des pays n'est pas initialisé";
     private static final String CATEGORY_SET_NOT_INITIALIZED = "L'ensemble des catégories n'est pas initialisé";
     private static final String CEREMONY_AWARDS_SET_NOT_INITIALIZED = "L'ensemble des cérémonies n'est pas initialisé";
@@ -159,9 +160,6 @@ public class Movie extends PanacheEntityBase {
     )
     private Set<Category> categories = new HashSet<>();
 
-//    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Set<Award> awards = new HashSet<>();
-
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CeremonyAwards> ceremoniesAwards = new HashSet<>();
 
@@ -177,19 +175,34 @@ public class Movie extends PanacheEntityBase {
     }
 
     public static Movie of(MovieDTO movieDTO) {
-        return Movie.builder()
-                .title(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getTitle()).trim()))
-                .originalTitle(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getOriginalTitle()).trim()))
-                .releaseDate(movieDTO.getReleaseDate())
-                .synopsis(StringUtils.defaultString(movieDTO.getSynopsis()).trim())
-                .runningTime(movieDTO.getRunningTime())
-                .budget(movieDTO.getBudget().getValue())
-                .budgetCurrency(movieDTO.getBudget().getCurrency())
-                .boxOffice(movieDTO.getBoxOffice().getValue())
-                .boxOfficeCurrency(movieDTO.getBoxOffice().getCurrency())
-                .posterFileName(movieDTO.getPosterFileName())
-                .user(User.fromDTO(movieDTO.getUser()))
-                .build();
+        return
+                Movie.builder()
+                        .title(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getTitle()).trim()))
+                        .originalTitle(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getOriginalTitle()).trim()))
+                        .releaseDate(movieDTO.getReleaseDate())
+                        .synopsis(StringUtils.defaultString(movieDTO.getSynopsis()).trim())
+                        .runningTime(movieDTO.getRunningTime())
+                        .budget(movieDTO.getBudget().getValue())
+                        .budgetCurrency(movieDTO.getBudget().getCurrency())
+                        .boxOffice(movieDTO.getBoxOffice().getValue())
+                        .boxOfficeCurrency(movieDTO.getBoxOffice().getCurrency())
+                        .posterFileName(movieDTO.getPosterFileName())
+                        .user(User.fromDTO(movieDTO.getUser()))
+                        .build()
+                ;
+    }
+
+    public void updateGeneralInfos(MovieDTO movieDTO) {
+        setTitle(movieDTO.getTitle());
+        setOriginalTitle(movieDTO.getOriginalTitle());
+        setSynopsis(movieDTO.getSynopsis());
+        setReleaseDate(movieDTO.getReleaseDate());
+        setRunningTime(movieDTO.getRunningTime());
+        setBudget(movieDTO.getBudget().getValue());
+        setBudgetCurrency(movieDTO.getBudget().getCurrency());
+        setPosterFileName(Optional.ofNullable(movieDTO.getPosterFileName()).orElse(DEFAULT_POSTER));
+        setBoxOffice(movieDTO.getBoxOffice().getValue());
+        setBoxOfficeCurrency(movieDTO.getBoxOffice().getCurrency());
     }
 
     public <T extends MovieTechnician> void removeObsoleteTechnicians(List<T> technicians, List<MovieTechnicianDTO> movieTechnicianDTOList) {
@@ -318,27 +331,6 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
-    /*public void updateExistingAwards(Set<AwardDTO> awardDTOList) {
-        awards.forEach(award ->
-                awardDTOList.stream()
-                        .filter(dto -> Objects.equals(dto.getId(), award.getId()))
-                        .findFirst()
-                        .ifPresent(
-                                dto -> {
-                                    if (!Objects.equals(award.getCeremony().getName(), dto.getCeremony().getName())) {
-                                        award.setCeremony(Ceremony.of(dto.getCeremony()));
-                                    }
-                                    if (!Objects.equals(award.getName(), dto.getName())) {
-                                        award.setName(dto.getName());
-                                    }
-                                    if (!Objects.equals(award.getYear(), dto.getYear())) {
-                                        award.setYear(dto.getYear());
-                                    }
-                                }
-                        )
-        );
-    }*/
-
     /**
      * Retire une personne de la collection existante de personnes en fonction de son identifiant.
      *
@@ -402,25 +394,6 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Supprime une récompense par son identifiant de l'ensemble des récompenses.
-     * <p>
-     * Cette méthode permet de supprimer une récompense de l'ensemble des récompenses en fonction de son identifiant.
-     * Si l'ensemble des récompenses n'est pas initialisé, une exception est levée. La suppression de la récompense se
-     * fait en recherchant la récompense dont l'identifiant correspond à celui fourni.
-     *
-     * @param id L'identifiant de la récompense à supprimer.
-     * @return Un {@link Uni} contenant l'ensemble des récompenses après suppression de celle correspondant à l'identifiant.
-     * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisé.
-     */
-//    public Uni<Set<Award>> removeAward(Long id) {
-//        return
-//                Mutiny.fetch(awards)
-//                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_SET_NOT_INITIALIZED))
-//                        .invoke(fetchAwards -> fetchAwards.removeIf(award -> Objects.equals(award.getId(), id)))
-//                ;
-//    }
-
-    /**
      * Vide un ensemble de personnes.
      * <p>
      * Cette méthode permet de vider un ensemble de personnes spécifié. Avant de procéder à l'opération, elle vérifie
@@ -477,23 +450,6 @@ public class Movie extends PanacheEntityBase {
                 ;
     }
 
-    /**
-     * Vide l'ensemble des récompenses associées à un objet.
-     * <p>
-     * Cette méthode permet de vider la collection des récompenses associées à l'objet en utilisant la méthode
-     * {@link Set#clear()}. Elle vérifie également si l'ensemble des récompenses est correctement initialisée.
-     * Si la collection des récompenses est nulle, une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble vide de récompenses après avoir vidé la collection.
-     * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisée (null).
-     */
-//    public Uni<Set<Award>> clearAwards() {
-//        return
-//                Mutiny.fetch(awards)
-//                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_SET_NOT_INITIALIZED))
-//                        .invoke(Set::clear)
-//                ;
-//    }
     public Uni<List<MovieActorDTO>> fetchAndMapActorList() {
         return
                 Mutiny.fetch(movieActors)
@@ -505,6 +461,16 @@ public class Movie extends PanacheEntityBase {
                                         .sorted(MovieActorDTO::compareTo)
                                         .toList()
                         )
+                ;
+    }
+
+    public List<MovieActorDTO> fromEntityList() {
+        return
+                movieActors
+                        .stream()
+                        .map(MovieActorDTO::of)
+                        .sorted(MovieActorDTO::compareTo)
+                        .toList()
                 ;
     }
 
@@ -556,22 +522,4 @@ public class Movie extends PanacheEntityBase {
                         .map(CountryDTO::fromCountryEntitySet)
                 ;
     }
-
-    /**
-     * Récupère et convertit les récompenses associées à un film en objets {@link AwardDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les récompenses liées à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des récompenses est `null`,
-     * une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble de {@link AwardDTO}.
-     * @throws IllegalStateException si la liste des récompenses n'est pas initialisée.
-     */
-//    public Uni<Set<AwardDTO>> fetchAndMapAwardSet() {
-//        return
-//                Mutiny.fetch(awards)
-//                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_SET_NOT_INITIALIZED))
-//                        .map(AwardDTO::fromEntitySet)
-//                ;
-//    }
 }

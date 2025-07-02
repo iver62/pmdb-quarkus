@@ -46,21 +46,6 @@ public class CeremonyAwards extends PanacheEntityBase {
                 ;
     }
 
-    /**
-     * Ajoute un ensemble de récompenses à la collection existante.
-     *
-     * @param awardList L'ensemble des récompenses à ajouter.
-     * @return Une {@link Uni} contenant la collection mise à jour des {@link Award}.
-     * @throws IllegalStateException si la collection des récompenses n'est pas initialisée.
-     */
-    public Uni<List<Award>> addAwards(List<Award> awardList) {
-        return
-                Mutiny.fetch(awards)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_LIST_NOT_INITIALIZED))
-                        .invoke(fetchAwards -> fetchAwards.addAll(awardList))
-                ;
-    }
-
     public Uni<CeremonyAwards> updateExistingCeremonyAwards(CeremonyAwardsDTO ceremonyAwardsDTO, Map<Long, Person> personMap) {
         List<AwardDTO> dtoAwards = Objects.nonNull(ceremonyAwardsDTO.getAwards()) ? ceremonyAwardsDTO.getAwards() : List.of();
         // Mettre à jour la cérémonie si besoin
@@ -106,12 +91,8 @@ public class CeremonyAwards extends PanacheEntityBase {
      * @return Un {@link Uni} contenant l'ensemble des récompenses après suppression de celle correspondant à l'identifiant.
      * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisé.
      */
-    public Uni<List<Award>> removeAward(Long id) {
-        return
-                Mutiny.fetch(awards)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_LIST_NOT_INITIALIZED))
-                        .invoke(fetchAwards -> fetchAwards.removeIf(award -> Objects.equals(award.getId(), id)))
-                ;
+    public void removeAward(Long id) {
+        awards.removeIf(award -> Objects.equals(award.getId(), id));
     }
 
     public void removeAwards(List<AwardDTO> awardDTOList) {
@@ -131,12 +112,13 @@ public class CeremonyAwards extends PanacheEntityBase {
      * @return Un {@link Uni} contenant un ensemble vide de récompenses après avoir vidé la collection.
      * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisée (null).
      */
-    public Uni<List<Award>> clearAwards() {
-        return
-                Mutiny.fetch(awards)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_LIST_NOT_INITIALIZED))
-                        .invoke(List::clear)
-                ;
+    public void clearAwards() {
+        awards.clear();
+//        return
+//                Mutiny.fetch(awards)
+//                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_LIST_NOT_INITIALIZED))
+//                        .invoke(List::clear)
+//                ;
     }
 
     /**

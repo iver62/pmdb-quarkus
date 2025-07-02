@@ -13,6 +13,7 @@ import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.domain.record.Repartition;
 import org.desha.app.repository.*;
+import org.desha.app.utils.Utils;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
@@ -20,7 +21,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -159,7 +159,7 @@ public class MovieService {
                                 countryList ->
                                         countryList
                                                 .stream()
-                                                .map(CountryDTO::fromEntity)
+                                                .map(CountryDTO::of)
                                                 .toList()
                         )
                 ;
@@ -180,7 +180,12 @@ public class MovieService {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                        .flatMap(Movie::fetchAndMapActorList)
+                        .chain(movie ->
+                                Mutiny.fetch(movie.getMovieActors())
+                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                                        .flatMap(movieActorList -> movie.fetchAndMapActorList())
+                        )
+
                 ;
     }
 
@@ -504,24 +509,22 @@ public class MovieService {
                                                     .toList();
 
                                             Uni<Set<Category>> newCategoriesUni = newCategoryUnis.isEmpty()
-                                                    ? Uni.createFrom().item(new HashSet<>())  // Retourne un empty set s'il n'y pas de nouvelles catégories
+                                                    ? Uni.createFrom().item(new HashSet<>())  // Retourne un empty set s'il n'y a pas de nouvelles catégories
                                                     : Uni.join().all(newCategoryUnis).andCollectFailures()
                                                     .map(HashSet::new); // Convertit List<Category> en Set<Category>
 
                                             return newCategoriesUni
-                                                    .chain(newCategories ->
+                                                    .chain(created ->
                                                             categoryService.getByIds(existingCategoryIds)
-                                                                    .map(existingCategories -> {
-                                                                        newCategories.addAll(existingCategories);
-                                                                        return newCategories;
-                                                                    })
-                                                                    .invoke(finalCategorySet -> {
-                                                                        movie.setCategories(new HashSet<>(finalCategorySet));
+                                                                    .map(existing -> {
+                                                                        Set<Category> allCategories = new HashSet<>(existing);
+                                                                        allCategories.addAll(created);
+                                                                        movie.setCategories(allCategories);
                                                                         movie.setLastUpdate(LocalDateTime.now());
+                                                                        return movie;
                                                                     })
 
-                                                    )
-                                                    .replaceWith(movie);
+                                                    );
                                         })
                                         .chain(movieRepository::persist)
                                         .call(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
@@ -692,47 +695,6 @@ public class MovieService {
     }
 
     /**
-     * Ajoute un ensemble de récompenses à un film spécifique.
-     *
-     * @param idMovie      L'identifiant du film auquel les récompenses doivent être ajoutées.
-     * @param awardDTOList La liste des récompenses à ajouter sous forme de {@link AwardDTO}.
-     * @return Une {@link Uni} contenant un {@link Set} de {@link AwardDTO} :
-     * @throws IllegalArgumentException si le film n'est pas trouvé.
-     * @throws IllegalStateException    si l'ensemble des récompenses n'est pas initialisé pour ce film.
-     */
-    public Uni<CeremonyAwardsDTO> addAwards(Long idMovie, Long idCeremonyAwards, List<AwardDTO> awardDTOList) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(idMovie)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .chain(movie ->
-                                                Mutiny.fetch(movie.getCeremoniesAwards())
-                                                        .map(ceremonyAwardsSet ->
-                                                                ceremonyAwardsSet.stream()
-                                                                        .filter(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), idCeremonyAwards))
-                                                                        .findFirst()
-                                                                        .orElseThrow(() -> new IllegalArgumentException("Cérémonie inexistante pour ce film"))
-                                                        )
-                                                        .flatMap(ceremonyAwards ->
-                                                                ceremonyAwards.addAwards(
-                                                                                awardDTOList
-                                                                                        .stream()
-                                                                                        .filter(awardDTO -> Objects.isNull(awardDTO.getId()))
-                                                                                        .map(Award::of)
-                                                                                        .toList()
-                                                                        )
-                                                                        .replaceWith(ceremonyAwards)
-                                                        )
-                                        )
-                                        .call(ceremonyAwardsRepository::persist)
-                                        .call(ceremonyAwardsRepository::flush)
-                                        .map(CeremonyAwardsDTO::of)
-                        )
-                ;
-    }
-
-    /**
      * Retire une personne spécifique d'un film.
      *
      * @param movieId           L'identifiant du film.
@@ -839,122 +801,74 @@ public class MovieService {
                 ;
     }
 
-    /**
-     * Supprime une récompense associée à un film.
-     * <p>
-     * Cette méthode recherche un film par son identifiant et supprime une récompense
-     * spécifique de sa liste de récompenses si elle est présente. Si le film n'est pas trouvé,
-     * une exception est levée. Après la suppression, les changements sont persistés en base,
-     * puis la liste mise à jour des récompenses est récupérée et retournée sous forme de DTOs.
-     *
-     * @param movieId L'identifiant du film.
-     * @param awardId L'identifiant de la récompense à supprimer.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des {@link AwardDTO} du film.
-     * @throws IllegalArgumentException si le film est introuvable.
-     */
-    public Uni<CeremonyAwardsDTO> removeAward(Long movieId, Long ceremonyAwardsId, Long awardId) {
+    public Uni<MovieDTO> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
         return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Film introuvable"))
-                                        .chain(movie ->
-                                                Mutiny.fetch(movie.getCeremoniesAwards())
-                                                        .map(ceremonyAwardsSet ->
-                                                                ceremonyAwardsSet.stream()
-                                                                        .filter(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), ceremonyAwardsId))
-                                                                        .findFirst()
-                                                                        .orElseThrow(() -> new IllegalArgumentException("Cérémonie inexistante pour ce film"))
-                                                        )
+                Panache.withTransaction(() ->
+                        movieRepository.findById(id)
+                                .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable"))
+                                .invoke(movie -> movie.updateGeneralInfos(movieDTO))
+                                .chain(movie -> {
+                                    if (Objects.nonNull(file)) {
+                                        return uploadPoster(file)
+                                                .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
+                                                .invoke(movie::setPosterFileName)
+                                                .replaceWith(movie);
+                                    }
+                                    return Uni.createFrom().item(movie);
+                                })
+                                .chain(movie -> updateCategoriesIfNeeded(movie, movieDTO))
+                                .chain(movie -> updateCountriesIfNeeded(movie, movieDTO))
+                                .chain(movie -> updateReleaseDateIfNeeded(movie, movieDTO))
+                                .map(movie ->
+                                        MovieDTO.of(
+                                                movie,
+                                                movie.getCategories(),
+                                                movie.getCountries()
                                         )
-                                        .call(ceremonyAwards -> ceremonyAwards.removeAward(awardId))
-                                        .call(ceremonyAwardsRepository::persist)
-                                        .map(CeremonyAwardsDTO::of)
+                                )
+                );
+    }
+
+    private Uni<Movie> updateReleaseDateIfNeeded(Movie movie, MovieDTO movieDTO) {
+        boolean shouldUpdate = Objects.nonNull(movieDTO.getReleaseDate()) && !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
+        return (shouldUpdate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem())
+                .replaceWith(movie);
+    }
+
+    private Uni<Movie> updateCategoriesIfNeeded(Movie movie, MovieDTO movieDTO) {
+        return
+                Mutiny.fetch(movie.getCategories())
+                        .chain(categories -> {
+                                    if (!Utils.categoriesEquals(movieDTO.getCategories(), categories)) {
+                                        return
+                                                categoryService.getByIds(movieDTO.getCategories().stream().map(CategoryDTO::getId).toList())
+                                                        .invoke(movie::setCategories)
+                                                        .chain(statsService::updateMoviesByCategoryRepartition)
+                                                ;
+                                    }
+                                    return Uni.createFrom().nullItem();
+                                }
                         )
+                        .replaceWith(movie)
                 ;
     }
 
-    public Uni<MovieDTO> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
+    private Uni<Movie> updateCountriesIfNeeded(Movie movie, MovieDTO movieDTO) {
         return
-                Panache
-                        .withTransaction(() ->
-                                        movieRepository.findById(id)
-                                                .onItem().ifNull().failWith(() -> new NotFoundException("Film introuvable"))
-                                                /*.chain(movie -> {
-                                                    List<Long> newCategoryIds = movieDTO.getCategories().stream().map(CategoryDTO::getId).toList();
-                                                    AtomicBoolean shouldUpdateCategories = new AtomicBoolean(false);
-                                                    return
-                                                            Mutiny.fetch(movie.getCategories())
-                                                                    .chain(categories -> Uni.createFrom().item( !new HashSet<>(newCategoryIds)
-                                                                                    .equals(
-                                                                                            new HashSet<>(categories.stream()
-                                                                                                    .map(Category::getId)
-                                                                                                    .toList())
-                                                                                    ))
-                                                                    )
-                                                                    .chain(bool -> {
-                                                                        if(Boolean.TRUE.equals(bool)) {
-                                                                            categoryService.getByIds(newCategoryIds).call(movie::setCategories);
-                                                                            statsService.updateMoviesByCategoryRepartition();
-                                                                        }
-                                                                    })
-                                                                    .replaceWith(movie);
-                                                })*/
-                                                .flatMap(
-                                                        movie -> {
-                                                            List<Long> newCountryIds = movieDTO.getCountries().stream().map(CountryDTO::getId).toList();
-                                                            List<Long> newCategoryIds = movieDTO.getCategories().stream().map(CategoryDTO::getId).toList();
-
-                                                            boolean shouldUpdateReleaseDate = Objects.nonNull(movieDTO.getReleaseDate()) && !movieDTO.getReleaseDate().equals(movie.getReleaseDate());
-                                                            AtomicBoolean shouldUpdateCountries = new AtomicBoolean(false);
-                                                            AtomicBoolean shouldUpdateCategories = new AtomicBoolean(false);
-
-                                                            return
-                                                                    Mutiny.fetch(movie.getCountries())
-                                                                            .invoke(countries -> shouldUpdateCountries.set(!new HashSet<>(newCountryIds)
-                                                                                            .equals(
-                                                                                                    new HashSet<>(countries.stream()
-                                                                                                            .map(Country::getId)
-                                                                                                            .toList())
-                                                                                            )
-                                                                                    )
-                                                                            )
-                                                                            .chain(() ->
-                                                                                    Mutiny.fetch(movie.getCategories())
-                                                                                            .invoke(categories -> shouldUpdateCategories.set(!new HashSet<>(newCategoryIds)
-                                                                                                            .equals(
-                                                                                                                    new HashSet<>(categories.stream()
-                                                                                                                            .map(Category::getId)
-                                                                                                                            .toList())
-                                                                                                            )
-                                                                                                    )
-                                                                                            )
-                                                                            )
-                                                                            .chain(ignore ->
-                                                                                            countryService.getByIds(newCountryIds).invoke(movie::setCountries)
-                                                                                            .chain(() -> categoryService.getByIds(newCategoryIds).invoke(movie::setCategories))
-                                                                                                    .invoke(() -> movie.updateGeneralInfos(movieDTO))
-                                                                                                    .flatMap(categorySet -> {
-                                                                                                                if (Objects.nonNull(file)) {
-                                                                                                                    return uploadPoster(file)
-                                                                                                                            .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                                                                                            .invoke(movie::setPosterFileName)
-                                                                                                                            .replaceWith(movie);
-                                                                                                                }
-                                                                                                                return Uni.createFrom().item(movie);
-                                                                                                            }
-                                                                                                    )
-                                                                                                    .flatMap(entity -> {
-                                                                                                        Uni<Void> releaseDateUpdate = shouldUpdateReleaseDate ? statsService.updateMoviesByReleaseDateRepartition() : Uni.createFrom().voidItem();
-                                                                                                        Uni<Void> categoryUpdate = shouldUpdateCategories.get() ? statsService.updateMoviesByCategoryRepartition() : Uni.createFrom().voidItem();
-                                                                                                        Uni<Void> countryUpdate = shouldUpdateCountries.get() ? statsService.updateMoviesByCountryRepartition() : Uni.createFrom().voidItem();
-                                                                                                        return releaseDateUpdate.chain(() -> categoryUpdate.chain(() -> countryUpdate)).replaceWith(entity);
-                                                                                                    })
-                                                                                                    .map(entity -> MovieDTO.of(movie, movie.getCategories(), movie.getCountries()))
-                                                                            );
-                                                        }
-                                                )
-                        );
+                Mutiny.fetch(movie.getCountries())
+                        .chain(countries -> {
+                                    if (!Utils.countriesEquals(movieDTO.getCountries(), countries)) {
+                                        return
+                                                countryService.getByIds(movieDTO.getCountries().stream().map(CountryDTO::getId).toList())
+                                                        .invoke(movie::setCountries)
+                                                        .chain(statsService::updateMoviesByCountryRepartition)
+                                                ;
+                                    }
+                                    return Uni.createFrom().nullItem();
+                                }
+                        )
+                        .replaceWith(movie)
+                ;
     }
 
     /**
@@ -1084,7 +998,7 @@ public class MovieService {
      * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
      *                                 en cas de film introuvable ou d'erreur de persistance).
      */
-    public Uni<Boolean> deleteCeremonyAwards(Long movieId, Long ceremonyAwardsId) {
+    public Uni<Boolean> clearCeremonyAwards(Long movieId, Long ceremonyAwardsId) {
         return
                 Panache
                         .withTransaction(() ->
