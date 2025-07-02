@@ -85,7 +85,7 @@ public class CountryService {
                                 countryList ->
                                         countryList
                                                 .stream()
-                                                .map(CountryDTO::fromEntity)
+                                                .map(CountryDTO::of)
                                                 .toList()
                         )
                 ;
@@ -95,13 +95,7 @@ public class CountryService {
         return
                 countryRepository
                         .findCountries(sort, direction, term)
-                        .map(
-                                countryList ->
-                                        countryList
-                                                .stream()
-                                                .map(CountryDTO::fromEntity)
-                                                .toList()
-                        )
+                        .map(this::fromCountryListEntity)
                 ;
     }
 
@@ -135,7 +129,7 @@ public class CountryService {
                         .onItem().ifNotNull()
                         .transform(tList ->
                                 tList.stream()
-                                        .map(CountryDTO::fromEntity)
+                                        .map(CountryDTO::of)
                                         .toList()
                         )
                         .onFailure().recoverWithItem(Collections.emptyList())
@@ -199,6 +193,15 @@ public class CountryService {
                                                 }
                                         )
                         )
+                ;
+    }
+
+    public List<CountryDTO> fromCountryListEntity(List<Country> countryList) {
+        return
+                countryList
+                        .stream()
+                        .map(CountryDTO::of)
+                        .toList()
                 ;
     }
 }

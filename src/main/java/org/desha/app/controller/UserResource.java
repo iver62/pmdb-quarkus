@@ -44,7 +44,7 @@ public class UserResource {
      * @return un {@link Uni} contenant la réponse HTTP
      */
     @GET
-    @Path("{id}")
+    @Path("/{id}")
     public Uni<Response> getUser(@RestPath UUID id) {
         return
                 userService.getUser(id)

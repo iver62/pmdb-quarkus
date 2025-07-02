@@ -71,7 +71,7 @@ public class PersonDTO {
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
                 .types(person.getTypes())
-                .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
+                .countries(countries.stream().map(CountryDTO::of).collect(Collectors.toSet()))
                 .creationDate(person.getCreationDate())
                 .lastUpdate(person.getLastUpdate())
                 .build();
@@ -85,7 +85,7 @@ public class PersonDTO {
                 .dateOfDeath(person.getDateOfDeath())
                 .photoFileName(person.getPhotoFileName())
                 .types(person.getTypes())
-                .countries(countries.stream().map(CountryDTO::fromEntity).collect(Collectors.toSet()))
+                .countries(countries.stream().map(CountryDTO::of).collect(Collectors.toSet()))
                 .movies(
                         movies
                                 .stream()

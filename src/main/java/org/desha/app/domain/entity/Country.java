@@ -10,7 +10,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,7 +23,7 @@ import java.util.Set;
 public class Country extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "nomFrFr";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("code", "alpha2", "alpha3", "nomEnGb", DEFAULT_SORT, "lastUpdate");
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("code", "alpha2", "alpha3", "nomEnGb", DEFAULT_SORT);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -45,10 +44,6 @@ public class Country extends PanacheEntityBase {
     @Column(name = "nom_fr_fr")
     private String nomFrFr;
 
-    @Column(name = "date_mise_a_jour")
-    @Temporal(TemporalType.TIMESTAMP)
-    private LocalDateTime lastUpdate;
-
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
     private Set<Movie> movies = new HashSet<>();
@@ -56,16 +51,6 @@ public class Country extends PanacheEntityBase {
     @JsonIgnore
     @ManyToMany(mappedBy = "countries")
     private Set<Person> persons = new HashSet<>();
-
-    @PrePersist
-    public void onCreate() {
-        this.lastUpdate = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void onUpdate() {
-        this.lastUpdate = LocalDateTime.now();
-    }
 
     public Uni<Movie> addMovie(Movie movie) {
         return

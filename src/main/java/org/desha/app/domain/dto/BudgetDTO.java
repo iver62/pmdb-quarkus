@@ -5,14 +5,15 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class BoxOffice {
+public class BudgetDTO {
 
     private Long value;
+
     private String currency;
 
-    public static BoxOffice of(Long value, String currency) {
+    public static BudgetDTO of(Long value, String currency) {
         return
-                BoxOffice.builder()
+                BudgetDTO.builder()
                         .value(value)
                         .currency(currency)
                         .build()

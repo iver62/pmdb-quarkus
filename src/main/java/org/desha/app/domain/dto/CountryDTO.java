@@ -25,7 +25,7 @@ public class CountryDTO {
     private Set<MovieDTO> movies;
     private Set<PersonDTO> persons;
 
-    public static CountryDTO fromEntity(Country country) {
+    public static CountryDTO of(Country country) {
         return
                 CountryDTO.builder()
                         .id(country.getId())
@@ -61,7 +61,7 @@ public class CountryDTO {
         return
                 Optional.ofNullable(countrySet).orElse(Set.of())
                         .stream()
-                        .map(CountryDTO::fromEntity)
+                        .map(CountryDTO::of)
                         .collect(Collectors.toSet())
                 ;
     }

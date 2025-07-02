@@ -114,11 +114,6 @@ public class CeremonyAwards extends PanacheEntityBase {
      */
     public void clearAwards() {
         awards.clear();
-//        return
-//                Mutiny.fetch(awards)
-//                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_LIST_NOT_INITIALIZED))
-//                        .invoke(List::clear)
-//                ;
     }
 
     /**

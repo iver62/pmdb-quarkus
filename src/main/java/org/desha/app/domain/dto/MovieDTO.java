@@ -3,7 +3,10 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.*;
+import org.desha.app.domain.entity.Category;
+import org.desha.app.domain.entity.CeremonyAwards;
+import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Movie;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,8 +24,8 @@ public class MovieDTO {
     private String synopsis;
     private LocalDate releaseDate;
     private Long runningTime;
-    private Budget budget;
-    private BoxOffice boxOffice;
+    private BudgetDTO budget;
+    private BoxOfficeDTO boxOffice;
     private String posterFileName;
     private Long numberOfAwards;
     private UserDTO user;
@@ -43,8 +46,8 @@ public class MovieDTO {
                         .synopsis(movie.getSynopsis())
                         .releaseDate(movie.getReleaseDate())
                         .runningTime(movie.getRunningTime())
-                        .budget(Budget.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOffice.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
+                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
+                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
                         .user(UserDTO.fromEntity(movie.getUser()))
                         .countries(CountryDTO.fromCountryEntitySet(movie.getCountries()))
@@ -64,8 +67,8 @@ public class MovieDTO {
                         .originalTitle(movie.getOriginalTitle())
                         .releaseDate(movie.getReleaseDate())
                         .runningTime(movie.getRunningTime())
-                        .budget(Budget.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOffice.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
+                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
+                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
@@ -83,8 +86,8 @@ public class MovieDTO {
                         .releaseDate(movie.getReleaseDate())
                         .synopsis(movie.getSynopsis())
                         .runningTime(movie.getRunningTime())
-                        .budget(Budget.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOffice.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
+                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
+                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
@@ -103,8 +106,8 @@ public class MovieDTO {
                         .originalTitle(movie.getOriginalTitle())
                         .releaseDate(movie.getReleaseDate())
                         .runningTime(movie.getRunningTime())
-                        .budget(Budget.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOffice.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
+                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
+                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
@@ -124,8 +127,8 @@ public class MovieDTO {
                         .originalTitle(movie.getOriginalTitle())
                         .releaseDate(movie.getReleaseDate())
                         .runningTime(movie.getRunningTime())
-                        .budget(Budget.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOffice.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
+                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
+                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
