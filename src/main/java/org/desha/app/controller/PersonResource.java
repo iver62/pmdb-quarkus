@@ -599,4 +599,22 @@ public class PersonResource {
                         .onItem().ifNotNull().transform(person -> Response.ok(person).build())
                         .onItem().ifNull().failWith(new NotFoundException("Person with ID " + id + " not found."));
     }
+
+    @DELETE
+    @Path("/{id}")
+    @RolesAllowed("admin")
+    public Uni<Response> delete(@RestPath Long id) {
+        return
+                personService
+                        .deletePerson(id)
+                        .onItem().ifNotNull().transform(person -> Response.ok(person).build())
+                        .onFailure().recoverWithItem(e -> {
+                                    log.error(e.getMessage());
+                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                            .entity("Erreur lors de la suppression de la personne")
+                                            .build();
+                                }
+                        )
+                ;
+    }
 }

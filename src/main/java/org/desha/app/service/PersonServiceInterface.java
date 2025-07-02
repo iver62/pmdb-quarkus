@@ -117,7 +117,7 @@ public interface PersonServiceInterface {
      * @return un {@link Uni} contenant {@code true} si la personne a été supprimée
      * @throws IllegalArgumentException si aucune personne ne correspond à l'identifiant
      */
-    Uni<Boolean> delete(Long id);
+    Uni<Boolean> deletePerson(Long id);
 
     /**
      * Supprime tous les pays associés à une personne donnée.

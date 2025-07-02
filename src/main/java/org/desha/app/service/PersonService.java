@@ -38,6 +38,7 @@ public class PersonService implements PersonServiceInterface {
 
     private final CountryService countryService;
     private final FileService fileService;
+    private final StatsService statsService;
 
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
@@ -49,13 +50,15 @@ public class PersonService implements PersonServiceInterface {
             FileService fileService,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
-            PersonRepository personRepository
+            PersonRepository personRepository,
+            StatsService statsService
     ) {
         this.countryService = countryService;
         this.fileService = fileService;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
         this.personRepository = personRepository;
+        this.statsService = statsService;
     }
 
     public Uni<Long> countAll() {
@@ -172,7 +175,7 @@ public class PersonService implements PersonServiceInterface {
                                 countryList ->
                                         countryList
                                                 .stream()
-                                                .map(CountryDTO::fromEntity)
+                                                .map(CountryDTO::of)
                                                 .toList()
                         )
                 ;
@@ -185,7 +188,7 @@ public class PersonService implements PersonServiceInterface {
                                 countryList ->
                                         countryList
                                                 .stream()
-                                                .map(CountryDTO::fromEntity)
+                                                .map(CountryDTO::of)
                                                 .toList()
                         )
                 ;
@@ -359,13 +362,16 @@ public class PersonService implements PersonServiceInterface {
                 ;
     }
 
-    public Uni<Boolean> delete(Long id) {
+    public Uni<Boolean> deletePerson(Long id) {
         return
-                Panache
-                        .withTransaction(() -> personRepository.deleteById(id)
-                                .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                Panache.withTransaction(() ->
+                                personRepository.deleteById(id)
+                                        .flatMap(aBoolean -> statsService.updateActorsStats().replaceWith(aBoolean))
                         )
-                ;
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression de la personne", throwable);
+                        });
     }
 
     public Uni<Boolean> clearCountries(Long id) {
