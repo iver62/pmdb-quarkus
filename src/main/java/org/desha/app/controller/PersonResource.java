@@ -313,15 +313,15 @@ public class PersonResource {
     }
 
     @GET
-    @Path("/costumiers")
+    @Path("/costume-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getCostumiers(@BeanParam PersonQueryParamsDTO queryParams) {
+    public Uni<Response> getCostumeDesigners(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COSTUMIER);
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COSTUME_DESIGNER);
 
         return
                 personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)

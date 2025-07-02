@@ -18,7 +18,7 @@ public class TechnicalTeam {
     private List<MovieTechnician> composers;
     private List<MovieTechnician> musicians;
     private List<MovieTechnician> photographers;
-    private List<MovieTechnician> costumiers;
+    private List<MovieTechnician> costumeDesigners;
     private List<MovieTechnician> decorators;
     private List<MovieTechnician> editors;
     private List<MovieTechnician> casters;
@@ -38,7 +38,7 @@ public class TechnicalTeam {
             final List<MovieTechnician> composers,
             final List<MovieTechnician> musicians,
             final List<MovieTechnician> photographers,
-            final List<MovieTechnician> costumiers,
+            final List<MovieTechnician> costumeDesigners,
             final List<MovieTechnician> decorators,
             final List<MovieTechnician> editors,
             final List<MovieTechnician> casters,
@@ -58,7 +58,7 @@ public class TechnicalTeam {
                 .composers(composers)
                 .musicians(musicians)
                 .photographers(photographers)
-                .costumiers(costumiers)
+                .costumeDesigners(costumeDesigners)
                 .decorators(decorators)
                 .editors(editors)
                 .casters(casters)

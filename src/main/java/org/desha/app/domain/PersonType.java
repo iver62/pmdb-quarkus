@@ -9,7 +9,7 @@ public enum PersonType {
     COMPOSER,
     MUSICIAN,
     PHOTOGRAPHER,
-    COSTUMIER,
+    COSTUME_DESIGNER,
     DECORATOR,
     EDITOR,
     CASTER,

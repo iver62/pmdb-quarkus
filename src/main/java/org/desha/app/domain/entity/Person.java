@@ -80,7 +80,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     private List<MoviePhotographer> photographedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieCostumier> costumedMovies = new ArrayList<>();
+    private List<MovieCostumeDesigner> costumeDesignedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
     private List<MovieDecorator> decoratedMovies = new ArrayList<>();
@@ -217,7 +217,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                         .chain(set -> getMoviesByType(() -> Mutiny.fetch(composedMovies)).invoke(set::addAll).replaceWith(set))
                         .chain(set -> getMoviesByType(() -> Mutiny.fetch(musicalMovies)).invoke(set::addAll).replaceWith(set))
                         .chain(set -> getMoviesByType(() -> Mutiny.fetch(photographedMovies)).invoke(set::addAll).replaceWith(set))
-                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(costumedMovies)).invoke(set::addAll).replaceWith(set))
+                        .chain(set -> getMoviesByType(() -> Mutiny.fetch(costumeDesignedMovies)).invoke(set::addAll).replaceWith(set))
                         .chain(set -> getMoviesByType(() -> Mutiny.fetch(decoratedMovies)).invoke(set::addAll).replaceWith(set))
                         .chain(set -> getMoviesByType(() -> Mutiny.fetch(editedMovies)).invoke(set::addAll).replaceWith(set))
                         .chain(set -> getMoviesByType(() -> Mutiny.fetch(castedMovies)).invoke(set::addAll).replaceWith(set))

@@ -267,7 +267,7 @@ public class MovieService {
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieComposers),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieMusicians),
                                                         personService.fromMovieTechnicianListEntity(movie::getMoviePhotographers),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieCostumiers),
+                                                        personService.fromMovieTechnicianListEntity(movie::getMovieCostumeDesigners),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieDecorators),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieEditors),
                                                         personService.fromMovieTechnicianListEntity(movie::getMovieCasters),

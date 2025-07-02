@@ -365,11 +365,11 @@ public class MovieResource {
     }
 
     @GET
-    @Path("/{id}/costumiers")
+    @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getCostumiers(@RestPath Long id) {
+    public Uni<Response> getCostumeDesigners(@RestPath Long id) {
         return
-                movieService.getMovieTechniciansByMovie(id, Movie::getMovieCostumiers, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
+                movieService.getMovieTechniciansByMovie(id, Movie::getMovieCostumeDesigners, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -994,9 +994,9 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("/{id}/costumiers")
+    @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> saveCostumiers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+    public Uni<Response> saveCostumeDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
         if (Objects.isNull(movieTechnicianDTOList)) {
             throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
         }
@@ -1005,9 +1005,9 @@ public class MovieResource {
                 movieService.saveTechnicians(
                                 id,
                                 movieTechnicianDTOList,
-                                Movie::getMovieCostumiers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUMIER)
-                                        .map(person -> MovieCostumier.of(movie, person, dto.getRole())),
+                                Movie::getMovieCostumeDesigners,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUME_DESIGNER)
+                                        .map(person -> MovieCostumeDesigner.of(movie, person, dto.getRole())),
                                 Messages.COSTUME_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1662,9 +1662,9 @@ public class MovieResource {
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
-    @Path("/{id}/costumiers")
+    @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> addCostumiers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+    public Uni<Response> addCostumeDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
         if (Objects.isNull(movieTechnicianDTOList)) {
             throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
         }
@@ -1673,9 +1673,9 @@ public class MovieResource {
                 movieService.addTechnicians(
                                 id,
                                 movieTechnicianDTOList,
-                                Movie::getMovieCostumiers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUMIER)
-                                        .map(person -> MovieCostumier.of(movie, person, dto.getRole())),
+                                Movie::getMovieCostumeDesigners,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUME_DESIGNER)
+                                        .map(person -> MovieCostumeDesigner.of(movie, person, dto.getRole())),
                                 Messages.COSTUME_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -2351,18 +2351,18 @@ public class MovieResource {
     /**
      * Supprime un costumier d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId     L'identifiant du film concerné.
-     * @param costumierId L'identifiant du costumier à supprimer du film.
+     * @param movieId           L'identifiant du film concerné.
+     * @param costumeDesignerId L'identifiant du costumier à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des costumiers si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/costumiers/{costumierId}")
+    @Path("/{movieId}/costume-designers/{costumeDesignerId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeCostumier(@RestPath Long movieId, @RestPath Long costumierId) {
+    public Uni<Response> removeCostumeDesigner(@RestPath Long movieId, @RestPath Long costumeDesignerId) {
         return
-                movieService.removeTechnician(movieId, costumierId, Movie::getMovieCostumiers, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
+                movieService.removeTechnician(movieId, costumeDesignerId, Movie::getMovieCostumeDesigners, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2941,11 +2941,11 @@ public class MovieResource {
      * @throws WebApplicationException Si une erreur survient lors de la suppression des costumiers.
      */
     @DELETE
-    @Path("/{id}/costumiers")
+    @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> deleteCostumiers(@RestPath Long id) {
+    public Uni<Response> deleteCostumeDesigners(@RestPath Long id) {
         return
-                movieService.clearTechnicians(id, Movie::getMovieCostumiers, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
+                movieService.clearTechnicians(id, Movie::getMovieCostumeDesigners, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
                         .map(deleted -> Response.ok(deleted).build())
                 ;
     }
