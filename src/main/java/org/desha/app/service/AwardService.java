@@ -10,6 +10,7 @@ import org.desha.app.domain.dto.LightPersonDTO;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.AwardRepository;
+import org.desha.app.utils.Messages;
 
 import java.util.List;
 import java.util.Objects;
@@ -43,7 +44,7 @@ public class AwardService {
     public Uni<AwardDTO> getAward(Long id) {
         return
                 awardRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Récompense introuvable"))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
                         .map(AwardDTO::of)
                 ;
     }
@@ -79,7 +80,7 @@ public class AwardService {
                 Panache
                         .withTransaction(() ->
                                 awardRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Récompense introuvable"))
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
                                         .invoke(entity -> {
                                             entity.setName(StringUtils.capitalize(awardDTO.getName().trim()));
                                             entity.setYear(awardDTO.getYear());
@@ -104,7 +105,7 @@ public class AwardService {
                 Panache
                         .withTransaction(() ->
                                 awardRepository.deleteById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Récompense introuvable"))
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
                         )
                 ;
     }

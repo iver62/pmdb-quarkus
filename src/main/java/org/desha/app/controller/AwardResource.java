@@ -46,7 +46,12 @@ public class AwardResource {
                         .onItem().ifNotNull().transform(awardDTO -> Response.ok(awardDTO).build())
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la récupération de la récompense: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response
+                                                    .serverError()
+                                                    .entity("Erreur lors de la récupération de la récompense")
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;
@@ -77,7 +82,12 @@ public class AwardResource {
                         .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la modification de la récompense: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response
+                                                    .serverError()
+                                                    .entity("Erreur lors de la modification de la récompense")
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;
@@ -104,9 +114,15 @@ public class AwardResource {
                         .map(deleted -> Response.ok(deleted).status(NO_CONTENT).build())
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la suppression de la récompense: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response
+                                                    .serverError()
+                                                    .entity("Erreur lors de la suppression de la récompense")
+                                                    .build()
+                                            ;
                                 }
-                        );
+                        )
+                ;
     }
 
 }
