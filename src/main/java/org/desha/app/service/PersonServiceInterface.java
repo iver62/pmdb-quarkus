@@ -62,7 +62,7 @@ public interface PersonServiceInterface {
      * @return un {@link Uni} contenant l'ensemble des pays mis à jour sous forme de DTO
      * @throws IllegalArgumentException si la personne avec l'identifiant donné n'est pas trouvée
      */
-    Uni<Set<CountryDTO>> saveCountries(Long id, Set<CountryDTO> countryDTOSet);
+    Uni<Set<CountryDTO>> updateCountries(Long id, Set<CountryDTO> countryDTOSet);
 
     /**
      * Ajoute des pays à une personne identifiée par son ID.

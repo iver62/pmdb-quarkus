@@ -255,80 +255,21 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                 ;
     }
 
-    /**
-     * Ajoute un ensemble de pays à la collection existante des pays.
-     * <p>
-     * Cette méthode récupère l'ensemble actuel des pays via Mutiny, puis ajoute les pays
-     * spécifiés dans {@code countrySet} s'ils ne sont pas nuls.
-     * Si la collection initiale de pays est nulle, une exception {@link IllegalStateException}
-     * est levée.
-     * </p>
-     *
-     * @param countrySet l'ensemble des pays à ajouter ; peut être nul (aucune action dans ce cas)
-     * @return un {@link Uni} contenant l'ensemble mis à jour des pays
-     * @throws IllegalStateException si la collection de pays n'est pas initialisée
-     */
-    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
-                        .invoke(fetchCountries -> fetchCountries.addAll(countrySet))
-                ;
+    public void addCountries(Set<Country> countrySet) {
+        countries.addAll(countrySet);
     }
 
     public void addType(PersonType type) {
         this.types.add(type);
     }
 
-    /**
-     * Supprime un pays de la collection en fonction de son identifiant.
-     * <p>
-     * Cette méthode récupère l'ensemble actuel des pays via Mutiny, puis supprime
-     * celui dont l'identifiant correspond à {@code id}. Si l'ensemble des pays n'est pas
-     * initialisé (null), une exception {@link IllegalStateException} est levée.
-     * </p>
-     *
-     * @param id l'identifiant du pays à supprimer
-     * @return un {@link Uni} contenant l'ensemble mis à jour des pays
-     * @throws IllegalStateException si l'ensemble des pays n'est pas initialisé
-     */
-    public Uni<Set<Country>> removeCountry(Long id) {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
-                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
-                ;
+    public void removeCountry(Long id) {
+        countries.removeIf(country -> Objects.equals(country.getId(), id));
     }
 
-    /**
-     * Supprime tous les pays de la collection.
-     * <p>
-     * Cette méthode vide l'ensemble des pays récupéré via {@code Mutiny.fetch(countries)}.
-     * Si l'ensemble des pays n'est pas initialisé (null), une exception {@link IllegalStateException} est levée.
-     * </p>
-     *
-     * @return un {@link Uni} contenant l'ensemble désormais vide des pays
-     * @throws IllegalStateException si l'ensemble des pays n'est pas initialisé
-     */
-    public Uni<Set<Country>> clearCountries() {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("L'ensemble des pays n'est pas initialisé"))
-                        .invoke(Set::clear)
-                ;
+    public void clearCountries() {
+        countries.clear();
     }
-
-    public static Set<Person> fromDTOSet(Set<PersonDTO> personDTOSet) {
-        return
-                personDTOSet.stream()
-                        .map(Person::build)
-                        .collect(Collectors.toSet())
-                ;
-    }
-
-    /*public List<Movie> getMovies() {
-        return Collections.emptyList();
-    }*/
 
     @Override
     public int compareTo(Person p) {

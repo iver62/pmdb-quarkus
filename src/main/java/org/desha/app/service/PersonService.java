@@ -16,6 +16,7 @@ import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
+import org.desha.app.utils.Messages;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
@@ -23,14 +24,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
-@Slf4j
 @ApplicationScoped
+@Slf4j
 public class PersonService implements PersonServiceInterface {
 
     private static final String PHOTOS_DIR = "photos/";
@@ -61,17 +63,16 @@ public class PersonService implements PersonServiceInterface {
         this.statsService = statsService;
     }
 
-    public Uni<Long> countAll() {
-        return personRepository.countAll();
-    }
-
     public Uni<Long> countPersons(CriteriasDTO criteriasDTO) {
         return personRepository.countPersons(criteriasDTO);
     }
 
     public Uni<Long> countMovies(long id, CriteriasDTO criteriasDTO) {
-        return personRepository.findById(id)
-                .chain(person -> movieRepository.countMoviesByPerson(person, criteriasDTO));
+        return
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .chain(person -> movieRepository.countMoviesByPerson(person, criteriasDTO))
+                ;
     }
 
     public Uni<Long> countCountries(String term, String lang) {
@@ -85,19 +86,26 @@ public class PersonService implements PersonServiceInterface {
     public Uni<PersonDTO> getById(Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .call(person -> Mutiny.fetch(person.getCountries()).invoke(person::setCountries))
                         .map(person -> PersonDTO.of(person, person.getCountries()))
+                ;
+    }
+
+    public Uni<LightPersonDTO> getLightById(Long id) {
+        return
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .map(LightPersonDTO::of)
                 ;
     }
 
     public Uni<List<PersonDTO>> searchByName(String name) {
         return
                 personRepository.findByName(name.trim())
-                        .onItem().ifNotNull()
-                        .transform(tList ->
-                                tList.stream()
-                                        .map(t -> PersonDTO.of(t, t.getCountries()))
+                        .onItem().ifNotNull().transform(personList ->
+                                personList.stream()
+                                        .map(person -> PersonDTO.of(person, person.getCountries()))
                                         .toList()
                         )
                         .onFailure().recoverWithItem(Collections.emptyList())
@@ -112,12 +120,15 @@ public class PersonService implements PersonServiceInterface {
         return
                 personRepository
                         .findPersons(page, sort, direction, criteriasDTO)
-                        .map(personList ->
-                                personList
-                                        .stream()
-                                        .map(PersonDTO::of)
-                                        .toList()
-                        )
+                        .map(personList -> fromPersonListEntity(personList, PersonDTO::of))
+                ;
+    }
+
+    public Uni<List<LightPersonDTO>> getLightPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+        return
+                personRepository
+                        .findPersons(page, sort, direction, criteriasDTO)
+                        .map(personList -> fromPersonListEntity(personList, LightPersonDTO::of))
                 ;
     }
 
@@ -136,20 +147,16 @@ public class PersonService implements PersonServiceInterface {
 
     public Uni<List<PersonDTO>> getAll() {
         return
-                personRepository.listAll()
-                        .map(tList ->
-                                tList
-                                        .stream()
-                                        .map(PersonDTO::of)
-                                        .toList()
-                        )
+                personRepository
+                        .listAll()
+                        .map(personList -> fromPersonListEntity(personList, PersonDTO::of))
                 ;
     }
 
     public Uni<List<MovieDTO>> getMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .chain(person ->
                                 movieRepository
                                         .findMoviesByPerson(person, page, sort, direction, criteriasDTO)
@@ -171,33 +178,21 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findPersonCountries(page, sort, direction, term, lang)
-                        .map(
-                                countryList ->
-                                        countryList
-                                                .stream()
-                                                .map(CountryDTO::of)
-                                                .toList()
-                        )
+                        .map(countryService::fromCountryListEntity)
                 ;
     }
 
     public Uni<List<CountryDTO>> getMovieCountriesByPerson(Long id, Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findMovieCountriesByPerson(id, page, sort, direction, term, lang)
-                        .map(
-                                countryList ->
-                                        countryList
-                                                .stream()
-                                                .map(CountryDTO::of)
-                                                .toList()
-                        )
+                        .map(countryService::fromCountryListEntity)
                 ;
     }
 
     public Uni<Set<CeremonyAwardsDTO>> getAwardsByPerson(Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .flatMap(
                                 person -> Mutiny.fetch(person.getAwards())
                                         .map(AwardDTO::fromEntityList)
@@ -307,13 +302,13 @@ public class PersonService implements PersonServiceInterface {
                 );
     }
 
-    public Uni<Set<CountryDTO>> saveCountries(Long id, Set<CountryDTO> countryDTOSet) {
+    public Uni<Set<CountryDTO>> updateCountries(Long id, Set<CountryDTO> countryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
-                                        .chain(t ->
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                                        .chain(person ->
                                                 countryService.getByIds(
                                                                 countryDTOSet.stream()
                                                                         .map(CountryDTO::getId)
@@ -321,10 +316,10 @@ public class PersonService implements PersonServiceInterface {
                                                                         .toList()
                                                         )
                                                         .invoke(finalCountrySet -> {
-                                                            t.setCountries(new HashSet<>(finalCountrySet));
-                                                            t.setLastUpdate(LocalDateTime.now());
+                                                            person.setCountries(new HashSet<>(finalCountrySet));
+                                                            person.setLastUpdate(LocalDateTime.now());
                                                         })
-                                                        .replaceWith(t)
+                                                        .replaceWith(person)
                                         )
                                         .flatMap(personRepository::persist)
                                         .flatMap(this::fetchAndMapCountries)
@@ -336,12 +331,16 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable introuvable"))
-                                        .flatMap(t ->
-                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
-                                                        .call(t::addCountries)
-                                                        .replaceWith(t)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                                        .flatMap(person ->
+                                                Mutiny.fetch(person.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .chain(countries ->
+                                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
+                                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
+                                                                        .invoke(person::addCountries)
+                                                        )
+                                                        .replaceWith(person)
                                         )
                                         .chain(personRepository::persist)
                                         .flatMap(this::fetchAndMapCountries)
@@ -354,8 +353,13 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(personId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
-                                        .call(t -> t.removeCountry(countryId))
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                                        .flatMap(person ->
+                                                Mutiny.fetch(person.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .invoke(countries -> person.removeCountry(countryId))
+                                                        .replaceWith(person)
+                                        )
                                         .chain(personRepository::persist)
                                         .flatMap(this::fetchAndMapCountries)
                         )
@@ -366,6 +370,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 Panache.withTransaction(() ->
                                 personRepository.deleteById(id)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                                         .flatMap(aBoolean -> statsService.updateActorsStats().replaceWith(aBoolean))
                         )
                         .onFailure().transform(throwable -> {
@@ -379,8 +384,13 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Personne introuvable"))
-                                        .call(Person::clearCountries)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                                        .flatMap(person ->
+                                                Mutiny.fetch(person.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .invoke(countries -> person.clearCountries())
+                                                        .replaceWith(person)
+                                        )
                                         .chain(personRepository::persist)
                                         .map(t -> true)
                         )
@@ -393,6 +403,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Person> prepareAndPersistPerson(PersonDTO personDTO, PersonType type) {
         return
                 personRepository.findById(personDTO.getId())
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .invoke(person -> person.addType(type))
                         .call(personRepository::persist);
     }
@@ -416,11 +427,11 @@ public class PersonService implements PersonServiceInterface {
                 ;
     }
 
-    public List<PersonDTO> fromPersonListEntity(List<Person> personList) {
+    public <T> List<T> fromPersonListEntity(List<Person> personList, Function<Person, T> mapper) {
         return
                 personList
                         .stream()
-                        .map(PersonDTO::of)
+                        .map(mapper)
                         .toList()
                 ;
     }
@@ -437,7 +448,7 @@ public class PersonService implements PersonServiceInterface {
     private Uni<Set<CountryDTO>> fetchAndMapCountries(Person person) {
         return
                 Mutiny.fetch(person.getCountries())
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des pays n'est pas initialisée"))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
                         .map(CountryDTO::fromCountryEntitySet)
                 ;
     }

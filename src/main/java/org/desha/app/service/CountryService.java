@@ -174,7 +174,7 @@ public class CountryService {
     public Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findPersonsByCountry(id, page, sort, direction, criteriasDTO)
-                        .map(personService::fromPersonListEntity)
+                        .map(personList ->  personService.fromPersonListEntity(personList, PersonDTO::of))
                 ;
     }
 
