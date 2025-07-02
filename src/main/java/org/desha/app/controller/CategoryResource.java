@@ -9,6 +9,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CategoryDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieQueryParamsDTO;
 import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.Category;
@@ -65,11 +66,10 @@ public class CategoryResource {
     public Uni<Response> getCategories(@BeanParam MovieQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
-        String term = queryParams.getTerm();
 
         return
-                categoryService.getCategories(finalSort, queryParams.validateSortDirection(), term)
-                        .flatMap(categoryDTOS -> categoryService.count(term)
+                categoryService.getCategories(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                        .flatMap(categoryDTOS -> categoryService.count(queryParams.getTerm())
                                 .map(aLong ->
                                         categoryDTOS.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, aLong).build()
@@ -83,11 +83,15 @@ public class CategoryResource {
     @Path("{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCategory(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+
         return
-                categoryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                categoryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(movieList ->
                                 categoryService.countMovies(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()

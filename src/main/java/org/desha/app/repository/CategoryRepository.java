@@ -1,6 +1,7 @@
 package org.desha.app.repository;
 
 import io.quarkus.hibernate.reactive.panache.PanacheRepository;
+import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
@@ -24,12 +25,14 @@ public class CategoryRepository implements PanacheRepository<Category> {
         return list("id IN ?1", ids);
     }
 
-    public Uni<List<Category>> findCategories(String sort, Sort.Direction direction, String term) {
+    public Uni<List<Category>> findCategories(Page page, String sort, Sort.Direction direction, String term) {
         return
                 find(
                         "LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Sort.by(sort, direction),
                         Parameters.with("term", "%" + term + "%")
-                ).list();
+                )
+                        .page(page)
+                        .list();
     }
 }

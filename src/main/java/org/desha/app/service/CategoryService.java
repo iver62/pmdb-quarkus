@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CategoryDTO;
+import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.entity.Category;
 import org.desha.app.repository.CategoryRepository;
@@ -46,10 +47,10 @@ public class CategoryService {
         return movieRepository.countMoviesByCategory(id, term);
     }
 
-    public Uni<List<CategoryDTO>> getCategories(String sort, Sort.Direction direction, String term) {
+    public Uni<List<CategoryDTO>> getCategories(Page page, String sort, Sort.Direction direction, String term) {
         return
                 categoryRepository
-                        .findCategories(sort, direction, term)
+                        .findCategories(page, sort, direction, term)
                         .map(this::fromCategoryListEntity)
                 ;
     }
@@ -68,17 +69,21 @@ public class CategoryService {
         return categoryRepository.findByIds(ids).map(HashSet::new);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, String term) {
+    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
-                movieRepository.findMoviesByCategory(id, page, sort, direction, term)
-                        .map(movieList ->
-                                movieList
+                movieRepository.findMoviesByCategory(id, page, sort, direction, criteriasDTO)
+                        .map(movieWithAwardsNumberList ->
+                                movieWithAwardsNumberList
                                         .stream()
-                                        .map(MovieDTO::of)
+                                        .map(movieWithAwardsNumber ->
+                                                MovieDTO.of(
+                                                        movieWithAwardsNumber.movie(),
+                                                        movieWithAwardsNumber.awardsNumber()
+                                                )
+                                        )
                                         .toList()
 
                         )
-//                        .onFailure().recoverWithItem(Collections.emptyList())
                 ;
     }
 
