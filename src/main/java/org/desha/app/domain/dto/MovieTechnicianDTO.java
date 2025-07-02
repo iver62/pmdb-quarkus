@@ -13,6 +13,7 @@ import org.desha.app.domain.entity.MovieTechnician;
 public class MovieTechnicianDTO {
 
     protected Long id;
+    protected LightMovieDTO movie;
     protected PersonDTO person;
     protected String role;
 

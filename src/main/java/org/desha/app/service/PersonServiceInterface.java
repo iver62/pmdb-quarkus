@@ -19,7 +19,7 @@ public interface PersonServiceInterface {
 
     Uni<Long> countCountries(String term, String lang);
 
-    Uni<Long> countMovies(long personId, CriteriasDTO criteriasDTO);
+    Uni<Long> countMovies(Long personId, CriteriasDTO criteriasDTO);
 
     Uni<PersonDTO> getById(Long id);
 

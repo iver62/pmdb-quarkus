@@ -14,6 +14,7 @@ import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.MovieActor;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.service.PersonService;
 import org.jboss.resteasy.reactive.PartType;
@@ -86,7 +87,7 @@ public class PersonResource {
 
     @GET
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getPersonsWithMoviesNumber(@BeanParam PersonQueryParamsDTO queryParams) {
+    public Uni<Response> getPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
@@ -95,9 +96,30 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                personService.getPersonsWithMovieNumbers(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/{id}/roles")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getRolesByPerson(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(MovieActor.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, MovieActor.ALLOWED_SORT_FIELDS);
+
+        return
+                personService.getRoles(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection())
+                        .flatMap(personDTOList ->
+                                personService.countRolesByPerson(id).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -118,7 +140,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ACTOR);
 
         return
-                personService.getPersonsWithMovieNumbers(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -141,7 +163,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DIRECTOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -164,7 +186,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ASSISTANT_DIRECTOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -187,7 +209,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SCREENWRITER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -210,7 +232,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.PRODUCER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -233,7 +255,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COMPOSER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -256,7 +278,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.MUSICIAN);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -279,7 +301,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.PHOTOGRAPHER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -302,7 +324,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COSTUMIER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -325,7 +347,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DECORATOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -348,7 +370,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.EDITOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -371,7 +393,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.CASTER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -394,7 +416,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ARTIST);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -417,7 +439,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SOUND_EDITOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -440,7 +462,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.MAKEUP_ARTIST);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -463,7 +485,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.VFX_SUPERVISOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -486,7 +508,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SFX_SUPERVISOR);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -509,7 +531,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.HAIR_DRESSER);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -532,7 +554,7 @@ public class PersonResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.STUNT_MAN);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
                         .flatMap(personDTOList ->
                                 personService.countPersons(criteriasDTO).map(total ->
                                         personDTOList.isEmpty()

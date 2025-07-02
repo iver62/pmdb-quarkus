@@ -1,20 +1,24 @@
 package org.desha.app.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.desha.app.domain.entity.MovieActor;
 
+import java.util.List;
+
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<MovieActorDTO> {
 
     private Integer rank;
 
-    public static MovieActorDTO of(MovieActor movieActor) {
+    public static MovieActorDTO fromActor(MovieActor movieActor) {
         return
                 MovieActorDTO.builder()
                         .id(movieActor.getId())
@@ -22,6 +26,25 @@ public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<Movi
                         .role(movieActor.getRole())
                         .rank(movieActor.getRank())
                         .build()
+                ;
+    }
+
+    public static MovieActorDTO fromMovie(MovieActor movieActor) {
+        return
+                MovieActorDTO.builder()
+                        .id(movieActor.getId())
+                        .movie(LightMovieDTO.of(movieActor.getMovie()))
+                        .role(movieActor.getRole())
+                        .build()
+                ;
+    }
+
+    public static List<MovieActorDTO> fromEntityList(List<MovieActor> movieActorList) {
+        return
+                movieActorList
+                        .stream()
+                        .map(MovieActorDTO::fromActor)
+                        .toList()
                 ;
     }
 

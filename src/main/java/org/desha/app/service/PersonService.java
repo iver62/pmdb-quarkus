@@ -14,6 +14,7 @@ import org.desha.app.domain.entity.MovieActor;
 import org.desha.app.domain.entity.MovieTechnician;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.repository.CountryRepository;
+import org.desha.app.repository.MovieActorRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
 import org.desha.app.utils.Messages;
@@ -44,6 +45,7 @@ public class PersonService implements PersonServiceInterface {
 
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
+    private final MovieActorRepository movieActorRepository;
     private final PersonRepository personRepository;
 
     @Inject
@@ -52,6 +54,7 @@ public class PersonService implements PersonServiceInterface {
             FileService fileService,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
+            MovieActorRepository movieActorRepository,
             PersonRepository personRepository,
             StatsService statsService
     ) {
@@ -59,6 +62,7 @@ public class PersonService implements PersonServiceInterface {
         this.fileService = fileService;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
+        this.movieActorRepository = movieActorRepository;
         this.personRepository = personRepository;
         this.statsService = statsService;
     }
@@ -67,12 +71,16 @@ public class PersonService implements PersonServiceInterface {
         return personRepository.countPersons(criteriasDTO);
     }
 
-    public Uni<Long> countMovies(long id, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countMovies(Long id, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .chain(person -> movieRepository.countMoviesByPerson(person, criteriasDTO))
                 ;
+    }
+
+    public Uni<Long> countRolesByPerson(Long id) {
+        return movieActorRepository.countMovieActorsByActor(id);
     }
 
     public Uni<Long> countCountries(String term, String lang) {
@@ -116,14 +124,6 @@ public class PersonService implements PersonServiceInterface {
         return personRepository.findByIds(ids);
     }
 
-    public Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        return
-                personRepository
-                        .findPersons(page, sort, direction, criteriasDTO)
-                        .map(personList -> fromPersonListEntity(personList, PersonDTO::of))
-                ;
-    }
-
     public Uni<List<LightPersonDTO>> getLightPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository
@@ -132,7 +132,7 @@ public class PersonService implements PersonServiceInterface {
                 ;
     }
 
-    public Uni<List<PersonDTO>> getPersonsWithMovieNumbers(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository
                         .findPersonsWithMoviesNumber(page, sort, direction, criteriasDTO)
@@ -140,6 +140,18 @@ public class PersonService implements PersonServiceInterface {
                                 personList
                                         .stream()
                                         .map(personWithMoviesNumber -> PersonDTO.of(personWithMoviesNumber.person(), personWithMoviesNumber.moviesNumber(), personWithMoviesNumber.awardsNumber()))
+                                        .toList()
+                        )
+                ;
+    }
+
+    public Uni<List<MovieActorDTO>> getRoles(Long id, Page page, String sort, Sort.Direction direction) {
+        return
+                movieActorRepository
+                        .findMovieActorsByActor(id, page, sort, direction)
+                        .map(movieActorList ->
+                                movieActorList.stream()
+                                        .map(MovieActorDTO::fromMovie)
                                         .toList()
                         )
                 ;
@@ -412,7 +424,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 movieActorList
                         .stream()
-                        .map(MovieActorDTO::of)
+                        .map(MovieActorDTO::fromActor)
                         .sorted(MovieActorDTO::compareTo)
                         .toList()
                 ;

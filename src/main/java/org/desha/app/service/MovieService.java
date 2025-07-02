@@ -183,7 +183,7 @@ public class MovieService {
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                         .chain(movie ->
                                 Mutiny.fetch(movie.getMovieActors())
-                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
                                         .flatMap(movieActorList -> movie.fetchAndMapActorList())
                         )
 
@@ -747,7 +747,7 @@ public class MovieService {
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getMovieActors())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
                                                         .map(personService::fromMovieActorListEntity)
                                         )
                         )

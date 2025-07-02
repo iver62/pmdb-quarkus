@@ -10,6 +10,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.*;
+import org.desha.app.utils.Messages;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
@@ -358,7 +359,7 @@ public class Movie extends PanacheEntityBase {
     public Uni<List<MovieActor>> removeMovieActor(Long id) {
         return
                 Mutiny.fetch(movieActors)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
                         .invoke(movieActorList -> movieActorList.removeIf(movieActor -> Objects.equals(movieActor.getId(), id)))
                 ;
     }
@@ -453,24 +454,14 @@ public class Movie extends PanacheEntityBase {
     public Uni<List<MovieActorDTO>> fetchAndMapActorList() {
         return
                 Mutiny.fetch(movieActors)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException("La liste des acteurs n'est pas initialisée"))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
                         .map(movieActorList ->
                                 movieActorList
                                         .stream()
-                                        .map(MovieActorDTO::of)
+                                        .map(MovieActorDTO::fromActor)
                                         .sorted(MovieActorDTO::compareTo)
                                         .toList()
                         )
-                ;
-    }
-
-    public List<MovieActorDTO> fromEntityList() {
-        return
-                movieActors
-                        .stream()
-                        .map(MovieActorDTO::of)
-                        .sorted(MovieActorDTO::compareTo)
-                        .toList()
                 ;
     }
 

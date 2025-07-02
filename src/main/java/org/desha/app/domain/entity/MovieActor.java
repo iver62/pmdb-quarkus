@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -16,6 +18,9 @@ import lombok.*;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieActor extends PanacheEntityBase implements Comparable<MovieActor> {
+
+    public static final String DEFAULT_SORT = "movie.title";
+    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "movie.releaseDate", "role");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
