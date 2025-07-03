@@ -22,7 +22,7 @@ public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<Movi
         return
                 MovieActorDTO.builder()
                         .id(movieActor.getId())
-                        .person(PersonDTO.of(movieActor.getActor()))
+                        .person(LightPersonDTO.of(movieActor.getActor()))
                         .role(movieActor.getRole())
                         .rank(movieActor.getRank())
                         .build()
@@ -44,6 +44,7 @@ public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<Movi
                 movieActorList
                         .stream()
                         .map(MovieActorDTO::fromActor)
+                        .sorted(MovieActorDTO::compareTo)
                         .toList()
                 ;
     }

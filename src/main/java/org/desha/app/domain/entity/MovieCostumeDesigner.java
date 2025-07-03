@@ -14,7 +14,7 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieCostumeDesigner extends MovieTechnician {
 
-    public static MovieCostumeDesigner of(Long id, Movie movie, Person person, String role) {
+    private static MovieCostumeDesigner build(Long id, Movie movie, Person person, String role) {
         return
                 MovieCostumeDesigner.builder()
                         .id(id)
@@ -25,14 +25,12 @@ public class MovieCostumeDesigner extends MovieTechnician {
                 ;
     }
 
+    public static MovieCostumeDesigner of(Long id, Movie movie, Person person, String role) {
+        return build(id, movie, person, role);
+    }
+
     public static MovieCostumeDesigner of(Movie movie, Person person, String role) {
-        return
-                MovieCostumeDesigner.builder()
-                        .movie(movie)
-                        .person(person)
-                        .role(role)
-                        .build()
-                ;
+        return build(null, movie, person, role);
     }
 
 }

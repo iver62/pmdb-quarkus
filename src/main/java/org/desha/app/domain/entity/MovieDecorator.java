@@ -14,21 +14,23 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieDecorator extends MovieTechnician {
 
+    private static MovieDecorator build(Long id, Movie movie, Person person, String role) {
+        return
+                MovieDecorator.builder()
+                        .id(id)
+                        .movie(movie)
+                        .person(person)
+                        .role(role)
+                        .build()
+                ;
+    }
+
     public static MovieDecorator of(Long id, Movie movie, Person person, String role) {
-        return MovieDecorator.builder()
-                .id(id)
-                .movie(movie)
-                .person(person)
-                .role(role)
-                .build();
+        return build(id, movie, person, role);
     }
 
     public static MovieDecorator of(Movie movie, Person person, String role) {
-        return MovieDecorator.builder()
-                .movie(movie)
-                .person(person)
-                .role(role)
-                .build();
+        return build(null, movie, person, role);
     }
 
 }

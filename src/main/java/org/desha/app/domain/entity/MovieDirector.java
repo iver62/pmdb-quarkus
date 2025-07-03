@@ -2,12 +2,9 @@
 package org.desha.app.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
@@ -17,21 +14,23 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieDirector extends MovieTechnician {
 
+    private static MovieDirector build(Long id, Movie movie, Person person, String role) {
+        return
+                MovieDirector.builder()
+                        .id(id)
+                        .movie(movie)
+                        .person(person)
+                        .role(role)
+                        .build()
+                ;
+    }
+
     public static MovieDirector of(Long id, Movie movie, Person person, String role) {
-        return MovieDirector.builder()
-                .id(id)
-                .movie(movie)
-                .person(person)
-                .role(role)
-                .build();
+        return build(id, movie, person, role);
     }
 
     public static MovieDirector of(Movie movie, Person person, String role) {
-        return MovieDirector.builder()
-                .movie(movie)
-                .person(person)
-                .role(role)
-                .build();
+        return build(null, movie, person, role);
     }
 
 }

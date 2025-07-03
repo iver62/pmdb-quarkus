@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieProducer extends MovieTechnician {
 
-    public static MovieProducer of(Long id, Movie movie, Person person, String role) {
+    private static MovieProducer build(Long id, Movie movie, Person person, String role) {
         return
                 MovieProducer.builder()
                         .id(id)
@@ -24,14 +24,12 @@ public class MovieProducer extends MovieTechnician {
                 ;
     }
 
+    public static MovieProducer of(Long id, Movie movie, Person person, String role) {
+        return build(id, movie, person, role);
+    }
+
     public static MovieProducer of(Movie movie, Person person, String role) {
-        return
-                MovieProducer.builder()
-                        .movie(movie)
-                        .person(person)
-                        .role(role)
-                        .build()
-                ;
+        return build(null, movie, person, role);
     }
 
 }

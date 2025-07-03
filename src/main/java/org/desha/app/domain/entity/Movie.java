@@ -32,10 +32,6 @@ import java.util.function.Function;
 public class Movie extends PanacheEntityBase {
 
     private static final String DEFAULT_POSTER = "default-poster.jpg";
-    private static final String COUNTRY_SET_NOT_INITIALIZED = "L'ensemble des pays n'est pas initialisé";
-    private static final String CATEGORY_SET_NOT_INITIALIZED = "L'ensemble des catégories n'est pas initialisé";
-    private static final String CEREMONY_AWARDS_SET_NOT_INITIALIZED = "L'ensemble des cérémonies n'est pas initialisé";
-
     public static final String DEFAULT_SORT = "title";
     public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "user.username", "awardsCount", "creationDate", "lastUpdate");
 
@@ -65,14 +61,14 @@ public class Movie extends PanacheEntityBase {
     @PositiveOrZero(message = "Le budget doit avoir une valeur positive")
     private Long budget;
 
-    @Column(name = "monnaie_budget")
+    @Column(name = "budget_devise")
     private String budgetCurrency;
 
     @Column(name = "box_office")
     @PositiveOrZero(message = "Le box-office doit avoir une valeur positive")
     private Long boxOffice;
 
-    @Column(name = "box_office_budget")
+    @Column(name = "box_office_devise")
     private String boxOfficeCurrency;
 
     @Column(name = "chemin_affiche")
@@ -290,46 +286,24 @@ public class Movie extends PanacheEntityBase {
      * Ajoute un ensemble de catégories à la collection existante.
      *
      * @param categorySet L'ensemble des catégories à ajouter.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des catégories après l'ajout.
      * @throws IllegalStateException Si la collection existante des catégories est nulle.
      */
-    public Uni<Set<Category>> addCategories(Set<Category> categorySet) {
-        return
-                Mutiny.fetch(categories)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(CATEGORY_SET_NOT_INITIALIZED))
-                        .invoke(fetchCategories -> {
-                            if (Objects.nonNull(categorySet)) {
-                                fetchCategories.addAll(categorySet);
-                            }
-                        })
-                ;
+    public void addCategories(Set<Category> categorySet) {
+        categories.addAll(categorySet);
     }
 
     /**
      * Ajoute un ensemble de pays à la collection existante.
      *
      * @param countrySet L'ensemble des pays à ajouter.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après l'ajout.
      * @throws IllegalStateException Si la collection des pays n'est pas initialisée.
      */
-    public Uni<Set<Country>> addCountries(Set<Country> countrySet) {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(COUNTRY_SET_NOT_INITIALIZED))
-                        .invoke(fetchCountries -> {
-                            if (Objects.nonNull(countrySet)) {
-                                fetchCountries.addAll(countrySet);
-                            }
-                        })
-                ;
+    public void addCountries(Set<Country> countrySet) {
+        countries.addAll(countrySet);
     }
 
-    public Uni<Set<CeremonyAwards>> addCeremonyAwards(CeremonyAwards ceremonyAwards) {
-        return
-                Mutiny.fetch(ceremoniesAwards)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(CEREMONY_AWARDS_SET_NOT_INITIALIZED))
-                        .invoke(ceremonyAwardsSet -> ceremoniesAwards.add(ceremonyAwards))
-                ;
+    public void addCeremonyAwards(CeremonyAwards ceremonyAwards) {
+        ceremoniesAwards.add(ceremonyAwards);
     }
 
     /**
@@ -353,45 +327,34 @@ public class Movie extends PanacheEntityBase {
      * Supprime un acteur de la collection existante de personnes en fonction de son identifiant.
      *
      * @param id L'identifiant de l'entité {@link MovieActor} à supprimer.
-     * @return Une instance de {@link Uni} contenant la liste mise à jour des acteurs.
      * @throws IllegalStateException Si la liste des acteurs n'est pas initialisée.
      */
-    public Uni<List<MovieActor>> removeMovieActor(Long id) {
-        return
-                Mutiny.fetch(movieActors)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
-                        .invoke(movieActorList -> movieActorList.removeIf(movieActor -> Objects.equals(movieActor.getId(), id)))
-                ;
+    public void removeMovieActor(Long id) {
+        movieActors.removeIf(movieActor -> Objects.equals(movieActor.getId(), id));
     }
 
     /**
      * Retire une catégorie de la collection existante en fonction de son ID.
      *
      * @param id L'ID de la catégorie à supprimer.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des catégories après la suppression.
      * @throws IllegalStateException Si la collection existante des catégories est null.
      */
-    public Uni<Set<Category>> removeCategory(Long id) {
-        return
-                Mutiny.fetch(categories)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(CATEGORY_SET_NOT_INITIALIZED))
-                        .invoke(fetchCategories -> fetchCategories.removeIf(category -> Objects.equals(category.getId(), id)))
-                ;
+    public void removeCategory(Long id) {
+        categories.removeIf(category -> Objects.equals(category.getId(), id));
     }
 
     /**
      * Retire un pays de la collection existante en fonction de son ID.
      *
      * @param id L'ID du pays à retirer.
-     * @return Un {@link Uni} contenant l'ensemble mis à jour des pays après la suppression.
      * @throws IllegalStateException Si la collection existante des pays est null.
      */
-    public Uni<Set<Country>> removeCountry(Long id) {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(COUNTRY_SET_NOT_INITIALIZED))
-                        .invoke(fetchCountries -> fetchCountries.removeIf(country -> Objects.equals(country.getId(), id)))
-                ;
+    public void removeCountry(Long id) {
+        countries.removeIf(country -> Objects.equals(country.getId(), id));
+    }
+
+    public void removeCeremonyAward(Long id) {
+        ceremoniesAwards.removeIf(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), id));
     }
 
     /**
@@ -416,52 +379,34 @@ public class Movie extends PanacheEntityBase {
     }
 
     /**
-     * Vide l'ensemble des catégories associées à un objet.
+     * Vide l'ensemble des catégories.
      * <p>
      * Cette méthode permet de vider la collection des catégories associées à l'objet en utilisant la méthode
-     * {@link Set#clear()}. Elle vérifie également si l'ensemble des catégories est correctement initialisé.
-     * Si la collection des catégories est nulle, une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble vide de catégories après avoir vidé la collection.
-     * @throws IllegalStateException Si l'ensemble des catégories n'est pas initialisé (null).
+     * {@link Set#clear()}.
      */
-    public Uni<Set<Category>> clearCategories() {
-        return
-                Mutiny.fetch(categories)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(CATEGORY_SET_NOT_INITIALIZED))
-                        .invoke(Set::clear)
-                ;
+    public void clearCategories() {
+        categories.clear();
     }
 
     /**
-     * Vide l'ensemble des pays associés à un objet.
+     * Vide l'ensemble des pays.
      * <p>
      * Cette méthode permet de vider la collection des pays associés à l'objet en utilisant la méthode
-     * {@link Set#clear()}. Elle vérifie également si l'ensemble des pays est correctement initialisé.
-     * Si la collection des pays est nulle, une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble vide de pays après avoir vidé la collection.
-     * @throws IllegalStateException Si l'ensemble des pays n'est pas initialisé (null).
+     * {@link Set#clear()}.
      */
-    public Uni<Set<Country>> clearCountries() {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(COUNTRY_SET_NOT_INITIALIZED))
-                        .invoke(Set::clear)
-                ;
+    public void clearCountries() {
+        countries.clear();
+    }
+
+    public void clearCeremonyAwards() {
+        ceremoniesAwards.clear();
     }
 
     public Uni<List<MovieActorDTO>> fetchAndMapActorList() {
         return
                 Mutiny.fetch(movieActors)
                         .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
-                        .map(movieActorList ->
-                                movieActorList
-                                        .stream()
-                                        .map(MovieActorDTO::fromActor)
-                                        .sorted(MovieActorDTO::compareTo)
-                                        .toList()
-                        )
+                        .map(MovieActorDTO::fromEntityList)
                 ;
     }
 
@@ -491,7 +436,7 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<CategoryDTO>> fetchAndMapCategorySet() {
         return
                 Mutiny.fetch(categories)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(CATEGORY_SET_NOT_INITIALIZED))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
                         .map(CategoryDTO::fromCategorySetEntity)
                 ;
     }
@@ -509,7 +454,7 @@ public class Movie extends PanacheEntityBase {
     public Uni<Set<CountryDTO>> fetchAndMapCountrySet() {
         return
                 Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(COUNTRY_SET_NOT_INITIALIZED))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
                         .map(CountryDTO::fromCountryEntitySet)
                 ;
     }
