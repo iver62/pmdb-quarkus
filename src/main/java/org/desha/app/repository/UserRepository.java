@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.entity.User;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -53,7 +54,7 @@ public class UserRepository implements PanacheRepositoryBase<User, UUID> {
         }
 
         // Protection basique contre injection ou champ non mappé
-        List<String> allowedFields = User.ALLOWED_SORT_FIELDS;
+        Set<String> allowedFields = User.ALLOWED_SORT_FIELDS;
         if (!allowedFields.contains(sort)) {
             throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
         }

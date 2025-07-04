@@ -13,10 +13,7 @@ import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.record.PersonWithMoviesNumber;
 import org.desha.app.domain.record.Repartition;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @ApplicationScoped
 public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
@@ -77,10 +74,6 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         );
 
         return count(query, params);
-    }
-
-    public Uni<Person> findByIdWithMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
-        return findById(id);
     }
 
     public Uni<List<Person>> findByName(String name) {
@@ -212,7 +205,7 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         }
 
         // Protection basique contre injection ou champ non mappé
-        List<String> allowedFields = Person.ALLOWED_SORT_FIELDS;
+        Set<String> allowedFields = Person.ALLOWED_SORT_FIELDS;
         if (!allowedFields.contains(sort)) {
             throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
         }

@@ -12,7 +12,6 @@ import org.desha.app.domain.dto.CategoryDTO;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -28,7 +27,7 @@ import java.util.Set;
 public class Category extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "name";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", "name", "creationDate", "lastUpdate");
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "name", "creationDate", "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

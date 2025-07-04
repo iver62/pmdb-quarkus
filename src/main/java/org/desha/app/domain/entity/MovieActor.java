@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -20,7 +20,7 @@ import java.util.List;
 public class MovieActor extends PanacheEntityBase implements Comparable<MovieActor> {
 
     public static final String DEFAULT_SORT = "movie.title";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "movie.releaseDate", "role");
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "movie.originalTitle", "movie.releaseDate", "role");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

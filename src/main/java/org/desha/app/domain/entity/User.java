@@ -13,6 +13,7 @@ import org.hibernate.annotations.Subselect;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -26,7 +27,7 @@ import java.util.UUID;
 public class User extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "username";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "lastname", "email", "emailVerified", "moviesCount");
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "lastname", "email", "emailVerified", "moviesCount");
 
     @Id
     private UUID id;

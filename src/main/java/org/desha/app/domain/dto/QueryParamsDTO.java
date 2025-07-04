@@ -10,8 +10,8 @@ import org.desha.app.exception.InvalidSortException;
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Getter
 public class QueryParamsDTO {
@@ -58,7 +58,7 @@ public class QueryParamsDTO {
      * @param allowedSortFields La liste des champs de tri autorisés.
      * @throws InvalidSortException si le champ de tri n'est pas autorisé.
      */
-    public void validateSortField(String sort, List<String> allowedSortFields) {
+    public void validateSortField(String sort, Set<String> allowedSortFields) {
         if (!allowedSortFields.contains(sort)) {
             throw new InvalidSortException(MessageFormat.format("Le champ de tri \"{0}\" est invalide. Valeurs autorisées : {1}", sort, allowedSortFields));
         }

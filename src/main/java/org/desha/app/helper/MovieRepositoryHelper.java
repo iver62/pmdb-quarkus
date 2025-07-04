@@ -8,6 +8,7 @@ import org.desha.app.domain.entity.Movie;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class MovieRepositoryHelper extends SqlHelper {
 
@@ -22,7 +23,7 @@ public class MovieRepositoryHelper extends SqlHelper {
         }
 
         // Protection basique contre injection ou champ non mappé
-        List<String> allowedFields = Movie.ALLOWED_SORT_FIELDS;
+        Set<String> allowedFields = Movie.ALLOWED_SORT_FIELDS;
         if (!allowedFields.contains(sort)) {
             throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
         }

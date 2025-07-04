@@ -414,7 +414,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         }
 
         // Protection basique contre injection ou champ non mappé
-        List<String> allowedFields = Movie.ALLOWED_SORT_FIELDS;
+        Set<String> allowedFields = Movie.ALLOWED_SORT_FIELDS;
         if (!allowedFields.contains(sort)) {
             throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
         }

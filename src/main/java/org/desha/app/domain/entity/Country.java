@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -23,7 +22,7 @@ import java.util.Set;
 public class Country extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "nomFrFr";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("code", "alpha2", "alpha3", "nomEnGb", DEFAULT_SORT);
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("code", "alpha2", "alpha3", "nomEnGb", DEFAULT_SORT);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 public class Person extends PanacheEntityBase implements Comparable<Person> {
 
     public static final String DEFAULT_SORT = "name";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "dateOfBirth", "dateOfDeath", "moviesCount", "awardsCount", "creationDate", "lastUpdate");
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "dateOfBirth", "dateOfDeath", "moviesCount", "awardsCount", "creationDate", "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

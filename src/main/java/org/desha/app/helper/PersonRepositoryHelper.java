@@ -5,9 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Person;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class PersonRepositoryHelper extends SqlHelper {
 
@@ -27,7 +27,7 @@ public class PersonRepositoryHelper extends SqlHelper {
         }
 
         // Protection basique contre injection ou champ non mappé
-        List<String> allowedFields = Person.ALLOWED_SORT_FIELDS;
+        Set<String> allowedFields = Person.ALLOWED_SORT_FIELDS;
         if (!allowedFields.contains(sort)) {
             throw new IllegalArgumentException("Champ de tri non autorisé : " + sort);
         }

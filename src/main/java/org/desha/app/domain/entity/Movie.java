@@ -33,7 +33,7 @@ public class Movie extends PanacheEntityBase {
 
     private static final String DEFAULT_POSTER = "default-poster.jpg";
     public static final String DEFAULT_SORT = "title";
-    public static final List<String> ALLOWED_SORT_FIELDS = List.of("id", DEFAULT_SORT, "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "user.username", "awardsCount", "creationDate", "lastUpdate");
+    public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "user.username", "awardsCount", "creationDate", "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -327,7 +327,6 @@ public class Movie extends PanacheEntityBase {
      * Supprime un acteur de la collection existante de personnes en fonction de son identifiant.
      *
      * @param id L'identifiant de l'entité {@link MovieActor} à supprimer.
-     * @throws IllegalStateException Si la liste des acteurs n'est pas initialisée.
      */
     public void removeMovieActor(Long id) {
         movieActors.removeIf(movieActor -> Objects.equals(movieActor.getId(), id));
@@ -337,7 +336,6 @@ public class Movie extends PanacheEntityBase {
      * Retire une catégorie de la collection existante en fonction de son ID.
      *
      * @param id L'ID de la catégorie à supprimer.
-     * @throws IllegalStateException Si la collection existante des catégories est null.
      */
     public void removeCategory(Long id) {
         categories.removeIf(category -> Objects.equals(category.getId(), id));
@@ -347,7 +345,6 @@ public class Movie extends PanacheEntityBase {
      * Retire un pays de la collection existante en fonction de son ID.
      *
      * @param id L'ID du pays à retirer.
-     * @throws IllegalStateException Si la collection existante des pays est null.
      */
     public void removeCountry(Long id) {
         countries.removeIf(country -> Objects.equals(country.getId(), id));
