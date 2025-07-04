@@ -2844,8 +2844,14 @@ public class MovieResource {
     @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> delete(@RestPath Long id) {
-        return movieService.deleteMovie(id)
-                .map(deleted -> Response.ok().status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND).build());
+        return
+                movieService.deleteMovie(id)
+                        .map(deleted ->
+                                Response.ok()
+                                        .status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND)
+                                        .build()
+                        )
+                ;
     }
 
     /**

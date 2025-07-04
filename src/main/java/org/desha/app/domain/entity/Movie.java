@@ -141,7 +141,7 @@ public class Movie extends PanacheEntityBase {
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieActor> movieActors = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.ALL, CascadeType.MERGE})
     @JoinTable(
             name = "lnk_film_pays",
             joinColumns = @JoinColumn(name = "fk_film"),

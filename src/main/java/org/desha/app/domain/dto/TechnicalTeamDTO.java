@@ -51,26 +51,28 @@ public class TechnicalTeamDTO {
             final List<MovieTechnicianDTO> hairDressers,
             final List<MovieTechnicianDTO> stuntmen
     ) {
-        return TechnicalTeamDTO.builder()
-                .producers(producers)
-                .directors(directors)
-                .assistantDirectors(assistantDirectors)
-                .screenwriters(screenwriters)
-                .composers(composers)
-                .musicians(musicians)
-                .photographers(photographers)
-                .costumeDesigners(costumeDesigners)
-                .setDesigners(setDesigners)
-                .editors(editors)
-                .casters(casters)
-                .artists(artists)
-                .soundEditors(soundEditors)
-                .vfxSupervisors(vfxSupervisors)
-                .sfxSupervisors(sfxSupervisors)
-                .makeupArtists(makeupArtists)
-                .hairDressers(hairDressers)
-                .stuntmen(stuntmen)
-                .build();
+        return
+                TechnicalTeamDTO.builder()
+                        .producers(producers)
+                        .directors(directors)
+                        .assistantDirectors(assistantDirectors)
+                        .screenwriters(screenwriters)
+                        .composers(composers)
+                        .musicians(musicians)
+                        .photographers(photographers)
+                        .costumeDesigners(costumeDesigners)
+                        .setDesigners(setDesigners)
+                        .editors(editors)
+                        .casters(casters)
+                        .artists(artists)
+                        .soundEditors(soundEditors)
+                        .vfxSupervisors(vfxSupervisors)
+                        .sfxSupervisors(sfxSupervisors)
+                        .makeupArtists(makeupArtists)
+                        .hairDressers(hairDressers)
+                        .stuntmen(stuntmen)
+                        .build()
+                ;
     }
 
     public static TechnicalTeamDTO of(Movie movie) {

@@ -944,8 +944,24 @@ public class MovieService {
     public Uni<Boolean> deleteMovie(Long id) {
         return
                 Panache.withTransaction(() ->
-                                movieRepository.deleteById(id)
-                                        .flatMap(aBoolean -> statsService.decrementNumberOfMovies().replaceWith(aBoolean))
+                                movieRepository.findById(id)
+                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.FILM_NOT_FOUND))
+                                        .flatMap(movie ->
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .invoke(countrySet -> movie.clearCountries())
+                                                        .chain(() -> Mutiny.fetch(movie.getCategories())
+                                                                .invoke(categorySet -> movie.clearCategories())
+                                                        )
+                                                        .chain(() ->
+                                                                movieRepository.delete(movie).replaceWith(true)
+                                                                        .chain(aBoolean ->
+                                                                                statsService.decrementNumberOfMovies()
+                                                                                        .chain(statsService::updateMoviesByCountryRepartition)
+                                                                                        .chain(statsService::updateMoviesByCategoryRepartition)
+                                                                                        .replaceWith(aBoolean)
+                                                                        )
+                                                        )
+                                        )
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());

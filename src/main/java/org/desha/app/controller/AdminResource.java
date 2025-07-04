@@ -19,7 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-@Path("admin")
+@Path("/admin")
 @RolesAllowed("admin")
 @ApplicationScoped
 @Slf4j
