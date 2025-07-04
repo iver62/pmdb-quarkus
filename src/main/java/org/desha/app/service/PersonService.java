@@ -147,8 +147,7 @@ public class PersonService implements PersonServiceInterface {
 
     public Uni<List<MovieActorDTO>> getRoles(Long id, Page page, String sort, Sort.Direction direction) {
         return
-                movieActorRepository
-                        .findMovieActorsByActor(id, page, sort, direction)
+                movieActorRepository.findMovieActorsByActor(id, page, sort, direction)
                         .map(movieActorList ->
                                 movieActorList.stream()
                                         .map(MovieActorDTO::fromMovie)
@@ -159,8 +158,7 @@ public class PersonService implements PersonServiceInterface {
 
     public Uni<List<PersonDTO>> getAll() {
         return
-                personRepository
-                        .listAll()
+                personRepository.listAll()
                         .map(personList -> fromPersonListEntity(personList, PersonDTO::of))
                 ;
     }
@@ -190,14 +188,14 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findPersonCountries(page, sort, direction, term, lang)
-                        .map(countryService::fromCountryListEntity)
+                        .map(CountryDTO::fromCountryListEntity)
                 ;
     }
 
     public Uni<List<CountryDTO>> getMovieCountriesByPerson(Long id, Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findMovieCountriesByPerson(id, page, sort, direction, term, lang)
-                        .map(countryService::fromCountryListEntity)
+                        .map(CountryDTO::fromCountryListEntity)
                 ;
     }
 
@@ -415,6 +413,14 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Person> prepareAndPersistPerson(PersonDTO personDTO, PersonType type) {
         return
                 personRepository.findById(personDTO.getId())
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .invoke(person -> person.addType(type))
+                        .call(personRepository::persist);
+    }
+
+    public Uni<Person> prepareAndPersistPerson(LightPersonDTO lightPersonDTO, PersonType type) {
+        return
+                personRepository.findById(lightPersonDTO.getId())
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .invoke(person -> person.addType(type))
                         .call(personRepository::persist);

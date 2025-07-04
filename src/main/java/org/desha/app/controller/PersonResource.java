@@ -31,7 +31,7 @@ import java.util.Set;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 
 @Slf4j
-@Path("persons")
+@Path("/persons")
 @ApplicationScoped
 public class PersonResource {
 
@@ -111,8 +111,7 @@ public class PersonResource {
     @Path("/{id}/roles")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getRolesByPerson(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
-        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
-
+        log.info("SORT {}", queryParams.getSort());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(MovieActor.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, MovieActor.ALLOWED_SORT_FIELDS);
 
