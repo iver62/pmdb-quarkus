@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.desha.app.domain.entity.Country;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -63,6 +64,15 @@ public class CountryDTO {
                         .stream()
                         .map(CountryDTO::of)
                         .collect(Collectors.toSet())
+                ;
+    }
+
+    public static List<CountryDTO> fromCountryListEntity(List<Country> countryList) {
+        return
+                countryList
+                        .stream()
+                        .map(CountryDTO::of)
+                        .toList()
                 ;
     }
 

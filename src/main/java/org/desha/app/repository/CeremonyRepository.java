@@ -1,25 +1,20 @@
 package org.desha.app.repository;
 
-import io.quarkus.hibernate.reactive.panache.PanacheRepository;
+import io.quarkus.hibernate.reactive.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Ceremony;
 
 import java.util.List;
 
 @ApplicationScoped
-public class CeremonyRepository implements PanacheRepository<Ceremony> {
+public class CeremonyRepository implements PanacheRepositoryBase<Ceremony, Long> {
 
     public Uni<Long> countCeremonies(String term) {
-        return count("""
-                        SELECT COUNT(c)
-                        FROM Ceremony c
-                        WHERE LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                        """,
+        return count("LOWER(FUNCTION('unaccent', name)) LIKE LOWER(FUNCTION('unaccent', :term))",
                 Parameters.with("term", "%" + term + "%")
         );
     }

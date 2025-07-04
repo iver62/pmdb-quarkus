@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.desha.app.domain.entity.Category;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,6 +35,15 @@ public class CategoryDTO {
                         .stream()
                         .map(CategoryDTO::of)
                         .collect(Collectors.toSet())
+                ;
+    }
+
+    public static List<CategoryDTO> fromCategoryListEntity(List<Category> categoryList) {
+        return
+                categoryList
+                        .stream()
+                        .map(CategoryDTO::of)
+                        .toList()
                 ;
     }
 

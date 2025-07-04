@@ -81,21 +81,14 @@ public class CountryService {
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findCountries(page, sort, direction, term, lang)
-                        .map(
-                                countryList ->
-                                        countryList
-                                                .stream()
-                                                .map(CountryDTO::of)
-                                                .toList()
-                        )
+                        .map(CountryDTO::fromCountryListEntity)
                 ;
     }
 
     public Uni<List<CountryDTO>> getCountries(String sort, Sort.Direction direction, String term) {
         return
-                countryRepository
-                        .findCountries(sort, direction, term)
-                        .map(this::fromCountryListEntity)
+                countryRepository.findCountries(sort, direction, term)
+                        .map(CountryDTO::fromCountryListEntity)
                 ;
     }
 
@@ -174,7 +167,7 @@ public class CountryService {
     public Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findPersonsByCountry(id, page, sort, direction, criteriasDTO)
-                        .map(personList ->  personService.fromPersonListEntity(personList, PersonDTO::of))
+                        .map(personList -> personService.fromPersonListEntity(personList, PersonDTO::of))
                 ;
     }
 
@@ -193,15 +186,6 @@ public class CountryService {
                                                 }
                                         )
                         )
-                ;
-    }
-
-    public List<CountryDTO> fromCountryListEntity(List<Country> countryList) {
-        return
-                countryList
-                        .stream()
-                        .map(CountryDTO::of)
-                        .toList()
                 ;
     }
 }

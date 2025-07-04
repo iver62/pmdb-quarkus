@@ -346,7 +346,7 @@ public class MovieService {
                 });
     }
 
-    public Uni<Movie> saveMovie(FileUpload file, MovieDTO movieDTO) {
+    public Uni<MovieDTO> saveMovie(FileUpload file, MovieDTO movieDTO) {
         return
                 movieRepository.movieExists(movieDTO.getTitle(), movieDTO.getOriginalTitle())
                         .flatMap(exists -> {
@@ -376,9 +376,9 @@ public class MovieService {
                                                 movie.setPosterFileName(DEFAULT_POSTER);
                                                 return Uni.createFrom().voidItem();
                                             })
-                                            .chain(movie::persist)
-                                            .replaceWith(movie) // Retourne le film après la transaction
-                                            .flatMap(entity ->
+                                            .replaceWith(movie)
+                                            .chain(movieRepository::persist)
+                                            .call(entity ->
                                                     statsService.incrementNumberOfMovies()
                                                             .chain(() -> {
                                                                 if (Objects.nonNull(movie.getCountries()) && !movie.getCountries().isEmpty()) {
@@ -394,6 +394,7 @@ public class MovieService {
                                                             })
                                                             .replaceWith(entity)
                                             )
+                                            .map(entity -> MovieDTO.of(entity, entity.getCategories(), entity.getCountries())) // Retourne le film après la transaction
                             );
                         });
     }
@@ -651,9 +652,13 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                                         .flatMap(movie ->
-                                                categoryService.getByIds(categoryDTOSet.stream().map(CategoryDTO::getId).toList())
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Une ou plusieurs catégories sont introuvables"))
-                                                        .flatMap(movie::addCategories)
+                                                Mutiny.fetch(movie.getCategories())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
+                                                        .chain(categorySet ->
+                                                                categoryService.getByIds(categoryDTOSet.stream().map(CategoryDTO::getId).toList())
+                                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Une ou plusieurs catégories sont introuvables"))
+                                                        )
+                                                        .invoke(movie::addCategories)
                                                         .replaceWith(movie)
                                         )
                                         .chain(movieRepository::persist)
@@ -681,9 +686,13 @@ public class MovieService {
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                                         .flatMap(movie ->
-                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
-                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
-                                                        .flatMap(movie::addCountries)
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .chain(countrySet ->
+                                                                countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
+                                                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
+                                                        )
+                                                        .invoke(movie::addCountries)
                                                         .replaceWith(movie)
                                         )
                                         .chain(movieRepository::persist)
@@ -743,7 +752,12 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                                        .call(movie -> movie.removeMovieActor(movieActorId))
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getMovieActors())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
+                                                        .invoke(movieActorList -> movie.removeMovieActor(movieActorId))
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getMovieActors())
@@ -768,7 +782,12 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                                        .call(movie -> movie.removeCategory(categoryId))
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCategories())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
+                                                        .invoke(categorySet -> movie.removeCategory(categoryId))
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
                                         .flatMap(Movie::fetchAndMapCategorySet)
@@ -792,7 +811,12 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                                        .call(movie -> movie.removeCountry(countryId))
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .invoke(countries -> movie.removeCountry(countryId))
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
                                         .flatMap(Movie::fetchAndMapCountrySet)
@@ -800,6 +824,40 @@ public class MovieService {
                         )
                         .onFailure().invoke(e -> log.error("Failed to remove country from movie {}: {}", movieId, e.getMessage()))
                 ;
+    }
+
+    /**
+     * Supprime toutes les récompenses associées à un film donné.
+     * <p>
+     * Cette méthode permet de vider la collection des récompenses associées à un film en supprimant toutes les entrées
+     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
+     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
+     *
+     * @param movieId L'identifiant du film pour lequel les récompenses doivent être supprimées.
+     * @return Un {@link Uni} contenant {@code true} si la suppression des récompenses a réussi,
+     * ou une exception sera levée en cas d'erreur.
+     * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
+     *                                 en cas de film introuvable ou d'erreur de persistance).
+     */
+    public Uni<Boolean> removeCeremonyAwards(Long movieId, Long ceremonyAwardsId) {
+        return
+                Panache
+                        .withTransaction(() ->
+                                movieRepository.findById(movieId)
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCeremoniesAwards())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CEREMONY_AWARDS_NOT_INITIALIZED))
+                                                        .invoke(ceremonyAwardsSet -> movie.removeCeremonyAward(ceremonyAwardsId))
+                                                        .replaceWith(movie)
+                                        )
+                                        .chain(movieRepository::persist)
+                                        .map(movie -> true)
+                        )
+                        .onFailure().transform(throwable -> {
+                            log.error(throwable.getMessage());
+                            throw new WebApplicationException("Erreur lors de la suppression de la cérémonie", throwable);
+                        });
     }
 
     public Uni<MovieDTO> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
@@ -945,7 +1003,12 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                                        .call(Movie::clearCategories)
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCategories())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
+                                                        .invoke(categorySet -> movie.clearCategories())
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
                                         .map(movie -> true)
@@ -975,7 +1038,12 @@ public class MovieService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                                        .call(Movie::clearCountries)
+                                        .chain(movie ->
+                                                Mutiny.fetch(movie.getCountries())
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .invoke(countries -> movie.clearCountries())
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
                                         .map(movie -> true)
@@ -986,30 +1054,16 @@ public class MovieService {
                         });
     }
 
-    /**
-     * Supprime toutes les récompenses associées à un film donné.
-     * <p>
-     * Cette méthode permet de vider la collection des récompenses associées à un film en supprimant toutes les entrées
-     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
-     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
-     *
-     * @param movieId L'identifiant du film pour lequel les récompenses doivent être supprimées.
-     * @return Un {@link Uni} contenant {@code true} si la suppression des récompenses a réussi,
-     * ou une exception sera levée en cas d'erreur.
-     * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
-     *                                 en cas de film introuvable ou d'erreur de persistance).
-     */
-    public Uni<Boolean> clearCeremonyAwards(Long movieId, Long ceremonyAwardsId) {
+    public Uni<Boolean> clearCeremonyAwards(Long id) {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findById(movieId)
+                                movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCeremoniesAwards())
-                                                        .invoke(ceremonyAwardsSet ->
-                                                                ceremonyAwardsSet.removeIf(ceremonyAwards -> Objects.equals(ceremonyAwards.getId(), ceremonyAwardsId))
-                                                        )
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CEREMONY_AWARDS_NOT_INITIALIZED))
+                                                        .invoke(ceremonyAwards -> movie.clearCeremonyAwards())
                                                         .replaceWith(movie)
                                         )
                                         .chain(movieRepository::persist)
@@ -1017,7 +1071,8 @@ public class MovieService {
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
-                            throw new WebApplicationException("Erreur lors de la suppression de la cérémonie", throwable);
+                            throw new WebApplicationException("Erreur lors de la suppression des cérémonies", throwable);
                         });
     }
+
 }

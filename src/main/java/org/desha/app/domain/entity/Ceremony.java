@@ -31,7 +31,8 @@ public class Ceremony extends PanacheEntityBase {
                 Ceremony.builder()
                         .id(id)
                         .name(StringUtils.capitalize(StringUtils.defaultString(name).trim()))
-                        .build();
+                        .build()
+                ;
     }
 
     public static Ceremony of(CeremonyDTO ceremonyDTO) {

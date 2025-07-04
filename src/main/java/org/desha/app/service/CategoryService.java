@@ -51,7 +51,7 @@ public class CategoryService {
         return
                 categoryRepository
                         .findCategories(page, sort, direction, term)
-                        .map(this::fromCategoryListEntity)
+                        .map(CategoryDTO::fromCategoryListEntity)
                 ;
     }
 
@@ -149,15 +149,6 @@ public class CategoryService {
                                 categoryRepository.deleteById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Catégorie introuvable"))
                         )
-                ;
-    }
-
-    public List<CategoryDTO> fromCategoryListEntity(List<Category> categoryList) {
-        return
-                categoryList
-                        .stream()
-                        .map(CategoryDTO::of)
-                        .toList()
                 ;
     }
 }

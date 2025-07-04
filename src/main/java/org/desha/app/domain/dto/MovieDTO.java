@@ -49,7 +49,7 @@ public class MovieDTO {
                         .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
                         .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
-                        .user(UserDTO.fromEntity(movie.getUser()))
+                        .user(UserDTO.of(movie.getUser()))
                         .countries(CountryDTO.fromCountryEntitySet(movie.getCountries()))
                         .categories(CategoryDTO.fromCategorySetEntity(movie.getCategories()))
                         .ceremonyAwards(CeremonyAwardsDTO.fromEntitySet(movie.getCeremoniesAwards()))
@@ -72,7 +72,7 @@ public class MovieDTO {
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
-                        .user(UserDTO.fromEntity(movie.getUser()))
+                        .user(UserDTO.of(movie.getUser()))
                         .build()
                 ;
     }
@@ -93,7 +93,7 @@ public class MovieDTO {
                         .lastUpdate(movie.getLastUpdate())
                         .categories(CategoryDTO.fromCategorySetEntity(categorySet))
                         .countries(CountryDTO.fromCountryEntitySet(countrySet))
-                        .user(UserDTO.fromEntity(movie.getUser()))
+                        .user(UserDTO.of(movie.getUser()))
                         .build()
                 ;
     }
@@ -114,7 +114,7 @@ public class MovieDTO {
                         .categories(CategoryDTO.fromCategorySetEntity(categorySet))
                         .countries(CountryDTO.fromCountryEntitySet(countrySet))
                         .ceremonyAwards(CeremonyAwardsDTO.fromEntitySet(ceremonyAwardsSet))
-                        .user(UserDTO.fromEntity(movie.getUser()))
+                        .user(UserDTO.of(movie.getUser()))
                         .build()
                 ;
     }
@@ -132,7 +132,7 @@ public class MovieDTO {
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
-                        .user(UserDTO.fromEntity(movie.getUser()))
+                        .user(UserDTO.of(movie.getUser()))
                         .numberOfAwards(numberOfAwards)
                         .build()
                 ;

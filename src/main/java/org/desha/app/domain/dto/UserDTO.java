@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.desha.app.domain.entity.User;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -24,7 +25,7 @@ public class UserDTO {
     private String firstname;
     private Long numberOfMovies;
 
-    public static UserDTO fromEntity(User user) {
+    public static UserDTO of(User user) {
         return
                 UserDTO.builder()
                         .id(user.getId())
@@ -37,7 +38,7 @@ public class UserDTO {
                 ;
     }
 
-    public static UserDTO fromEntity(User user, long nbMovies) {
+    public static UserDTO of(User user, long nbMovies) {
         return
                 UserDTO.builder()
                         .id(user.getId())
@@ -48,6 +49,15 @@ public class UserDTO {
                         .firstname(user.getFirstname())
                         .numberOfMovies(nbMovies)
                         .build()
+                ;
+    }
+
+    public static List<UserDTO> fromUserListEntity(List<User> userList) {
+        return
+                userList
+                        .stream()
+                        .map(UserDTO::of)
+                        .toList()
                 ;
     }
 }

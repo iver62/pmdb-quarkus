@@ -26,14 +26,14 @@ public class PersonDTO {
     private String photoFileName;
     private LocalDate dateOfBirth;
     private LocalDate dateOfDeath;
-    private LocalDateTime creationDate;
-    private LocalDateTime lastUpdate;
     private Long numberOfMovies;
     private Long numberOfAwards;
     private Set<PersonType> types;
     private Set<MovieDTO> movies;
     private Set<CountryDTO> countries;
     private Set<Award> awards;
+    private LocalDateTime creationDate;
+    private LocalDateTime lastUpdate;
 
     public static PersonDTO of(Person person) {
         return PersonDTO.builder()

@@ -50,7 +50,7 @@ public class UserService {
         return
                 userRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Utilisateur introuvable"))
-                        .map(user -> UserDTO.fromEntity(user, user.getMovies().size()))
+                        .map(user -> UserDTO.of(user, user.getMovies().size()))
                 ;
     }
 
@@ -71,7 +71,7 @@ public class UserService {
                         .map(users ->
                                 users
                                         .stream()
-                                        .map(user -> UserDTO.fromEntity(user, user.getMovies().size()))
+                                        .map(user -> UserDTO.of(user, user.getMovies().size()))
                                         .toList()
                         )
                 ;
@@ -90,12 +90,7 @@ public class UserService {
     public Uni<List<UserDTO>> getUsers(String sort, Sort.Direction direction, String term) {
         return
                 userRepository.findUsers(sort, direction, term)
-                        .map(users ->
-                                users
-                                        .stream()
-                                        .map(UserDTO::fromEntity)
-                                        .toList()
-                        )
+                        .map(UserDTO::fromUserListEntity)
                 ;
     }
 }

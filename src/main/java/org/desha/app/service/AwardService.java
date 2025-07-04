@@ -110,13 +110,4 @@ public class AwardService {
                 ;
     }
 
-    public List<Award> fromDTOList(List<AwardDTO> awardDTOList) {
-        return
-                awardDTOList
-                        .stream()
-                        .map(Award::of)
-                        .toList()
-                ;
-    }
-
 }

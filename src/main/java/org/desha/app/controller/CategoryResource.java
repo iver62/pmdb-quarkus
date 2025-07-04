@@ -7,6 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CategoryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
@@ -22,8 +23,9 @@ import java.util.Optional;
 
 import static jakarta.ws.rs.core.Response.Status.*;
 
-@Path("categories")
+@Path("/categories")
 @ApplicationScoped
+@Slf4j
 public class CategoryResource {
 
     private final CategoryService categoryService;
@@ -34,29 +36,41 @@ public class CategoryResource {
     }
 
     @GET
-    @Path("count")
+    @Path("/count")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         return
                 categoryService.count(queryParams.getTerm())
                         .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors du comptage des catégories: {}", err.getMessage());
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors du comptage des catégories")
+                                                    .build()
+                                            ;
+                                }
                         )
                 ;
     }
 
     @GET
-    @Path("{id}")
+    @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCategory(@RestPath Long id) {
         return
                 categoryService.getById(id)
                         .onItem().ifNotNull().transform(category -> Response.ok(category).build())
                         .onItem().ifNull().continueWith(Response.noContent().build())
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la récupération de la catégorie: {}", err.getMessage());
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la récupération de la catégorie")
+                                                    .build()
+                                            ;
+                                }
                         )
                 ;
     }
@@ -80,7 +94,7 @@ public class CategoryResource {
     }
 
     @GET
-    @Path("{id}/movies")
+    @Path("/{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCategory(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
@@ -99,8 +113,14 @@ public class CategoryResource {
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la récupération des films: {}", err.getMessage());
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la récupération des films")
+                                                    .build()
+                                            ;
+                                }
                         )
                 ;
     }
@@ -115,14 +135,20 @@ public class CategoryResource {
         return
                 categoryService.create(categoryDTO)
                         .map(category -> Response.status(CREATED).entity(category).build())
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la création de la catégorie: {}", err.getMessage());
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la création de la catégorie")
+                                                    .build()
+                                            ;
+                                }
                         )
                 ;
     }
 
     @PUT
-    @Path("{id}")
+    @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> updateCategory(@RestPath Long id, CategoryDTO categoryDTO) {
         if (Objects.isNull(categoryDTO) || Objects.isNull(categoryDTO.getName())) {
@@ -133,14 +159,20 @@ public class CategoryResource {
                 categoryService.update(id, categoryDTO)
                         .onItem().ifNotNull().transform(category -> Response.ok(category).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la mise à jour de la catégorie: {}", err.getMessage());
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la mise à jour de la catégorie")
+                                                    .build()
+                                            ;
+                                }
                         )
                 ;
     }
 
     @DELETE
-    @Path("{id}")
+    @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> deleteCategory(@RestPath Long id) {
         return
@@ -148,8 +180,14 @@ public class CategoryResource {
                         .map(deleted -> Boolean.TRUE.equals(deleted)
                                 ? Response.status(NO_CONTENT).build()
                                 : Response.status(NOT_FOUND).build())
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la suppression de la catégorie: {}", err.getMessage());
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la suppression de la catégorie")
+                                                    .build()
+                                            ;
+                                }
                         )
                 ;
     }

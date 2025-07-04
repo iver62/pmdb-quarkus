@@ -51,7 +51,11 @@ public class UserResource {
                         .onItem().ifNotNull().transform(movie -> Response.ok(movie).build())
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la récupération de l'utilisateur: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la récupération de l'utilisateur")
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;
@@ -90,7 +94,11 @@ public class UserResource {
                         )
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la récupération des utilisateurs: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la récupération des utilisateurs")
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;
@@ -128,7 +136,11 @@ public class UserResource {
                         )
                         .onFailure().recoverWithItem(err -> {
                                     log.error("Erreur lors de la récupération des utilisateurs: {}", err.getMessage());
-                                    return Response.serverError().entity("Erreur serveur : " + err.getMessage()).build();
+                                    return
+                                            Response.serverError()
+                                                    .entity("Erreur lors de la récupération des utilisateurs")
+                                                    .build()
+                                            ;
                                 }
                         )
                 ;

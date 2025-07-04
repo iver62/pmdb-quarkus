@@ -5,6 +5,10 @@ import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Ceremony;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Getter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,5 +28,13 @@ public class CeremonyDTO {
 
     public static CeremonyDTO of(Ceremony ceremony) {
         return CeremonyDTO.build(ceremony.getId(), ceremony.getName());
+    }
+
+    public static Set<CeremonyDTO> fromEntityList(List<Ceremony> ceremonyList) {
+        return
+                ceremonyList.stream()
+                        .map(CeremonyDTO::of)
+                        .collect(Collectors.toSet())
+                ;
     }
 }

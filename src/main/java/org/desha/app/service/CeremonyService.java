@@ -10,8 +10,8 @@ import org.desha.app.domain.dto.CeremonyDTO;
 import org.desha.app.domain.entity.Ceremony;
 import org.desha.app.repository.CeremonyRepository;
 
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @ApplicationScoped
 public class CeremonyService {
@@ -33,8 +33,11 @@ public class CeremonyService {
      * @return un {@link Uni} contenant la liste des noms de cérémonies correspondantes
      */
     @WithSession
-    public Uni<List<Ceremony>> getCeremonies(Page page, Sort.Direction direction, String term) {
-        return ceremonyRepository.findCeremonies(page, direction, term);
+    public Uni<Set<CeremonyDTO>> getCeremonies(Page page, Sort.Direction direction, String term) {
+        return
+                ceremonyRepository.findCeremonies(page, direction, term)
+                        .map(CeremonyDTO::fromEntityList)
+                ;
     }
 
     public Uni<Ceremony> findOrCreateCeremony(CeremonyDTO ceremonyDTO) {

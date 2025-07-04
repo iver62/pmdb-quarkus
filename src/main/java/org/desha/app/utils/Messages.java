@@ -10,6 +10,8 @@ public class Messages {
     public final String ASSISTANT_DIRECTORS_NOT_INITIALIZED = "La liste des assistants réalisateurs n'est pas initialisée";
     public final String AWARD_NOT_FOUND = "Récompense introuvable";
     public final String CASTERS_NOT_INITIALIZED = "La liste des casteurs n'est pas initialisée";
+    public final String CATEGORIES_NOT_INITIALIZED = "L'ensemble des catégories n'est pas initialisé";
+    public final String CEREMONY_AWARDS_NOT_INITIALIZED = "L'ensemble des cérémonies n'est pas initialisé";
     public final String COMPOSERS_NOT_INITIALIZED = "La liste des compositeurs n'est pas initialisée";
     public final String COUNTRIES_NOT_INITIALIZED = "L'ensemble des pays n'est pas initialisé";
     public final String COSTUME_DESIGNERS_NOT_INITIALIZED = "La liste des costumiers n'est pas initialisée";

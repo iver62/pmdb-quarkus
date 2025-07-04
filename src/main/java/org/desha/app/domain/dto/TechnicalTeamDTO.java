@@ -1,5 +1,6 @@
 package org.desha.app.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import org.desha.app.domain.entity.Movie;
@@ -8,12 +9,13 @@ import java.util.List;
 
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TechnicalTeamDTO {
 
-    private List<MovieTechnicianDTO> producers;
     private List<MovieTechnicianDTO> directors;
     private List<MovieTechnicianDTO> assistantDirectors;
     private List<MovieTechnicianDTO> screenwriters;
+    private List<MovieTechnicianDTO> producers;
     private List<MovieTechnicianDTO> composers;
     private List<MovieTechnicianDTO> musicians;
     private List<MovieTechnicianDTO> photographers;

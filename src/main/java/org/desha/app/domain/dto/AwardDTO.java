@@ -36,16 +36,6 @@ public class AwardDTO {
                 ;
     }
 
-    public static AwardDTO withoutCeremony(AwardDTO dto) {
-        return AwardDTO.build(
-                dto.getId(),
-                null,
-                dto.getName(),
-                null,
-                dto.getYear()
-        );
-    }
-
     public static AwardDTO of(Award award) {
         return
                 AwardDTO.build(
