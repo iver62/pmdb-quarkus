@@ -388,11 +388,11 @@ public class MovieResource {
     }
 
     @GET
-    @Path("/{id}/decorators")
+    @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getDecorators(@RestPath Long id) {
+    public Uni<Response> getSetDesigners(@RestPath Long id) {
         return
-                movieService.getMovieTechniciansByMovie(id, Movie::getMovieDecorators, Messages.SET_DESIGNERS_NOT_INITIALIZED)
+                movieService.getMovieTechniciansByMovie(id, Movie::getMovieSetDesigners, Messages.SET_DESIGNERS_NOT_INITIALIZED)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -714,7 +714,7 @@ public class MovieResource {
     @POST
     @RolesAllowed({"user", "admin"})
     public Uni<Response> create(@RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO) {
-        if (Objects.isNull(movieDTO)) {
+        if (Objects.isNull(movieDTO) || Objects.nonNull(movieDTO.getId())) {
             throw new WebApplicationException("Id was invalidly set on request.", 422);
         }
 
@@ -1054,9 +1054,9 @@ public class MovieResource {
     }
 
     @PUT
-    @Path("/{id}/decorators")
+    @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> saveDecorators(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+    public Uni<Response> saveSetDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
         if (Objects.isNull(movieTechnicianDTOList)) {
             throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
         }
@@ -1065,9 +1065,9 @@ public class MovieResource {
                 movieService.saveTechnicians(
                                 id,
                                 movieTechnicianDTOList,
-                                Movie::getMovieDecorators,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DECORATOR)
-                                        .map(person -> MovieDecorator.of(movie, person, dto.getRole())),
+                                Movie::getMovieSetDesigners,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SET_DESIGNER)
+                                        .map(person -> MovieSetDesigner.of(movie, person, dto.getRole())),
                                 Messages.SET_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1728,9 +1728,9 @@ public class MovieResource {
      * - 500 Server Error si l'ajout a échoué.
      */
     @PATCH
-    @Path("/{id}/decorators")
+    @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> addDecorators(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+    public Uni<Response> addSetDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
         if (Objects.isNull(movieTechnicianDTOList)) {
             throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
         }
@@ -1739,9 +1739,9 @@ public class MovieResource {
                 movieService.addTechnicians(
                                 id,
                                 movieTechnicianDTOList,
-                                Movie::getMovieDecorators,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DECORATOR)
-                                        .map(person -> MovieDecorator.of(movie, person, dto.getRole())),
+                                Movie::getMovieSetDesigners,
+                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SET_DESIGNER)
+                                        .map(person -> MovieSetDesigner.of(movie, person, dto.getRole())),
                                 Messages.SET_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -2415,18 +2415,18 @@ public class MovieResource {
     /**
      * Supprime un décorateur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId     L'identifiant du film concerné.
-     * @param decoratorId L'identifiant du décorateur à supprimer du film.
+     * @param movieId       L'identifiant du film concerné.
+     * @param setDesignerId L'identifiant du décorateur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des décorateurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/decorators/{decoratorId}")
+    @Path("/{movieId}/set-designers/{setDesignerId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeDecorator(@RestPath Long movieId, @RestPath Long decoratorId) {
+    public Uni<Response> removeSetDesigner(@RestPath Long movieId, @RestPath Long setDesignerId) {
         return
-                movieService.removeTechnician(movieId, decoratorId, Movie::getMovieDecorators, Messages.SET_DESIGNERS_NOT_INITIALIZED)
+                movieService.removeTechnician(movieId, setDesignerId, Movie::getMovieSetDesigners, Messages.SET_DESIGNERS_NOT_INITIALIZED)
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
@@ -2979,11 +2979,11 @@ public class MovieResource {
      * @throws WebApplicationException Si une erreur survient lors de la suppression des décorateurs.
      */
     @DELETE
-    @Path("/{id}/decorators")
+    @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> deleteDecorators(@RestPath Long id) {
+    public Uni<Response> deleteSetDesigners(@RestPath Long id) {
         return
-                movieService.clearTechnicians(id, Movie::getMovieDecorators, Messages.SET_DESIGNERS_NOT_INITIALIZED)
+                movieService.clearTechnicians(id, Movie::getMovieSetDesigners, Messages.SET_DESIGNERS_NOT_INITIALIZED)
                         .map(deleted -> Response.ok(deleted).build())
                 ;
     }

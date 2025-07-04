@@ -19,7 +19,7 @@ public class TechnicalTeam {
     private List<MovieTechnician> musicians;
     private List<MovieTechnician> photographers;
     private List<MovieTechnician> costumeDesigners;
-    private List<MovieTechnician> decorators;
+    private List<MovieTechnician> setDesigners;
     private List<MovieTechnician> editors;
     private List<MovieTechnician> casters;
     private List<MovieTechnician> artists;
@@ -39,7 +39,7 @@ public class TechnicalTeam {
             final List<MovieTechnician> musicians,
             final List<MovieTechnician> photographers,
             final List<MovieTechnician> costumeDesigners,
-            final List<MovieTechnician> decorators,
+            final List<MovieTechnician> setDesigners,
             final List<MovieTechnician> editors,
             final List<MovieTechnician> casters,
             final List<MovieTechnician> artists,
@@ -59,7 +59,7 @@ public class TechnicalTeam {
                 .musicians(musicians)
                 .photographers(photographers)
                 .costumeDesigners(costumeDesigners)
-                .decorators(decorators)
+                .setDesigners(setDesigners)
                 .editors(editors)
                 .casters(casters)
                 .artists(artists)

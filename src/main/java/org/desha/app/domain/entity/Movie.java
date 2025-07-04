@@ -109,7 +109,7 @@ public class Movie extends PanacheEntityBase {
     private List<MovieCostumeDesigner> movieCostumeDesigners = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MovieDecorator> movieDecorators = new ArrayList<>();
+    private List<MovieSetDesigner> movieSetDesigners = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieEditor> movieEditors = new ArrayList<>();

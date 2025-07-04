@@ -12,11 +12,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Table(name = "lnk_film_decorateur")
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MovieDecorator extends MovieTechnician {
+public class MovieSetDesigner extends MovieTechnician {
 
-    private static MovieDecorator build(Long id, Movie movie, Person person, String role) {
+    private static MovieSetDesigner build(Long id, Movie movie, Person person, String role) {
         return
-                MovieDecorator.builder()
+                MovieSetDesigner.builder()
                         .id(id)
                         .movie(movie)
                         .person(person)
@@ -25,11 +25,11 @@ public class MovieDecorator extends MovieTechnician {
                 ;
     }
 
-    public static MovieDecorator of(Long id, Movie movie, Person person, String role) {
+    public static MovieSetDesigner of(Long id, Movie movie, Person person, String role) {
         return build(id, movie, person, role);
     }
 
-    public static MovieDecorator of(Movie movie, Person person, String role) {
+    public static MovieSetDesigner of(Movie movie, Person person, String role) {
         return build(null, movie, person, role);
     }
 

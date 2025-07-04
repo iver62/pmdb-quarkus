@@ -20,7 +20,7 @@ public class TechnicalTeamDTO {
     private List<MovieTechnicianDTO> musicians;
     private List<MovieTechnicianDTO> photographers;
     private List<MovieTechnicianDTO> costumeDesigners;
-    private List<MovieTechnicianDTO> decorators;
+    private List<MovieTechnicianDTO> setDesigners;
     private List<MovieTechnicianDTO> editors;
     private List<MovieTechnicianDTO> casters;
     private List<MovieTechnicianDTO> artists;
@@ -40,7 +40,7 @@ public class TechnicalTeamDTO {
             final List<MovieTechnicianDTO> musicians,
             final List<MovieTechnicianDTO> photographers,
             final List<MovieTechnicianDTO> costumeDesigners,
-            final List<MovieTechnicianDTO> decorators,
+            final List<MovieTechnicianDTO> setDesigners,
             final List<MovieTechnicianDTO> editors,
             final List<MovieTechnicianDTO> casters,
             final List<MovieTechnicianDTO> artists,
@@ -60,7 +60,7 @@ public class TechnicalTeamDTO {
                 .musicians(musicians)
                 .photographers(photographers)
                 .costumeDesigners(costumeDesigners)
-                .decorators(decorators)
+                .setDesigners(setDesigners)
                 .editors(editors)
                 .casters(casters)
                 .artists(artists)
@@ -84,7 +84,7 @@ public class TechnicalTeamDTO {
                         movie.getMovieMusicians().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMoviePhotographers().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieCostumeDesigners().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieDecorators().stream().map(MovieTechnicianDTO::of).toList(),
+                        movie.getMovieSetDesigners().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieEditors().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieCasters().stream().map(MovieTechnicianDTO::of).toList(),
                         movie.getMovieArtists().stream().map(MovieTechnicianDTO::of).toList(),

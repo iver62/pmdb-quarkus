@@ -5,6 +5,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -335,15 +336,15 @@ public class PersonResource {
     }
 
     @GET
-    @Path("/decorators")
+    @Path("/set-designers")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getDecorators(@BeanParam PersonQueryParamsDTO queryParams) {
+    public Uni<Response> getSetDesigners(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DECORATOR);
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SET_DESIGNER);
 
         return
                 personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
@@ -677,12 +678,16 @@ public class PersonResource {
 
     @POST
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> save(PersonDTO personDTO) {
+    public Uni<Response> save(@Valid PersonDTO personDTO) {
+        if (Objects.isNull(personDTO) || Objects.nonNull(personDTO.getId())) {
+            throw new WebApplicationException("Id was invalidly set on request.", 422);
+        }
+
         return
                 personService
                         .save(personDTO)
                         .onItem().ifNotNull()
-                        .transform(decorator -> Response.ok(decorator).status(CREATED).build())
+                        .transform(person -> Response.ok(person).status(CREATED).build())
                 ;
     }
 
