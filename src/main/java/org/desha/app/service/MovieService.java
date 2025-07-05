@@ -351,7 +351,7 @@ public class MovieService {
                 movieRepository.movieExists(movieDTO.getTitle(), movieDTO.getOriginalTitle())
                         .flatMap(exists -> {
                             if (Boolean.TRUE.equals(exists)) {
-                                return Uni.createFrom().failure(new WebApplicationException("Le film existe déjà.", 409));
+                                return Uni.createFrom().failure(new WebApplicationException("Ce film existe déjà", 409));
                             }
 
                             Movie movie = Movie.of(movieDTO);

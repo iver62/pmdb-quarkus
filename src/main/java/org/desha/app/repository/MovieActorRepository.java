@@ -16,7 +16,7 @@ import java.util.List;
 public class MovieActorRepository implements PanacheRepositoryBase<MovieActor, Long> {
 
     public Uni<Long> countMovieActorsByActor(Long id) {
-        return count("actor.id", id);
+        return count("person.id", id);
     }
 
     public Uni<List<MovieActor>> findMovieActorsByActor(Long id, Page page, String sortField, Sort.Direction direction) {
@@ -26,7 +26,7 @@ public class MovieActorRepository implements PanacheRepositoryBase<MovieActor, L
                                 SELECT ma
                                 FROM MovieActor ma
                                 JOIN FETCH ma.movie
-                                WHERE ma.actor.id = :id
+                                WHERE ma.person.id = :id
                                 """, Sort.by(sortField, direction), Parameters.with("id", id)
                 )
                         .page(page)

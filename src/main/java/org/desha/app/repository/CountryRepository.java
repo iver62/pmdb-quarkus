@@ -6,11 +6,16 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.entity.Country;
+import org.desha.app.domain.entity.Person;
+import org.desha.app.helper.MovieRepositoryHelper;
 
 import java.util.List;
 
 @ApplicationScoped
+@Slf4j
 public class CountryRepository implements PanacheRepository<Country> {
 
     /**
@@ -63,18 +68,17 @@ public class CountryRepository implements PanacheRepository<Country> {
         );
     }
 
-    public Uni<Long> countMovieCountriesByPerson(Long id, String term, String lang) {
+    public Uni<Long> countMovieCountriesByPerson(Person person, String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
 
         return count("""
-                        SELECT COUNT(DISTINCT c)
-                        FROM Person p
-                        JOIN p.movies m
-                        JOIN m.countries c
-                        WHERE p.id = :id
+                            SELECT COUNT(DISTINCT c)
+                            FROM Movie m
+                            JOIN m.countries c
+                            WHERE (%s)
                             AND LOWER(FUNCTION('unaccent', c.%s)) LIKE LOWER(FUNCTION('unaccent', :term))
-                        """.formatted(field),
-                Parameters.with("id", id).and("term", "%" + term + "%")
+                        """.formatted(MovieRepositoryHelper.buildExistsClause(person), field),
+                Parameters.with("person", person).and("term", "%" + term + "%")
         );
     }
 
@@ -157,22 +161,24 @@ public class CountryRepository implements PanacheRepository<Country> {
                         .list();
     }
 
-    public Uni<List<Country>> findMovieCountriesByPerson(Long id, Page page, String sort, Sort.Direction direction, String term, String lang) {
+    public Uni<List<Country>> findMovieCountriesByPerson(Person person, Page page, String sort, Sort.Direction direction, String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
 
         final String query = """
-                SELECT DISTINCT c
-                FROM Person p
-                JOIN p.movies m
-                JOIN m.countries c
-                WHERE p.id = :id
+                    SELECT DISTINCT c
+                    FROM Movie m
+                    JOIN m.countries c
+                    WHERE (%s)
                     AND LOWER(FUNCTION('unaccent', c.%s)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """.formatted(field);
+                """.formatted(MovieRepositoryHelper.buildExistsClause(person), field);
+
+        Parameters parameters = Parameters.with("person", person)
+                .and("term", "%" + StringUtils.defaultString(term + "%"));
 
         return
-                find(query, Sort.by(sort, direction), Parameters.with("id", id).and("term", "%" + term + "%"))
+                find(query, Sort.by(sort, direction), parameters)
                         .page(page)
-                        .list();
+                        .list()
+                ;
     }
-
 }

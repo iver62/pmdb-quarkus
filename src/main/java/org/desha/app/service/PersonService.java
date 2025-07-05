@@ -88,7 +88,11 @@ public class PersonService implements PersonServiceInterface {
     }
 
     public Uni<Long> countMovieCountriesByPerson(Long id, String term, String lang) {
-        return countryRepository.countMovieCountriesByPerson(id, term, lang);
+        return
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .flatMap(person -> countryRepository.countMovieCountriesByPerson(person, term, lang))
+                ;
     }
 
     public Uni<PersonDTO> getById(Long id) {
@@ -194,8 +198,12 @@ public class PersonService implements PersonServiceInterface {
 
     public Uni<List<CountryDTO>> getMovieCountriesByPerson(Long id, Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findMovieCountriesByPerson(id, page, sort, direction, term, lang)
-                        .map(CountryDTO::fromCountryListEntity)
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .flatMap(person ->
+                                countryRepository.findMovieCountriesByPerson(person, page, sort, direction, term, lang)
+                                        .map(CountryDTO::fromCountryListEntity)
+                        )
                 ;
     }
 

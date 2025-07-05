@@ -16,6 +16,7 @@ import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.record.CountryRepartition;
 import org.desha.app.domain.record.MovieWithAwardsNumber;
 import org.desha.app.domain.record.Repartition;
+import org.desha.app.helper.MovieRepositoryHelper;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
@@ -43,26 +44,20 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
     public Uni<Long> countMoviesByPerson(Person person, CriteriasDTO criteriasDTO) {
         final String query = String.format("""
-                FROM Movie m
-                WHERE m.id IN :ids
-                  AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                  %s
-                """, addClauses(criteriasDTO)
+                       FROM Movie m
+                       WHERE (%s)
+                         AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                """, MovieRepositoryHelper.buildExistsClause(person), addClauses(criteriasDTO)
         );
 
-        return
-                person.getAllRelatedMovies()
-                        .map(movies -> movies.stream().map(Movie::getId).toList())
-                        .onItem().transformToUni(movieIds -> {
-                                    Parameters params = addParameters(
-                                            Parameters.with("ids", movieIds)
-                                                    .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                                            criteriasDTO
-                                    );
+        Parameters params = addParameters(
+                Parameters.with("person", person)
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
+                criteriasDTO
+        );
 
-                                    return count(query, params);
-                                }
-                        );
+        return count(query, params);
     }
 
     public Uni<Long> countMoviesByCountry(Long id, String term) {
@@ -207,34 +202,24 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         final String query = String.format("""
                        SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                        FROM Movie m
-                       WHERE m.id IN :ids
+                       WHERE (%s)
                          AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, MovieRepositoryHelper.buildExistsClause(person), addClauses(criteriasDTO), addSort(sort, direction)
+        );
+
+        Parameters params = addParameters(
+                Parameters.with("person", person)
+                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
+                criteriasDTO
         );
 
         return
-                person.getAllRelatedMovies()
-                        .map(movies -> movies.stream().map(Movie::getId).toList())
-                        .onItem().transformToUni(movieIds -> {
-                                    if (Objects.isNull(movieIds) || movieIds.isEmpty()) {
-                                        return Uni.createFrom().item(List.of());
-                                    }
-
-                                    Parameters params = addParameters(
-                                            Parameters.with("ids", movieIds)
-                                                    .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                                            criteriasDTO
-                                    );
-
-                                    return
-                                            find(query, params)
-                                                    .project(MovieWithAwardsNumber.class)
-                                                    .page(page)
-                                                    .list();
-                                }
-                        )
+                find(query, params)
+                        .project(MovieWithAwardsNumber.class)
+                        .page(page)
+                        .list()
                 ;
     }
 

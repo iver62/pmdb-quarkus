@@ -32,7 +32,7 @@ public class MovieActor extends PanacheEntityBase implements Comparable<MovieAct
 
     @ManyToOne
     @JoinColumn(name = "fk_acteur")
-    private Person actor;
+    private Person person;
 
     @NotEmpty(message = "Le rôle ne peut pas être vide")
     @Column(name = "role", nullable = false)
@@ -42,12 +42,12 @@ public class MovieActor extends PanacheEntityBase implements Comparable<MovieAct
     @Column(name = "rang", nullable = false)
     private Integer rank;
 
-    private static MovieActor build(Long id, Movie movie, Person actor, String role, Integer rank) {
+    private static MovieActor build(Long id, Movie movie, Person person, String role, Integer rank) {
         return
                 MovieActor.builder()
                         .id(id)
                         .movie(movie)
-                        .actor(actor)
+                        .person(person)
                         .role(role)
                         .rank(rank)
                         .build()
@@ -63,7 +63,7 @@ public class MovieActor extends PanacheEntityBase implements Comparable<MovieAct
     }
 
     public String toString() {
-        return id + " / " + actor.getId() + ": " + actor.getName() + " -> " + role + " (" + rank + ")";
+        return id + " / " + person.getId() + ": " + person.getName() + " -> " + role + " (" + rank + ")";
     }
 
     @Override
