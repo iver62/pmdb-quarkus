@@ -55,6 +55,7 @@ public class FileService {
     }
 
     public void deleteFile(String folder, String fileName) throws IOException {
+        log.info("Suppression du fichier {}", fileName);
         FileUtils.forceDelete(Paths.get(RESOURCES_FOLDER, folder, fileName).toFile());
     }
 }

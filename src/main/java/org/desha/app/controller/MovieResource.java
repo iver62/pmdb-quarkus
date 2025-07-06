@@ -209,6 +209,33 @@ public class MovieResource {
     }
 
     @GET
+    @Path("/categories")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getCategories(@BeanParam QueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
+        String term = queryParams.getTerm();
+
+        return
+                movieService.getCategoriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term)
+                        .flatMap(categoryDTOList ->
+                                movieService.countCategoriesInMovies(term).map(total ->
+                                        categoryDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(categoryDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                        .onFailure().recoverWithItem(err -> {
+                                    log.error("Erreur lors de la récupération des catégories: {}", err.getMessage());
+                                    return Response.serverError()
+                                            .entity("Erreur lors de la récupération des catégories")
+                                            .build();
+                                }
+                        )
+                ;
+    }
+
+    @GET
     @Path("/title/{title}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getByTitle(@RestPath String title) {

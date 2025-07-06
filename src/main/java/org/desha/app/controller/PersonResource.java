@@ -13,10 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
-import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Movie;
-import org.desha.app.domain.entity.MovieActor;
-import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.entity.*;
 import org.desha.app.service.PersonService;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
@@ -654,11 +651,31 @@ public class PersonResource {
 
         return
                 personService.getMovieCountriesByPerson(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term, finalLang)
-                        .flatMap(countryList ->
+                        .flatMap(countryDTOList ->
                                 personService.countMovieCountriesByPerson(id, term, finalLang).map(total ->
-                                        countryList.isEmpty()
+                                        countryDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(countryDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/{id}/movies/categories")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> getMovieCategoriesByPerson(@RestPath Long id, @BeanParam QueryParamsDTO queryParams) {
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
+        String term = queryParams.getTerm();
+
+        return
+                personService.getMovieCategoriesByPerson(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term)
+                        .flatMap(categoryDTOList ->
+                                personService.countMovieCategoriesByPerson(id, term).map(total ->
+                                        categoryDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(categoryDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;

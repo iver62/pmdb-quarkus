@@ -82,6 +82,18 @@ public class CountryRepository implements PanacheRepository<Country> {
         );
     }
 
+    public Uni<Long> countMovieCategoriesByPerson(Person person, String term) {
+        return count("""
+                            SELECT COUNT(DISTINCT c)
+                            FROM Movie m
+                            JOIN m.categories c
+                            WHERE (%s)
+                            AND LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                        """.formatted(MovieRepositoryHelper.buildExistsClause(person)),
+                Parameters.with("person", person).and("term", "%" + term + "%")
+        );
+    }
+
     /**
      * Récupère une liste de pays en fonction de leurs identifiants.
      *

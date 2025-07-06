@@ -13,10 +13,7 @@ import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.MovieActor;
 import org.desha.app.domain.entity.MovieTechnician;
 import org.desha.app.domain.entity.Person;
-import org.desha.app.repository.CountryRepository;
-import org.desha.app.repository.MovieActorRepository;
-import org.desha.app.repository.MovieRepository;
-import org.desha.app.repository.PersonRepository;
+import org.desha.app.repository.*;
 import org.desha.app.utils.Messages;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
@@ -43,6 +40,7 @@ public class PersonService implements PersonServiceInterface {
     private final FileService fileService;
     private final StatsService statsService;
 
+    private final CategoryRepository categoryRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
@@ -52,6 +50,7 @@ public class PersonService implements PersonServiceInterface {
     protected PersonService(
             CountryService countryService,
             FileService fileService,
+            CategoryRepository categoryRepository,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
             MovieActorRepository movieActorRepository,
@@ -60,6 +59,7 @@ public class PersonService implements PersonServiceInterface {
     ) {
         this.countryService = countryService;
         this.fileService = fileService;
+        this.categoryRepository = categoryRepository;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
         this.movieActorRepository = movieActorRepository;
@@ -92,6 +92,14 @@ public class PersonService implements PersonServiceInterface {
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .flatMap(person -> countryRepository.countMovieCountriesByPerson(person, term, lang))
+                ;
+    }
+
+    public Uni<Long> countMovieCategoriesByPerson(Long id, String term) {
+        return
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .flatMap(person -> countryRepository.countMovieCategoriesByPerson(person, term))
                 ;
     }
 
@@ -203,6 +211,17 @@ public class PersonService implements PersonServiceInterface {
                         .flatMap(person ->
                                 countryRepository.findMovieCountriesByPerson(person, page, sort, direction, term, lang)
                                         .map(CountryDTO::fromCountryListEntity)
+                        )
+                ;
+    }
+
+    public Uni<List<CategoryDTO>> getMovieCategoriesByPerson(Long id, Page page, String sort, Sort.Direction direction, String term) {
+        return
+                personRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                        .flatMap(person ->
+                                categoryRepository.findMovieCategoriesByPerson(person, page, sort, direction, term)
+                                        .map(CategoryDTO::fromCategoryListEntity)
                         )
                 ;
     }

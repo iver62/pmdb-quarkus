@@ -42,6 +42,7 @@ public class MovieService {
     private final StatsService statsService;
 
     private final CeremonyAwardsRepository ceremonyAwardsRepository;
+    private final CategoryRepository categoryRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
@@ -54,6 +55,7 @@ public class MovieService {
             AwardService awardService,
             CeremonyAwardsService ceremonyAwardsService,
             CountryService countryService,
+            CategoryRepository categoryRepository,
             CountryRepository countryRepository,
             FileService fileService,
             CategoryService categoryService,
@@ -68,6 +70,7 @@ public class MovieService {
         this.awardService = awardService;
         this.ceremonyAwardsService = ceremonyAwardsService;
         this.countryService = countryService;
+        this.categoryRepository = categoryRepository;
         this.countryRepository = countryRepository;
         this.fileService = fileService;
         this.categoryService = categoryService;
@@ -89,6 +92,10 @@ public class MovieService {
 
     public Uni<Long> countCountriesInMovies(String term, String lang) {
         return countryRepository.countCountriesInMovies(term, lang);
+    }
+
+    public Uni<Long> countCategoriesInMovies(String term) {
+        return categoryRepository.countCategoriesInMovies(term);
     }
 
     public Uni<MovieDTO> getById(Long id) {
@@ -161,6 +168,19 @@ public class MovieService {
                                         countryList
                                                 .stream()
                                                 .map(CountryDTO::of)
+                                                .toList()
+                        )
+                ;
+    }
+
+    public Uni<List<CategoryDTO>> getCategoriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
+        return
+                categoryRepository.findCategoriesInMovies(page, sort, direction, term)
+                        .map(
+                                categoryList ->
+                                        categoryList
+                                                .stream()
+                                                .map(CategoryDTO::of)
                                                 .toList()
                         )
                 ;
@@ -867,19 +887,27 @@ public class MovieService {
                                 .onItem().ifNull().failWith(() -> new NotFoundException(Messages.FILM_NOT_FOUND))
                                 .invoke(movie -> movie.updateGeneralInfos(movieDTO))
                                 .call(movie -> {
+                                    String currentPoster = movie.getPosterFileName();
+                                    String dtoPoster = movieDTO.getPosterFileName();
+
                                     if (Objects.nonNull(file)) {
+                                        // Nouveau fichier uploadé → on remplace l'ancienne affiche si elle n'est pas l'affiche par défaut
                                         return uploadPoster(file)
                                                 .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
                                                 .chain(uploadedFileName ->
-                                                        deletePosterIfExists(movie.getPosterFileName()) // On supprime l'ancien fichier si ce n'est pas le fichier par défaut
+                                                        deletePosterIfExists(currentPoster)
                                                                 .replaceWith(uploadedFileName)
                                                 )
                                                 .invoke(movie::setPosterFileName);
+                                    } else if (!Objects.equals(currentPoster, dtoPoster)) {
+                                        // Pas de nouveau fichier, mais différence → on remet l'affiche par défaut
+                                        return
+                                                deletePosterIfExists(currentPoster)
+                                                        .invoke(() -> movie.setPosterFileName(Movie.DEFAULT_POSTER))
+                                                ;
                                     }
-                                    return
-                                            deletePosterIfExists(movie.getPosterFileName())
-                                                    .invoke(() -> movie.setPosterFileName(Movie.DEFAULT_POSTER))
-                                            ;
+                                    // Aucun changement d'affiche
+                                    return Uni.createFrom().item(movie);
                                 })
                                 .chain(movie -> updateCategoriesIfNeeded(movie, movieDTO))
                                 .chain(movie -> updateCountriesIfNeeded(movie, movieDTO))
@@ -976,7 +1004,6 @@ public class MovieService {
     }
 
     public Uni<Void> deletePosterIfExists(String fileName) {
-        log.info("FILENAME {}", fileName);
         if (Objects.isNull(fileName) || fileName.isBlank() || Objects.equals(fileName, Movie.DEFAULT_POSTER)) {
             return Uni.createFrom().voidItem();
         }
