@@ -20,6 +20,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
 public class MovieService {
 
     private static final String POSTERS_DIR = "posters/";
-    private static final String DEFAULT_POSTER = "default-poster.jpg";
 
     private final AwardService awardService;
     private final CeremonyAwardsService ceremonyAwardsService;
@@ -323,26 +323,26 @@ public class MovieService {
     public Uni<File> getPoster(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {
             log.warn("Poster name is missing, returning default poster.");
-            return fileService.getFile(POSTERS_DIR, DEFAULT_POSTER);
+            return fileService.getFile(POSTERS_DIR, Movie.DEFAULT_POSTER);
         }
 
         return fileService.getFile(POSTERS_DIR, fileName)
                 .onFailure(FileNotFoundException.class).recoverWithUni(() -> {
                     log.warn("Poster {} not found, returning default poster.", fileName);
-                    return fileService.getFile(POSTERS_DIR, DEFAULT_POSTER);
+                    return fileService.getFile(POSTERS_DIR, Movie.DEFAULT_POSTER);
                 });
     }
 
     private Uni<String> uploadPoster(FileUpload file) {
         if (Objects.isNull(file) || Objects.isNull(file.uploadedFile()) || file.fileName().isBlank()) {
             log.warn("Invalid or missing file. Using default poster.");
-            return Uni.createFrom().item(DEFAULT_POSTER);
+            return Uni.createFrom().item(Movie.DEFAULT_POSTER);
         }
 
         return fileService.uploadFile(POSTERS_DIR, file)
                 .onFailure().recoverWithItem(error -> {
                     log.error("Poster upload failed: {}", error.getMessage());
-                    return DEFAULT_POSTER;
+                    return Movie.DEFAULT_POSTER;
                 });
     }
 
@@ -373,7 +373,7 @@ public class MovieService {
                                                             .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
                                                             .invoke(movie::setPosterFileName);
                                                 }
-                                                movie.setPosterFileName(DEFAULT_POSTER);
+                                                movie.setPosterFileName(Movie.DEFAULT_POSTER);
                                                 return Uni.createFrom().voidItem();
                                             })
                                             .replaceWith(movie)
@@ -866,14 +866,20 @@ public class MovieService {
                         movieRepository.findById(id)
                                 .onItem().ifNull().failWith(() -> new NotFoundException(Messages.FILM_NOT_FOUND))
                                 .invoke(movie -> movie.updateGeneralInfos(movieDTO))
-                                .chain(movie -> {
+                                .call(movie -> {
                                     if (Objects.nonNull(file)) {
                                         return uploadPoster(file)
                                                 .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", id, error.getMessage()))
-                                                .invoke(movie::setPosterFileName)
-                                                .replaceWith(movie);
+                                                .chain(uploadedFileName ->
+                                                        deletePosterIfExists(movie.getPosterFileName()) // On supprime l'ancien fichier si ce n'est pas le fichier par défaut
+                                                                .replaceWith(uploadedFileName)
+                                                )
+                                                .invoke(movie::setPosterFileName);
                                     }
-                                    return Uni.createFrom().item(movie);
+                                    return
+                                            deletePosterIfExists(movie.getPosterFileName())
+                                                    .invoke(() -> movie.setPosterFileName(Movie.DEFAULT_POSTER))
+                                            ;
                                 })
                                 .chain(movie -> updateCategoriesIfNeeded(movie, movieDTO))
                                 .chain(movie -> updateCountriesIfNeeded(movie, movieDTO))
@@ -946,27 +952,43 @@ public class MovieService {
                 Panache.withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.FILM_NOT_FOUND))
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getCountries())
-                                                        .invoke(countrySet -> movie.clearCountries())
-                                                        .chain(() -> Mutiny.fetch(movie.getCategories())
-                                                                .invoke(categorySet -> movie.clearCategories())
-                                                        )
-                                                        .chain(() ->
-                                                                movieRepository.delete(movie).replaceWith(true)
-                                                                        .chain(aBoolean ->
-                                                                                statsService.decrementNumberOfMovies()
-                                                                                        .chain(statsService::updateMoviesByCountryRepartition)
-                                                                                        .chain(statsService::updateMoviesByCategoryRepartition)
-                                                                                        .replaceWith(aBoolean)
-                                                                        )
-                                                        )
+                                        .flatMap(movie -> {
+                                                    final String posterFileName = movie.getPosterFileName();
+                                                    return Mutiny.fetch(movie.getCountries()).invoke(countrySet -> movie.clearCountries())
+                                                            .chain(() -> Mutiny.fetch(movie.getCategories()).invoke(categorySet -> movie.clearCategories()))
+                                                            .chain(() ->
+                                                                    movieRepository.delete(movie).replaceWith(true)
+                                                                            .chain(aBoolean ->
+                                                                                    statsService.decrementNumberOfMovies()
+                                                                                            .chain(statsService::updateMoviesByCountryRepartition)
+                                                                                            .chain(statsService::updateMoviesByCategoryRepartition)
+                                                                                            .replaceWith(aBoolean)
+                                                                            )
+                                                                            .chain(success -> deletePosterIfExists(posterFileName).replaceWith(success))
+                                                            );
+                                                }
                                         )
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
                             throw new WebApplicationException("Erreur lors de la suppression du film", throwable);
                         });
+    }
+
+    public Uni<Void> deletePosterIfExists(String fileName) {
+        log.info("FILENAME {}", fileName);
+        if (Objects.isNull(fileName) || fileName.isBlank() || Objects.equals(fileName, Movie.DEFAULT_POSTER)) {
+            return Uni.createFrom().voidItem();
+        }
+
+        return Uni.createFrom().item(() -> {
+            try {
+                fileService.deleteFile(POSTERS_DIR, fileName);
+                return null;
+            } catch (IOException e) {
+                throw new RuntimeException("Erreur lors de la suppression de l'affiche", e.getCause());
+            }
+        });
     }
 
     /**

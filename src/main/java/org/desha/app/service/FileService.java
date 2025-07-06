@@ -3,6 +3,7 @@ package org.desha.app.service;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
@@ -16,9 +17,11 @@ import java.util.UUID;
 @ApplicationScoped
 public class FileService {
 
+    private static final String RESOURCES_FOLDER = "src/main/resources/";
+
     public Uni<File> getFile(String uploadDirectory, String fileName) {
         return Uni.createFrom().item(() -> {
-            Path filePath = Paths.get(uploadDirectory, fileName);
+            Path filePath = Paths.get(RESOURCES_FOLDER, uploadDirectory, fileName);
 
             if (!Files.exists(filePath)) {
                 log.warn("Requested file not found: {}", filePath);
@@ -33,7 +36,7 @@ public class FileService {
         // Sauvegarde du fichier
         return Uni.createFrom().item(() -> {
             final String fileName = UUID.randomUUID() + "_" + file.fileName();
-            Path destination = Paths.get(uploadDirectory + fileName);
+            Path destination = Paths.get(RESOURCES_FOLDER, uploadDirectory, fileName);
 
             try {
                 File uploadDir = new File(uploadDirectory);
@@ -49,5 +52,9 @@ public class FileService {
                 throw new RuntimeException("File upload failed", e);
             }
         });
+    }
+
+    public void deleteFile(String folder, String fileName) throws IOException {
+        FileUtils.forceDelete(Paths.get(RESOURCES_FOLDER, folder, fileName).toFile());
     }
 }

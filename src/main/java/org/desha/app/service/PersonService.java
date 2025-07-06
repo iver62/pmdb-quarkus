@@ -23,6 +23,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -37,7 +38,6 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 public class PersonService implements PersonServiceInterface {
 
     private static final String PHOTOS_DIR = "photos/";
-    public static final String DEFAULT_PHOTO = "default-photo.jpg";
 
     private final CountryService countryService;
     private final FileService fileService;
@@ -258,32 +258,35 @@ public class PersonService implements PersonServiceInterface {
     public Uni<File> getPhoto(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {
             log.warn("Photo name is missing, returning default photo.");
-            return fileService.getFile(PHOTOS_DIR, DEFAULT_PHOTO);
+            return fileService.getFile(PHOTOS_DIR, Person.DEFAULT_PHOTO);
         }
 
         return fileService.getFile(PHOTOS_DIR, fileName)
                 .onFailure(FileNotFoundException.class).recoverWithUni(() -> {
                     log.warn("Photo {} not found, returning default photo.", fileName);
-                    return fileService.getFile(PHOTOS_DIR, DEFAULT_PHOTO);
+                    return fileService.getFile(PHOTOS_DIR, Person.DEFAULT_PHOTO);
                 });
     }
 
     private Uni<String> uploadPhoto(FileUpload file) {
         if (Objects.isNull(file) || Objects.isNull(file.uploadedFile()) || file.fileName().isBlank()) {
             log.warn("Invalid or missing file. Using default photo.");
-            return Uni.createFrom().item(DEFAULT_PHOTO);
+            return Uni.createFrom().item(Person.DEFAULT_PHOTO);
         }
 
         return fileService.uploadFile(PHOTOS_DIR, file)
                 .onFailure().recoverWithItem(error -> {
                     log.error("Photo upload failed: {}", error.getMessage());
-                    return DEFAULT_PHOTO;
+                    return Person.DEFAULT_PHOTO;
                 });
     }
 
     public Uni<PersonDTO> save(PersonDTO personDTO) {
-        log.info("Saving person: {}, with types: {}", personDTO.getName(), personDTO.getTypes());
-        return Panache.withTransaction(() -> personRepository.persist(Person.build(personDTO)).map(PersonDTO::of));
+        return
+                Panache.withTransaction(() ->
+                        personRepository.persist(Person.build(personDTO))
+                                .map(PersonDTO::of)
+                );
     }
 
     public Uni<PersonDTO> update(Long id, FileUpload file, PersonDTO personDTO) {
@@ -295,29 +298,44 @@ public class PersonService implements PersonServiceInterface {
         return
                 Panache.withTransaction(() ->
                         personRepository.findById(id)
-                                .onItem().ifNull().failWith(() -> {
-                                    log.error("Person with ID {} not found in the database.", id);
-                                    return new WebApplicationException("Person missing from database.", NOT_FOUND);
-                                })
+                                .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.PERSON_NOT_FOUND, NOT_FOUND))
                                 .call(person -> countryService.getByIds(personDTO.getCountries())
                                         .onFailure().invoke(error -> log.error("Failed to fetch countries for person {}: {}", id, error.getMessage()))
                                         .invoke(person::setCountries)
                                 )
-                                .invoke(entity -> {
-                                    entity.setName(personDTO.getName());
-                                    entity.setDateOfBirth(personDTO.getDateOfBirth());
-                                    entity.setDateOfDeath(personDTO.getDateOfDeath());
-                                    entity.setPhotoFileName(Optional.ofNullable(personDTO.getPhotoFileName()).orElse(DEFAULT_PHOTO));
-                                }).call(entity -> {
+                                .invoke(person -> person.updatePerson(personDTO))
+                                .call(person -> {
                                     if (Objects.nonNull(file)) {
                                         return uploadPhoto(file)
                                                 .onFailure().invoke(error -> log.error("Photo upload failed for person {}: {}", id, error.getMessage()))
-                                                .invoke(entity::setPhotoFileName);
+                                                .chain(uploadedFileName ->
+                                                        deletePhotoIfExists(person.getPhotoFileName()) // On supprime l'ancien fichier si ce n'est pas le fichier par défaut
+                                                                .replaceWith(uploadedFileName)
+                                                )
+                                                .invoke(person::setPhotoFileName);
                                     }
-                                    return Uni.createFrom().item(entity);
+                                    return
+                                            deletePhotoIfExists(person.getPhotoFileName())
+                                                    .invoke(() -> person.setPhotoFileName(Person.DEFAULT_PHOTO))
+                                            ;
                                 })
                                 .map(person -> PersonDTO.of(person, person.getCountries()))
                 );
+    }
+
+    public Uni<Void> deletePhotoIfExists(String fileName) {
+        if (Objects.isNull(fileName) || fileName.isBlank() || Objects.equals(fileName, Person.DEFAULT_PHOTO)) {
+            return Uni.createFrom().voidItem();
+        }
+
+        return Uni.createFrom().item(() -> {
+            try {
+                fileService.deleteFile(PHOTOS_DIR, fileName);
+                return null;
+            } catch (IOException e) {
+                throw new RuntimeException("Erreur lors de la suppression de la photo", e.getCause());
+            }
+        });
     }
 
     public Uni<Set<CountryDTO>> updateCountries(Long id, Set<CountryDTO> countryDTOSet) {
@@ -387,9 +405,17 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Boolean> deletePerson(Long id) {
         return
                 Panache.withTransaction(() ->
-                                personRepository.deleteById(id)
+                                personRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
-                                        .flatMap(aBoolean -> statsService.updateActorsStats().replaceWith(aBoolean))
+                                        .flatMap(person -> {
+                                                    final String photoFileName = person.getPhotoFileName();
+                                                    return
+                                                            personRepository.delete(person).replaceWith(true)
+                                                                    .call(aBoolean -> statsService.updateActorsStats())
+                                                                    .call(aBoolean -> deletePhotoIfExists(photoFileName))
+                                                            ;
+                                                }
+                                        )
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
@@ -416,14 +442,6 @@ public class PersonService implements PersonServiceInterface {
                             log.error(throwable.getMessage());
                             throw new WebApplicationException("Erreur lors de la suppression des pays", throwable);
                         });
-    }
-
-    public Uni<Person> prepareAndPersistPerson(PersonDTO personDTO, PersonType type) {
-        return
-                personRepository.findById(personDTO.getId())
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
-                        .invoke(person -> person.addType(type))
-                        .call(personRepository::persist);
     }
 
     public Uni<Person> prepareAndPersistPerson(LightPersonDTO lightPersonDTO, PersonType type) {

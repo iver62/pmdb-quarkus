@@ -3,10 +3,7 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Category;
-import org.desha.app.domain.entity.CeremonyAwards;
-import org.desha.app.domain.entity.Country;
-import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

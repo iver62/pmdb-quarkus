@@ -31,7 +31,7 @@ import java.util.function.Function;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Movie extends PanacheEntityBase {
 
-    private static final String DEFAULT_POSTER = "default-poster.jpg";
+    public static final String DEFAULT_POSTER = "default-poster.jpg";
     public static final String DEFAULT_SORT = "title";
     public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "originalTitle", "releaseDate", "runningTime", "budget", "boxOffice", "user.username", "awardsCount", "creationDate", "lastUpdate");
 
@@ -197,7 +197,6 @@ public class Movie extends PanacheEntityBase {
         setRunningTime(movieDTO.getRunningTime());
         setBudget(movieDTO.getBudget().getValue());
         setBudgetCurrency(movieDTO.getBudget().getCurrency());
-        setPosterFileName(Optional.ofNullable(movieDTO.getPosterFileName()).orElse(DEFAULT_POSTER));
         setBoxOffice(movieDTO.getBoxOffice().getValue());
         setBoxOfficeCurrency(movieDTO.getBoxOffice().getCurrency());
     }

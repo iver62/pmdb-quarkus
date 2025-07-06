@@ -7,7 +7,6 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.PersonDTO;
-import org.desha.app.service.PersonService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,18 +25,19 @@ import java.util.stream.Stream;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Person extends PanacheEntityBase implements Comparable<Person> {
 
+    public static final String DEFAULT_PHOTO = "default-photo.jpg";
     public static final String DEFAULT_SORT = "name";
     public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "dateOfBirth", "dateOfDeath", "moviesCount", "awardsCount", "creationDate", "lastUpdate");
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    protected Long id;
+    private Long id;
 
     @Column(name = "nom")
-    protected String name;
+    private String name;
 
     @Column(name = "photo")
-    protected String photoFileName;
+    private String photoFileName;
 
     @Column(name = "date_naissance")
     private LocalDate dateOfBirth;
@@ -137,7 +137,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                 Person.builder()
                         .id(personDTO.getId())
                         .name(personDTO.getName().trim())
-                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : DEFAULT_PHOTO)
                         .dateOfBirth(personDTO.getDateOfBirth())
                         .dateOfDeath(personDTO.getDateOfDeath())
                         .types(personDTO.getTypes())
@@ -152,7 +152,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                 Person.builder()
                         .id(personDTO.getId())
                         .name(personDTO.getName().trim())
-                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : PersonService.DEFAULT_PHOTO)
+                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : DEFAULT_PHOTO)
                         .dateOfBirth(personDTO.getDateOfBirth())
                         .dateOfDeath(personDTO.getDateOfDeath())
                         .types(
@@ -165,6 +165,12 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
                         .lastUpdate(personDTO.getLastUpdate())
                         .build()
                 ;
+    }
+
+    public void updatePerson(PersonDTO personDTO) {
+        setName(personDTO.getName());
+        setDateOfBirth(personDTO.getDateOfBirth());
+        setDateOfDeath(personDTO.getDateOfDeath());
     }
 
     public void addCountries(Set<Country> countrySet) {
