@@ -5,9 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.desha.app.domain.entity.User;
 
-import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -20,44 +18,22 @@ public class UserDTO {
     private UUID id;
     private String username;
     private String email;
-    private Boolean emailVerified;
     private String lastname;
     private String firstname;
-    private Long numberOfMovies;
+    private Boolean emailVerified;
+    private Integer numberOfMovies;
 
-    public static UserDTO of(User user) {
+    public static UserDTO build(UUID id, String username, String email, Boolean emailVerified, String lastname, String firstname, Integer numberOfMovies) {
         return
                 UserDTO.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .emailVerified(user.getEmailVerified())
-                        .lastname(user.getLastname())
-                        .firstname(user.getFirstname())
+                        .id(id)
+                        .username(username)
+                        .email(email)
+                        .emailVerified(emailVerified)
+                        .lastname(lastname)
+                        .firstname(firstname)
+                        .numberOfMovies(numberOfMovies)
                         .build()
-                ;
-    }
-
-    public static UserDTO of(User user, long nbMovies) {
-        return
-                UserDTO.builder()
-                        .id(user.getId())
-                        .username(user.getUsername())
-                        .email(user.getEmail())
-                        .emailVerified(user.getEmailVerified())
-                        .lastname(user.getLastname())
-                        .firstname(user.getFirstname())
-                        .numberOfMovies(nbMovies)
-                        .build()
-                ;
-    }
-
-    public static List<UserDTO> fromUserListEntity(List<User> userList) {
-        return
-                userList
-                        .stream()
-                        .map(UserDTO::of)
-                        .toList()
                 ;
     }
 }

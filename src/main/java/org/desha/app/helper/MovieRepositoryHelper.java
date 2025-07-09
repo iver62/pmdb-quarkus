@@ -3,7 +3,7 @@ package org.desha.app.helper;
 import io.quarkus.panache.common.Sort;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.PersonType;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;

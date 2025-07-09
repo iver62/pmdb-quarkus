@@ -8,11 +8,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
-import org.desha.app.domain.entity.MovieActor;
 import org.desha.app.domain.entity.MovieTechnician;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.enums.PersonType;
+import org.desha.app.mapper.*;
 import org.desha.app.repository.*;
 import org.desha.app.utils.Messages;
 import org.hibernate.reactive.mutiny.Mutiny;
@@ -23,8 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -35,6 +33,14 @@ import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 public class PersonService implements PersonServiceInterface {
 
     private static final String PHOTOS_DIR = "photos/";
+
+    private final AwardMapper awardMapper;
+    private final CategoryMapper categoryMapper;
+    private final CountryMapper countryMapper;
+    private final MovieMapper movieMapper;
+    private final MovieActorMapper movieActorMapper;
+    private final MovieTechnicianMapper movieTechnicianMapper;
+    private final PersonMapper personMapper;
 
     private final CountryService countryService;
     private final FileService fileService;
@@ -48,6 +54,13 @@ public class PersonService implements PersonServiceInterface {
 
     @Inject
     protected PersonService(
+            AwardMapper awardMapper,
+            CategoryMapper categoryMapper,
+            CountryMapper countryMapper,
+            MovieMapper movieMapper,
+            MovieActorMapper movieActorMapper,
+            MovieTechnicianMapper movieTechnicianMapper,
+            PersonMapper personMapper,
             CountryService countryService,
             FileService fileService,
             CategoryRepository categoryRepository,
@@ -57,6 +70,13 @@ public class PersonService implements PersonServiceInterface {
             PersonRepository personRepository,
             StatsService statsService
     ) {
+        this.awardMapper = awardMapper;
+        this.categoryMapper = categoryMapper;
+        this.countryMapper = countryMapper;
+        this.movieMapper = movieMapper;
+        this.movieActorMapper = movieActorMapper;
+        this.movieTechnicianMapper = movieTechnicianMapper;
+        this.personMapper = personMapper;
         this.countryService = countryService;
         this.fileService = fileService;
         this.categoryRepository = categoryRepository;
@@ -108,27 +128,15 @@ public class PersonService implements PersonServiceInterface {
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .call(person -> Mutiny.fetch(person.getCountries()).invoke(person::setCountries))
-                        .map(person -> PersonDTO.of(person, person.getCountries()))
+                        .map(personMapper::personToPersonDTO)
                 ;
     }
 
-    public Uni<LightPersonDTO> getLightById(Long id) {
+    public Uni<LitePersonDTO> getLightById(Long id) {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
-                        .map(LightPersonDTO::of)
-                ;
-    }
-
-    public Uni<List<PersonDTO>> searchByName(String name) {
-        return
-                personRepository.findByName(name.trim())
-                        .onItem().ifNotNull().transform(personList ->
-                                personList.stream()
-                                        .map(person -> PersonDTO.of(person, person.getCountries()))
-                                        .toList()
-                        )
-                        .onFailure().recoverWithItem(Collections.emptyList())
+                        .map(personMapper::personToLitePersonDTO)
                 ;
     }
 
@@ -136,11 +144,11 @@ public class PersonService implements PersonServiceInterface {
         return personRepository.findByIds(ids);
     }
 
-    public Uni<List<LightPersonDTO>> getLightPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<LitePersonDTO>> getLightPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository
                         .findPersons(page, sort, direction, criteriasDTO)
-                        .map(personList -> fromPersonListEntity(personList, LightPersonDTO::of))
+                        .map(personMapper::toLiteDTOList)
                 ;
     }
 
@@ -148,51 +156,29 @@ public class PersonService implements PersonServiceInterface {
         return
                 personRepository
                         .findPersonsWithMoviesNumber(page, sort, direction, criteriasDTO)
-                        .map(personList ->
-                                personList
-                                        .stream()
-                                        .map(personWithMoviesNumber -> PersonDTO.of(personWithMoviesNumber.person(), personWithMoviesNumber.moviesNumber(), personWithMoviesNumber.awardsNumber()))
-                                        .toList()
-                        )
+                        .map(personMapper::toDTOWithNumbersList)
                 ;
     }
 
     public Uni<List<MovieActorDTO>> getRoles(Long id, Page page, String sort, Sort.Direction direction) {
         return
                 movieActorRepository.findMovieActorsByActor(id, page, sort, direction)
-                        .map(movieActorList ->
-                                movieActorList.stream()
-                                        .map(MovieActorDTO::fromMovie)
-                                        .toList()
-                        )
+                        .map(movieActorMapper::toDTOList)
                 ;
     }
 
     public Uni<List<PersonDTO>> getAll() {
-        return
-                personRepository.listAll()
-                        .map(personList -> fromPersonListEntity(personList, PersonDTO::of))
-                ;
+        return personRepository.listAll().map(personMapper::toDTOList);
     }
 
-    public Uni<List<MovieDTO>> getMovies(long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .chain(person ->
                                 movieRepository
                                         .findMoviesByPerson(person, page, sort, direction, criteriasDTO)
-                                        .map(movieWithAwardsNumberList ->
-                                                movieWithAwardsNumberList
-                                                        .stream()
-                                                        .map(movieWithAwardsNumber ->
-                                                                MovieDTO.of(
-                                                                        movieWithAwardsNumber.movie(),
-                                                                        movieWithAwardsNumber.awardsNumber()
-                                                                )
-                                                        )
-                                                        .toList()
-                                        )
+                                        .map(movieMapper::toDTOWithAwardsNumberList)
                         )
                 ;
     }
@@ -200,7 +186,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findPersonCountries(page, sort, direction, term, lang)
-                        .map(CountryDTO::fromCountryListEntity)
+                        .map(countryMapper::toDTOList)
                 ;
     }
 
@@ -210,7 +196,7 @@ public class PersonService implements PersonServiceInterface {
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .flatMap(person ->
                                 countryRepository.findMovieCountriesByPerson(person, page, sort, direction, term, lang)
-                                        .map(CountryDTO::fromCountryListEntity)
+                                        .map(countryMapper::toDTOList)
                         )
                 ;
     }
@@ -221,7 +207,7 @@ public class PersonService implements PersonServiceInterface {
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .flatMap(person ->
                                 categoryRepository.findMovieCategoriesByPerson(person, page, sort, direction, term)
-                                        .map(CategoryDTO::fromCategoryListEntity)
+                                        .map(categoryMapper::toDTOList)
                         )
                 ;
     }
@@ -232,7 +218,7 @@ public class PersonService implements PersonServiceInterface {
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .flatMap(
                                 person -> Mutiny.fetch(person.getAwards())
-                                        .map(AwardDTO::fromEntityList)
+                                        .map(awardMapper::toDTOList)
                                         .map(awardDTOList -> {
                                             Map<CeremonyAwardsDTO, List<AwardDTO>> grouped = awardDTOList.stream()
                                                     .collect(Collectors.groupingBy(AwardDTO::getCeremonyAwards));
@@ -303,8 +289,17 @@ public class PersonService implements PersonServiceInterface {
     public Uni<PersonDTO> save(PersonDTO personDTO) {
         return
                 Panache.withTransaction(() ->
-                        personRepository.persist(Person.build(personDTO))
-                                .map(PersonDTO::of)
+                        personRepository.persist(Person.build(
+                                        personDTO.getId(),
+                                        personDTO.getName(),
+                                        personDTO.getPhotoFileName(),
+                                        personDTO.getDateOfBirth(),
+                                        personDTO.getDateOfDeath(),
+                                        personDTO.getTypes(),
+                                        personDTO.getCreationDate(),
+                                        personDTO.getLastUpdate())
+                                )
+                                .map(personMapper::personToPersonDTO)
                 );
     }
 
@@ -338,7 +333,7 @@ public class PersonService implements PersonServiceInterface {
                                                     .invoke(() -> person.setPhotoFileName(Person.DEFAULT_PHOTO))
                                             ;
                                 })
-                                .map(person -> PersonDTO.of(person, person.getCountries()))
+                                .map(personMapper::personToPersonDTO)
                 );
     }
 
@@ -463,7 +458,7 @@ public class PersonService implements PersonServiceInterface {
                         });
     }
 
-    public Uni<Person> prepareAndPersistPerson(LightPersonDTO lightPersonDTO, PersonType type) {
+    public Uni<Person> prepareAndPersistPerson(LitePersonDTO lightPersonDTO, PersonType type) {
         return
                 personRepository.findById(lightPersonDTO.getId())
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
@@ -471,39 +466,11 @@ public class PersonService implements PersonServiceInterface {
                         .call(personRepository::persist);
     }
 
-    public List<MovieActorDTO> fromMovieActorListEntity(List<MovieActor> movieActorList) {
-        return
-                movieActorList
-                        .stream()
-                        .map(MovieActorDTO::fromActor)
-                        .sorted(MovieActorDTO::compareTo)
-                        .toList()
-                ;
-    }
-
-    public <T extends MovieTechnician> List<MovieTechnicianDTO> fromMovieTechnicianListEntity(Supplier<List<T>> getTechnicians) {
-        return
-                getTechnicians.get()
-                        .stream()
-                        .map(MovieTechnicianDTO::of)
-                        .toList()
-                ;
-    }
-
-    public <T> List<T> fromPersonListEntity(List<Person> personList, Function<Person, T> mapper) {
-        return
-                personList
-                        .stream()
-                        .map(mapper)
-                        .toList()
-                ;
-    }
-
     public <T extends MovieTechnician> List<MovieTechnicianDTO> fromMovieTechnicianListEntity(List<T> movieTechnicians) {
         return
                 movieTechnicians
                         .stream()
-                        .map(MovieTechnicianDTO::of)
+                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
                         .toList()
                 ;
     }
@@ -512,7 +479,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 Mutiny.fetch(person.getCountries())
                         .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
-                        .map(CountryDTO::fromCountryEntitySet)
+                        .map(countryMapper::toDTOSet)
                 ;
     }
 

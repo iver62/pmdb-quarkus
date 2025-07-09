@@ -2,7 +2,7 @@ package org.desha.app.domain.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.PersonType;
+import org.desha.app.domain.enums.PersonType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

@@ -1,20 +1,15 @@
 package org.desha.app.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.desha.app.domain.dto.UserDTO;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Getter
@@ -47,19 +42,23 @@ public class User extends PanacheEntityBase {
     @Column(name = "prenom")
     private String firstname;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Movie> movies = new ArrayList<>();
 
-    public static User fromDTO(UserDTO userDTO) {
+    public static User build(UUID id, String username, String email, Boolean emailVerified, String lastname, String firstname) {
         return
                 User.builder()
-                        .id(userDTO.getId())
-                        .username(userDTO.getUsername())
-                        .email(userDTO.getEmail())
-                        .emailVerified(userDTO.getEmailVerified())
-                        .lastname(userDTO.getLastname())
-                        .firstname(userDTO.getFirstname())
-                        .build();
+                        .id(id)
+                        .username(username)
+                        .email(email)
+                        .emailVerified(emailVerified)
+                        .lastname(lastname)
+                        .firstname(firstname)
+                        .build()
+                ;
+    }
+
+    public int getNumberOfMovies() {
+        return Objects.nonNull(movies) ? movies.size() : 0;
     }
 }

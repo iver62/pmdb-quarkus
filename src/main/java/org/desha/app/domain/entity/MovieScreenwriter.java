@@ -14,10 +14,9 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieScreenwriter extends MovieTechnician {
 
-    private static MovieScreenwriter build(Long id, Movie movie, Person person, String role) {
+    public static MovieScreenwriter build(Movie movie, Person person, String role) {
         return
                 MovieScreenwriter.builder()
-                        .id(id)
                         .movie(movie)
                         .person(person)
                         .role(role)
@@ -25,11 +24,4 @@ public class MovieScreenwriter extends MovieTechnician {
                 ;
     }
 
-    public static MovieScreenwriter of(Long id, Movie movie, Person person, String role) {
-        return build(id, movie, person, role);
-    }
-
-    public static MovieScreenwriter of(Movie movie, Person person, String role) {
-        return build(null, movie, person, role);
-    }
 }

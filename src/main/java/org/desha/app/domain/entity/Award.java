@@ -7,12 +7,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
-import org.desha.app.domain.dto.LightPersonDTO;
+import org.desha.app.domain.dto.LitePersonDTO;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import java.time.Year;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -62,25 +61,13 @@ public class Award extends PanacheEntityBase {
                 ;
     }
 
-    public static Award of(AwardDTO awardDTO) {
-        return Award.build(awardDTO.getId(), awardDTO.getName(), awardDTO.getYear());
-    }
-
-    public static List<Award> of(List<AwardDTO> awardDTOList) {
-        return
-                awardDTOList.stream()
-                        .map(Award::of)
-                        .toList()
-                ;
-    }
-
     public static Award createAward(AwardDTO awardDTO, CeremonyAwards ceremonyAwards, Map<Long, Person> personMap) {
-        Award newAward = Award.of(awardDTO);
+        Award newAward = Award.build(awardDTO.getId(), awardDTO.getName(), awardDTO.getYear());
         newAward.setCeremonyAwards(ceremonyAwards);
 
         if (Objects.nonNull(awardDTO.getPersons())) {
             Set<Person> linkedPersons = awardDTO.getPersons().stream()
-                    .map(LightPersonDTO::getId)
+                    .map(LitePersonDTO::getId)
                     .map(personMap::get)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
@@ -97,7 +84,7 @@ public class Award extends PanacheEntityBase {
 
         if (Objects.nonNull(awardDTO.getPersons())) {
             Set<Person> linkedPersons = awardDTO.getPersons().stream()
-                    .map(LightPersonDTO::getId)
+                    .map(LitePersonDTO::getId)
                     .map(personMap::get)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());

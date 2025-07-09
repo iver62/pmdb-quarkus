@@ -5,14 +5,12 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.PersonDTO;
+import org.desha.app.domain.enums.PersonType;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Table(name = "personne")
 @Entity
@@ -132,37 +130,17 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
         this.lastUpdate = LocalDateTime.now();
     }
 
-    public static Person build(PersonDTO personDTO) {
+    public static Person build(Long id, String name, String photoFileName, LocalDate dateOfBirth, LocalDate dateOfDeath, Set<PersonType> types, LocalDateTime creationDate, LocalDateTime lastUpdate) {
         return
                 Person.builder()
-                        .id(personDTO.getId())
-                        .name(personDTO.getName().trim())
-                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : DEFAULT_PHOTO)
-                        .dateOfBirth(personDTO.getDateOfBirth())
-                        .dateOfDeath(personDTO.getDateOfDeath())
-                        .types(personDTO.getTypes())
-                        .creationDate(personDTO.getCreationDate())
-                        .lastUpdate(personDTO.getLastUpdate())
-                        .build()
-                ;
-    }
-
-    public static Person of(PersonDTO personDTO, PersonType type) {
-        return
-                Person.builder()
-                        .id(personDTO.getId())
-                        .name(personDTO.getName().trim())
-                        .photoFileName(Objects.nonNull(personDTO.getPhotoFileName()) ? personDTO.getPhotoFileName() : DEFAULT_PHOTO)
-                        .dateOfBirth(personDTO.getDateOfBirth())
-                        .dateOfDeath(personDTO.getDateOfDeath())
-                        .types(
-                                Stream.concat(
-                                        Optional.ofNullable(personDTO.getTypes()).orElse(Set.of()).stream(),
-                                        Stream.of(type)
-                                ).collect(Collectors.toSet())
-                        )
-                        .creationDate(personDTO.getCreationDate())
-                        .lastUpdate(personDTO.getLastUpdate())
+                        .id(id)
+                        .name(name.trim())
+                        .photoFileName(Optional.ofNullable(photoFileName).orElse(DEFAULT_PHOTO))
+                        .dateOfBirth(dateOfBirth)
+                        .dateOfDeath(dateOfDeath)
+                        .types(types)
+                        .creationDate(creationDate)
+                        .lastUpdate(lastUpdate)
                         .build()
                 ;
     }
@@ -191,6 +169,9 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
 
     @Override
     public int compareTo(Person p) {
-        return name.toLowerCase().compareTo(p.getName().toLowerCase());
+        return Comparator
+                .comparing(Person::getName, Comparator.nullsLast(String::compareToIgnoreCase))
+                .thenComparing(Person::getId, Comparator.nullsLast(Long::compareTo))
+                .compare(this, p);
     }
 }

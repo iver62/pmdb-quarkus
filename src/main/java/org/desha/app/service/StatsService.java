@@ -10,7 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.PersonType;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieStats;
 import org.desha.app.domain.record.CountryRepartition;

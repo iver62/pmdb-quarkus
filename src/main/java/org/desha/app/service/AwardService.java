@@ -6,9 +6,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
-import org.desha.app.domain.dto.LightPersonDTO;
+import org.desha.app.domain.dto.LitePersonDTO;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.mapper.AwardMapper;
 import org.desha.app.repository.AwardRepository;
 import org.desha.app.utils.Messages;
 
@@ -18,14 +19,17 @@ import java.util.Objects;
 @ApplicationScoped
 public class AwardService {
 
+    private final AwardMapper awardMapper;
     private final PersonService personService;
     private final AwardRepository awardRepository;
 
     @Inject
     public AwardService(
+            AwardMapper awardMapper,
             PersonService personService,
             AwardRepository awardRepository
     ) {
+        this.awardMapper = awardMapper;
         this.personService = personService;
         this.awardRepository = awardRepository;
     }
@@ -45,7 +49,7 @@ public class AwardService {
         return
                 awardRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
-                        .map(AwardDTO::of)
+                        .map(awardMapper::awardToAwardDTO)
                 ;
     }
 
@@ -55,7 +59,7 @@ public class AwardService {
                         awardDTOList.stream()
                                 .filter(dto -> Objects.nonNull(dto.getPersons()))
                                 .flatMap(dto -> dto.getPersons().stream())
-                                .map(LightPersonDTO::getId)
+                                .map(LitePersonDTO::getId)
                                 .filter(Objects::nonNull)
                                 .distinct()
                                 .toList()

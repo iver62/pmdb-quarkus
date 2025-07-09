@@ -7,8 +7,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.AuditCategoryListener;
-import org.desha.app.domain.dto.CategoryDTO;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -47,11 +47,11 @@ public class Category extends PanacheEntityBase {
     @ManyToMany(mappedBy = "categories")
     private Set<Movie> movies = new HashSet<>();
 
-    public static Category of(CategoryDTO categoryDTO) {
+    public static Category build(Long id, String name) {
         return
                 Category.builder()
-                        .id(categoryDTO.getId())
-                        .name(categoryDTO.getName())
+                        .id(id)
+                        .name(StringUtils.capitalize(StringUtils.defaultString(name).trim()))
                         .build()
                 ;
     }

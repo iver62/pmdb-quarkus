@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.PersonType;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.service.PersonService;
@@ -109,7 +109,6 @@ public class PersonResource {
     @Path("/{id}/roles")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getRolesByPerson(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
-        log.info("SORT {}", queryParams.getSort());
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(MovieActor.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, MovieActor.ALLOWED_SORT_FIELDS);
 

@@ -8,7 +8,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.desha.app.domain.dto.CeremonyDTO;
 import org.desha.app.domain.entity.Ceremony;
+import org.desha.app.mapper.CeremonyMapper;
 import org.desha.app.repository.CeremonyRepository;
+import org.desha.app.utils.Messages;
 
 import java.util.Objects;
 import java.util.Set;
@@ -16,10 +18,15 @@ import java.util.Set;
 @ApplicationScoped
 public class CeremonyService {
 
+    private final CeremonyMapper ceremonyMapper;
     private final CeremonyRepository ceremonyRepository;
 
     @Inject
-    public CeremonyService(CeremonyRepository ceremonyRepository) {
+    public CeremonyService(
+            CeremonyMapper ceremonyMapper,
+            CeremonyRepository ceremonyRepository
+    ) {
+        this.ceremonyMapper = ceremonyMapper;
         this.ceremonyRepository = ceremonyRepository;
     }
 
@@ -36,7 +43,7 @@ public class CeremonyService {
     public Uni<Set<CeremonyDTO>> getCeremonies(Page page, Sort.Direction direction, String term) {
         return
                 ceremonyRepository.findCeremonies(page, direction, term)
-                        .map(CeremonyDTO::fromEntityList)
+                        .map(ceremonyMapper::toDTOSet)
                 ;
     }
 
@@ -44,8 +51,8 @@ public class CeremonyService {
         return
                 Objects.nonNull(ceremonyDTO.getId())
                         ? ceremonyRepository.findById(ceremonyDTO.getId())
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Cérémonie inconnue"))
-                        : ceremonyRepository.persist(Ceremony.of(ceremonyDTO))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.CEREMONY_NOT_FOUND))
+                        : ceremonyRepository.persist(ceremonyMapper.ceremonyDTOtoCeremony(ceremonyDTO))
                 ;
     }
 

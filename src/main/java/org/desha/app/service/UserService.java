@@ -6,7 +6,9 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.desha.app.domain.dto.UserDTO;
+import org.desha.app.mapper.UserMapper;
 import org.desha.app.repository.UserRepository;
+import org.desha.app.utils.Messages;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,10 +16,15 @@ import java.util.UUID;
 @ApplicationScoped
 public class UserService {
 
+    private final UserMapper userMapper;
     private final UserRepository userRepository;
 
     @Inject
-    public UserService(UserRepository userRepository) {
+    public UserService(
+            UserMapper userMapper,
+            UserRepository userRepository
+    ) {
+        this.userMapper = userMapper;
         this.userRepository = userRepository;
     }
 
@@ -49,8 +56,8 @@ public class UserService {
     public Uni<UserDTO> getUser(UUID id) {
         return
                 userRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Utilisateur introuvable"))
-                        .map(user -> UserDTO.of(user, user.getMovies().size()))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.USER_NOT_FOUND))
+                        .map(userMapper::userToUserDTO)
                 ;
     }
 
@@ -68,12 +75,7 @@ public class UserService {
     public Uni<List<UserDTO>> getUsers(Page page, String sort, Sort.Direction direction, String term) {
         return
                 userRepository.findUsers(page, sort, direction, term)
-                        .map(users ->
-                                users
-                                        .stream()
-                                        .map(user -> UserDTO.of(user, user.getMovies().size()))
-                                        .toList()
-                        )
+                        .map(userMapper::toDTOList)
                 ;
     }
 
@@ -90,7 +92,7 @@ public class UserService {
     public Uni<List<UserDTO>> getUsers(String sort, Sort.Direction direction, String term) {
         return
                 userRepository.findUsers(sort, direction, term)
-                        .map(UserDTO::fromUserListEntity)
+                        .map(userMapper::toDTOList)
                 ;
     }
 }

@@ -8,11 +8,13 @@ import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.AwardDTO;
 import org.desha.app.domain.dto.CeremonyAwardsDTO;
-import org.desha.app.domain.dto.LightPersonDTO;
+import org.desha.app.domain.dto.LitePersonDTO;
 import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.CeremonyAwards;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.mapper.AwardMapper;
+import org.desha.app.mapper.CeremonyAwardsMapper;
 import org.desha.app.repository.CeremonyAwardsRepository;
 import org.hibernate.reactive.mutiny.Mutiny;
 
@@ -23,16 +25,24 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class CeremonyAwardsService {
 
+    private final AwardMapper awardMapper;
+    private final CeremonyAwardsMapper ceremonyAwardsMapper;
+
     private final AwardService awardService;
     private final CeremonyService ceremonyService;
+
     private final CeremonyAwardsRepository ceremonyAwardsRepository;
 
     @Inject
     public CeremonyAwardsService(
+            AwardMapper awardMapper,
+            CeremonyAwardsMapper ceremonyAwardsMapper,
             AwardService awardService,
             CeremonyService ceremonyService,
             CeremonyAwardsRepository ceremonyAwardsRepository
     ) {
+        this.awardMapper = awardMapper;
+        this.ceremonyAwardsMapper = ceremonyAwardsMapper;
         this.awardService = awardService;
         this.ceremonyService = ceremonyService;
         this.ceremonyAwardsRepository = ceremonyAwardsRepository;
@@ -45,12 +55,12 @@ public class CeremonyAwardsService {
                         .invoke(ceremonyAwards -> {
                                     if (Objects.nonNull(ceremonyAwardsDTO.getAwards())) {
                                         for (AwardDTO awardDTO : ceremonyAwardsDTO.getAwards()) {
-                                            Award award = Award.of(awardDTO);
+                                            Award award = awardMapper.awardDTOtoAward(awardDTO);
                                             award.setCeremonyAwards(ceremonyAwards);
 
                                             if (Objects.nonNull(awardDTO.getPersons())) {
                                                 Set<Person> linkedPersons = awardDTO.getPersons().stream()
-                                                        .map(LightPersonDTO::getId)
+                                                        .map(LitePersonDTO::getId)
                                                         .map(personMap::get)
                                                         .filter(Objects::nonNull)
                                                         .collect(Collectors.toSet());
@@ -87,7 +97,7 @@ public class CeremonyAwardsService {
                                         )
                                         .call(ceremonyAwardsRepository::persist)
                                         .call(ceremonyAwardsRepository::flush)
-                                        .map(ceremonyAwards -> CeremonyAwardsDTO.of(ceremonyAwards, ceremonyAwards.getAwards()))
+                                        .map(ceremonyAwardsMapper::ceremonyAwardsToCeremonyAwardsDTO)
                         )
                 ;
     }
@@ -116,7 +126,7 @@ public class CeremonyAwardsService {
                                                         .replaceWith(ceremonyAwards)
                                         )
                                         .call(ceremonyAwardsRepository::persist)
-                                        .map(ceremonyAwards -> CeremonyAwardsDTO.of(ceremonyAwards, ceremonyAwards.getAwards()))
+                                        .map(ceremonyAwardsMapper::ceremonyAwardsToCeremonyAwardsDTO)
                         )
                 ;
     }

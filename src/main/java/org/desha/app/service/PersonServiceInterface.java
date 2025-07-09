@@ -23,8 +23,6 @@ public interface PersonServiceInterface {
 
     Uni<PersonDTO> getById(Long id);
 
-    Uni<List<PersonDTO>> searchByName(String name);
-
     Uni<List<Person>> getByIds(List<Long> ids);
 
     Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang);
@@ -33,7 +31,7 @@ public interface PersonServiceInterface {
 
     Uni<List<PersonDTO>> getAll();
 
-    Uni<List<MovieDTO>> getMovies(long id, Page page, String sort, Sort.Direction sortDirection, CriteriasDTO criteriasDTO);
+    Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction sortDirection, CriteriasDTO criteriasDTO);
 
 //    Uni<List<Movie>> addMovie(Long personId, Movie movie);
 

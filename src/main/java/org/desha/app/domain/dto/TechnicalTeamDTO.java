@@ -75,28 +75,4 @@ public class TechnicalTeamDTO {
                 ;
     }
 
-    public static TechnicalTeamDTO of(Movie movie) {
-        return
-                TechnicalTeamDTO.build(
-                        movie.getMovieProducers().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieDirectors().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieAssistantDirectors().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieScreenwriters().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieComposers().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieMusicians().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMoviePhotographers().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieCostumeDesigners().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieSetDesigners().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieEditors().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieCasters().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieArtists().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieSoundEditors().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieVfxSupervisors().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieSfxSupervisors().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieMakeupArtists().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieHairDressers().stream().map(MovieTechnicianDTO::of).toList(),
-                        movie.getMovieStuntmen().stream().map(MovieTechnicianDTO::of).toList()
-                );
-    }
-
 }

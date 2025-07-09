@@ -49,7 +49,7 @@ public class CeremonyAwards extends PanacheEntityBase {
     public Uni<CeremonyAwards> updateExistingCeremonyAwards(CeremonyAwardsDTO ceremonyAwardsDTO, Map<Long, Person> personMap) {
         List<AwardDTO> dtoAwards = Objects.nonNull(ceremonyAwardsDTO.getAwards()) ? ceremonyAwardsDTO.getAwards() : List.of();
         // Mettre à jour la cérémonie si besoin
-        setCeremony(Ceremony.of(ceremonyAwardsDTO.getCeremony()));
+        setCeremony(Ceremony.build(ceremonyAwardsDTO.getCeremony().getId(), ceremonyAwardsDTO.getCeremony().getName()));
 
         return
                 Mutiny.fetch(awards)
@@ -88,8 +88,6 @@ public class CeremonyAwards extends PanacheEntityBase {
      * fait en recherchant la récompense dont l'identifiant correspond à celui fourni.
      *
      * @param id L'identifiant de la récompense à supprimer.
-     * @return Un {@link Uni} contenant l'ensemble des récompenses après suppression de celle correspondant à l'identifiant.
-     * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisé.
      */
     public void removeAward(Long id) {
         awards.removeIf(award -> Objects.equals(award.getId(), id));
@@ -108,29 +106,9 @@ public class CeremonyAwards extends PanacheEntityBase {
      * Cette méthode permet de vider la collection des récompenses associées à l'objet en utilisant la méthode
      * {@link Set#clear()}. Elle vérifie également si l'ensemble des récompenses est correctement initialisée.
      * Si la collection des récompenses est nulle, une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble vide de récompenses après avoir vidé la collection.
-     * @throws IllegalStateException Si l'ensemble des récompenses n'est pas initialisée (null).
      */
     public void clearAwards() {
         awards.clear();
     }
 
-    /**
-     * Récupère et convertit les récompenses associées à un film en objets {@link AwardDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les récompenses liées à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des récompenses est `null`,
-     * une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble de {@link AwardDTO}.
-     * @throws IllegalStateException si la liste des récompenses n'est pas initialisée.
-     */
-    public Uni<List<AwardDTO>> fetchAndMapAwardSet() {
-        return
-                Mutiny.fetch(awards)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(AWARD_LIST_NOT_INITIALIZED))
-                        .map(AwardDTO::fromEntityListWithPersons)
-                ;
-    }
 }

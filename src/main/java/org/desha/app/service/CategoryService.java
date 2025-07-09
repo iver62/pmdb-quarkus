@@ -11,22 +11,32 @@ import org.desha.app.domain.dto.CategoryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.entity.Category;
+import org.desha.app.mapper.CategoryMapper;
+import org.desha.app.mapper.MovieMapper;
 import org.desha.app.repository.CategoryRepository;
 import org.desha.app.repository.MovieRepository;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class CategoryService {
 
+    private final CategoryMapper categoryMapper;
+    private final MovieMapper movieMapper;
     private final CategoryRepository categoryRepository;
     private final MovieRepository movieRepository;
 
     @Inject
     public CategoryService(
+            CategoryMapper categoryMapper,
+            MovieMapper movieMapper,
             CategoryRepository categoryRepository,
             MovieRepository movieRepository
     ) {
+        this.categoryMapper = categoryMapper;
+        this.movieMapper = movieMapper;
         this.categoryRepository = categoryRepository;
         this.movieRepository = movieRepository;
     }
@@ -51,18 +61,8 @@ public class CategoryService {
         return
                 categoryRepository
                         .findCategories(page, sort, direction, term)
-                        .map(CategoryDTO::fromCategoryListEntity)
+                        .map(categoryMapper::toDTOList)
                 ;
-    }
-
-    public Uni<Set<Category>> getByIds(Set<CategoryDTO> categoryDTOSet) {
-        return
-                categoryRepository.findByIds(
-                        Optional.ofNullable(categoryDTOSet).orElse(Collections.emptySet())
-                                .stream()
-                                .map(CategoryDTO::getId)
-                                .toList()
-                ).map(HashSet::new);
     }
 
     public Uni<Set<Category>> getByIds(List<Long> ids) {
@@ -75,12 +75,7 @@ public class CategoryService {
                         .map(movieWithAwardsNumberList ->
                                 movieWithAwardsNumberList
                                         .stream()
-                                        .map(movieWithAwardsNumber ->
-                                                MovieDTO.of(
-                                                        movieWithAwardsNumber.movie(),
-                                                        movieWithAwardsNumber.awardsNumber()
-                                                )
-                                        )
+                                        .map(movieMapper::movieWithAwardsNumberToMovieDTO)
                                         .toList()
 
                         )
@@ -100,8 +95,7 @@ public class CategoryService {
         return
                 Panache
                         .withTransaction(() -> {
-                            Category category = Category.of(categoryDTO);
-                            category.setName(StringUtils.capitalize(category.getName().trim())); // Normalisation du nom
+                            Category category = Category.build(categoryDTO.getId(), categoryDTO.getName());
                             return category.persist();
                         })
                 ;

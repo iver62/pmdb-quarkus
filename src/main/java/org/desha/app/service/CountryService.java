@@ -11,16 +11,22 @@ import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Country;
+import org.desha.app.mapper.CountryMapper;
+import org.desha.app.mapper.MovieMapper;
+import org.desha.app.mapper.PersonMapper;
 import org.desha.app.repository.CountryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
-import org.hibernate.reactive.mutiny.Mutiny;
+import org.desha.app.utils.Messages;
 
 import java.util.*;
 
 @ApplicationScoped
 public class CountryService {
 
+    private final CountryMapper countryMapper;
+    private final MovieMapper movieMapper;
+    private final PersonMapper personMapper;
     private final PersonService personService;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
@@ -28,11 +34,17 @@ public class CountryService {
 
     @Inject
     public CountryService(
+            CountryMapper countryMapper,
+            MovieMapper movieMapper,
+            PersonMapper personMapper,
             PersonService personService,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
             PersonRepository personRepository
     ) {
+        this.countryMapper = countryMapper;
+        this.movieMapper = movieMapper;
+        this.personMapper = personMapper;
         this.personService = personService;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
@@ -71,24 +83,25 @@ public class CountryService {
         return personRepository.countByCountry(countryId, criteriasDTO);
     }
 
-    public Uni<Country> getById(Long id) {
+    public Uni<CountryDTO> getById(Long id) {
         return
                 countryRepository.findById(id)
-                        .onFailure().recoverWithNull()
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
+                        .map(countryMapper::countryToCountryDTO)
                 ;
     }
 
     public Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findCountries(page, sort, direction, term, lang)
-                        .map(CountryDTO::fromCountryListEntity)
+                        .map(countryMapper::toDTOList)
                 ;
     }
 
     public Uni<List<CountryDTO>> getCountries(String sort, Sort.Direction direction, String term) {
         return
                 countryRepository.findCountries(sort, direction, term)
-                        .map(CountryDTO::fromCountryListEntity)
+                        .map(countryMapper::toDTOList)
                 ;
     }
 
@@ -106,25 +119,10 @@ public class CountryService {
         return countryRepository.findByIds(ids).map(HashSet::new);
     }
 
-    public Uni<CountryDTO> getFull(Long id) {
-        return
-                countryRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Pays non trouvé"))
-                        .call(country -> Mutiny.fetch(country.getMovies()))
-                        .call(country -> Mutiny.fetch(country.getPersons()))
-                        .map(CountryDTO::fromFullEntity)
-                ;
-    }
-
     public Uni<List<CountryDTO>> searchByName(String name) {
         return
                 countryRepository.findByName(name.trim())
-                        .onItem().ifNotNull()
-                        .transform(tList ->
-                                tList.stream()
-                                        .map(CountryDTO::of)
-                                        .toList()
-                        )
+                        .onItem().ifNotNull().transform(countryMapper::toDTOList)
                         .onFailure().recoverWithItem(Collections.emptyList())
                 ;
     }
@@ -132,24 +130,16 @@ public class CountryService {
     public Uni<List<MovieDTO>> getMovies(Long id, String sort, Sort.Direction direction, String term) {
         return
                 movieRepository.findMoviesByCountry(id, sort, direction, term)
-                        .map(movieList ->
-                                movieList
-                                        .stream()
-                                        .map(MovieDTO::of)
-                                        .toList()
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
+                        .map(movieMapper::movieListToDTOList)
                 ;
     }
 
     public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 movieRepository.findMoviesByCountry(id, page, sort, direction, term)
-                        .map(movieList ->
-                                movieList
-                                        .stream()
-                                        .map(MovieDTO::of)
-                                        .toList()
-                        )
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
+                        .map(movieMapper::movieListToDTOList)
                 ;
     }
 
@@ -167,7 +157,7 @@ public class CountryService {
     public Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findPersonsByCountry(id, page, sort, direction, criteriasDTO)
-                        .map(personList -> personService.fromPersonListEntity(personList, PersonDTO::of))
+                        .map(personMapper::toDTOList)
                 ;
     }
 
@@ -176,15 +166,8 @@ public class CountryService {
                 Panache
                         .withTransaction(() ->
                                 countryRepository.findById(id)
-                                        .onItem().ifNotNull().invoke(
-                                                entity -> {
-                                                    entity.setCode(countryDTO.getCode());
-                                                    entity.setAlpha2(countryDTO.getAlpha2());
-                                                    entity.setAlpha3(countryDTO.getAlpha3());
-                                                    entity.setNomEnGb(countryDTO.getNomEnGb());
-                                                    entity.setNomFrFr(countryDTO.getNomFrFr());
-                                                }
-                                        )
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
+                                        .invoke(entity -> entity.updateMovie(countryDTO))
                         )
                 ;
     }

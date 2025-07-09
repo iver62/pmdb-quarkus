@@ -10,10 +10,11 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.service.MovieService;
 import org.desha.app.service.PersonService;
 import org.desha.app.utils.Messages;
@@ -820,7 +821,7 @@ public class MovieResource {
                                 id,
                                 movieActorsList,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ACTOR)
-                                        .map(person -> MovieActor.of(movie, person, dto.getRole(), dto.getRank()))
+                                        .map(person -> MovieActor.build(movie, person, StringUtils.defaultString(dto.getRole()).trim(), dto.getRank()))
                         )
                         .onItem().ifNotNull().transform(movieActorDTOList -> Response.ok(movieActorDTOList).build())
                         .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
@@ -850,7 +851,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieProducers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PRODUCER)
-                                        .map(person -> MovieProducer.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieProducer.build(movie, person, dto.getRole())),
                                 Messages.PRODUCERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -881,7 +882,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieDirectors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DIRECTOR)
-                                        .map(person -> MovieDirector.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieDirector.build(movie, person, dto.getRole())),
                                 Messages.DIRECTORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -912,7 +913,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieAssistantDirectors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ASSISTANT_DIRECTOR)
-                                        .map(person -> MovieAssistantDirector.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieAssistantDirector.build(movie, person, dto.getRole())),
                                 Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -943,7 +944,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieScreenwriters,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SCREENWRITER)
-                                        .map(person -> MovieScreenwriter.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieScreenwriter.build(movie, person, dto.getRole())),
                                 Messages.SCREENWRITERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -974,7 +975,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieComposers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COMPOSER)
-                                        .map(person -> MovieComposer.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieComposer.build(movie, person, dto.getRole())),
                                 Messages.COMPOSERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1005,7 +1006,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieMusicians,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MUSICIAN)
-                                        .map(person -> MovieMusician.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieMusician.build(movie, person, dto.getRole())),
                                 Messages.MUSICIANS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1036,7 +1037,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMoviePhotographers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PHOTOGRAPHER)
-                                        .map(person -> MoviePhotographer.of(movie, person, dto.getRole())),
+                                        .map(person -> MoviePhotographer.build(movie, person, dto.getRole())),
                                 Messages.PHOTOGRAPHERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1065,7 +1066,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieCostumeDesigners,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUME_DESIGNER)
-                                        .map(person -> MovieCostumeDesigner.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieCostumeDesigner.build(movie, person, dto.getRole())),
                                 Messages.COSTUME_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1094,7 +1095,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieSetDesigners,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SET_DESIGNER)
-                                        .map(person -> MovieSetDesigner.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieSetDesigner.build(movie, person, dto.getRole())),
                                 Messages.SET_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1123,7 +1124,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieEditors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.EDITOR)
-                                        .map(person -> MovieEditor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieEditor.build(movie, person, dto.getRole())),
                                 Messages.EDITORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1152,7 +1153,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieCasters,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.CASTER)
-                                        .map(person -> MovieCaster.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieCaster.build(movie, person, dto.getRole())),
                                 Messages.CASTERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1181,7 +1182,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieArtists,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ARTIST)
-                                        .map(person -> MovieArtist.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieArtist.build(movie, person, dto.getRole())),
                                 Messages.ARTISTS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1210,7 +1211,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieSoundEditors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SOUND_EDITOR)
-                                        .map(person -> MovieSoundEditor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieSoundEditor.build(movie, person, dto.getRole())),
                                 Messages.SOUND_EDITORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1239,7 +1240,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieVfxSupervisors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.VFX_SUPERVISOR)
-                                        .map(person -> MovieVfxSupervisor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieVfxSupervisor.build(movie, person, dto.getRole())),
                                 Messages.VFX_SUPERVISORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1268,7 +1269,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieSfxSupervisors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SFX_SUPERVISOR)
-                                        .map(person -> MovieSfxSupervisor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieSfxSupervisor.build(movie, person, dto.getRole())),
                                 Messages.SFX_SUPERVISORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1297,7 +1298,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieMakeupArtists,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MAKEUP_ARTIST)
-                                        .map(person -> MovieMakeupArtist.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieMakeupArtist.build(movie, person, dto.getRole())),
                                 Messages.MAKEUP_ARTISTS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1326,7 +1327,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieHairDressers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.HAIR_DRESSER)
-                                        .map(person -> MovieHairDresser.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieHairDresser.build(movie, person, dto.getRole())),
                                 Messages.HAIRDRESSERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1355,7 +1356,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieStuntmen,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.STUNT_MAN)
-                                        .map(person -> MovieStuntman.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieStuntman.build(movie, person, dto.getRole())),
                                 Messages.STUNTMEN_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
@@ -1489,7 +1490,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieProducers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PRODUCER)
-                                        .map(person -> MovieProducer.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieProducer.build(movie, person, dto.getRole())),
                                 Messages.PRODUCERS_NOT_INITIALIZED)
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
@@ -1523,7 +1524,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieDirectors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DIRECTOR)
-                                        .map(person -> MovieDirector.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieDirector.build(movie, person, dto.getRole())),
                                 Messages.DIRECTORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1558,7 +1559,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieAssistantDirectors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ASSISTANT_DIRECTOR)
-                                        .map(person -> MovieAssistantDirector.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieAssistantDirector.build(movie, person, dto.getRole())),
                                 Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1593,7 +1594,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieScreenwriters,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SCREENWRITER)
-                                        .map(person -> MovieScreenwriter.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieScreenwriter.build(movie, person, dto.getRole())),
                                 Messages.SCREENWRITERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1628,7 +1629,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieComposers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COMPOSER)
-                                        .map(person -> MovieComposer.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieComposer.build(movie, person, dto.getRole())),
                                 Messages.COMPOSERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1663,7 +1664,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieMusicians,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MUSICIAN)
-                                        .map(person -> MovieMusician.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieMusician.build(movie, person, dto.getRole())),
                                 Messages.MUSICIANS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1698,7 +1699,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMoviePhotographers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PHOTOGRAPHER)
-                                        .map(person -> MoviePhotographer.of(movie, person, dto.getRole())),
+                                        .map(person -> MoviePhotographer.build(movie, person, dto.getRole())),
                                 Messages.PHOTOGRAPHERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1733,7 +1734,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieCostumeDesigners,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUME_DESIGNER)
-                                        .map(person -> MovieCostumeDesigner.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieCostumeDesigner.build(movie, person, dto.getRole())),
                                 Messages.COSTUME_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1768,7 +1769,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieSetDesigners,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SET_DESIGNER)
-                                        .map(person -> MovieSetDesigner.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieSetDesigner.build(movie, person, dto.getRole())),
                                 Messages.SET_DESIGNERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1803,7 +1804,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieEditors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.EDITOR)
-                                        .map(person -> MovieEditor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieEditor.build(movie, person, dto.getRole())),
                                 Messages.EDITORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1838,7 +1839,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieCasters,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.CASTER)
-                                        .map(person -> MovieCaster.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieCaster.build(movie, person, dto.getRole())),
                                 Messages.CASTERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1873,7 +1874,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieArtists,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ARTIST)
-                                        .map(person -> MovieArtist.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieArtist.build(movie, person, dto.getRole())),
                                 Messages.ARTISTS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1908,7 +1909,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieSoundEditors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SOUND_EDITOR)
-                                        .map(person -> MovieSoundEditor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieSoundEditor.build(movie, person, dto.getRole())),
                                 Messages.SOUND_EDITORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1943,7 +1944,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieVfxSupervisors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.VFX_SUPERVISOR)
-                                        .map(person -> MovieVfxSupervisor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieVfxSupervisor.build(movie, person, dto.getRole())),
                                 Messages.VFX_SUPERVISORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -1978,7 +1979,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieSfxSupervisors,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SFX_SUPERVISOR)
-                                        .map(person -> MovieSfxSupervisor.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieSfxSupervisor.build(movie, person, dto.getRole())),
                                 Messages.SFX_SUPERVISORS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -2013,7 +2014,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieMakeupArtists,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MAKEUP_ARTIST)
-                                        .map(person -> MovieMakeupArtist.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieMakeupArtist.build(movie, person, dto.getRole())),
                                 Messages.MAKEUP_ARTISTS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -2048,7 +2049,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieHairDressers,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.HAIR_DRESSER)
-                                        .map(person -> MovieHairDresser.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieHairDresser.build(movie, person, dto.getRole())),
                                 Messages.HAIRDRESSERS_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -2083,7 +2084,7 @@ public class MovieResource {
                                 movieTechnicianDTOList,
                                 Movie::getMovieStuntmen,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.STUNT_MAN)
-                                        .map(person -> MovieStuntman.of(movie, person, dto.getRole())),
+                                        .map(person -> MovieStuntman.build(movie, person, dto.getRole())),
                                 Messages.STUNTMEN_NOT_INITIALIZED
                         )
                         .onItem().ifNotNull().transform(movieTechnicianDTOs ->
@@ -2108,7 +2109,7 @@ public class MovieResource {
                                 id,
                                 movieActorDTOList,
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ACTOR)
-                                        .map(person -> MovieActor.of(movie, person, dto.getRole(), dto.getRank()))
+                                        .map(person -> MovieActor.build(movie, person, dto.getRole(), dto.getRank()))
                         )
                         .onItem().ifNotNull().transform(movieActorDTOs ->
                                 movieActorDTOs.isEmpty()

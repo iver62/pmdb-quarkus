@@ -43,94 +43,11 @@ public class MovieDTO {
                         .synopsis(movie.getSynopsis())
                         .releaseDate(movie.getReleaseDate())
                         .runningTime(movie.getRunningTime())
-                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
-                        .posterFileName(movie.getPosterFileName())
-                        .user(UserDTO.of(movie.getUser()))
-                        .countries(CountryDTO.fromCountryEntitySet(movie.getCountries()))
-                        .categories(CategoryDTO.fromCategorySetEntity(movie.getCategories()))
-                        .ceremonyAwards(CeremonyAwardsDTO.fromEntitySet(movie.getCeremoniesAwards()))
-                        .creationDate(movie.getCreationDate())
-                        .lastUpdate(movie.getLastUpdate())
-                        .build()
-                ;
-    }
-
-    public static MovieDTO of(Movie movie) {
-        return
-                MovieDTO.builder()
-                        .id(movie.getId())
-                        .title(movie.getTitle())
-                        .originalTitle(movie.getOriginalTitle())
-                        .releaseDate(movie.getReleaseDate())
-                        .runningTime(movie.getRunningTime())
-                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
+                        .budget(BudgetDTO.build(movie.getBudget(), movie.getBudgetCurrency()))
+                        .boxOffice(BoxOfficeDTO.build(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
                         .posterFileName(movie.getPosterFileName())
                         .creationDate(movie.getCreationDate())
                         .lastUpdate(movie.getLastUpdate())
-                        .user(UserDTO.of(movie.getUser()))
-                        .build()
-                ;
-    }
-
-    public static MovieDTO of(Movie movie, Set<Category> categorySet, Set<Country> countrySet) {
-        return
-                MovieDTO.builder()
-                        .id(movie.getId())
-                        .title(movie.getTitle())
-                        .originalTitle(movie.getOriginalTitle())
-                        .releaseDate(movie.getReleaseDate())
-                        .synopsis(movie.getSynopsis())
-                        .runningTime(movie.getRunningTime())
-                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
-                        .posterFileName(movie.getPosterFileName())
-                        .creationDate(movie.getCreationDate())
-                        .lastUpdate(movie.getLastUpdate())
-                        .categories(CategoryDTO.fromCategorySetEntity(categorySet))
-                        .countries(CountryDTO.fromCountryEntitySet(countrySet))
-                        .user(UserDTO.of(movie.getUser()))
-                        .build()
-                ;
-    }
-
-    public static MovieDTO of(Movie movie, Set<Category> categorySet, Set<Country> countrySet, Set<CeremonyAwards> ceremonyAwardsSet) {
-        return
-                MovieDTO.builder()
-                        .id(movie.getId())
-                        .title(movie.getTitle())
-                        .originalTitle(movie.getOriginalTitle())
-                        .releaseDate(movie.getReleaseDate())
-                        .runningTime(movie.getRunningTime())
-                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
-                        .posterFileName(movie.getPosterFileName())
-                        .creationDate(movie.getCreationDate())
-                        .lastUpdate(movie.getLastUpdate())
-                        .categories(CategoryDTO.fromCategorySetEntity(categorySet))
-                        .countries(CountryDTO.fromCountryEntitySet(countrySet))
-                        .ceremonyAwards(CeremonyAwardsDTO.fromEntitySet(ceremonyAwardsSet))
-                        .user(UserDTO.of(movie.getUser()))
-                        .build()
-                ;
-    }
-
-    public static MovieDTO of(Movie movie, Long numberOfAwards) {
-        return
-                MovieDTO.builder()
-                        .id(movie.getId())
-                        .title(movie.getTitle())
-                        .originalTitle(movie.getOriginalTitle())
-                        .releaseDate(movie.getReleaseDate())
-                        .runningTime(movie.getRunningTime())
-                        .budget(BudgetDTO.of(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOfficeDTO.of(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
-                        .posterFileName(movie.getPosterFileName())
-                        .creationDate(movie.getCreationDate())
-                        .lastUpdate(movie.getLastUpdate())
-                        .user(UserDTO.of(movie.getUser()))
-                        .numberOfAwards(numberOfAwards)
                         .build()
                 ;
     }

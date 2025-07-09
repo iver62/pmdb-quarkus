@@ -1,4 +1,4 @@
-package org.desha.app.domain;
+package org.desha.app.domain.enums;
 
 public enum PersonType {
     ACTOR,

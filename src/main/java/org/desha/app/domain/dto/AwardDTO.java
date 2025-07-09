@@ -4,12 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Award;
-import org.desha.app.domain.entity.Person;
 
 import java.time.Year;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Getter
@@ -21,10 +17,10 @@ public class AwardDTO {
     @JsonIgnore
     private CeremonyAwardsDTO ceremonyAwards;
     private String name;
-    private Set<LightPersonDTO> persons;
+    private Set<LitePersonDTO> persons;
     private Year year;
 
-    public static AwardDTO build(Long id, CeremonyAwardsDTO ceremonyAwards, String name, Set<LightPersonDTO> persons, Year year) {
+    public static AwardDTO build(Long id, CeremonyAwardsDTO ceremonyAwards, String name, Set<LitePersonDTO> persons, Year year) {
         return
                 AwardDTO.builder()
                         .id(id)
@@ -34,44 +30,6 @@ public class AwardDTO {
                         .year(year)
                         .build()
                 ;
-    }
-
-    public static AwardDTO of(Award award) {
-        return
-                AwardDTO.build(
-                        award.getId(),
-                        CeremonyAwardsDTO.of(award.getCeremonyAwards()),
-                        award.getName(),
-                        null,
-                        award.getYear()
-                );
-    }
-
-    public static AwardDTO of(Award award, Set<Person> personSet) {
-        return
-                AwardDTO.build(
-                        award.getId(),
-                        null,
-                        award.getName(),
-                        LightPersonDTO.fromEntitySet(personSet),
-                        award.getYear()
-                );
-    }
-
-    public static List<AwardDTO> fromEntityList(List<Award> awardList) {
-        return
-                Optional.ofNullable(awardList).orElse(List.of())
-                        .stream()
-                        .map(AwardDTO::of)
-                        .toList()
-                ;
-    }
-
-    public static List<AwardDTO> fromEntityListWithPersons(List<Award> awards) {
-        return Optional.ofNullable(awards).orElse(List.of())
-                .stream()
-                .map(award -> AwardDTO.of(award, award.getPersonSet()))
-                .toList();
     }
 
     @Override

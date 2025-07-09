@@ -35,8 +35,4 @@ public class Ceremony extends PanacheEntityBase {
                 ;
     }
 
-    public static Ceremony of(CeremonyDTO ceremonyDTO) {
-        return Ceremony.build(ceremonyDTO.getId(), ceremonyDTO.getName());
-    }
-
 }

@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.domain.record.Repartition;
+import org.desha.app.mapper.*;
 import org.desha.app.repository.*;
 import org.desha.app.utils.Messages;
 import org.desha.app.utils.Utils;
@@ -33,6 +34,14 @@ public class MovieService {
 
     private static final String POSTERS_DIR = "posters/";
 
+    private final CategoryMapper categoryMapper;
+    private final CeremonyAwardsMapper ceremonyAwardsMapper;
+    private final CountryMapper countryMapper;
+    private final MovieMapper movieMapper;
+    private final MovieActorMapper movieActorMapper;
+    private final MovieTechnicianMapper movieTechnicianMapper;
+    private final PersonMapper personMapper;
+
     private final AwardService awardService;
     private final CeremonyAwardsService ceremonyAwardsService;
     private final CountryService countryService;
@@ -51,6 +60,13 @@ public class MovieService {
 
     @Inject
     public MovieService(
+            CategoryMapper categoryMapper,
+            CeremonyAwardsMapper ceremonyAwardsMapper,
+            CountryMapper countryMapper,
+            MovieMapper movieMapper,
+            MovieActorMapper movieActorMapper,
+            MovieTechnicianMapper movieTechnicianMapper,
+            PersonMapper personMapper,
             CeremonyAwardsRepository ceremonyAwardsRepository,
             AwardService awardService,
             CeremonyAwardsService ceremonyAwardsService,
@@ -66,6 +82,13 @@ public class MovieService {
             PersonRepository personRepository,
             UserRepository userRepository
     ) {
+        this.categoryMapper = categoryMapper;
+        this.ceremonyAwardsMapper = ceremonyAwardsMapper;
+        this.countryMapper = countryMapper;
+        this.movieMapper = movieMapper;
+        this.movieActorMapper = movieActorMapper;
+        this.movieTechnicianMapper = movieTechnicianMapper;
+        this.personMapper = personMapper;
         this.ceremonyAwardsRepository = ceremonyAwardsRepository;
         this.awardService = awardService;
         this.ceremonyAwardsService = ceremonyAwardsService;
@@ -102,7 +125,7 @@ public class MovieService {
         return
                 movieRepository.findByIdWithCountriesAndCategories(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                        .map(movie -> MovieDTO.of(movie, movie.getCategories(), movie.getCountries()))
+                        .map(movieMapper::movieToMovieDTO)
                 ;
     }
 
@@ -110,17 +133,7 @@ public class MovieService {
         return
                 movieRepository
                         .findMovies(page, sort, direction, criteriasDTO)
-                        .map(movieWithAwardsNumberList ->
-                                movieWithAwardsNumberList
-                                        .stream()
-                                        .map(movieWithAwardsNumber ->
-                                                MovieDTO.of(
-                                                        movieWithAwardsNumber.movie(),
-                                                        movieWithAwardsNumber.awardsNumber()
-                                                )
-                                        )
-                                        .toList()
-                        )
+                        .map(movieMapper::movieWithAwardsListToDTOList)
                 ;
     }
 
@@ -128,18 +141,7 @@ public class MovieService {
         return
                 movieRepository
                         .findMovies(sort, direction, criteriasDTO)
-                        .map(
-                                movieWithAwardsNumberList ->
-                                        movieWithAwardsNumberList
-                                                .stream()
-                                                .map(movieWithAwardsNumber ->
-                                                        MovieDTO.of(
-                                                                movieWithAwardsNumber.movie(),
-                                                                movieWithAwardsNumber.awardsNumber()
-                                                        )
-                                                )
-                                                .toList()
-                        )
+                        .map(movieMapper::movieWithAwardsListToDTOList)
                 ;
     }
 
@@ -150,12 +152,7 @@ public class MovieService {
     public Uni<List<MovieDTO>> searchByTitle(String query) {
         return
                 movieRepository.searchByTitle(query.trim())
-                        .onItem().ifNotNull()
-                        .transform(movieList ->
-                                movieList.stream()
-                                        .map(MovieDTO::of)
-                                        .toList()
-                        )
+                        .onItem().ifNotNull().transform(movieMapper::movieListToDTOList)
                         .onFailure().recoverWithItem(Collections.emptyList())
                 ;
     }
@@ -163,36 +160,24 @@ public class MovieService {
     public Uni<List<CountryDTO>> getCountriesInMovies(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
-                        .map(
-                                countryList ->
-                                        countryList
-                                                .stream()
-                                                .map(CountryDTO::of)
-                                                .toList()
-                        )
+                        .map(countryMapper::toDTOList)
                 ;
     }
 
     public Uni<List<CategoryDTO>> getCategoriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
         return
                 categoryRepository.findCategoriesInMovies(page, sort, direction, term)
-                        .map(
-                                categoryList ->
-                                        categoryList
-                                                .stream()
-                                                .map(CategoryDTO::of)
-                                                .toList()
-                        )
+                        .map(categoryMapper::toDTOList)
                 ;
     }
 
-    public Uni<List<PersonDTO>> getPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<LitePersonDTO>> getPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                         .flatMap(movie ->
                                 personRepository.findPersonsByMovie(id, page, sort, direction, criteriasDTO)
-                                        .map(personList -> personService.fromPersonListEntity(personList, PersonDTO::of))
+                                        .map(personMapper::toLiteDTOList)
                         )
                 ;
     }
@@ -201,12 +186,12 @@ public class MovieService {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                        .chain(movie ->
-                                Mutiny.fetch(movie.getMovieActors())
-                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
-                                        .flatMap(movieActorList -> movie.fetchAndMapActorList())
+                        .chain(this::fetchAndMapActorList)
+                        .map(movieActorDTOList ->
+                                movieActorDTOList.stream()
+                                        .sorted(Comparator.comparing(MovieActorDTO::getRank, Comparator.nullsLast(Integer::compareTo)))
+                                        .toList()
                         )
-
                 ;
     }
 
@@ -227,9 +212,9 @@ public class MovieService {
                         .flatMap(movie ->
                                 Mutiny.fetch(techniciansGetter.apply(movie))
                                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                                        .map(ts ->
-                                                ts.stream()
-                                                        .map(MovieTechnicianDTO::of)
+                                        .map(tList ->
+                                                tList.stream()
+                                                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
                                                         .toList()
                                         )
                         )
@@ -248,7 +233,7 @@ public class MovieService {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
-                        .flatMap(Movie::fetchAndMapCategorySet)
+                        .flatMap(this::fetchAndMapCategorySet)
                 ;
     }
 
@@ -266,8 +251,8 @@ public class MovieService {
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                         .flatMap(movie ->
                                 Mutiny.fetch(movie.getCountries())
-                                        .onItem().ifNull().failWith(() -> new IllegalStateException("Pays non initialisés pour ce film"))
-                                        .map(CountryDTO::fromCountryEntitySet)
+                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                        .map(countryMapper::toDTOSet)
                         )
                 ;
     }
@@ -280,24 +265,24 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                                         .map(movie ->
                                                 TechnicalTeamDTO.build(
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieProducers),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieDirectors),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieAssistantDirectors),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieScreenwriters),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieComposers),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieMusicians),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMoviePhotographers),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieCostumeDesigners),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieSetDesigners),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieEditors),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieCasters),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieArtists),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieSoundEditors),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieVfxSupervisors),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieSfxSupervisors),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieMakeupArtists),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieHairDressers),
-                                                        personService.fromMovieTechnicianListEntity(movie::getMovieStuntmen)
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieProducers()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieDirectors()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieAssistantDirectors()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieScreenwriters()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieComposers()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieMusicians()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMoviePhotographers()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieCostumeDesigners()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieSetDesigners()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieEditors()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieCasters()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieArtists()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieSoundEditors()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieVfxSupervisors()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieSfxSupervisors()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieMakeupArtists()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieHairDressers()),
+                                                        personService.fromMovieTechnicianListEntity(movie.getMovieStuntmen())
                                                 )
                                         )
                         )
@@ -309,7 +294,7 @@ public class MovieService {
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                         .flatMap(movie -> ceremonyAwardsRepository.findCeremoniesAwardsByMovie(movie.getId()))
-                        .map(CeremonyAwardsDTO::fromEntityList)
+                        .map(ceremonyAwardsMapper::toDTOSet)
                 ;
     }
 
@@ -374,13 +359,13 @@ public class MovieService {
                                 return Uni.createFrom().failure(new WebApplicationException("Ce film existe déjà", 409));
                             }
 
-                            Movie movie = Movie.of(movieDTO);
+                            Movie movie = movieMapper.movieDTOtoMovie(movieDTO);
 
                             return Panache.withTransaction(() ->
                                     // Récupérer les pays et les catégories
-                                    countryService.getByIds(movieDTO.getCountries())
+                                    countryService.getByIds(movieDTO.getCountries().stream().map(CountryDTO::getId).toList())
                                             .invoke(movie::setCountries)
-                                            .chain(() -> categoryService.getByIds(movieDTO.getCategories()))
+                                            .chain(() -> categoryService.getByIds(movieDTO.getCategories().stream().map(CategoryDTO::getId).toList()))
                                             .invoke(movie::setCategories)
                                             .chain(() ->
                                                     userRepository.findById(movieDTO.getUser().getId())
@@ -414,7 +399,7 @@ public class MovieService {
                                                             })
                                                             .replaceWith(entity)
                                             )
-                                            .map(entity -> MovieDTO.of(entity, entity.getCategories(), entity.getCountries())) // Retourne le film après la transaction
+                                            .map(movieMapper::movieToMovieDTO) // Retourne le film après la transaction
                             );
                         });
     }
@@ -438,7 +423,7 @@ public class MovieService {
                         )
                         .chain(movieRepository::persist)
                         .call(movieActorRepository::flush) // Force la génération des IDs
-                        .flatMap(movie -> movie.fetchAndMapTechniciansList(techniciansGetter, errorMessage))
+                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, errorMessage))
         );
     }
 
@@ -461,7 +446,7 @@ public class MovieService {
                                 .chain(movieRepository::persist)
                                 .call(movieActorRepository::flush) // Force la génération des IDs
                                 .call(statsService::updateActorsStats)
-                                .flatMap(Movie::fetchAndMapActorList) // Convertit les entités en DTO
+                                .flatMap(this::fetchAndMapActorList) // Convertit les entités en DTO
                 );
     }
 
@@ -494,7 +479,7 @@ public class MovieService {
                                                 .call(ceremonyAwardsRepository::persist)
                                                 .call(ceremonyAwardsRepository::flush)
                                                 .call(() -> movieRepository.persist(movie))
-                                                .map(ceremonyAwards -> CeremonyAwardsDTO.of(ceremonyAwards, ceremonyAwards.getAwards()))
+                                                .map(ceremonyAwardsMapper::ceremonyAwardsToCeremonyAwardsDTO)
                                 )
                 );
     }
@@ -550,7 +535,7 @@ public class MovieService {
                                         })
                                         .chain(movieRepository::persist)
                                         .call(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
-                                        .flatMap(Movie::fetchAndMapCategorySet)
+                                        .flatMap(this::fetchAndMapCategorySet)
                         );
     }
 
@@ -585,7 +570,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .call(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
-                                        .flatMap(Movie::fetchAndMapCountrySet)
+                                        .flatMap(this::fetchAndMapCountrySet)
                         );
     }
 
@@ -621,7 +606,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .call(movieActorRepository::flush) // Force la génération des IDs
-                                        .flatMap(movie -> movie.fetchAndMapTechniciansList(techniciansGetter, errorMessage))
+                                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, errorMessage))
                         )
                 ;
     }
@@ -652,7 +637,7 @@ public class MovieService {
                                 .chain(movieRepository::persist)
                                 .call(movieActorRepository::flush) // Force la génération des IDs
                                 .call(statsService::updateActorsStats)
-                                .flatMap(Movie::fetchAndMapActorList) // Convertit les entités en DTO
+                                .flatMap(this::fetchAndMapActorList) // Convertit les entités en DTO
                 );
     }
 
@@ -683,7 +668,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
-                                        .flatMap(Movie::fetchAndMapCategorySet)
+                                        .flatMap(this::fetchAndMapCategorySet)
                                         .invoke(() -> log.info("Catégories ajoutées au film {}", movieId))
                         )
                         .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des catégories au film {} : {}", movieId, e.getMessage()))
@@ -717,7 +702,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
-                                        .flatMap(Movie::fetchAndMapCountrySet)
+                                        .flatMap(this::fetchAndMapCountrySet)
                                         .invoke(() -> log.info("Pays ajoutés au film {}", movieId))
                         )
                         .onFailure().invoke(e -> log.error("Erreur lors de l'ajout des pays au film {} : {}", movieId, e.getMessage()))
@@ -751,7 +736,12 @@ public class MovieService {
                                         .flatMap(movie ->
                                                 Mutiny.fetch(techniciansGetter.apply(movie))
                                                         .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                                                        .map(personService::fromMovieTechnicianListEntity)
+                                                        .map(tList ->
+                                                                tList.stream()
+                                                                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
+                                                                        .toList()
+
+                                                        )
                                         )
                         )
                 ;
@@ -779,11 +769,7 @@ public class MovieService {
                                                         .replaceWith(movie)
                                         )
                                         .chain(movieRepository::persist)
-                                        .flatMap(movie ->
-                                                Mutiny.fetch(movie.getMovieActors())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
-                                                        .map(personService::fromMovieActorListEntity)
-                                        )
+                                        .flatMap(this::fetchAndMapActorList)
                         )
                 ;
     }
@@ -810,7 +796,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
-                                        .flatMap(Movie::fetchAndMapCategorySet)
+                                        .flatMap(this::fetchAndMapCategorySet)
                                         .invoke(() -> log.info("Category {} removed from movie {}", categoryId, movieId))
                         )
                         .onFailure().invoke(e -> log.error("Failed to remove category from movie {}: {}", movieId, e.getMessage()))
@@ -839,7 +825,7 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .chain(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
-                                        .flatMap(Movie::fetchAndMapCountrySet)
+                                        .flatMap(this::fetchAndMapCountrySet)
                                         .invoke(() -> log.info("Country {} removed from movie {}", countryId, movieId))
                         )
                         .onFailure().invoke(e -> log.error("Failed to remove country from movie {}: {}", movieId, e.getMessage()))
@@ -912,13 +898,7 @@ public class MovieService {
                                 .chain(movie -> updateCategoriesIfNeeded(movie, movieDTO))
                                 .chain(movie -> updateCountriesIfNeeded(movie, movieDTO))
                                 .chain(movie -> updateReleaseDateIfNeeded(movie, movieDTO))
-                                .map(movie ->
-                                        MovieDTO.of(
-                                                movie,
-                                                movie.getCategories(),
-                                                movie.getCountries()
-                                        )
-                                )
+                                .map(movieMapper::movieToMovieDTO)
                 );
     }
 
@@ -1138,6 +1118,62 @@ public class MovieService {
                             log.error(throwable.getMessage());
                             throw new WebApplicationException("Erreur lors de la suppression des cérémonies", throwable);
                         });
+    }
+
+    public Uni<List<MovieActorDTO>> fetchAndMapActorList(Movie movie) {
+        return
+                Mutiny.fetch(movie.getMovieActors())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
+                        .map(movieActorMapper::toDTOList)
+                ;
+    }
+
+    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> fetchAndMapTechniciansList(Movie movie, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
+        return
+                Mutiny.fetch(techniciansGetter.apply(movie))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
+                        .map(tList ->
+                                tList.stream()
+                                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
+                                        .toList()
+                        )
+                ;
+    }
+
+    /**
+     * Récupère et convertit les catégories associées à un film en objets {@link CategoryDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les catégories d'un film
+     * et les transformer en un ensemble de DTOs. Si la liste des catégories est `null`,
+     * une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble de {@link CategoryDTO}.
+     * @throws IllegalStateException si l'ensemble des catégories n'est pas initialisé.
+     */
+    public Uni<Set<CategoryDTO>> fetchAndMapCategorySet(Movie movie) {
+        return
+                Mutiny.fetch(movie.getCategories())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
+                        .map(categoryMapper::toDTOSet)
+                ;
+    }
+
+    /**
+     * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
+     * <p>
+     * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
+     * et les transformer en un ensemble de DTOs. Si la liste des pays est `null`,
+     * une exception est levée.
+     *
+     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.
+     * @throws IllegalStateException si la liste des pays n'est pas initialisée.
+     */
+    public Uni<Set<CountryDTO>> fetchAndMapCountrySet(Movie movie) {
+        return
+                Mutiny.fetch(movie.getCountries())
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                        .map(countryMapper::toDTOSet)
+                ;
     }
 
 }

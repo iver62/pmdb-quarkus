@@ -81,17 +81,6 @@ public class CountryResource {
     }
 
     @GET
-    @Path("{id}/full")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getFullCountry(Long id) {
-        return
-                countryService.getFull(id)
-                        .onItem().ifNotNull().transform(country -> Response.ok(country).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
-                ;
-    }
-
-    @GET
     @Path("search")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> searchCountriesByName(@QueryParam("query") String query) {

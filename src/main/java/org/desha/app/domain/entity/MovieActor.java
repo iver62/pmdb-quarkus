@@ -42,24 +42,15 @@ public class MovieActor extends PanacheEntityBase implements Comparable<MovieAct
     @Column(name = "rang", nullable = false)
     private Integer rank;
 
-    private static MovieActor build(Long id, Movie movie, Person person, String role, Integer rank) {
+    public static MovieActor build(Movie movie, Person person, String role, Integer rank) {
         return
                 MovieActor.builder()
-                        .id(id)
                         .movie(movie)
                         .person(person)
                         .role(role)
                         .rank(rank)
                         .build()
                 ;
-    }
-
-    public static MovieActor of(Long id, Movie movie, Person actor, String role, Integer rank) {
-        return build(id, movie, actor, role, rank);
-    }
-
-    public static MovieActor of(Movie movie, Person actor, String role, Integer rank) {
-        return build(null, movie, actor, role, rank);
     }
 
     public String toString() {

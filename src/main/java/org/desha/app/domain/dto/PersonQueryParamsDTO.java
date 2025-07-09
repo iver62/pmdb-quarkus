@@ -2,7 +2,7 @@ package org.desha.app.domain.dto;
 
 import jakarta.ws.rs.QueryParam;
 import lombok.Getter;
-import org.desha.app.domain.PersonType;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.exception.InvalidDateException;
 
 import java.text.MessageFormat;

@@ -12,8 +12,10 @@ public class Messages {
     public final String CASTERS_NOT_INITIALIZED = "La liste des casteurs n'est pas initialisée";
     public final String CATEGORIES_NOT_INITIALIZED = "L'ensemble des catégories n'est pas initialisé";
     public final String CEREMONY_AWARDS_NOT_INITIALIZED = "L'ensemble des cérémonies n'est pas initialisé";
+    public final String CEREMONY_NOT_FOUND = "Cérémonie introuvable";
     public final String COMPOSERS_NOT_INITIALIZED = "La liste des compositeurs n'est pas initialisée";
     public final String COUNTRIES_NOT_INITIALIZED = "L'ensemble des pays n'est pas initialisé";
+    public final String COUNTRIES_NOT_FOUND = "Pays introuvable";
     public final String COSTUME_DESIGNERS_NOT_INITIALIZED = "La liste des costumiers n'est pas initialisée";
     public final String DIRECTORS_NOT_INITIALIZED = "La liste des réalisateurs n'est pas initialisée";
     public final String EDITORS_NOT_INITIALIZED = "La liste des monteurs n'est pas initialisée";
@@ -29,7 +31,7 @@ public class Messages {
     public final String SFX_SUPERVISORS_NOT_INITIALIZED = "La liste des spécialistes des effets spéciaux n'est pas initialisée";
     public final String SOUND_EDITORS_NOT_INITIALIZED = "La liste des ingénieurs du son n'est pas initialisée";
     public final String STUNTMEN_NOT_INITIALIZED = "La liste des cascadeurs n'est pas initialisée";
+    public final String USER_NOT_FOUND = "Utilisateur introuvable";
     public final String VFX_SUPERVISORS_NOT_INITIALIZED = "La liste des spécialistes des effets visuels n'est pas initialisée";
-
 
 }

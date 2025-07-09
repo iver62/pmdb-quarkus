@@ -111,14 +111,24 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     }
 
     public Uni<List<Movie>> searchByTitle(String term) {
-        String query = "LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', ?1))";
-
-        return list(query, Sort.by("title"), "%" + term + "%");
+        return
+                list(
+                        """
+                                SELECT DISTINCT m
+                                FROM Movie m
+                                LEFT JOIN FETCH m.countries
+                                LEFT JOIN FETCH m.categories
+                                WHERE LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', ?1))
+                                """,
+                        Sort.by("title"),
+                        "%" + term + "%"
+                );
     }
 
     public Uni<Movie> findByIdWithCountriesAndCategories(Long id) {
         return
                 find("""
+                        SELECT DISTINCT m
                         FROM Movie m
                         LEFT JOIN FETCH m.countries
                         LEFT JOIN FETCH m.categories

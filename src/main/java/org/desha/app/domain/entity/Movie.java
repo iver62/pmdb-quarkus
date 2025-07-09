@@ -8,9 +8,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.dto.*;
-import org.desha.app.utils.Messages;
+import org.desha.app.domain.dto.MovieActorDTO;
+import org.desha.app.domain.dto.MovieDTO;
+import org.desha.app.domain.dto.MovieTechnicianDTO;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.time.LocalDate;
@@ -169,24 +169,6 @@ public class Movie extends PanacheEntityBase {
     @PreUpdate
     protected void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
-    }
-
-    public static Movie of(MovieDTO movieDTO) {
-        return
-                Movie.builder()
-                        .title(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getTitle()).trim()))
-                        .originalTitle(StringUtils.capitalize(StringUtils.defaultString(movieDTO.getOriginalTitle()).trim()))
-                        .releaseDate(movieDTO.getReleaseDate())
-                        .synopsis(StringUtils.defaultString(movieDTO.getSynopsis()).trim())
-                        .runningTime(movieDTO.getRunningTime())
-                        .budget(movieDTO.getBudget().getValue())
-                        .budgetCurrency(movieDTO.getBudget().getCurrency())
-                        .boxOffice(movieDTO.getBoxOffice().getValue())
-                        .boxOfficeCurrency(movieDTO.getBoxOffice().getCurrency())
-                        .posterFileName(movieDTO.getPosterFileName())
-                        .user(User.fromDTO(movieDTO.getUser()))
-                        .build()
-                ;
     }
 
     public void updateGeneralInfos(MovieDTO movieDTO) {
@@ -398,60 +380,4 @@ public class Movie extends PanacheEntityBase {
         ceremoniesAwards.clear();
     }
 
-    public Uni<List<MovieActorDTO>> fetchAndMapActorList() {
-        return
-                Mutiny.fetch(movieActors)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.ACTORS_NOT_INITIALIZED))
-                        .map(MovieActorDTO::fromEntityList)
-                ;
-    }
-
-    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> fetchAndMapTechniciansList(Function<Movie, List<T>> techniciansGetter, String errorMessage) {
-        return
-                Mutiny.fetch(techniciansGetter.apply(this))
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(errorMessage))
-                        .map(tList ->
-                                tList
-                                        .stream()
-                                        .map(MovieTechnicianDTO::of)
-                                        .toList()
-                        )
-                ;
-    }
-
-    /**
-     * Récupère et convertit les catégories associées à un film en objets {@link CategoryDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les catégories d'un film
-     * et les transformer en un ensemble de DTOs. Si la liste des catégories est `null`,
-     * une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble de {@link CategoryDTO}.
-     * @throws IllegalStateException si l'ensemble des catégories n'est pas initialisé.
-     */
-    public Uni<Set<CategoryDTO>> fetchAndMapCategorySet() {
-        return
-                Mutiny.fetch(categories)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
-                        .map(CategoryDTO::fromCategorySetEntity)
-                ;
-    }
-
-    /**
-     * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
-     * <p>
-     * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des pays est `null`,
-     * une exception est levée.
-     *
-     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.
-     * @throws IllegalStateException si la liste des pays n'est pas initialisée.
-     */
-    public Uni<Set<CountryDTO>> fetchAndMapCountrySet() {
-        return
-                Mutiny.fetch(countries)
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
-                        .map(CountryDTO::fromCountryEntitySet)
-                ;
-    }
 }

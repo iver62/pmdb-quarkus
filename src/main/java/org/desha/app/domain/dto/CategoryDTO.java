@@ -1,17 +1,19 @@
 package org.desha.app.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Category;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CategoryDTO {
 
     private Long id;
@@ -19,36 +21,15 @@ public class CategoryDTO {
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;
 
-    public static CategoryDTO of(Category category) {
+    public static CategoryDTO build(Long id, String name, LocalDateTime creationDate, LocalDateTime lastUpdate) {
         return
                 CategoryDTO.builder()
-                        .id(category.getId())
-                        .name(category.getName())
-                        .creationDate(category.getCreationDate())
-                        .lastUpdate(category.getLastUpdate())
-                        .build();
-    }
-
-    public static Set<CategoryDTO> fromCategorySetEntity(Set<Category> categorySet) {
-        return
-                Optional.ofNullable(categorySet).orElse(Set.of())
-                        .stream()
-                        .map(CategoryDTO::of)
-                        .collect(Collectors.toSet())
+                        .id(id)
+                        .name(name)
+                        .creationDate(creationDate)
+                        .lastUpdate(lastUpdate)
+                        .build()
                 ;
-    }
-
-    public static List<CategoryDTO> fromCategoryListEntity(List<Category> categoryList) {
-        return
-                categoryList
-                        .stream()
-                        .map(CategoryDTO::of)
-                        .toList()
-                ;
-    }
-
-    public String toString() {
-        return id + ": " + name;
     }
 
 }

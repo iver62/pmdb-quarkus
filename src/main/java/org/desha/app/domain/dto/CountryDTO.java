@@ -3,13 +3,6 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
-import org.desha.app.domain.entity.Country;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Builder
 @Getter
@@ -22,58 +15,17 @@ public class CountryDTO {
     private String alpha3;
     private String nomEnGb;
     private String nomFrFr;
-    private LocalDateTime lastUpdate;
-    private Set<MovieDTO> movies;
-    private Set<PersonDTO> persons;
 
-    public static CountryDTO of(Country country) {
+    public static CountryDTO build(Long id, int code, String alpha2, String alpha3, String nomEnGb, String nomFrFr) {
         return
                 CountryDTO.builder()
-                        .id(country.getId())
-                        .code(country.getCode())
-                        .alpha2(country.getAlpha2())
-                        .alpha3(country.getAlpha3())
-                        .nomFrFr(country.getNomFrFr())
-                        .nomEnGb(country.getNomEnGb())
-                        .build();
-    }
-
-    public static CountryDTO fromFullEntity(Country country) {
-        return
-                CountryDTO.builder()
-                        .id(country.getId())
-                        .code(country.getCode())
-                        .alpha2(country.getAlpha2())
-                        .alpha3(country.getAlpha3())
-                        .nomFrFr(country.getNomFrFr())
-                        .nomEnGb(country.getNomEnGb())
-                        .movies(
-                                Optional.ofNullable(country.getMovies())
-                                        .orElse(Set.of())
-                                        .stream()
-                                        .map(MovieDTO::of)
-                                        .collect(Collectors.toSet())
-                        )
-                        .persons(PersonDTO.fromEntitySet(country.getPersons()))
-                        .build();
-    }
-
-    public static Set<CountryDTO> fromCountryEntitySet(Set<Country> countrySet) {
-        return
-                Optional.ofNullable(countrySet).orElse(Set.of())
-                        .stream()
-                        .map(CountryDTO::of)
-                        .collect(Collectors.toSet())
+                        .id(id)
+                        .code(code)
+                        .alpha2(alpha2)
+                        .alpha3(alpha3)
+                        .nomEnGb(nomEnGb)
+                        .nomFrFr(nomFrFr)
+                        .build()
                 ;
     }
-
-    public static List<CountryDTO> fromCountryListEntity(List<Country> countryList) {
-        return
-                countryList
-                        .stream()
-                        .map(CountryDTO::of)
-                        .toList()
-                ;
-    }
-
 }

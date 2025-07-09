@@ -3,12 +3,11 @@ package org.desha.app.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.reactive.mutiny.Mutiny;
+import org.desha.app.domain.dto.CountryDTO;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -51,7 +50,15 @@ public class Country extends PanacheEntityBase {
     @ManyToMany(mappedBy = "countries")
     private Set<Person> persons = new HashSet<>();
 
-    public Uni<Movie> addMovie(Movie movie) {
+    public void updateMovie(CountryDTO countryDTO) {
+        setCode(countryDTO.getCode());
+        setAlpha2(countryDTO.getAlpha2());
+        setAlpha3(countryDTO.getAlpha3());
+        setNomEnGb(countryDTO.getNomEnGb());
+        setNomFrFr(countryDTO.getNomFrFr());
+    }
+
+    /*public Uni<Movie> addMovie(Movie movie) {
         return
                 Mutiny.fetch(movies)
                         .invoke(
@@ -62,6 +69,6 @@ public class Country extends PanacheEntityBase {
                         )
                         .replaceWith(movie)
                 ;
-    }
+    }*/
 
 }

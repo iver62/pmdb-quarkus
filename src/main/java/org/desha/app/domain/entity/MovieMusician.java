@@ -14,23 +14,14 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieMusician extends MovieTechnician {
 
-    private static MovieMusician build(Long id, Movie movie, Person person, String role) {
+    public static MovieMusician build(Movie movie, Person person, String role) {
         return
                 MovieMusician.builder()
-                        .id(id)
                         .movie(movie)
                         .person(person)
                         .role(role)
                         .build()
                 ;
-    }
-
-    public static MovieMusician of(Long id, Movie movie, Person person, String role) {
-        return build(id, movie, person, role);
-    }
-
-    public static MovieMusician of(Movie movie, Person person, String role) {
-        return build(null, movie, person, role);
     }
 
 }

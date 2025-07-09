@@ -7,7 +7,7 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.PersonType;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.record.PersonWithMoviesNumber;
@@ -74,10 +74,6 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         );
 
         return count(query, params);
-    }
-
-    public Uni<List<Person>> findByName(String name) {
-        return findAll().list();
     }
 
     public Uni<List<Person>> findByIds(List<Long> ids) {
