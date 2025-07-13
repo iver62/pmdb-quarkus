@@ -265,24 +265,24 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.FILM_NOT_FOUND))
                                         .map(movie ->
                                                 TechnicalTeamDTO.build(
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieProducers()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieDirectors()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieAssistantDirectors()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieScreenwriters()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieComposers()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieMusicians()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMoviePhotographers()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieCostumeDesigners()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieSetDesigners()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieEditors()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieCasters()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieArtists()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieSoundEditors()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieVfxSupervisors()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieSfxSupervisors()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieMakeupArtists()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieHairDressers()),
-                                                        personService.fromMovieTechnicianListEntity(movie.getMovieStuntmen())
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieProducers()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieDirectors()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieAssistantDirectors()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieScreenwriters()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieComposers()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieMusicians()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMoviePhotographers()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieCostumeDesigners()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieSetDesigners()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieEditors()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieCasters()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieArtists()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieSoundEditors()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieVfxSupervisors()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieSfxSupervisors()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieMakeupArtists()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieHairDressers()),
+                                                        movieTechnicianMapper.toDTOList(movie.getMovieStuntmen())
                                                 )
                                         )
                         )

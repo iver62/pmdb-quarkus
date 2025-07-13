@@ -6,7 +6,7 @@ public class CustomHttpHeaders extends HttpHeaders {
 
     public static final String X_TOTAL_COUNT = "X-Total-Count";
 
-    private CustomHttpHeaders(io.vertx.core.http.HttpHeaders delegate) {
+    public CustomHttpHeaders(io.vertx.core.http.HttpHeaders delegate) {
         super(delegate);
     }
 }

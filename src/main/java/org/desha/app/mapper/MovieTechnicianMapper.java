@@ -16,7 +16,7 @@ public interface MovieTechnicianMapper {
 
     MovieTechnicianDTO toMovieTechnicianDTO(MovieTechnician entity);
 
-    List<MovieTechnicianDTO> toDTOList(List<MovieTechnician> entityList);
+    List<MovieTechnicianDTO> toDTOList(List<? extends MovieTechnician> entityList);
 
     Set<MovieTechnicianDTO> toDTOSet(Set<MovieTechnician> entitySet);
 }

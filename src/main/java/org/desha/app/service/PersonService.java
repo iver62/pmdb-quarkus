@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
-import org.desha.app.domain.entity.MovieTechnician;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.enums.PersonType;
 import org.desha.app.mapper.*;
@@ -39,7 +38,6 @@ public class PersonService implements PersonServiceInterface {
     private final CountryMapper countryMapper;
     private final MovieMapper movieMapper;
     private final MovieActorMapper movieActorMapper;
-    private final MovieTechnicianMapper movieTechnicianMapper;
     private final PersonMapper personMapper;
 
     private final CountryService countryService;
@@ -59,7 +57,6 @@ public class PersonService implements PersonServiceInterface {
             CountryMapper countryMapper,
             MovieMapper movieMapper,
             MovieActorMapper movieActorMapper,
-            MovieTechnicianMapper movieTechnicianMapper,
             PersonMapper personMapper,
             CountryService countryService,
             FileService fileService,
@@ -75,7 +72,6 @@ public class PersonService implements PersonServiceInterface {
         this.countryMapper = countryMapper;
         this.movieMapper = movieMapper;
         this.movieActorMapper = movieActorMapper;
-        this.movieTechnicianMapper = movieTechnicianMapper;
         this.personMapper = personMapper;
         this.countryService = countryService;
         this.fileService = fileService;
@@ -266,11 +262,14 @@ public class PersonService implements PersonServiceInterface {
             return fileService.getFile(PHOTOS_DIR, Person.DEFAULT_PHOTO);
         }
 
-        return fileService.getFile(PHOTOS_DIR, fileName)
-                .onFailure(FileNotFoundException.class).recoverWithUni(() -> {
-                    log.warn("Photo {} not found, returning default photo.", fileName);
-                    return fileService.getFile(PHOTOS_DIR, Person.DEFAULT_PHOTO);
-                });
+        return
+                fileService.getFile(PHOTOS_DIR, fileName)
+                        .onFailure(FileNotFoundException.class).recoverWithUni(() -> {
+                                    log.warn("Photo {} not found, returning default photo.", fileName);
+                                    return fileService.getFile(PHOTOS_DIR, Person.DEFAULT_PHOTO);
+                                }
+                        )
+                ;
     }
 
     private Uni<String> uploadPhoto(FileUpload file) {
@@ -279,25 +278,29 @@ public class PersonService implements PersonServiceInterface {
             return Uni.createFrom().item(Person.DEFAULT_PHOTO);
         }
 
-        return fileService.uploadFile(PHOTOS_DIR, file)
-                .onFailure().recoverWithItem(error -> {
-                    log.error("Photo upload failed: {}", error.getMessage());
-                    return Person.DEFAULT_PHOTO;
-                });
+        return
+                fileService.uploadFile(PHOTOS_DIR, file)
+                        .onFailure().recoverWithItem(error -> {
+                                    log.error("Photo upload failed: {}", error.getMessage());
+                                    return Person.DEFAULT_PHOTO;
+                                }
+                        )
+                ;
     }
 
     public Uni<PersonDTO> save(PersonDTO personDTO) {
         return
                 Panache.withTransaction(() ->
-                        personRepository.persist(Person.build(
-                                        personDTO.getId(),
-                                        personDTO.getName(),
-                                        personDTO.getPhotoFileName(),
-                                        personDTO.getDateOfBirth(),
-                                        personDTO.getDateOfDeath(),
-                                        personDTO.getTypes(),
-                                        personDTO.getCreationDate(),
-                                        personDTO.getLastUpdate())
+                        personRepository.persist(
+                                        Person.build(
+                                                personDTO.getName(),
+                                                personDTO.getPhotoFileName(),
+                                                personDTO.getDateOfBirth(),
+                                                personDTO.getDateOfDeath(),
+                                                personDTO.getTypes(),
+                                                personDTO.getCreationDate(),
+                                                personDTO.getLastUpdate()
+                                        )
                                 )
                                 .map(personMapper::personToPersonDTO)
                 );
@@ -458,20 +461,18 @@ public class PersonService implements PersonServiceInterface {
                         });
     }
 
-    public Uni<Person> prepareAndPersistPerson(LitePersonDTO lightPersonDTO, PersonType type) {
+    public Uni<Person> prepareAndPersistPerson(LitePersonDTO litePersonDTO, PersonType type) {
         return
-                personRepository.findById(lightPersonDTO.getId())
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
+                personRepository.findById(litePersonDTO.getId())
+                        .onItem().ifNull().switchTo(() ->
+                                personRepository.persist(
+                                        Person.build(
+                                                litePersonDTO.getName(),
+                                                litePersonDTO.getPhotoFileName()
+                                        )
+                                )
+                        )
                         .invoke(person -> person.addType(type))
-                        .call(personRepository::persist);
-    }
-
-    public <T extends MovieTechnician> List<MovieTechnicianDTO> fromMovieTechnicianListEntity(List<T> movieTechnicians) {
-        return
-                movieTechnicians
-                        .stream()
-                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
-                        .toList()
                 ;
     }
 

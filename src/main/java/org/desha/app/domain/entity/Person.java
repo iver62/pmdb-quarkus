@@ -5,6 +5,7 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.enums.PersonType;
 
@@ -130,17 +131,26 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
         this.lastUpdate = LocalDateTime.now();
     }
 
-    public static Person build(Long id, String name, String photoFileName, LocalDate dateOfBirth, LocalDate dateOfDeath, Set<PersonType> types, LocalDateTime creationDate, LocalDateTime lastUpdate) {
+    public static Person build(String name, String photoFileName, LocalDate dateOfBirth, LocalDate dateOfDeath, Set<PersonType> types, LocalDateTime creationDate, LocalDateTime lastUpdate) {
         return
                 Person.builder()
-                        .id(id)
-                        .name(name.trim())
+                        .name(StringUtils.defaultString(name).trim())
                         .photoFileName(Optional.ofNullable(photoFileName).orElse(DEFAULT_PHOTO))
                         .dateOfBirth(dateOfBirth)
                         .dateOfDeath(dateOfDeath)
                         .types(types)
                         .creationDate(creationDate)
                         .lastUpdate(lastUpdate)
+                        .build()
+                ;
+    }
+
+    public static Person build(String name, String photoFileName) {
+        return
+                Person.builder()
+                        .name(StringUtils.defaultString(name).trim())
+                        .photoFileName(Optional.ofNullable(photoFileName).orElse(DEFAULT_PHOTO))
+                        .types(new HashSet<>())
                         .build()
                 ;
     }
