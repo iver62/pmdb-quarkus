@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
 import org.desha.app.domain.record.Repartition;
+import org.desha.app.exception.PhotoDeletionException;
 import org.desha.app.mapper.*;
 import org.desha.app.repository.*;
 import org.desha.app.utils.Messages;
@@ -47,7 +48,6 @@ public class MovieService {
     private final CountryService countryService;
     private final FileService fileService;
     private final CategoryService categoryService;
-    private final PersonService personService;
     private final StatsService statsService;
 
     private final CeremonyAwardsRepository ceremonyAwardsRepository;
@@ -75,7 +75,6 @@ public class MovieService {
             CountryRepository countryRepository,
             FileService fileService,
             CategoryService categoryService,
-            PersonService personService,
             StatsService statsService,
             MovieRepository movieRepository,
             MovieActorRepository movieActorRepository,
@@ -101,7 +100,6 @@ public class MovieService {
         this.movieActorRepository = movieActorRepository;
         this.userRepository = userRepository;
         this.personRepository = personRepository;
-        this.personService = personService;
         this.statsService = statsService;
     }
 
@@ -993,7 +991,8 @@ public class MovieService {
                 fileService.deleteFile(POSTERS_DIR, fileName);
                 return null;
             } catch (IOException e) {
-                throw new RuntimeException("Erreur lors de la suppression de l'affiche", e.getCause());
+                log.error("Erreur lors de la suppression de la photo {}: {}", fileName, e.getCause().getLocalizedMessage());
+                throw new PhotoDeletionException("Erreur lors de la suppression de l'affiche " + fileName);
             }
         });
     }

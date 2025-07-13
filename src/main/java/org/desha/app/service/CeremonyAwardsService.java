@@ -16,6 +16,7 @@ import org.desha.app.domain.entity.Person;
 import org.desha.app.mapper.AwardMapper;
 import org.desha.app.mapper.CeremonyAwardsMapper;
 import org.desha.app.repository.CeremonyAwardsRepository;
+import org.desha.app.utils.Messages;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 import java.util.*;
@@ -81,7 +82,7 @@ public class CeremonyAwardsService {
                 Panache
                         .withTransaction(() ->
                                 ceremonyAwardsRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Cérémonie introuvable"))
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.CEREMONY_NOT_FOUND))
                                         .chain(
                                                 ceremonyAwards ->
                                                         awardService.getPersonsByAwards(awardDTOList)
@@ -119,7 +120,7 @@ public class CeremonyAwardsService {
                 Panache
                         .withTransaction(() ->
                                 ceremonyAwardsRepository.findById(ceremonyAwardsId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Cérémonie introuvable"))
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.CEREMONY_NOT_FOUND))
                                         .chain(ceremonyAwards ->
                                                 Mutiny.fetch(ceremonyAwards.getAwards())
                                                         .invoke(awardList -> ceremonyAwards.removeAward(awardId))
@@ -136,7 +137,7 @@ public class CeremonyAwardsService {
                 Panache
                         .withTransaction(() ->
                                 ceremonyAwardsRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Cérémonie introuvable"))
+                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.CEREMONY_NOT_FOUND))
                                         .chain(ceremonyAwards ->
                                                 Mutiny.fetch(ceremonyAwards.getAwards())
                                                         .invoke(awardList -> ceremonyAwards.clearAwards())

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.enums.PersonType;
+import org.desha.app.exception.PhotoDeletionException;
 import org.desha.app.mapper.*;
 import org.desha.app.repository.*;
 import org.desha.app.utils.Messages;
@@ -350,7 +351,8 @@ public class PersonService implements PersonServiceInterface {
                 fileService.deleteFile(PHOTOS_DIR, fileName);
                 return null;
             } catch (IOException e) {
-                throw new RuntimeException("Erreur lors de la suppression de la photo", e.getCause());
+                log.error("Erreur lors de la suppression de la photo {}: {}", fileName, e.getCause().getLocalizedMessage());
+                throw new PhotoDeletionException("Erreur lors de la suppression de la photo " + fileName);
             }
         });
     }

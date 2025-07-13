@@ -4,6 +4,8 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.desha.app.exception.FileNotFoundException;
+import org.desha.app.exception.FileUploadException;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.File;
@@ -25,7 +27,7 @@ public class FileService {
 
             if (!Files.exists(filePath)) {
                 log.warn("Requested file not found: {}", filePath);
-                throw new RuntimeException("File not found: " + fileName);
+                throw new FileNotFoundException("Fichier introuvable: " + fileName);
             }
 
             return filePath.toFile();
@@ -49,7 +51,7 @@ public class FileService {
                 return fileName;
             } catch (IOException e) {
                 log.error("File upload failed: {}", e.getMessage());
-                throw new RuntimeException("File upload failed", e);
+                throw new FileUploadException("Erreur lors de l'upload du fichier " + fileName);
             }
         });
     }

@@ -35,6 +35,7 @@ public class MovieStats {
                         .byCreationDate(byCreationDate)
                         .moviesNumberEvolution(moviesNumberEvolution)
                         .actorsNumberEvolution(actorsNumberEvolution)
-                        .build();
+                        .build()
+                ;
     }
 }

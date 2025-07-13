@@ -18,11 +18,6 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PersonDTO extends LitePersonDTO {
 
-    //    private Long id;
-//    private String name;
-//    private String photoFileName;
-//    private LocalDate dateOfBirth;
-//    private LocalDate dateOfDeath;
     private Long numberOfMovies;
     private Long numberOfAwards;
     private Set<PersonType> types;

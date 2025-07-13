@@ -12,10 +12,12 @@ public class ErrorResponse {
     private String details;
 
     public static ErrorResponse build(String error, String invalidField, String details) {
-        return ErrorResponse.builder()
-                .error(error)
-                .invalidField(invalidField)
-                .details(details)
-                .build();
+        return
+                ErrorResponse.builder()
+                        .error(error)
+                        .invalidField(invalidField)
+                        .details(details)
+                        .build()
+                ;
     }
 }

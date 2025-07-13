@@ -27,7 +27,6 @@ public class CountryService {
     private final CountryMapper countryMapper;
     private final MovieMapper movieMapper;
     private final PersonMapper personMapper;
-    private final PersonService personService;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final PersonRepository personRepository;
@@ -37,7 +36,6 @@ public class CountryService {
             CountryMapper countryMapper,
             MovieMapper movieMapper,
             PersonMapper personMapper,
-            PersonService personService,
             CountryRepository countryRepository,
             MovieRepository movieRepository,
             PersonRepository personRepository
@@ -45,7 +43,6 @@ public class CountryService {
         this.countryMapper = countryMapper;
         this.movieMapper = movieMapper;
         this.personMapper = personMapper;
-        this.personService = personService;
         this.countryRepository = countryRepository;
         this.movieRepository = movieRepository;
         this.personRepository = personRepository;
