@@ -12,7 +12,6 @@ public class Messages {
     public final String CASTERS_NOT_INITIALIZED = "La liste des casteurs n'est pas initialisée";
     public final String CATEGORIES_NOT_INITIALIZED = "L'ensemble des catégories n'est pas initialisé";
     public final String CEREMONY_AWARDS_NOT_INITIALIZED = "L'ensemble des cérémonies n'est pas initialisé";
-    public final String CEREMONY_NOT_FOUND = "Cérémonie introuvable";
     public final String COMPOSERS_NOT_INITIALIZED = "La liste des compositeurs n'est pas initialisée";
     public final String COUNTRIES_NOT_INITIALIZED = "L'ensemble des pays n'est pas initialisé";
     public final String COUNTRIES_NOT_FOUND = "Pays introuvable";
@@ -75,6 +74,7 @@ public class Messages {
 
     public final String NOT_FOUND_FILM = "Film introuvable";
     public final String NOT_FOUND_CATEGORY = "Catégorie introuvable";
+    public final String NOT_FOUND_CEREMONY = "Cérémonie introuvable";
 
     public final String HAIRDRESSERS_NOT_INITIALIZED = "La liste des coiffeurs n'est pas initialisée";
     public final String MAKEUP_ARTISTS_NOT_INITIALIZED = "La liste des maquilleurs n'est pas initialisée";
