@@ -14,12 +14,11 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieCaster extends MovieTechnician {
 
-    public static MovieCaster build(Movie movie, Person person, String role) {
+    public static MovieCaster build(Movie movie, Person person) {
         return
                 MovieCaster.builder()
                         .movie(movie)
                         .person(person)
-                        .role(role)
                         .build()
                 ;
     }

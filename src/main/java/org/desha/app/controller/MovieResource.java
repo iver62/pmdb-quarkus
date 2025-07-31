@@ -29,9 +29,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static jakarta.ws.rs.core.Response.Status.*;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
 
 @Path("/movies")
 @ApplicationScoped
@@ -84,16 +85,11 @@ public class MovieResource {
     @GET
     @Path("/{id}")
     public Uni<Response> getMovie(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getById(id)
                         .onItem().ifNotNull().transform(movie -> Response.ok(movie).build())
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération du film: {}", err.getMessage());
-                                    return Response.serverError()
-                                            .entity("Erreur lors de la récupération du film")
-                                            .build();
-                                }
-                        )
                 ;
     }
 
@@ -109,6 +105,7 @@ public class MovieResource {
 
         return
                 movieService.getMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(movieList ->
                                 movieService.count(criteriasDTO)
                                         .map(total ->
@@ -116,13 +113,6 @@ public class MovieResource {
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                         : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                         )
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération des films: {}", err.getMessage());
-                                    return Response.serverError()
-                                            .entity("Erreur lors de la récupération des films")
-                                            .build();
-                                }
                         )
                 ;
     }
@@ -147,37 +137,6 @@ public class MovieResource {
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération des films: {}", err.getMessage());
-                                    return Response.serverError()
-                                            .entity("Erreur lors de la récupération des films")
-                                            .build();
-                                }
-                        )
-                ;
-    }
-
-    @GET
-    @Path("/search")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> searchByTitle(@QueryParam("query") String query) {
-        if (Objects.isNull(query) || query.trim().isEmpty()) {
-            return Uni.createFrom()
-                    .item(
-                            Response
-                                    .status(Response.Status.BAD_REQUEST)
-                                    .entity("Le paramètre 'query' est requis")
-                                    .build()
-                    );
-        }
-
-        return
-                movieService.searchByTitle(query)
-                        .map(movieDTOS ->
-                                movieDTOS.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(movieDTOS).build()
-                        )
                 ;
     }
 
@@ -192,6 +151,7 @@ public class MovieResource {
 
         return
                 movieService.getCountriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term, finalLang)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(countryList ->
                                 movieService.countCountriesInMovies(term, finalLang).map(total ->
                                         countryList.isEmpty()
@@ -199,26 +159,20 @@ public class MovieResource {
                                                 : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération des pays: {}", err.getMessage());
-                                    return Response.serverError()
-                                            .entity("Erreur lors de la récupération des pays")
-                                            .build();
-                                }
-                        )
                 ;
     }
 
     @GET
     @Path("/categories")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getCategories(@BeanParam QueryParamsDTO queryParams) {
+    public Uni<Response> getCategoriesInMovies(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
         String term = queryParams.getTerm();
 
         return
                 movieService.getCategoriesInMovies(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), term)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(categoryDTOList ->
                                 movieService.countCategoriesInMovies(term).map(total ->
                                         categoryDTOList.isEmpty()
@@ -226,24 +180,25 @@ public class MovieResource {
                                                 : Response.ok(categoryDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération des catégories: {}", err.getMessage());
-                                    return Response.serverError()
-                                            .entity("Erreur lors de la récupération des catégories")
-                                            .build();
-                                }
-                        )
                 ;
     }
 
     @GET
     @Path("/title/{title}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getByTitle(@RestPath String title) {
+    public Uni<Response> getMoviesByTitle(@RestPath String title) {
+        if (Objects.isNull(title)) {
+            throw new BadRequestException("Le titre ne peut pas être nul");
+        }
+
         return
                 movieService.getByTitle(title)
-                        .onItem().ifNotNull().transform(panacheEntityBases -> Response.ok(panacheEntityBases).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieList ->
+                                movieList.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieList).build()
+                        )
                 ;
     }
 
@@ -251,6 +206,8 @@ public class MovieResource {
     @Path("/{id}/persons")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersonsByMovie(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
@@ -260,6 +217,7 @@ public class MovieResource {
 
         return
                 movieService.getPersonsByMovie(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(personDTOList ->
                                 movieService.countPersonsByMovie(id, criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -273,22 +231,16 @@ public class MovieResource {
     @GET
     @Path("/{id}/actors")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> getActors(@RestPath Long id) {
+    public Uni<Response> getActorsByMovie(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getActorsByMovie(id)
-                        .onItem().ifNotNull().transform(movieActors ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieActors ->
                                 movieActors.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieActors).build()
-                        )
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la récupération du casting: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la récupération du casting")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -297,6 +249,8 @@ public class MovieResource {
     @Path("/{id}/technical-team")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getTechnicalTeam(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getTechnicalTeam(id)
                         .map(technicalTeam -> Response.ok(technicalTeam).build())
@@ -307,8 +261,11 @@ public class MovieResource {
     @Path("/{id}/producers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getProducers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieProducers, Messages.PRODUCERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -321,8 +278,11 @@ public class MovieResource {
     @Path("/{id}/directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getDirectors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieDirectors, Messages.DIRECTORS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -335,8 +295,11 @@ public class MovieResource {
     @Path("/{id}/assistant-directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getAssistantDirectors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieAssistantDirectors, Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -349,8 +312,11 @@ public class MovieResource {
     @Path("/{id}/screenwriters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getScreenwriters(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieScreenwriters, Messages.SCREENWRITERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -363,8 +329,11 @@ public class MovieResource {
     @Path("/{id}/composers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getComposers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieComposers, Messages.COMPOSERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -377,8 +346,11 @@ public class MovieResource {
     @Path("/{id}/musicians")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMusicians(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieMusicians, Messages.MUSICIANS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -391,8 +363,11 @@ public class MovieResource {
     @Path("/{id}/photographers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhotographers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMoviePhotographers, Messages.PHOTOGRAPHERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -405,8 +380,11 @@ public class MovieResource {
     @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCostumeDesigners(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieCostumeDesigners, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -419,8 +397,11 @@ public class MovieResource {
     @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getSetDesigners(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieSetDesigners, Messages.SET_DESIGNERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -433,8 +414,11 @@ public class MovieResource {
     @Path("/{id}/editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getEditors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieEditors, Messages.EDITORS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -447,8 +431,11 @@ public class MovieResource {
     @Path("/{id}/casters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCasters(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieCasters, Messages.CASTERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -461,8 +448,11 @@ public class MovieResource {
     @Path("/{id}/artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getArtists(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieArtists, Messages.ARTISTS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -490,8 +480,11 @@ public class MovieResource {
     @Path("/{id}/sound-editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getSoundEditors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieSoundEditors, Messages.SOUND_EDITORS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -518,8 +511,11 @@ public class MovieResource {
     @Path("/{id}/vfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getVfxSupervisors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieVfxSupervisors, Messages.VFX_SUPERVISORS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -546,8 +542,11 @@ public class MovieResource {
     @Path("/{id}/sfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getSfxSupervisors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieSfxSupervisors, Messages.SFX_SUPERVISORS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -574,8 +573,11 @@ public class MovieResource {
     @Path("/{id}/makeup-artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieMakeupArtists, Messages.MAKEUP_ARTISTS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -602,8 +604,11 @@ public class MovieResource {
     @Path("/{id}/hair-dressers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getHairDressers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieHairDressers, Messages.HAIRDRESSERS_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -630,8 +635,11 @@ public class MovieResource {
     @Path("/{id}/stuntmen")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getStuntmen(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getMovieTechniciansByMovie(id, Movie::getMovieStuntmen, Messages.STUNTMEN_NOT_INITIALIZED)
+                        .onItem().ifNull().continueWith(List::of)
                         .map(movieTechnicianDTOList ->
                                 movieTechnicianDTOList.isEmpty()
                                         ? Response.noContent().build()
@@ -652,8 +660,11 @@ public class MovieResource {
     @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCategories(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getCategoriesByMovie(id)
+                        .onItem().ifNull().continueWith(Set::of)
                         .map(categoryDTOSet ->
                                 categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
@@ -674,8 +685,11 @@ public class MovieResource {
     @Path("/{id}/countries")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountries(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getCountriesByMovie(id)
+                        .onItem().ifNull().continueWith(Set::of)
                         .map(countryDTOS ->
                                 countryDTOS.isEmpty()
                                         ? Response.noContent().build()
@@ -699,8 +713,11 @@ public class MovieResource {
     @Path("/{id}/ceremonies-awards")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCeremoniesAwards(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.getCeremoniesAwardsByMovie(id)
+                        .onItem().ifNull().continueWith(Set::of)
                         .map(ceremonyAwardsDTOS ->
                                 ceremonyAwardsDTOS.isEmpty()
                                         ? Response.noContent().build()
@@ -739,18 +756,6 @@ public class MovieResource {
                 ;
     }
 
-    @POST
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> create(@RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO) {
-        if (Objects.isNull(movieDTO) || Objects.nonNull(movieDTO.getId())) {
-            throw new WebApplicationException("Id was invalidly set on request.", 422);
-        }
-
-        return
-                movieService.saveMovie(file, movieDTO)
-                        .map(movie -> Response.status(CREATED).entity(movie).build());
-    }
-
     @GET
     @Path("/posters/{fileName}")
     @Produces({"image/jpg", "image/jpeg", "image/png"})
@@ -785,35 +790,57 @@ public class MovieResource {
                 ;
     }
 
-    @PUT
-    @Path("/{id}")
+    @POST
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> update(@RestPath Long id, @RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) MovieDTO movieDTO) {
-        if (Objects.isNull(movieDTO) || Objects.isNull(movieDTO.getTitle())) {
-            throw new WebApplicationException("Movie title was not set on request.", 422);
+    public Uni<Response> create(@RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO) {
+        if (Objects.isNull(movieDTO)) {
+            throw new BadRequestException("Aucune information sur le film n’a été fournie dans la requête");
+        }
+
+        if (Objects.nonNull(movieDTO.getId())) {
+            throw new BadRequestException("L’identifiant a été défini de manière incorrecte dans la requête");
+        }
+
+        if (StringUtils.isBlank(movieDTO.getTitle())) {
+            throw new BadRequestException("Le titre du film n’a pas été fourni dans la requête");
         }
 
         return
-                movieService.updateMovie(id, file, movieDTO)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la modification du film: " + e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la modification du film")
-                                                    .build()
-                                            ;
-                                }
-                        )
+                movieService.saveMovie(file, movieDTO)
+                        .map(movie -> Response.status(CREATED).entity(movie).build())
                 ;
+    }
+
+    @PUT
+    @Path("/{id}")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> update(@RestPath Long id, @RestForm("file") FileUpload file, @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
+        if (Objects.isNull(movieDTO)) {
+            throw new BadRequestException("Aucune information sur le film n’a été fournie dans la requête");
+        }
+
+        if (StringUtils.isBlank(movieDTO.getTitle())) {
+            throw new BadRequestException("Le titre du film n’a pas été fourni dans la requête");
+        }
+
+        if (!Objects.equals(id, movieDTO.getId())) {
+            throw new WebApplicationException("L'identifiant du film ne correspond pas à celui de la requête", 422);
+        }
+
+        return movieService.updateMovie(id, file, movieDTO)
+                .map(entity -> Response.ok(entity).build());
     }
 
     @PUT
     @Path("/{id}/cast")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCast(@RestPath Long id, List<MovieActorDTO> movieActorsList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieActorsList)) {
-            throw new BadRequestException("La liste des acteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des acteurs ne peut pas être nulle");
         }
 
         return
@@ -823,17 +850,26 @@ public class MovieResource {
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ACTOR)
                                         .map(person -> MovieActor.build(movie, person, StringUtils.defaultString(dto.getRole()).trim(), dto.getRank()))
                         )
-                        .onItem().ifNotNull().transform(movieActorDTOList -> Response.ok(movieActorDTOList).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour du casting: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour du casting")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieActorDTOS ->
+                                movieActorDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieActorDTOS).build()
                         )
+                ;
+    }
+
+    private <T extends MovieTechnician> BiFunction<Movie, MovieTechnicianDTO, Uni<T>> preparePerson(
+            PersonType personType,
+            BiFunction<Movie, Person, T> technicianFactory
+    ) {
+        return (movie, dto) ->
+                personService.prepareAndPersistPerson(dto.getPerson(), personType)
+                        .map(person -> {
+                            T technician = technicianFactory.apply(movie, person);
+                            technician.setRole(dto.getRole());
+                            return technician;
+                        })
                 ;
     }
 
@@ -841,8 +877,10 @@ public class MovieResource {
     @Path("/{id}/producers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveProducers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des producteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des producteurs ne peut pas être nulle");
         }
 
         return
@@ -850,20 +888,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieProducers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PRODUCER)
-                                        .map(person -> MovieProducer.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.PRODUCER, MovieProducer::build),
                                 Messages.PRODUCERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour des producteurs: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour des producteurs")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -872,8 +904,10 @@ public class MovieResource {
     @Path("/{id}/directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveDirectors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle");
         }
 
         return
@@ -881,20 +915,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieDirectors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DIRECTOR)
-                                        .map(person -> MovieDirector.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.DIRECTOR, MovieDirector::build),
                                 Messages.DIRECTORS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour des réalisateurs: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour des réalisateurs")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -903,8 +931,10 @@ public class MovieResource {
     @Path("/{id}/assistant-directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveAssistantDirectors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des assistants réalisateurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des assistants réalisateurs ne peut pas être nulle");
         }
 
         return
@@ -912,20 +942,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieAssistantDirectors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ASSISTANT_DIRECTOR)
-                                        .map(person -> MovieAssistantDirector.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.ASSISTANT_DIRECTOR, MovieAssistantDirector::build),
                                 Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour des assistants réalisateurs: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour des assistants réalisateurs")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -934,8 +958,10 @@ public class MovieResource {
     @Path("/{id}/screenwriters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveScreenwriters(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des scénaristes ne peut pas être nulle.");
+            throw new BadRequestException("La liste des scénaristes ne peut pas être nulle");
         }
 
         return
@@ -943,20 +969,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieScreenwriters,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SCREENWRITER)
-                                        .map(person -> MovieScreenwriter.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.SCREENWRITER, MovieScreenwriter::build),
                                 Messages.SCREENWRITERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour des scénaristes: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour des scénaristes")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -965,8 +985,10 @@ public class MovieResource {
     @Path("/{id}/composers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveComposers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des compositeurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des compositeurs ne peut pas être nulle");
         }
 
         return
@@ -974,20 +996,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieComposers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COMPOSER)
-                                        .map(person -> MovieComposer.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.COMPOSER, MovieComposer::build),
                                 Messages.COMPOSERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour des compositeurs: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour des compositeurs")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -996,8 +1012,10 @@ public class MovieResource {
     @Path("/{id}/musicians")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveMusicians(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des musiciens ne peut pas être nulle.");
+            throw new BadRequestException("La liste des musiciens ne peut pas être nulle");
         }
 
         return
@@ -1005,20 +1023,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieMusicians,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MUSICIAN)
-                                        .map(person -> MovieMusician.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.MUSICIAN, MovieMusician::build),
                                 Messages.MUSICIANS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error("Erreur lors de la mise à jour des musiciens: {}", e.getMessage());
-                                    return
-                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                                    .entity("Erreur lors de la mise à jour des musiciens")
-                                                    .build()
-                                            ;
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1027,8 +1039,10 @@ public class MovieResource {
     @Path("/{id}/photographers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> savePhotographers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des photographes ne peut pas être nulle.");
+            throw new BadRequestException("La liste des photographes ne peut pas être nulle");
         }
 
         return
@@ -1036,18 +1050,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMoviePhotographers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PHOTOGRAPHER)
-                                        .map(person -> MoviePhotographer.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.PHOTOGRAPHER, MoviePhotographer::build),
                                 Messages.PHOTOGRAPHERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des photographes")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1056,8 +1066,10 @@ public class MovieResource {
     @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCostumeDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
+            throw new BadRequestException("La liste des costumiers ne peut pas être nulle");
         }
 
         return
@@ -1065,18 +1077,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieCostumeDesigners,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUME_DESIGNER)
-                                        .map(person -> MovieCostumeDesigner.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.COSTUME_DESIGNER, MovieCostumeDesigner::build),
                                 Messages.COSTUME_DESIGNERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des costumiers")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1085,8 +1093,10 @@ public class MovieResource {
     @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveSetDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des décorateurs ne peut pas être nulle");
         }
 
         return
@@ -1094,18 +1104,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieSetDesigners,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SET_DESIGNER)
-                                        .map(person -> MovieSetDesigner.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.SET_DESIGNER, MovieSetDesigner::build),
                                 Messages.SET_DESIGNERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des décorateurs")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1114,8 +1120,10 @@ public class MovieResource {
     @Path("/{id}/editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveEditors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des monteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des monteurs ne peut pas être nulle");
         }
 
         return
@@ -1123,18 +1131,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieEditors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.EDITOR)
-                                        .map(person -> MovieEditor.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.EDITOR, MovieEditor::build),
                                 Messages.EDITORS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des monteurs")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1143,8 +1147,10 @@ public class MovieResource {
     @Path("/{id}/casters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCasters(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des casteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des casteurs ne peut pas être nulle");
         }
 
         return
@@ -1152,18 +1158,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieCasters,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.CASTER)
-                                        .map(person -> MovieCaster.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.CASTER, MovieCaster::build),
                                 Messages.CASTERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des casteurs")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1172,8 +1174,10 @@ public class MovieResource {
     @Path("/{id}/artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveArtists(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des artistes ne peut pas être nulle.");
+            throw new BadRequestException("La liste des artistes ne peut pas être nulle");
         }
 
         return
@@ -1181,18 +1185,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieArtists,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ARTIST)
-                                        .map(person -> MovieArtist.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.ARTIST, MovieArtist::build),
                                 Messages.ARTISTS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des artistes")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1201,8 +1201,10 @@ public class MovieResource {
     @Path("/{id}/sound-editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveSoundEditors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des ingénieurs son ne peut pas être nulle.");
+            throw new BadRequestException("La liste des ingénieurs son ne peut pas être nulle");
         }
 
         return
@@ -1210,18 +1212,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieSoundEditors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SOUND_EDITOR)
-                                        .map(person -> MovieSoundEditor.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.SOUND_EDITOR, MovieSoundEditor::build),
                                 Messages.SOUND_EDITORS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des ingénieurs son")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1230,8 +1228,10 @@ public class MovieResource {
     @Path("/{id}/vfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveVfxSupervisors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des spécialistes des effets visuels ne peut pas être nulle.");
+            throw new BadRequestException("La liste des spécialistes des effets visuels ne peut pas être nulle");
         }
 
         return
@@ -1239,18 +1239,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieVfxSupervisors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.VFX_SUPERVISOR)
-                                        .map(person -> MovieVfxSupervisor.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.VFX_SUPERVISOR, MovieVfxSupervisor::build),
                                 Messages.VFX_SUPERVISORS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des spécialistes des effets visuels")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1259,8 +1255,10 @@ public class MovieResource {
     @Path("/{id}/sfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveSfxSupervisors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle.");
+            throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle");
         }
 
         return
@@ -1268,18 +1266,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieSfxSupervisors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SFX_SUPERVISOR)
-                                        .map(person -> MovieSfxSupervisor.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.SFX_SUPERVISOR, MovieSfxSupervisor::build),
                                 Messages.SFX_SUPERVISORS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des spécialistes des effets spéciaux")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1288,8 +1282,10 @@ public class MovieResource {
     @Path("/{id}/makeup-artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveMakeupArtists(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle");
         }
 
         return
@@ -1297,18 +1293,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieMakeupArtists,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MAKEUP_ARTIST)
-                                        .map(person -> MovieMakeupArtist.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.MAKEUP_ARTIST, MovieMakeupArtist::build),
                                 Messages.MAKEUP_ARTISTS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des maquilleurs")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1317,8 +1309,10 @@ public class MovieResource {
     @Path("/{id}/hair-dressers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveHairDressers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle");
         }
 
         return
@@ -1326,18 +1320,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieHairDressers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.HAIR_DRESSER)
-                                        .map(person -> MovieHairDresser.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.HAIR_DRESSER, MovieHairDresser::build),
                                 Messages.HAIRDRESSERS_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des coiffeurs")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1346,8 +1336,10 @@ public class MovieResource {
     @Path("/{id}/stuntmen")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveStuntmen(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle");
         }
 
         return
@@ -1355,17 +1347,14 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieStuntmen,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.STUNT_MAN)
-                                        .map(person -> MovieStuntman.build(movie, person, dto.getRole())),
+                                preparePerson(PersonType.STUNT_MAN, MovieStuntman::build),
                                 Messages.STUNTMEN_NOT_INITIALIZED
                         )
-                        .onItem().ifNotNull().transform(personDTOS -> Response.ok(personDTOS).build())
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la mise à jour des cascadeurs")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOS ->
+                                movieTechnicianDTOS.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(movieTechnicianDTOS).build()
                         )
                 ;
     }
@@ -1388,18 +1377,20 @@ public class MovieResource {
     @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCategories(@RestPath Long id, Set<CategoryDTO> categoryDTOS) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(categoryDTOS)) {
-            throw new BadRequestException("La liste des catégories ne peut pas être nulle.");
+            throw new BadRequestException("La liste des catégories ne peut pas être nulle");
         }
 
         return
                 movieService.saveCategories(id, categoryDTOS)
-                        .onItem().ifNotNull().transform(categoryDTOSet ->
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(categoryDTOSet ->
                                 categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(categoryDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
                 ;
     }
 
@@ -1420,18 +1411,20 @@ public class MovieResource {
     @Path("/{id}/countries")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(countryDTOS)) {
-            throw new BadRequestException("La liste des pays ne peut pas être nulle.");
+            throw new BadRequestException("La liste des pays ne peut pas être nulle");
         }
 
         return
                 movieService.saveCountries(id, countryDTOS)
-                        .onItem().ifNotNull().transform(countryDTOSet ->
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(countryDTOSet ->
                                 countryDTOSet.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(countryDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
                 ;
     }
 
@@ -1449,21 +1442,18 @@ public class MovieResource {
      * @throws BadRequestException si la liste des récompenses est `null`.
      */
     @PUT
-    @Path("/{id}/ceremony-awards")
+    @Path("/{id}/ceremonies-awards")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> saveCeremonyAwards(@RestPath Long id, CeremonyAwardsDTO ceremonyAwardsDTO) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(ceremonyAwardsDTO)) {
-            throw new BadRequestException("La liste des récompenses ne peut pas être nulle.");
+            throw new BadRequestException("La liste des récompenses ne peut pas être nulle");
         }
 
         return
                 movieService.saveCeremonyAwards(id, ceremonyAwardsDTO)
-                        .onItem().ifNotNull().transform(dto ->
-                                Objects.isNull(dto)
-                                        ? Response.noContent().build()
-                                        : Response.ok(dto).build()
-                        )
-                        .onItem().ifNull().continueWith(Response.serverError().status(NOT_FOUND)::build)
+                        .map(dto -> Response.ok(dto).build())
                 ;
     }
 
@@ -1480,8 +1470,10 @@ public class MovieResource {
     @Path("/{id}/producers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addProducers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des producteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des producteurs ne peut pas être nulle");
         }
 
         return
@@ -1489,15 +1481,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieProducers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PRODUCER)
-                                        .map(person -> MovieProducer.build(movie, person, dto.getRole())),
-                                Messages.PRODUCERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                                preparePerson(PersonType.PRODUCER, MovieProducer::build),
+                                Messages.PRODUCERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_PRODUCERS
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1514,8 +1506,10 @@ public class MovieResource {
     @Path("/{id}/directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addDirectors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des réalisateurs ne peut pas être nulle");
         }
 
         return
@@ -1523,16 +1517,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieDirectors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.DIRECTOR)
-                                        .map(person -> MovieDirector.build(movie, person, dto.getRole())),
-                                Messages.DIRECTORS_NOT_INITIALIZED
+                                preparePerson(PersonType.DIRECTOR, MovieDirector::build),
+                                Messages.DIRECTORS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_DIRECTORS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1549,8 +1542,10 @@ public class MovieResource {
     @Path("/{id}/assistant-directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addAssistantDirectors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des assistants réalisateurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des assistants réalisateurs ne peut pas être nulle");
         }
 
         return
@@ -1558,16 +1553,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieAssistantDirectors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ASSISTANT_DIRECTOR)
-                                        .map(person -> MovieAssistantDirector.build(movie, person, dto.getRole())),
-                                Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED
+                                preparePerson(PersonType.ASSISTANT_DIRECTOR, MovieAssistantDirector::build),
+                                Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_ASSISTANT_DIRECTORS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1584,8 +1578,10 @@ public class MovieResource {
     @Path("/{id}/screenwriters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addScreenwriters(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des scénaristes ne peut pas être nulle.");
+            throw new BadRequestException("La liste des scénaristes ne peut pas être nulle");
         }
 
         return
@@ -1593,16 +1589,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieScreenwriters,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SCREENWRITER)
-                                        .map(person -> MovieScreenwriter.build(movie, person, dto.getRole())),
-                                Messages.SCREENWRITERS_NOT_INITIALIZED
+                                preparePerson(PersonType.SCREENWRITER, MovieScreenwriter::build),
+                                Messages.SCREENWRITERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_SCREENWRITERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1619,8 +1614,10 @@ public class MovieResource {
     @Path("/{id}/composers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addComposers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des compositeurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des compositeurs ne peut pas être nulle");
         }
 
         return
@@ -1628,16 +1625,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieComposers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COMPOSER)
-                                        .map(person -> MovieComposer.build(movie, person, dto.getRole())),
-                                Messages.COMPOSERS_NOT_INITIALIZED
+                                preparePerson(PersonType.COMPOSER, MovieComposer::build),
+                                Messages.COMPOSERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_COMPOSERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1654,8 +1650,10 @@ public class MovieResource {
     @Path("/{id}/musicians")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addMusicians(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des musiciens ne peut pas être nulle.");
+            throw new BadRequestException("La liste des musiciens ne peut pas être nulle");
         }
 
         return
@@ -1663,16 +1661,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieMusicians,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MUSICIAN)
-                                        .map(person -> MovieMusician.build(movie, person, dto.getRole())),
-                                Messages.MUSICIANS_NOT_INITIALIZED
+                                preparePerson(PersonType.MUSICIAN, MovieMusician::build),
+                                Messages.MUSICIANS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_MUSICIANS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1689,8 +1686,10 @@ public class MovieResource {
     @Path("/{id}/photographers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addPhotographers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des photographes ne peut pas être nulle.");
+            throw new BadRequestException("La liste des photographes ne peut pas être nulle");
         }
 
         return
@@ -1698,16 +1697,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMoviePhotographers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.PHOTOGRAPHER)
-                                        .map(person -> MoviePhotographer.build(movie, person, dto.getRole())),
-                                Messages.PHOTOGRAPHERS_NOT_INITIALIZED
+                                preparePerson(PersonType.PHOTOGRAPHER, MoviePhotographer::build),
+                                Messages.PHOTOGRAPHERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_PHOTOGRAPHERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1724,8 +1722,10 @@ public class MovieResource {
     @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addCostumeDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des costumiers ne peut pas être nulle.");
+            throw new BadRequestException("La liste des costumiers ne peut pas être nulle");
         }
 
         return
@@ -1733,16 +1733,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieCostumeDesigners,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.COSTUME_DESIGNER)
-                                        .map(person -> MovieCostumeDesigner.build(movie, person, dto.getRole())),
-                                Messages.COSTUME_DESIGNERS_NOT_INITIALIZED
+                                preparePerson(PersonType.COSTUME_DESIGNER, MovieCostumeDesigner::build),
+                                Messages.COSTUME_DESIGNERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_COSTUME_DESIGNERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1759,8 +1758,10 @@ public class MovieResource {
     @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addSetDesigners(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des décorateurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des décorateurs ne peut pas être nulle");
         }
 
         return
@@ -1768,16 +1769,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieSetDesigners,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SET_DESIGNER)
-                                        .map(person -> MovieSetDesigner.build(movie, person, dto.getRole())),
-                                Messages.SET_DESIGNERS_NOT_INITIALIZED
+                                preparePerson(PersonType.SET_DESIGNER, MovieSetDesigner::build),
+                                Messages.SET_DESIGNERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_SET_DESIGNERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1794,8 +1794,10 @@ public class MovieResource {
     @Path("/{id}/editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addEditors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des monteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des monteurs ne peut pas être nulle");
         }
 
         return
@@ -1803,16 +1805,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieEditors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.EDITOR)
-                                        .map(person -> MovieEditor.build(movie, person, dto.getRole())),
-                                Messages.EDITORS_NOT_INITIALIZED
+                                preparePerson(PersonType.EDITOR, MovieEditor::build),
+                                Messages.EDITORS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_EDITORS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1829,8 +1830,10 @@ public class MovieResource {
     @Path("/{id}/casters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addCasters(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des casteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des casteurs ne peut pas être nulle");
         }
 
         return
@@ -1838,16 +1841,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieCasters,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.CASTER)
-                                        .map(person -> MovieCaster.build(movie, person, dto.getRole())),
-                                Messages.CASTERS_NOT_INITIALIZED
+                                preparePerson(PersonType.CASTER, MovieCaster::build),
+                                Messages.CASTERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_CASTERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1864,8 +1866,10 @@ public class MovieResource {
     @Path("/{id}/artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addArtists(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des artistes ne peut pas être nulle.");
+            throw new BadRequestException("La liste des artistes ne peut pas être nulle");
         }
 
         return
@@ -1873,16 +1877,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieArtists,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ARTIST)
-                                        .map(person -> MovieArtist.build(movie, person, dto.getRole())),
-                                Messages.ARTISTS_NOT_INITIALIZED
+                                preparePerson(PersonType.ARTIST, MovieArtist::build),
+                                Messages.ARTISTS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_ARTISTS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1899,8 +1902,10 @@ public class MovieResource {
     @Path("/{id}/sound-editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addSoundEditors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des ingénieurs du son ne peut pas être nulle.");
+            throw new BadRequestException("La liste des ingénieurs son ne peut pas être nulle");
         }
 
         return
@@ -1908,16 +1913,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieSoundEditors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SOUND_EDITOR)
-                                        .map(person -> MovieSoundEditor.build(movie, person, dto.getRole())),
-                                Messages.SOUND_EDITORS_NOT_INITIALIZED
+                                preparePerson(PersonType.SOUND_EDITOR, MovieSoundEditor::build),
+                                Messages.SOUND_EDITORS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_SOUND_EDITORS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1934,8 +1938,10 @@ public class MovieResource {
     @Path("/{id}/vfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addVfxSupervisors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle.");
+            throw new BadRequestException("La liste des spécialistes des effets visuels ne peut pas être nulle");
         }
 
         return
@@ -1943,16 +1949,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieVfxSupervisors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.VFX_SUPERVISOR)
-                                        .map(person -> MovieVfxSupervisor.build(movie, person, dto.getRole())),
-                                Messages.VFX_SUPERVISORS_NOT_INITIALIZED
+                                preparePerson(PersonType.VFX_SUPERVISOR, MovieVfxSupervisor::build),
+                                Messages.VFX_SUPERVISORS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_VFX_SUPERVISORS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -1969,8 +1974,10 @@ public class MovieResource {
     @Path("/{id}/sfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addSfxSupervisors(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle.");
+            throw new BadRequestException("La liste des spécialistes des effets spéciaux ne peut pas être nulle");
         }
 
         return
@@ -1978,16 +1985,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieSfxSupervisors,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.SFX_SUPERVISOR)
-                                        .map(person -> MovieSfxSupervisor.build(movie, person, dto.getRole())),
-                                Messages.SFX_SUPERVISORS_NOT_INITIALIZED
+                                preparePerson(PersonType.SFX_SUPERVISOR, MovieSfxSupervisor::build),
+                                Messages.SFX_SUPERVISORS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_SFX_SUPERVISORS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2004,8 +2010,10 @@ public class MovieResource {
     @Path("/{id}/makeup-artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addMakeupArtists(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des maquilleurs ne peut pas être nulle");
         }
 
         return
@@ -2013,16 +2021,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieMakeupArtists,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.MAKEUP_ARTIST)
-                                        .map(person -> MovieMakeupArtist.build(movie, person, dto.getRole())),
-                                Messages.MAKEUP_ARTISTS_NOT_INITIALIZED
+                                preparePerson(PersonType.MAKEUP_ARTIST, MovieMakeupArtist::build),
+                                Messages.MAKEUP_ARTISTS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_MAKEUP_ARTISTS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2039,8 +2046,10 @@ public class MovieResource {
     @Path("/{id}/hair-dressers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addHairDressers(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des coiffeurs ne peut pas être nulle");
         }
 
         return
@@ -2048,16 +2057,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieHairDressers,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.HAIR_DRESSER)
-                                        .map(person -> MovieHairDresser.build(movie, person, dto.getRole())),
-                                Messages.HAIRDRESSERS_NOT_INITIALIZED
+                                preparePerson(PersonType.HAIR_DRESSER, MovieHairDresser::build),
+                                Messages.HAIRDRESSERS_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_HAIRDRESSERS
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2074,8 +2082,10 @@ public class MovieResource {
     @Path("/{id}/stuntmen")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addStuntmen(@RestPath Long id, List<MovieTechnicianDTO> movieTechnicianDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieTechnicianDTOList)) {
-            throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des cascadeurs ne peut pas être nulle");
         }
 
         return
@@ -2083,16 +2093,15 @@ public class MovieResource {
                                 id,
                                 movieTechnicianDTOList,
                                 Movie::getMovieStuntmen,
-                                (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.STUNT_MAN)
-                                        .map(person -> MovieStuntman.build(movie, person, dto.getRole())),
-                                Messages.STUNTMEN_NOT_INITIALIZED
+                                preparePerson(PersonType.STUNT_MAN, MovieStuntman::build),
+                                Messages.STUNTMEN_NOT_INITIALIZED, Messages.ERROR_WHILE_ADDING_STUNTMEN
                         )
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2100,8 +2109,10 @@ public class MovieResource {
     @Path("/{id}/roles")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addMovieActors(@RestPath Long id, List<MovieActorDTO> movieActorDTOList) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(movieActorDTOList)) {
-            throw new BadRequestException("La liste des acteurs ne peut pas être nulle.");
+            throw new BadRequestException("La liste des acteurs ne peut pas être nulle");
         }
 
         return
@@ -2111,12 +2122,12 @@ public class MovieResource {
                                 (movie, dto) -> personService.prepareAndPersistPerson(dto.getPerson(), PersonType.ACTOR)
                                         .map(person -> MovieActor.build(movie, person, dto.getRole(), dto.getRank()))
                         )
-                        .onItem().ifNotNull().transform(movieActorDTOs ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieActorDTOs ->
                                 movieActorDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieActorDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2133,18 +2144,20 @@ public class MovieResource {
     @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addCategories(@RestPath Long id, Set<CategoryDTO> categoryDTOS) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(categoryDTOS)) {
-            throw new BadRequestException("La liste des catégories ne peut pas être nulle.");
+            throw new BadRequestException("La liste des catégories ne peut pas être nulle");
         }
 
         return
                 movieService.addCategories(id, categoryDTOS)
-                        .onItem().ifNotNull().transform(categoryDTOSet ->
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(categoryDTOSet ->
                                 categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(categoryDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2161,50 +2174,52 @@ public class MovieResource {
     @Path("/{id}/countries")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> addCountries(@RestPath Long id, Set<CountryDTO> countryDTOS) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         if (Objects.isNull(countryDTOS)) {
-            throw new BadRequestException("La liste des pays ne peut pas être nulle.");
+            throw new BadRequestException("La liste des pays ne peut pas être nulle");
         }
 
         return
                 movieService.addCountries(id, countryDTOS)
-                        .onItem().ifNotNull().transform(countryDTOSet ->
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(countryDTOSet ->
                                 countryDTOSet.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(countryDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
     /**
      * Supprime un producteur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId    L'identifiant du film concerné.
-     * @param producerId L'identifiant du producteur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du producteur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des producteurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/producers/{producerId}")
+    @Path("/{movieId}/producers/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long producerId) {
+    public Uni<Response> removeProducer(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, producerId, Movie::getMovieProducers, Messages.PRODUCERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieProducers,
+                                Messages.PRODUCERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_PRODUCER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du producteur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du producteur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2212,32 +2227,32 @@ public class MovieResource {
     /**
      * Supprime un réalisateur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId    L'identifiant du film concerné.
-     * @param directorId L'identifiant du réalisateur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du réalisateur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des réalisateurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/directors/{directorId}")
+    @Path("/{movieId}/directors/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long directorId) {
+    public Uni<Response> removeDirector(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, directorId, Movie::getMovieDirectors, Messages.DIRECTORS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieDirectors,
+                                Messages.DIRECTORS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_DIRECTOR
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du réalisateur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du réalisateur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2245,32 +2260,32 @@ public class MovieResource {
     /**
      * Supprime un assistant réalisateur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId             L'identifiant du film concerné.
-     * @param assistantDirectorId L'identifiant de l'assistant réalisateur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant de l'assistant réalisateur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des assistants réalisateurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/assistant-directors/{assistantDirectorId}")
+    @Path("/{movieId}/assistant-directors/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeAssistantDirector(@RestPath Long movieId, @RestPath Long assistantDirectorId) {
+    public Uni<Response> removeAssistantDirector(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, assistantDirectorId, Movie::getMovieDirectors, Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieDirectors,
+                                Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_ASSISTANT_DIRECTOR
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression de l'assistant réalisateur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression de l'assistant réalisateur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2278,32 +2293,32 @@ public class MovieResource {
     /**
      * Supprime un scénariste d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId        L'identifiant du film concerné.
-     * @param screenwriterId L'identifiant du scénariste à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du scénariste à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des scénaristes si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/screenwriters/{screenwriterId}")
+    @Path("/{movieId}/screenwriters/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long screenwriterId) {
+    public Uni<Response> removeScreenwriter(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, screenwriterId, Movie::getMovieScreenwriters, Messages.SCREENWRITERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieScreenwriters,
+                                Messages.SCREENWRITERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_SCREENWRITER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du scénariste: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du scénariste")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2311,32 +2326,32 @@ public class MovieResource {
     /**
      * Supprime un compositeur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId    L'identifiant du film concerné.
-     * @param composerId L'identifiant du compositeur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du compositeur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des compositeurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/composers/{composerId}")
+    @Path("/{movieId}/composers/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeComposer(@RestPath Long movieId, @RestPath Long composerId) {
+    public Uni<Response> removeComposer(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, composerId, Movie::getMovieComposers, Messages.COMPOSERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieComposers,
+                                Messages.COMPOSERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_COMPOSER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du compositeur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du compositeur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2344,32 +2359,32 @@ public class MovieResource {
     /**
      * Supprime un musicien d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId    L'identifiant du film concerné.
-     * @param musicianId L'identifiant du musicien à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du musicien à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des musiciens si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/musicians/{musicianId}")
+    @Path("/{movieId}/musicians/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long musicianId) {
+    public Uni<Response> removeMusician(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, musicianId, Movie::getMovieMusicians, Messages.MUSICIANS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieMusicians,
+                                Messages.MUSICIANS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_MUSICIAN
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du musicien: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du musicien")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2377,32 +2392,32 @@ public class MovieResource {
     /**
      * Supprime un photographe d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId        L'identifiant du film concerné.
-     * @param photographerId L'identifiant du photographe à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du photographe à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des photographes si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/photographers/{photographerId}")
+    @Path("/{movieId}/photographers/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long photographerId) {
+    public Uni<Response> removePhotographer(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, photographerId, Movie::getMoviePhotographers, Messages.PHOTOGRAPHERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMoviePhotographers,
+                                Messages.PHOTOGRAPHERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_PHOTOGRAPHER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du photographe: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du photographe")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2410,32 +2425,32 @@ public class MovieResource {
     /**
      * Supprime un costumier d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId           L'identifiant du film concerné.
-     * @param costumeDesignerId L'identifiant du costumier à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du costumier à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des costumiers si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/costume-designers/{costumeDesignerId}")
+    @Path("/{movieId}/costume-designers/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeCostumeDesigner(@RestPath Long movieId, @RestPath Long costumeDesignerId) {
+    public Uni<Response> removeCostumeDesigner(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, costumeDesignerId, Movie::getMovieCostumeDesigners, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieCostumeDesigners,
+                                Messages.COSTUME_DESIGNERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_COSTUME_DESIGNER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du costumier: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du costumier")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2443,32 +2458,32 @@ public class MovieResource {
     /**
      * Supprime un décorateur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId       L'identifiant du film concerné.
-     * @param setDesignerId L'identifiant du décorateur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du décorateur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des décorateurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/set-designers/{setDesignerId}")
+    @Path("/{movieId}/set-designers/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeSetDesigner(@RestPath Long movieId, @RestPath Long setDesignerId) {
+    public Uni<Response> removeSetDesigner(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, setDesignerId, Movie::getMovieSetDesigners, Messages.SET_DESIGNERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieSetDesigners,
+                                Messages.SET_DESIGNERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_SET_DESIGNER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du décorateur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du décorateur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2477,31 +2492,31 @@ public class MovieResource {
      * Supprime un monteur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
      * @param movieId  L'identifiant du film concerné.
-     * @param editorId L'identifiant du monteur à supprimer du film.
+     * @param personId L'identifiant du monteur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des monteurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/editors/{editorId}")
+    @Path("/{movieId}/editors/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeEditor(@RestPath Long movieId, @RestPath Long editorId) {
+    public Uni<Response> removeEditor(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, editorId, Movie::getMovieEditors, Messages.EDITORS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieEditors,
+                                Messages.EDITORS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_EDITOR
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du monteur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du monteur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2510,31 +2525,31 @@ public class MovieResource {
      * Supprime un casteur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
      * @param movieId  L'identifiant du film concerné.
-     * @param casterId L'identifiant du casteur à supprimer du film.
+     * @param personId L'identifiant du casteur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des casteurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/casters/{casterId}")
+    @Path("/{movieId}/casters/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeCaster(@RestPath Long movieId, @RestPath Long casterId) {
+    public Uni<Response> removeCaster(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, casterId, Movie::getMovieCasters, Messages.CASTERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieCasters,
+                                Messages.CASTERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_CASTER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du casteur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du casteur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2543,31 +2558,31 @@ public class MovieResource {
      * Supprime un artiste d'un film spécifique et retourne une réponse HTTP appropriée.
      *
      * @param movieId  L'identifiant du film concerné.
-     * @param artistId L'identifiant de l'artiste à supprimer du film.
+     * @param personId L'identifiant de l'artiste à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des artistes si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/artists/{artistId}")
+    @Path("/{movieId}/artists/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeArtist(@RestPath Long movieId, @RestPath Long artistId) {
+    public Uni<Response> removeArtist(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, artistId, Movie::getMovieArtists, Messages.ARTISTS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieArtists,
+                                Messages.ARTISTS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_ARTIST
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression de l'artiste: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression de l'artiste")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2575,32 +2590,32 @@ public class MovieResource {
     /**
      * Supprime un ingénieur du son d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId         L'identifiant du film concerné.
-     * @param soundDirectorId L'identifiant de l'ingénieur du son à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant de l'ingénieur du son à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des ingénieurs du son si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/sound-editors/{soundDirectorId}")
+    @Path("/{movieId}/sound-editors/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeSoundEditors(@RestPath Long movieId, @RestPath Long soundDirectorId) {
+    public Uni<Response> removeSoundEditors(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, soundDirectorId, Movie::getMovieSoundEditors, Messages.SOUND_EDITORS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieSoundEditors,
+                                Messages.SOUND_EDITORS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_SOUND_EDITOR
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression de l'ingénieur du son: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression de l'ingénieur du son")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2608,32 +2623,32 @@ public class MovieResource {
     /**
      * Supprime un spécialiste des effets visuels d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId         L'identifiant du film concerné.
-     * @param vfxSupervisorId L'identifiant du spécialiste des effets visuels à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du spécialiste des effets visuels à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des spécialistes des effets visuels si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/vfx-supervisors/{vfxSupervisorId}")
+    @Path("/{movieId}/vfx-supervisors/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeVfxSupervisor(@RestPath Long movieId, @RestPath Long vfxSupervisorId) {
+    public Uni<Response> removeVfxSupervisor(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, vfxSupervisorId, Movie::getMovieVfxSupervisors, Messages.VFX_SUPERVISORS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieVfxSupervisors,
+                                Messages.VFX_SUPERVISORS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_VFX_SUPERVISOR
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du spécialiste des effets visuels: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du spécialiste des effets visuels")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2641,32 +2656,32 @@ public class MovieResource {
     /**
      * Supprime un spécialiste des effets spéciaux d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId         L'identifiant du film concerné.
-     * @param sfxSupervisorId L'identifiant du spécialiste des effets spéciaux à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du spécialiste des effets spéciaux à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des spécialistes des effets spéciaux si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/sfx-supervisors/{sfxSupervisorId}")
+    @Path("/{movieId}/sfx-supervisors/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeSfxSupervisor(@RestPath Long movieId, @RestPath Long sfxSupervisorId) {
+    public Uni<Response> removeSfxSupervisor(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, sfxSupervisorId, Movie::getMovieSfxSupervisors, Messages.SFX_SUPERVISORS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieSfxSupervisors,
+                                Messages.SFX_SUPERVISORS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_SFX_SUPERVISOR
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du spécialiste des effets spéciaux: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du spécialiste des effets spéciaux")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2674,32 +2689,32 @@ public class MovieResource {
     /**
      * Supprime un maquilleur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId        L'identifiant du film concerné.
-     * @param makeupArtistId L'identifiant du maquilleur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du maquilleur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des maquilleurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/makeup-artists/{makeupArtistId}")
+    @Path("/{movieId}/makeup-artists/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeMakeupArtists(@RestPath Long movieId, @RestPath Long makeupArtistId) {
+    public Uni<Response> removeMakeupArtists(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, makeupArtistId, Movie::getMovieMakeupArtists, Messages.MAKEUP_ARTISTS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieMakeupArtists,
+                                Messages.MAKEUP_ARTISTS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_MAKEUP_ARTIST
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du maquilleur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du maquilleur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2707,32 +2722,32 @@ public class MovieResource {
     /**
      * Supprime un coiffeur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId       L'identifiant du film concerné.
-     * @param hairDresserId L'identifiant du coiffeur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du coiffeur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des coiffeurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/hair-dressers/{hairDresserId}")
+    @Path("/{movieId}/hair-dressers/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeHairDressers(@RestPath Long movieId, @RestPath Long hairDresserId) {
+    public Uni<Response> removeHairDressers(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, hairDresserId, Movie::getMovieHairDressers, Messages.HAIRDRESSERS_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieHairDressers,
+                                Messages.HAIRDRESSERS_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_HAIRDRESSER
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du coiffeur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du coiffeur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2740,32 +2755,32 @@ public class MovieResource {
     /**
      * Supprime un cascadeur d'un film spécifique et retourne une réponse HTTP appropriée.
      *
-     * @param movieId    L'identifiant du film concerné.
-     * @param stuntmanId L'identifiant du cascadeur à supprimer du film.
+     * @param movieId  L'identifiant du film concerné.
+     * @param personId L'identifiant du cascadeur à supprimer du film.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des cascadeurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/stuntmen/{stuntmanId}")
+    @Path("/{movieId}/stuntmen/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeStuntman(@RestPath Long movieId, @RestPath Long stuntmanId) {
+    public Uni<Response> removeStuntman(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeTechnician(movieId, stuntmanId, Movie::getMovieStuntmen, Messages.STUNTMEN_NOT_INITIALIZED)
-                        .onItem().ifNotNull().transform(movieTechnicianDTOs ->
+                movieService.removeTechnician(
+                                movieId,
+                                personId,
+                                Movie::getMovieStuntmen,
+                                Messages.STUNTMEN_NOT_INITIALIZED,
+                                Messages.ERROR_WHILE_REMOVING_STUNTMAN
+                        )
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieTechnicianDTOs ->
                                 movieTechnicianDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieTechnicianDTOs).build()
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression du cascadeur: {}", err.getMessage());
-                                    return
-                                            Response
-                                                    .serverError()
-                                                    .entity("Erreur lors de la suppression du cascadeur")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
@@ -2773,24 +2788,27 @@ public class MovieResource {
     /**
      * Supprime un acteur associé à un film donné.
      *
-     * @param movieId      L'identifiant du film dont l'acteur doit être supprimé.
-     * @param movieActorId L'identifiant de l'association acteur-film à supprimer.
+     * @param movieId  L'identifiant du film dont l'acteur doit être supprimé.
+     * @param personId L'identifiant de l'association acteur-film à supprimer.
      * @return Une {@link Uni} contenant une {@link Response} :
      * - 200 OK avec la liste mise à jour des acteurs si la suppression est réussie.
      * - 500 Server Error si la suppression échoue.
      */
     @PATCH
-    @Path("/{movieId}/roles/{movieActorId}")
+    @Path("/{movieId}/roles/{personId}")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> removeMovieActor(@RestPath Long movieId, @RestPath Long movieActorId) {
+    public Uni<Response> removeMovieActor(@RestPath Long movieId, @RestPath Long personId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
+
         return
-                movieService.removeMovieActor(movieId, movieActorId)
-                        .onItem().ifNotNull().transform(movieActorDTOs ->
+                movieService.removeMovieActor(movieId, personId)
+                        .onItem().ifNull().continueWith(List::of)
+                        .map(movieActorDTOs ->
                                 movieActorDTOs.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(movieActorDTOs).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2807,14 +2825,17 @@ public class MovieResource {
     @Path("/{movieId}/categories/{categoryId}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCategory(@RestPath Long movieId, @RestPath Long categoryId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(categoryId, Messages.INVALID_CATEGORY_ID);
+
         return
                 movieService.removeCategory(movieId, categoryId)
-                        .onItem().ifNotNull().transform(categoryDTOSet ->
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(categoryDTOSet ->
                                 categoryDTOSet.isEmpty()
                                         ? Response.noContent().build()
                                         : Response.ok(categoryDTOSet).build()
                         )
-                        .onItem().ifNull().continueWith(Response.serverError().build())
                 ;
     }
 
@@ -2831,13 +2852,17 @@ public class MovieResource {
     @Path("/{movieId}/countries/{countryId}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCountry(@RestPath Long movieId, @RestPath Long countryId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(countryId, Messages.INVALID_COUNTRY_ID);
+
         return
                 movieService.removeCountry(movieId, countryId)
-                        .onItem().ifNotNull().transform(countryDTOSet ->
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(countryDTOSet ->
                                 countryDTOSet.isEmpty()
                                         ? Response.noContent().build()
-                                        : Response.ok(countryDTOSet).build())
-                        .onItem().ifNull().continueWith(Response.serverError().build())
+                                        : Response.ok(countryDTOSet).build()
+                        )
                 ;
     }
 
@@ -2851,19 +2876,20 @@ public class MovieResource {
      * @return Un {@link Uni} contenant la réponse HTTP avec un code 200 si les récompenses ont été supprimées avec succès.
      * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses.
      */
-    @DELETE
-    @Path("/{movieId}/ceremony-awards/{ceremonyAwardsId}")
+    @PATCH
+    @Path("/{movieId}/ceremonies-awards/{ceremonyAwardsId}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> removeCeremonyAwards(@RestPath Long movieId, @RestPath Long ceremonyAwardsId) {
+        ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(ceremonyAwardsId, Messages.INVALID_CEREMONY_AWARDS_ID);
+
         return
                 movieService.removeCeremonyAwards(movieId, ceremonyAwardsId)
-                        .map(deleted -> Response.ok(deleted).build())
-                        .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
-                                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                            .entity("Erreur lors de la suppression de la cérémonie")
-                                            .build();
-                                }
+                        .onItem().ifNull().continueWith(Set::of)
+                        .map(ceremonyAwardsDTOSet ->
+                                ceremonyAwardsDTOSet.isEmpty()
+                                        ? Response.noContent().build()
+                                        : Response.ok(ceremonyAwardsDTOSet).build()
                         )
                 ;
     }
@@ -2872,13 +2898,27 @@ public class MovieResource {
     @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> delete(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.deleteMovie(id)
                         .map(deleted ->
-                                Response.ok()
-                                        .status(Boolean.TRUE.equals(deleted) ? NO_CONTENT : NOT_FOUND)
-                                        .build()
+                                Boolean.TRUE.equals(deleted)
+                                        ? Response.noContent().build()
+                                        : Response.status(Response.Status.NOT_FOUND).build()
                         )
+                ;
+    }
+
+    @DELETE
+    @Path("/{id}/actors")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> deleteActors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
+        return
+                movieService.clearActors(id)
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -2896,9 +2936,11 @@ public class MovieResource {
     @Path("/{id}/producers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteProducers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieProducers, Messages.PRODUCERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -2916,9 +2958,11 @@ public class MovieResource {
     @Path("/{id}/directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteDirectors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieDirectors, Messages.DIRECTORS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -2936,9 +2980,11 @@ public class MovieResource {
     @Path("/{id}/assistant-directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteAssistantDirectors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieAssistantDirectors, Messages.ASSISTANT_DIRECTORS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -2956,9 +3002,11 @@ public class MovieResource {
     @Path("/{id}/screenwriters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteScreenwriters(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieScreenwriters, Messages.SCREENWRITERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -2976,9 +3024,11 @@ public class MovieResource {
     @Path("/{id}/composers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteComposers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieComposers, Messages.COMPOSERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -2996,9 +3046,11 @@ public class MovieResource {
     @Path("/{id}/musicians")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteMusicians(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieMusicians, Messages.MUSICIANS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3016,9 +3068,11 @@ public class MovieResource {
     @Path("/{id}/set-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSetDesigners(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieSetDesigners, Messages.SET_DESIGNERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3036,9 +3090,11 @@ public class MovieResource {
     @Path("/{id}/costume-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCostumeDesigners(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieCostumeDesigners, Messages.COSTUME_DESIGNERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3056,9 +3112,11 @@ public class MovieResource {
     @Path("/{id}/photographers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deletePhotographers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMoviePhotographers, Messages.PHOTOGRAPHERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3076,9 +3134,11 @@ public class MovieResource {
     @Path("/{id}/editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteEditors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieEditors, Messages.EDITORS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3096,9 +3156,11 @@ public class MovieResource {
     @Path("/{id}/casters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCasters(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieCasters, Messages.CASTERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3116,9 +3178,11 @@ public class MovieResource {
     @Path("/{id}/artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteArtists(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieArtists, Messages.ARTISTS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3136,9 +3200,11 @@ public class MovieResource {
     @Path("/{id}/sound-editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSoundEditors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieSoundEditors, Messages.SOUND_EDITORS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3156,9 +3222,11 @@ public class MovieResource {
     @Path("/{id}/vfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteVfxSupervisors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieVfxSupervisors, Messages.VFX_SUPERVISORS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3176,9 +3244,11 @@ public class MovieResource {
     @Path("/{id}/sfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSfxSupervisors(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieVfxSupervisors, Messages.SFX_SUPERVISORS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3196,9 +3266,11 @@ public class MovieResource {
     @Path("/{id}/makeup-artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteMakeupArtists(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieMakeupArtists, Messages.MAKEUP_ARTISTS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3216,9 +3288,11 @@ public class MovieResource {
     @Path("/{id}/hair-dressers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteHairDressers(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieHairDressers, Messages.HAIRDRESSERS_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3236,9 +3310,11 @@ public class MovieResource {
     @Path("/{id}/stuntmen")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteStuntmen(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 movieService.clearTechnicians(id, Movie::getMovieStuntmen, Messages.STUNTMEN_NOT_INITIALIZED)
-                        .map(deleted -> Response.ok(deleted).build())
+                        .map(deleted -> Response.noContent().build())
                 ;
     }
 
@@ -3256,7 +3332,10 @@ public class MovieResource {
     @Path("/{id}/categories")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCategories(@RestPath Long id) {
-        return movieService.clearCategories(id).map(deleted -> Response.ok(deleted).build());
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
+        return movieService.clearCategories(id)
+                .map(deleted -> Response.noContent().build());
     }
 
     /**
@@ -3273,14 +3352,18 @@ public class MovieResource {
     @Path("/{id}/countries")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCountries(@RestPath Long id) {
-        return movieService.clearCountries(id).map(deleted -> Response.ok(deleted).build());
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
+        return movieService.clearCountries(id).map(deleted -> Response.noContent().build());
     }
 
     @DELETE
-    @Path("/{id}/ceremony-awards")
+    @Path("/{id}/ceremonies-awards")
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> deleteCeremonyAwards(@RestPath Long id) {
-        return movieService.clearCeremonyAwards(id).map(deleted -> Response.ok(deleted).build());
+    public Uni<Response> deleteCeremoniesAwards(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
+        return movieService.clearCeremoniesAwards(id).map(deleted -> Response.noContent().build());
     }
 
 }

@@ -14,12 +14,11 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieSoundEditor extends MovieTechnician {
 
-    public static MovieSoundEditor build(Movie movie, Person person, String role) {
+    public static MovieSoundEditor build(Movie movie, Person person) {
         return
                 MovieSoundEditor.builder()
                         .movie(movie)
                         .person(person)
-                        .role(role)
                         .build()
                 ;
     }

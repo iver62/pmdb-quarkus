@@ -14,11 +14,10 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieVfxSupervisor extends MovieTechnician {
 
-    public static MovieVfxSupervisor build(Movie movie, Person person, String role) {
+    public static MovieVfxSupervisor build(Movie movie, Person person) {
         return MovieVfxSupervisor.builder()
                 .movie(movie)
                 .person(person)
-                .role(role)
                 .build();
     }
 

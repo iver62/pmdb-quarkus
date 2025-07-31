@@ -14,12 +14,11 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MovieCostumeDesigner extends MovieTechnician {
 
-    public static MovieCostumeDesigner build(Movie movie, Person person, String role) {
+    public static MovieCostumeDesigner build(Movie movie, Person person) {
         return
                 MovieCostumeDesigner.builder()
                         .movie(movie)
                         .person(person)
-                        .role(role)
                         .build()
                 ;
     }
