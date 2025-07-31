@@ -15,6 +15,17 @@ public class MovieActorDTO extends MovieTechnicianDTO implements Comparable<Movi
 
     private Integer rank;
 
+    public static MovieActorDTO build(Long id, LitePersonDTO personDTO, String role, Integer rank) {
+        return
+                MovieActorDTO.builder()
+                        .id(id)
+                        .person(personDTO)
+                        .role(role)
+                        .rank(rank)
+                        .build()
+                ;
+    }
+
     @Override
     public String toString() {
         return String.format("%s / %s: %s -> %s (%s)", id, person.getId(), person.getName(), role, rank);

@@ -18,6 +18,16 @@ public class MovieTechnicianDTO {
     protected LitePersonDTO person;
     protected String role;
 
+    public static MovieTechnicianDTO build(Long id, LitePersonDTO personDTO, String role) {
+        return
+                MovieActorDTO.builder()
+                        .id(id)
+                        .person(personDTO)
+                        .role(role)
+                        .build()
+                ;
+    }
+
     public String toString() {
         return String.format("%d / %s: %s -> %s", id, person.getId(), person.getName(), role);
     }

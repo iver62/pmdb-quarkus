@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.exception.ErrorResponse;
 import org.desha.app.exception.InvalidDateException;
 import org.desha.app.exception.InvalidSortException;
+import org.desha.app.exception.MovieUpdateException;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 import java.time.format.DateTimeParseException;
@@ -18,8 +19,6 @@ public class ExceptionMappers {
 
     @ServerExceptionMapper
     public Uni<Response> mapException(InvalidDateException exception) {
-        log.info("InvalidDateException: {}", exception.getMessage());
-
         return
                 Uni.createFrom().item(
                         Response.status(Response.Status.BAD_REQUEST)
@@ -30,8 +29,6 @@ public class ExceptionMappers {
 
     @ServerExceptionMapper
     public Uni<Response> mapException(InvalidSortException exception) {
-        log.info("InvalidSortException: {}", exception.getMessage());
-
         return
                 Uni.createFrom().item(
                         Response.status(Response.Status.BAD_REQUEST)
@@ -42,8 +39,6 @@ public class ExceptionMappers {
 
     @ServerExceptionMapper
     public Response mapException(WebApplicationException exception) {
-        log.info("WebApplicationException: {}", exception.getMessage());
-
         return Response.status(exception.getResponse().getStatus())
                 .entity(exception.getMessage())
                 .build();
@@ -51,10 +46,15 @@ public class ExceptionMappers {
 
     @ServerExceptionMapper
     public Response mapException(DateTimeParseException exception) {
-        log.info("DateTimeParseException: {}", exception.getMessage());
-
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity("Format de date invalide. Utilisez le format YYYY-MM-DD.")
+                .build();
+    }
+
+    @ServerExceptionMapper
+    public Response mapException(MovieUpdateException exception) {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(exception.getMessage())
                 .build();
     }
 

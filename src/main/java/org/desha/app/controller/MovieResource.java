@@ -67,7 +67,7 @@ public class MovieResource {
     public Uni<Response> count(@BeanParam MovieQueryParamsDTO queryParams) {
         return
                 movieService.count(CriteriasDTO.build(queryParams))
-                        .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build());
+                        .map(aLong -> Response.ok(aLong).build());
     }
 
     /**
@@ -763,8 +763,7 @@ public class MovieResource {
     public Uni<Response> getPoster(String fileName) {
         if (Objects.isNull(fileName) || fileName.isEmpty() || Objects.equals("undefined", fileName)) {
             log.warn("Invalid file request: {}", fileName);
-            return Uni.createFrom().item(Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Invalid file name").build());
+            throw new BadRequestException("Invalid file name");
         }
 
         return

@@ -96,7 +96,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
+            <version>3.18.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
         <dependency>
@@ -110,30 +110,21 @@
             <artifactId>mapstruct</artifactId>
             <version>1.6.3</version>
         </dependency>
-
         <!-- Testing -->
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit5-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.quarkus/quarkus-test-security -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-test-security</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.17.0</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.17.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -170,6 +161,7 @@
             </plugin>
             <plugin>
                 <!-- you need this specific version to integrate with the other build helpers -->
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire-plugin.version}</version>
                 <configuration>
@@ -177,6 +169,7 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
+                    <useModulePath>false</useModulePath>
                 </configuration>
             </plugin>
             <plugin>
@@ -188,6 +181,22 @@
                     <execution>
                         <goals>
                             <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin JaCoCo pour la couverture de tests -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <!-- Générer le rapport après les tests -->
+                    <execution>
+                        <id>report</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                            <goal>report</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -257,9 +266,7 @@
                                         <pluginExecution>
                                             <pluginExecutionFilter>
                                                 <groupId>io.fabric8</groupId>
-                                                <artifactId>
-                                                    docker-maven-plugin
-                                                </artifactId>
+                                                <artifactId>docker-maven-plugin</artifactId>
                                                 <versionRange>
                                                     [0.28.0,)
                                                 </versionRange>
