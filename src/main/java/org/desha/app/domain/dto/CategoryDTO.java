@@ -1,15 +1,13 @@
 package org.desha.app.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,6 +15,7 @@ import java.time.LocalDateTime;
 public class CategoryDTO {
 
     private Long id;
+    @NotBlank(message = "Le nom de la catégorie est obligatoire")
     private String name;
     private LocalDateTime creationDate;
     private LocalDateTime lastUpdate;

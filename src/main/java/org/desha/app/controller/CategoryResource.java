@@ -5,9 +5,11 @@ import io.smallrye.mutiny.Uni;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CategoryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
@@ -16,8 +18,10 @@ import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.Category;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.service.CategoryService;
+import org.desha.app.utils.Messages;
 import org.jboss.resteasy.reactive.RestPath;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -41,17 +45,7 @@ public class CategoryResource {
     public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         return
                 categoryService.count(queryParams.getTerm())
-                        .onItem().ifNotNull().transform(aLong -> Response.ok(aLong).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors du comptage des catégories: {}", err.getMessage());
-                                    return
-                                            Response.serverError()
-                                                    .entity("Erreur lors du comptage des catégories")
-                                                    .build()
-                                            ;
-                                }
-                        )
+                        .map(aLong -> Response.ok(aLong).build())
                 ;
     }
 
@@ -59,19 +53,11 @@ public class CategoryResource {
     @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCategory(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 categoryService.getById(id)
-                        .onItem().ifNotNull().transform(category -> Response.ok(category).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build())
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération de la catégorie: {}", err.getMessage());
-                                    return
-                                            Response.serverError()
-                                                    .entity("Erreur lors de la récupération de la catégorie")
-                                                    .build()
-                                            ;
-                                }
-                        )
+                        .map(categoryDTO -> Response.ok(categoryDTO).build())
                 ;
     }
 
@@ -83,6 +69,7 @@ public class CategoryResource {
 
         return
                 categoryService.getCategories(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(categoryDTOS -> categoryService.count(queryParams.getTerm())
                                 .map(aLong ->
                                         categoryDTOS.isEmpty()
@@ -97,6 +84,8 @@ public class CategoryResource {
     @Path("/{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCategory(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
@@ -105,45 +94,32 @@ public class CategoryResource {
         CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
 
         return
-                categoryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                categoryService.getMoviesByCategory(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(movieList ->
-                                categoryService.countMovies(id, queryParams.getTerm()).map(total ->
+                                categoryService.countMoviesByCategory(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
-                        )
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la récupération des films: {}", err.getMessage());
-                                    return
-                                            Response.serverError()
-                                                    .entity("Erreur lors de la récupération des films")
-                                                    .build()
-                                            ;
-                                }
                         )
                 ;
     }
 
     @POST
     @RolesAllowed({"user", "admin"})
-    public Uni<Response> createCategory(CategoryDTO categoryDTO) {
-        if (Objects.isNull(categoryDTO) || Objects.nonNull(categoryDTO.getId())) {
-            throw new WebApplicationException("Id was invalidly set on request.", 422);
+    public Uni<Response> createCategory(@Valid CategoryDTO categoryDTO) {
+        if (Objects.nonNull(categoryDTO.getId())) {
+            throw new BadRequestException("L’identifiant a été défini de manière incorrecte dans la requête");
+        }
+
+        if (StringUtils.isBlank(categoryDTO.getName())) {
+            throw new BadRequestException("Le nom de la catégorie n’a pas été fourni dans la requête");
         }
 
         return
                 categoryService.create(categoryDTO)
                         .map(category -> Response.status(CREATED).entity(category).build())
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la création de la catégorie: {}", err.getMessage());
-                                    return
-                                            Response.serverError()
-                                                    .entity("Erreur lors de la création de la catégorie")
-                                                    .build()
-                                            ;
-                                }
-                        )
                 ;
     }
 
@@ -151,23 +127,23 @@ public class CategoryResource {
     @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> updateCategory(@RestPath Long id, CategoryDTO categoryDTO) {
-        if (Objects.isNull(categoryDTO) || Objects.isNull(categoryDTO.getName())) {
-            throw new WebApplicationException("Category name was not set on request.", 422);
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
+        if (Objects.isNull(categoryDTO)) {
+            throw new BadRequestException("Aucune information sur la catégorie n’a été fournie dans la requête");
+        }
+
+        if (StringUtils.isBlank(categoryDTO.getName())) {
+            throw new BadRequestException("Le nom de la catégorie n’a pas été fourni dans la requête");
+        }
+
+        if (!Objects.equals(id, categoryDTO.getId())) {
+            throw new WebApplicationException("L'identifiant de la catégorie ne correspond pas à celui de la requête", 422);
         }
 
         return
                 categoryService.update(id, categoryDTO)
-                        .onItem().ifNotNull().transform(category -> Response.ok(category).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la mise à jour de la catégorie: {}", err.getMessage());
-                                    return
-                                            Response.serverError()
-                                                    .entity("Erreur lors de la mise à jour de la catégorie")
-                                                    .build()
-                                            ;
-                                }
-                        )
+                        .map(category -> Response.ok(category).build())
                 ;
     }
 
@@ -175,20 +151,13 @@ public class CategoryResource {
     @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> deleteCategory(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+
         return
                 categoryService.deleteCategory(id)
                         .map(deleted -> Boolean.TRUE.equals(deleted)
                                 ? Response.status(NO_CONTENT).build()
                                 : Response.status(NOT_FOUND).build())
-                        .onFailure().recoverWithItem(err -> {
-                                    log.error("Erreur lors de la suppression de la catégorie: {}", err.getMessage());
-                                    return
-                                            Response.serverError()
-                                                    .entity("Erreur lors de la suppression de la catégorie")
-                                                    .build()
-                                            ;
-                                }
-                        )
                 ;
     }
 

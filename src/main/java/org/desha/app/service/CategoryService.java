@@ -6,6 +6,10 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CategoryDTO;
 import org.desha.app.domain.dto.CriteriasDTO;
@@ -15,12 +19,14 @@ import org.desha.app.mapper.CategoryMapper;
 import org.desha.app.mapper.MovieMapper;
 import org.desha.app.repository.CategoryRepository;
 import org.desha.app.repository.MovieRepository;
+import org.desha.app.utils.Messages;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @ApplicationScoped
+@Slf4j
 public class CategoryService {
 
     private final CategoryMapper categoryMapper;
@@ -42,18 +48,37 @@ public class CategoryService {
     }
 
     public Uni<Long> count(String term) {
-        return categoryRepository.countCategories(term);
+        return
+                categoryRepository.countCategories(term)
+                        .onFailure().transform(e -> {
+                                    log.error("Erreur lors du comptage des catégories: {}", e.getMessage());
+                                    return new WebApplicationException("Erreur lors du comptage des catégories", 500);
+                                }
+                        )
+                ;
     }
 
-    public Uni<Category> getById(Long id) {
-        return categoryRepository.findById(id);
+    public Uni<CategoryDTO> getById(Long id) {
+        return
+                categoryRepository.findById(id)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CATEGORY))
+                        .map(categoryMapper::categoryToCategoryDTO)
+                        .onFailure().transform(e -> {
+                                    if (e instanceof WebApplicationException) {
+                                        return e;
+                                    }
+                                    log.error("Erreur lors de la récupération de la catégorie {}: {}", id, e.getMessage());
+                                    return new WebApplicationException("Erreur lors de la récupération de la catégorie", 500);
+                                }
+                        )
+                ;
     }
 
     public Uni<List<Category>> getAll() {
         return categoryRepository.listAll();
     }
 
-    public Uni<Long> countMovies(Long id, String term) {
+    public Uni<Long> countMoviesByCategory(Long id, String term) {
         return movieRepository.countMoviesByCategory(id, term);
     }
 
@@ -69,15 +94,21 @@ public class CategoryService {
         return categoryRepository.findByIds(ids).map(HashSet::new);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 movieRepository.findMoviesByCategory(id, page, sort, direction, criteriasDTO)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CATEGORY))
                         .map(movieWithAwardsNumberList ->
                                 movieWithAwardsNumberList
                                         .stream()
                                         .map(movieMapper::movieWithAwardsNumberToMovieDTO)
                                         .toList()
 
+                        )
+                        .onFailure().transform(err -> {
+                                    log.error("Erreur lors de la récupération des films appartenant à la catégorie {}: {}", id, err.getMessage());
+                                    return new WebApplicationException("Erreur lors de la récupération des films", 500);
+                                }
                         )
                 ;
     }
@@ -95,9 +126,14 @@ public class CategoryService {
         return
                 Panache
                         .withTransaction(() -> {
-                            Category category = Category.build(categoryDTO.getId(), categoryDTO.getName());
-                            return category.persist();
+                            Category category = categoryMapper.dtoToEntity(categoryDTO);
+                            return categoryRepository.persist(category);
                         })
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la création de la catégorie", throwable);
+                                    return new WebApplicationException("Erreur lors de la création de la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -113,14 +149,23 @@ public class CategoryService {
      * @return Un {@link Uni} contenant l'entité mise à jour.
      * @throws IllegalArgumentException si aucune catégorie n'est trouvée avec l'identifiant donné.
      */
-    public Uni<Category> update(Long id, CategoryDTO categoryDTO) {
+    public Uni<CategoryDTO> update(Long id, CategoryDTO categoryDTO) {
         return
                 Panache
                         .withTransaction(() ->
                                 categoryRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Catégorie introuvable"))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CATEGORY))
                                         .invoke(category -> category.setName(StringUtils.capitalize(categoryDTO.getName().trim())))
-                                        .flatMap(category -> categoryRepository.findById(category.getId()))
+                                        .call(category -> categoryRepository.flush())
+                                        .map(categoryMapper::categoryToCategoryDTO)
+                        )
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la mise à jour de la catégorie", throwable);
+                                    return new WebApplicationException("Erreur lors de la mise à jour de la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
                         )
                 ;
     }
@@ -141,7 +186,15 @@ public class CategoryService {
                 Panache
                         .withTransaction(() ->
                                 categoryRepository.deleteById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException("Catégorie introuvable"))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CATEGORY))
+                        )
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la suppression de la catégorie: {}", throwable.getMessage());
+                                    return new WebApplicationException("Erreur lors de la suppression de la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
                         )
                 ;
     }

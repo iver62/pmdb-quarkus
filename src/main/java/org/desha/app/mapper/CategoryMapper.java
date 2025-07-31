@@ -16,6 +16,8 @@ import java.util.Set;
 )
 public interface CategoryMapper {
 
+    Category dtoToEntity(CategoryDTO entity);
+
     CategoryDTO categoryToCategoryDTO(Category entity);
 
     @Named("toLiteCategoryDTO")
