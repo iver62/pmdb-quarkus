@@ -1,13 +1,11 @@
 package org.desha.app.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.desha.app.domain.dto.CountryDTO;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,21 +40,11 @@ public class Country extends PanacheEntityBase {
     @Column(name = "nom_fr_fr")
     private String nomFrFr;
 
-    @JsonIgnore
     @ManyToMany(mappedBy = "countries")
     private Set<Movie> movies = new HashSet<>();
 
-    @JsonIgnore
     @ManyToMany(mappedBy = "countries")
     private Set<Person> persons = new HashSet<>();
-
-    public void updateMovie(CountryDTO countryDTO) {
-        setCode(countryDTO.getCode());
-        setAlpha2(countryDTO.getAlpha2());
-        setAlpha3(countryDTO.getAlpha3());
-        setNomEnGb(countryDTO.getNomEnGb());
-        setNomFrFr(countryDTO.getNomFrFr());
-    }
 
     /*public Uni<Movie> addMovie(Movie movie) {
         return

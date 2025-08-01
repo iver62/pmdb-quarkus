@@ -13,13 +13,12 @@ import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.service.CountryService;
+import org.desha.app.utils.Messages;
 import org.jboss.resteasy.reactive.RestPath;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @Path("countries")
 @ApplicationScoped
@@ -33,13 +32,27 @@ public class CountryResource {
     }
 
     @GET
+    @Path("/count")
+    @RolesAllowed({"user", "admin"})
+    public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
+        String finalLang = queryParams.validateLang();
+
+        return
+                countryService.countCountries(queryParams.getTerm(), finalLang)
+                        .map(aLong -> Response.ok(aLong).build())
+                ;
+    }
+
+    @GET
     @Path("{id}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountry(@RestPath Long id) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
+
         return
                 countryService.getById(id)
-                        .onItem().ifNotNull().transform(country -> Response.ok(country).build())
-                        .onItem().ifNull().continueWith(Response.noContent().build());
+                        .map(country -> Response.ok(country).build())
+                ;
     }
 
     @GET
@@ -51,11 +64,12 @@ public class CountryResource {
 
         return
                 countryService.getCountries(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm(), finalLang)
-                        .flatMap(countryList ->
+                        .onItem().ifNull().continueWith(List::of)
+                        .flatMap(countryDTOList ->
                                 countryService.countCountries(queryParams.getTerm(), finalLang).map(total ->
-                                        countryList.isEmpty()
+                                        countryDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(countryList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(countryDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
                 ;
@@ -70,6 +84,7 @@ public class CountryResource {
 
         return
                 countryService.getCountries(finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(countryList ->
                                 countryService.countCountries(queryParams.getTerm(), queryParams.validateLang()).map(total ->
                                         countryList.isEmpty()
@@ -81,82 +96,35 @@ public class CountryResource {
     }
 
     @GET
-    @Path("search")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> searchCountriesByName(@QueryParam("query") String query) {
-        if (Objects.isNull(query) || query.trim().isEmpty()) {
-            throw new BadRequestException("Le paramètre 'query' est requis");
-        }
-
-        return
-                countryService.searchByName(query)
-                        .map(countryDTOS ->
-                                countryDTOS.isEmpty()
-                                        ? Response.noContent().build()
-                                        : Response.ok(countryDTOS).build()
-                        )
-                ;
-    }
-
-    @GET
-    @Path("{id}/movies/all")
-    @RolesAllowed({"user", "admin"})
-    public Uni<Response> getAllMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
-        queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
-
-        return
-                countryService.getMovies(id, queryParams.getSort(), queryParams.validateSortDirection(), queryParams.getTerm())
-                        .flatMap(movieList ->
-                                countryService.countMovies(id, queryParams.getTerm()).map(total ->
-                                        movieList.isEmpty()
-                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                )
-                        )
-                ;
-    }
-
-    @GET
     @Path("{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCountry(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        String finalSort = Optional.of(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
+        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+
         return
-                countryService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), queryParams.getTerm())
+                countryService.getMoviesByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(movieList ->
-                                countryService.countMovies(id, queryParams.getTerm()).map(total ->
+                                countryService.countMoviesByCountry(id, queryParams.getTerm()).map(total ->
                                         movieList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(movieList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                 )
                         )
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
-                        )
                 ;
     }
 
-    /**
-     * Récupère la liste des producteurs associés à un pays donné, avec prise en charge
-     * de la pagination, du tri et des filtres définis dans les paramètres de requête.
-     *
-     * @param id          L'identifiant du pays pour lequel récupérer les producteurs.
-     * @param queryParams Paramètres de requête contenant la pagination, le tri et les critères de recherche.
-     * @return Une {@link Uni} contenant une {@link Response} :
-     * - 200 OK avec la liste des producteurs associés au pays.
-     * - 204 OK si liste des producteurs associés au pays est vide.
-     * @throws org.desha.app.exception.InvalidDateException Si la plage de dates spécifiée dans les paramètres de requête est incohérente, par exemple si la date de début
-     *                                                      est après la date de fin. Cette exception est lancée par la méthode {@link PersonQueryParamsDTO#isInvalidDateRange()}.
-     * @throws org.desha.app.exception.InvalidSortException Si le champ de tri spécifié dans les paramètres de requête est invalide. Cette exception est lancée par
-     *                                                      la méthode {@link QueryParamsDTO#validateSortField(String, List)}.
-     */
     @GET
     @Path("/{id}/persons")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersonsByCountry(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
+
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
@@ -166,6 +134,7 @@ public class CountryResource {
 
         return
                 countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                        .onItem().ifNull().continueWith(List::of)
                         .flatMap(personDTOList ->
                                 countryService.countPersonsByCountry(id, criteriasDTO).map(total ->
                                         personDTOList.isEmpty()
@@ -175,22 +144,24 @@ public class CountryResource {
                         )
                 ;
     }
-    
+
     @PUT
     @Path("{id}")
     @RolesAllowed("admin")
     public Uni<Response> update(@RestPath Long id, CountryDTO countryDTO) {
-        if (Objects.isNull(countryDTO) || Objects.isNull(countryDTO.getNomFrFr())) {
-            throw new WebApplicationException("Country name was not set on request.", 422);
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
+
+        if (Objects.isNull(countryDTO)) {
+            throw new BadRequestException("Aucune information sur le pays n’a été fournie dans la requête");
+        }
+
+        if (!Objects.equals(id, countryDTO.getId())) {
+            throw new WebApplicationException("L'identifiant du pays ne correspond pas à celui de la requête", 422);
         }
 
         return
                 countryService.update(id, countryDTO)
-                        .onItem().ifNotNull().transform(entity -> Response.ok(entity).build())
-                        .onItem().ifNull().continueWith(Response.ok().status(NOT_FOUND)::build)
-                        .onFailure().recoverWithItem(err ->
-                                Response.serverError().entity("Erreur serveur : " + err.getMessage()).build()
-                        )
+                        .map(entity -> Response.ok(entity).build())
                 ;
     }
 

@@ -135,13 +135,6 @@ public class CountryRepository implements PanacheRepository<Country> {
                         .list();
     }
 
-    public Uni<List<Country>> findByName(String nomFrFr) {
-        final String query = "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))";
-
-        return find(query, Sort.by("nomFrFr"), Parameters.with("term", "%" + nomFrFr + "%"))
-                .list();
-    }
-
     public Uni<List<Country>> findCountriesInMovies(Page page, String sort, Sort.Direction direction, String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? "nomEnGb" : "nomFrFr";
 

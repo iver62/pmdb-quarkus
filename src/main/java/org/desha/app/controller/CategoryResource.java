@@ -53,7 +53,7 @@ public class CategoryResource {
     @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getCategory(@RestPath Long id) {
-        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_CATEGORY_ID);
 
         return
                 categoryService.getById(id)
@@ -84,7 +84,7 @@ public class CategoryResource {
     @Path("/{id}/movies")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByCategory(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
-        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_CATEGORY_ID);
 
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -127,7 +127,7 @@ public class CategoryResource {
     @Path("/{id}")
     @RolesAllowed("admin")
     public Uni<Response> updateCategory(@RestPath Long id, CategoryDTO categoryDTO) {
-        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
+        ValidationUtils.validateIdOrThrow(id, Messages.INVALID_CATEGORY_ID);
 
         if (Objects.isNull(categoryDTO)) {
             throw new BadRequestException("Aucune information sur la catégorie n’a été fournie dans la requête");

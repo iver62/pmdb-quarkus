@@ -50,9 +50,24 @@ public class CategoryService {
     public Uni<Long> count(String term) {
         return
                 categoryRepository.countCategories(term)
-                        .onFailure().transform(e -> {
-                                    log.error("Erreur lors du comptage des catégories: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors du comptage des catégories", 500);
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors du comptage des catégories", throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
+    }
+
+    public Uni<Long> countMoviesByCategory(Long id, String term) {
+        return
+                movieRepository.countMoviesByCategory(id, term)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CATEGORY))
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors du comptage des films pour la catégorie {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des catégories", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -68,7 +83,7 @@ public class CategoryService {
                                         return e;
                                     }
                                     log.error("Erreur lors de la récupération de la catégorie {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération de la catégorie", 500);
+                                    return new WebApplicationException("Erreur lors de la récupération de la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -76,10 +91,6 @@ public class CategoryService {
 
     public Uni<List<Category>> getAll() {
         return categoryRepository.listAll();
-    }
-
-    public Uni<Long> countMoviesByCategory(Long id, String term) {
-        return movieRepository.countMoviesByCategory(id, term);
     }
 
     public Uni<List<CategoryDTO>> getCategories(Page page, String sort, Sort.Direction direction, String term) {
@@ -107,7 +118,7 @@ public class CategoryService {
                         )
                         .onFailure().transform(err -> {
                                     log.error("Erreur lors de la récupération des films appartenant à la catégorie {}: {}", id, err.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des films", 500);
+                                    return new WebApplicationException("Erreur lors de la récupération des films pour la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;

@@ -6,10 +6,11 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.desha.app.domain.dto.CountryDTO;
-import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.MovieDTO;
-import org.desha.app.domain.dto.PersonDTO;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.mapper.CountryMapper;
 import org.desha.app.mapper.MovieMapper;
@@ -22,6 +23,7 @@ import org.desha.app.utils.Messages;
 import java.util.*;
 
 @ApplicationScoped
+@Slf4j
 public class CountryService {
 
     private final CountryMapper countryMapper;
@@ -49,7 +51,14 @@ public class CountryService {
     }
 
     public Uni<Long> countCountries(String term, String lang) {
-        return countryRepository.countCountries(term, lang);
+        return
+                countryRepository.countCountries(term, lang)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors du comptage des pays: {}", throwable.getMessage());
+                                    return new WebApplicationException("Erreur lors du comptage des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
     /**
@@ -59,8 +68,19 @@ public class CountryService {
      * @param term      Le terme de recherche dans le titre des films.
      * @return Un objet {@link Uni} contenant le nombre de films correspondant aux critères.
      */
-    public Uni<Long> countMovies(Long countryId, String term) {
-        return movieRepository.countMoviesByCountry(countryId, term);
+    public Uni<Long> countMoviesByCountry(Long countryId, String term) {
+        return
+                movieRepository.countMoviesByCountry(countryId, term)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors du comptage des films pour le pays {}", countryId, throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des films pour le pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
     /**
@@ -77,14 +97,33 @@ public class CountryService {
      * selon les critères de recherche et de filtrage.
      */
     public Uni<Long> countPersonsByCountry(Long countryId, CriteriasDTO criteriasDTO) {
-        return personRepository.countByCountry(countryId, criteriasDTO);
+        return
+                personRepository.countByCountry(countryId, criteriasDTO)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors du comptage des personnes pour le pays {}", countryId, throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des personnes pour le pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
     public Uni<CountryDTO> getById(Long id) {
         return
                 countryRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_COUNTRY))
                         .map(countryMapper::countryToCountryDTO)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération du pays {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération du pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -92,6 +131,11 @@ public class CountryService {
         return
                 countryRepository.findCountries(page, sort, direction, term, lang)
                         .map(countryMapper::toDTOList)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des pays", throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -99,6 +143,11 @@ public class CountryService {
         return
                 countryRepository.findCountries(sort, direction, term)
                         .map(countryMapper::toDTOList)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des pays", throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -116,27 +165,25 @@ public class CountryService {
         return countryRepository.findByIds(ids).map(HashSet::new);
     }
 
-    public Uni<List<CountryDTO>> searchByName(String name) {
+    public Uni<List<MovieDTO>> getMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
-                countryRepository.findByName(name.trim())
-                        .onItem().ifNotNull().transform(countryMapper::toDTOList)
-                        .onFailure().recoverWithItem(Collections.emptyList())
-                ;
-    }
+                movieRepository.findMoviesByCountry(id, page, sort, direction, criteriasDTO)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                        .map(movieWithAwardsNumberList ->
+                                movieWithAwardsNumberList
+                                        .stream()
+                                        .map(movieMapper::movieWithAwardsNumberToMovieDTO)
+                                        .toList()
 
-    public Uni<List<MovieDTO>> getMovies(Long id, String sort, Sort.Direction direction, String term) {
-        return
-                movieRepository.findMoviesByCountry(id, sort, direction, term)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
-                        .map(movieMapper::movieListToDTOList)
-                ;
-    }
-
-    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, String term) {
-        return
-                movieRepository.findMoviesByCountry(id, page, sort, direction, term)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
-                        .map(movieMapper::movieListToDTOList)
+                        )
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération des films appartenant au pays {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -151,20 +198,45 @@ public class CountryService {
      * @param criteriasDTO Les critères de filtrage pour affiner la recherche.
      * @return Une instance de {@link Uni<List<PersonDTO>>} contenant la liste des personnes sous forme de DTOs.
      */
-    public Uni<List<PersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<LitePersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
         return
                 personRepository.findPersonsByCountry(id, page, sort, direction, criteriasDTO)
-                        .map(personMapper::toDTOList)
+                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                        .map(personMapper::toLiteDTOList)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération des personnes appartenant au pays {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des personnes", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
-    public Uni<Country> update(Long id, CountryDTO countryDTO) {
+    public Uni<CountryDTO> update(Long id, CountryDTO countryDTO) {
         return
                 Panache
                         .withTransaction(() ->
                                 countryRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.COUNTRIES_NOT_FOUND))
-                                        .invoke(entity -> entity.updateMovie(countryDTO))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                                        .invoke(country -> {
+                                            country.setCode(countryDTO.getCode());
+                                            country.setAlpha2(countryDTO.getAlpha2());
+                                            country.setAlpha3(countryDTO.getAlpha3());
+                                            country.setNomEnGb(countryDTO.getNomEnGb());
+                                            country.setNomFrFr(countryDTO.getNomFrFr());
+                                        })
+                                        .call(category -> countryRepository.flush())
+                                        .map(countryMapper::countryToCountryDTO)
+                        )
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la mise à jour du pays", throwable);
+                                    return new WebApplicationException("Erreur lors de la mise à jour deu pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
                         )
                 ;
     }
