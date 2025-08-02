@@ -8,7 +8,6 @@ public class Messages {
     public final String ACTORS_NOT_INITIALIZED = "La liste des acteurs n'est pas initialisée";
     public final String ARTISTS_NOT_INITIALIZED = "La liste des artistes n'est pas initialisée";
     public final String ASSISTANT_DIRECTORS_NOT_INITIALIZED = "La liste des assistants réalisateurs n'est pas initialisée";
-    public final String AWARD_NOT_FOUND = "Récompense introuvable";
     public final String CASTERS_NOT_INITIALIZED = "La liste des casteurs n'est pas initialisée";
     public final String CATEGORIES_NOT_INITIALIZED = "L'ensemble des catégories n'est pas initialisé";
     public final String CEREMONY_AWARDS_NOT_INITIALIZED = "L'ensemble des cérémonies n'est pas initialisé";
@@ -66,12 +65,14 @@ public class Messages {
     public final String ERROR_WHILE_REMOVING_CATEGORY = "Erreur lors de la suppression de la catégorie";
     public final String ERROR_WHILE_REMOVING_COUNTRY = "Erreur lors de la suppression du pays";
 
+    public final String INVALID_AWARD_ID = "L'identifiant de la récompense est invalide";
     public final String INVALID_MOVIE_ID = "L'identifiant du film est invalide";
     public final String INVALID_PERSON_ID = "L'identifiant de la personne est invalide";
     public final String INVALID_CATEGORY_ID = "L'identifiant de la catégorie est invalide";
     public final String INVALID_COUNTRY_ID = "L'identifiant du pays est invalide";
     public final String INVALID_CEREMONY_AWARDS_ID = "L'identifiant du groupe de récompenses est invalide";
 
+    public final String NOT_FOUND_AWARD = "Récompense introuvable";
     public final String NOT_FOUND_FILM = "Film introuvable";
     public final String NOT_FOUND_CATEGORY = "Catégorie introuvable";
     public final String NOT_FOUND_CEREMONY = "Cérémonie introuvable";

@@ -1,7 +1,9 @@
 package org.desha.app.domain.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.desha.app.domain.enums.PersonType;
 
 import java.time.LocalDate;
@@ -12,6 +14,8 @@ import java.util.UUID;
 
 @Builder
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CriteriasDTO {
 
     private String term;

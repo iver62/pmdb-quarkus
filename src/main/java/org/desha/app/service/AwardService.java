@@ -4,10 +4,13 @@ import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
 import org.desha.app.domain.dto.LitePersonDTO;
-import org.desha.app.domain.entity.Award;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.mapper.AwardMapper;
 import org.desha.app.repository.AwardRepository;
@@ -17,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 
 @ApplicationScoped
+@Slf4j
 public class AwardService {
 
     private final AwardMapper awardMapper;
@@ -48,8 +52,16 @@ public class AwardService {
     public Uni<AwardDTO> getAward(Long id) {
         return
                 awardRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_AWARD))
                         .map(awardMapper::awardToAwardDTO)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération de la récompense", throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération de la récompense", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -79,17 +91,26 @@ public class AwardService {
      * @return un {@link Uni} contenant la récompense mise à jour après la transaction
      * @throws IllegalArgumentException si aucune récompense n'est trouvée avec l'identifiant donné
      */
-    public Uni<Award> updateAward(Long id, AwardDTO awardDTO) {
+    public Uni<AwardDTO> updateAward(Long id, AwardDTO awardDTO) {
         return
                 Panache
                         .withTransaction(() ->
                                 awardRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_AWARD))
                                         .invoke(entity -> {
                                             entity.setName(StringUtils.capitalize(awardDTO.getName().trim()));
                                             entity.setYear(awardDTO.getYear());
                                         })
-                                        .flatMap(award -> awardRepository.findById(award.getId()))
+                                        .call(category -> awardRepository.flush())
+                                        .map(awardMapper::awardToAwardDTO)
+                        )
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la modification de la récompense", throwable);
+                                    return new WebApplicationException("Erreur lors de la modification de la récompense", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
                         )
                 ;
     }
@@ -109,7 +130,15 @@ public class AwardService {
                 Panache
                         .withTransaction(() ->
                                 awardRepository.deleteById(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.AWARD_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_AWARD))
+                        )
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la suppression de la récompense", throwable);
+                                    return new WebApplicationException("Erreur lors de la suppression de la récompense", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
                         )
                 ;
     }

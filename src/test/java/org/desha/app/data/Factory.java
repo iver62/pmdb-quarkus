@@ -12,7 +12,7 @@ import java.time.Year;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @UtilityClass
@@ -213,6 +213,14 @@ public class Factory {
 
     public Set<CountryDTO> mockCountryDTOSet(int length) {
         return new HashSet<>(mockCountryDTOList(length));
+    }
+
+    public Set<CeremonyDTO> mockCeremonyDTOSet(int length) {
+        return
+                IntStream.range(0, length)
+                        .mapToObj(i -> mockCeremonyDTO())
+                        .collect(Collectors.toSet())
+                ;
     }
 
     public List<CeremonyAwardsDTO> mockCeremonyAwardsDTOList(int length) {
