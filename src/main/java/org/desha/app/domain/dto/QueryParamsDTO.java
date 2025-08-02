@@ -4,8 +4,11 @@ import io.quarkus.panache.common.Sort;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import lombok.Getter;
 import org.desha.app.exception.InvalidSortException;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.text.MessageFormat;
 import java.time.LocalDateTime;
@@ -16,27 +19,45 @@ import java.util.Set;
 @Getter
 public class QueryParamsDTO {
 
+    @Parameter(
+            name = "page",
+            description = "Numéro de la page à récupérer",
+            in = ParameterIn.QUERY
+    )
     @QueryParam("page")
     @DefaultValue("0")
     private int pageIndex;
 
+    @Parameter(
+            name = "size",
+            description = "Nombre d’éléments par page",
+            in = ParameterIn.QUERY
+    )
     @QueryParam("size")
     @DefaultValue("50")
     private int size;
 
+    @Parameter(
+            name = "sort",
+            description = "Champ sur lequel appliquer le tri (ex: title, creationDate)",
+            in = ParameterIn.QUERY
+    )
     @QueryParam("sort")
     private String sort;
 
+    @Parameter(
+            name = "direction",
+            description = "Direction du tri : Ascending (croissant) ou Descending (décroissant)",
+            in = ParameterIn.QUERY
+    )
     @QueryParam("direction")
     @DefaultValue("Ascending")
     private String direction;
 
     @QueryParam("term")
-    @DefaultValue("")
     private String term;
 
     @QueryParam("lang")
-    @DefaultValue("")
     private String lang;
 
     @QueryParam("from-creation-date")
@@ -99,7 +120,7 @@ public class QueryParamsDTO {
         if ("fr".equalsIgnoreCase(lang) || "en".equalsIgnoreCase(lang)) {
             return lang.toLowerCase();
         }
-        throw new WebApplicationException("Le paramètre lang est invalide. Les valeurs autorisées sont 'fr' or 'en'.", 400);
+        throw new WebApplicationException("Le paramètre lang est invalide. Les valeurs autorisées sont 'fr' or 'en'.", Response.Status.BAD_REQUEST);
     }
 
 }

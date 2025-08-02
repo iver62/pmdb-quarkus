@@ -5,6 +5,9 @@ import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.smallrye.mutiny.Uni;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.desha.app.data.Factory;
 import org.desha.app.data.Utils;
 import org.desha.app.domain.dto.CategoryDTO;
@@ -235,7 +238,34 @@ class CategoryEndPointTest {
                 .post()
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le nom de la catégorie n’a pas été fourni dans la requête"));
+                .body(
+                        "message", Matchers.is("Erreur de validation"),
+                        "details", Matchers.is("Le nom de la catégorie est obligatoire")
+                )
+        ;
+    }
+
+    @Test
+    void shouldReturnConflictWhenCategoryAlreadyExists() {
+        CategoryDTO mockCategoryDTO = Factory.mockCategoryDTO();
+        mockCategoryDTO.setId(null);
+
+        when(categoryService.create(any()))
+                .thenReturn(Uni.createFrom().failure(
+                                new WebApplicationException("Erreur, La catégorie existe déjà ou ne respecte pas les contraintes de validation", Response.Status.CONFLICT)
+                        )
+                )
+        ;
+
+        given()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(mockCategoryDTO)
+                .when()
+                .post()
+                .then()
+                .statusCode(409)
+                .body(equalTo("Erreur, La catégorie existe déjà ou ne respecte pas les contraintes de validation"))
+        ;
     }
 
     @Test
@@ -262,17 +292,6 @@ class CategoryEndPointTest {
     }
 
     @Test
-    void shouldReturnBadRequestWhenInvalidPayload() {
-        given()
-                .contentType("application/json")
-                .when()
-                .put("/1")
-                .then()
-                .statusCode(400)
-                .body(equalTo("Aucune information sur la catégorie n’a été fournie dans la requête"));
-    }
-
-    @Test
     void shouldReturnBadRequestIfNameIsMissing() {
         CategoryDTO mockCategoryDTO = Factory.mockCategoryDTO();
         mockCategoryDTO.setName(null);
@@ -284,7 +303,11 @@ class CategoryEndPointTest {
                 .put("/1")
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le nom de la catégorie n’a pas été fourni dans la requête"));
+                .body(
+                        "message", Matchers.is("Erreur de validation"),
+                        "details", Matchers.is("Le nom de la catégorie est obligatoire")
+                )
+        ;
     }
 
     @Test

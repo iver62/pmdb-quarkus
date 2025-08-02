@@ -1,5 +1,6 @@
 package org.desha.app.mapper;
 
+import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CategoryDTO;
 import org.desha.app.domain.entity.Category;
 import org.mapstruct.Mapper;
@@ -16,6 +17,7 @@ import java.util.Set;
 )
 public interface CategoryMapper {
 
+    @Mapping(target = "name", source = "name", qualifiedByName = "capitalize")
     Category dtoToEntity(CategoryDTO entity);
 
     CategoryDTO categoryToCategoryDTO(Category entity);
@@ -28,4 +30,9 @@ public interface CategoryMapper {
     List<CategoryDTO> toDTOList(List<Category> categoryList);
 
     Set<CategoryDTO> toDTOSet(Set<Category> categorySet);
+
+    @Named("capitalize")
+    static String capitalize(String input) {
+        return StringUtils.capitalize(input);
+    }
 }
