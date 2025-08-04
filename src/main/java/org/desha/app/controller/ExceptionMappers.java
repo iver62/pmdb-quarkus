@@ -1,6 +1,8 @@
 package org.desha.app.controller;
 
 import io.smallrye.mutiny.Uni;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
@@ -12,6 +14,8 @@ import org.desha.app.exception.MovieUpdateException;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
 import java.time.format.DateTimeParseException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Provider
 @Slf4j
@@ -55,6 +59,19 @@ public class ExceptionMappers {
     public Response mapException(MovieUpdateException exception) {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(exception.getMessage())
+                .build();
+    }
+
+    @ServerExceptionMapper
+    public Response mapException(ConstraintViolationException exception) {
+        String message = exception.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(", "));
+
+        log.warn("Erreur de validation : {}", message);
+
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity(Map.of("message", "Erreur de validation", "details", message))
                 .build();
     }
 
