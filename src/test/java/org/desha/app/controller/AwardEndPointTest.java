@@ -121,7 +121,11 @@ class AwardEndPointTest {
                 .put("/1")
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le nom de la récompense n’a pas été fourni dans la requête"));
+                .body(
+                        "details", Matchers.is("Le nom de la récompense est obligatoire"),
+                        "message", Matchers.is("Erreur de validation")
+                )
+        ;
     }
 
     @Test

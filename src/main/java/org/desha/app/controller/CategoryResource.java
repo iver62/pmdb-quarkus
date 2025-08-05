@@ -241,6 +241,10 @@ public class CategoryResource {
             content = @Content(schema = @Schema(implementation = CategoryDTO.class))
     )
     public Uni<Response> createCategory(@Valid CategoryDTO categoryDTO) {
+        if (Objects.isNull(categoryDTO)) {
+            throw new BadRequestException("Aucune information sur la catégorie n’a été fournie dans la requête");
+        }
+
         if (Objects.nonNull(categoryDTO.getId())) {
             throw new BadRequestException("L’identifiant a été défini de manière incorrecte dans la requête");
         }
@@ -287,6 +291,10 @@ public class CategoryResource {
     )
     public Uni<Response> updateCategory(@RestPath Long id, @Valid CategoryDTO categoryDTO) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_CATEGORY_ID);
+
+        if (Objects.isNull(categoryDTO)) {
+            throw new BadRequestException("Aucune information sur la catégorie n’a été fournie dans la requête");
+        }
 
         if (!Objects.equals(id, categoryDTO.getId())) {
             throw new WebApplicationException("L'identifiant de la catégorie ne correspond pas à celui de la requête", 422);
