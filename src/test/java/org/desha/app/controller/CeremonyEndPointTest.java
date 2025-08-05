@@ -133,7 +133,11 @@ class CeremonyEndPointTest {
                 .post()
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le nom de la cérémonie n’a pas été fourni dans la requête"));
+                .body(
+                        "details", Matchers.is("Le nom de la cérémonie est obligatoire"),
+                        "message", Matchers.is("Erreur de validation")
+                )
+        ;
     }
 
     @Test
@@ -177,10 +181,14 @@ class CeremonyEndPointTest {
                 .contentType("application/json")
                 .body(mockCeremonyDTO)
                 .when()
-                .put("/1")
+                .put("/" + mockCeremonyDTO.getId())
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le nom de la cérémonie n’a pas été fourni dans la requête"));
+                .body(
+                        "details", Matchers.is("Le nom de la cérémonie est obligatoire"),
+                        "message", Matchers.is("Erreur de validation")
+                )
+        ;
     }
 
     @Test
