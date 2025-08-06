@@ -7,9 +7,9 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.dto.CriteriasDTO;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.record.PersonWithMoviesNumber;
 import org.desha.app.domain.record.Repartition;
 
@@ -172,11 +172,17 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
     public Uni<List<Repartition>> findActorsCreationDateEvolution() {
         return
                 find("""
-                        SELECT CAST(FUNCTION('TO_CHAR', p.creationDate, 'MM-YYYY') AS string) AS mois_creation,
-                            SUM(COUNT(*)) OVER (ORDER BY FUNCTION('TO_CHAR', p.creationDate, 'MM-YYYY')) AS cumulative_count
-                        FROM Person p
-                        WHERE ?1 MEMBER OF p.types
-                        GROUP BY mois_creation
+                         SELECT
+                            mois_creation,
+                            SUM(monthly_count) OVER (ORDER BY mois_creation) AS cumulative_count
+                        FROM (
+                            SELECT
+                                TO_CHAR(p.creationDate, 'MM-YYYY') AS mois_creation,
+                                COUNT(*) AS monthly_count
+                            FROM Person p
+                            WHERE ?1 MEMBER OF p.types
+                            GROUP BY TO_CHAR(p.creationDate, 'MM-YYYY')
+                        ) AS sub
                         ORDER BY mois_creation
                         """, PersonType.ACTOR
                 )

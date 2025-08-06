@@ -25,14 +25,36 @@ public class CategoryRepository implements PanacheRepository<Category> {
     }
 
     public Uni<Long> countCategoriesInMovies(String term) {
-        return count("""
-                        SELECT COUNT(DISTINCT c)
+        String query = """
+                SELECT COUNT(c.id)
+                FROM Category c
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM Movie m
+                    JOIN m.categories mc
+                    WHERE mc.id = c.id
+                        AND LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                )
+                """;
+
+        return count(query, Parameters.with("term", "%" + StringUtils.defaultString(term) + "%"));
+    }
+
+    public Uni<Long> countMovieCategoriesByPerson(Person person, String term) {
+        String query = String.format("""
+                    SELECT COUNT(c.id)
+                    FROM Category c
+                    WHERE EXISTS (
+                        SELECT 1
                         FROM Movie m
-                        JOIN m.categories c
-                        WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                        """,
-                Parameters.with("term", "%" + term + "%")
+                        JOIN m.categories mc
+                        WHERE (%s)
+                            AND mc.id = c.id
+                                AND LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', :term))
+                )""", MovieRepositoryHelper.buildExistsClause(person)
         );
+
+        return count(query, Parameters.with("person", person).and("term", "%" + StringUtils.defaultString(term) + "%"));
     }
 
     public Uni<List<Category>> findByIds(List<Long> ids) {
@@ -58,22 +80,23 @@ public class CategoryRepository implements PanacheRepository<Category> {
                 WHERE LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 """;
         return
-                find(query, Sort.by(sort, direction), Parameters.with("term", "%" + term + "%"))
+                find(query, Sort.by(sort, direction), Parameters.with("term", "%" + StringUtils.defaultString(term) + "%"))
                         .page(page)
                         .list();
     }
 
     public Uni<List<Category>> findMovieCategoriesByPerson(Person person, Page page, String sort, Sort.Direction direction, String term) {
-        final String query = """
+        final String query = String.format("""
                     SELECT DISTINCT c
                     FROM Movie m
                     JOIN m.categories c
                     WHERE (%s)
                     AND LOWER(FUNCTION('unaccent', c.name)) LIKE LOWER(FUNCTION('unaccent', :term))
-                """.formatted(MovieRepositoryHelper.buildExistsClause(person));
+                """, MovieRepositoryHelper.buildExistsClause(person)
+        );
 
         Parameters parameters = Parameters.with("person", person)
-                .and("term", "%" + StringUtils.defaultString(term + "%"));
+                .and("term", "%" + StringUtils.defaultString(term) + "%");
 
         return
                 find(query, Sort.by(sort, direction), parameters)
