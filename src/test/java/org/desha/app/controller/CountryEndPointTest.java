@@ -152,19 +152,19 @@ class CountryEndPointTest {
                                 .map(movieDTO -> movieDTO.getReleaseDate().toString())
                                 .toArray(String[]::new)),
                         "runningTime", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getRunningTime().intValue())
+                                .map(MovieDTO::getRunningTime)
                                 .toArray(Integer[]::new)),
                         "budget.value", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBudget().value())
+                                .toArray(Long[]::new)),
                         "budget.currency", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getCurrency())
+                                .map(movieDTO -> movieDTO.getBudget().currency())
                                 .toArray(String[]::new)),
                         "boxOffice.value", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBoxOffice().value())
+                                .toArray(Long[]::new)),
                         "boxOffice.currency", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getCurrency())
+                                .map(movieDTO -> movieDTO.getBoxOffice().currency())
                                 .toArray(String[]::new)),
                         "posterFileName", Matchers.contains(mockMovieDTOList.stream()
                                 .map(MovieDTO::getPosterFileName)
