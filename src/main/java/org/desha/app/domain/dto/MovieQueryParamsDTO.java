@@ -18,8 +18,8 @@ public class MovieQueryParamsDTO extends QueryParamsDTO {
     @Parameter(
             name = "country",
             description = "Identifiants des pays associés aux films",
-            example = "country=1&country=2",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "country=1&country=2"
     )
     @QueryParam("country")
     private List<Integer> countryIds;
@@ -27,8 +27,8 @@ public class MovieQueryParamsDTO extends QueryParamsDTO {
     @Parameter(
             name = "category",
             description = "Identifiants des catégories associés aux films à filtrer",
-            example = "category=1&category=2",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "category=1&category=2"
     )
     @QueryParam("category")
     private List<Integer> categoryIds;
@@ -36,8 +36,8 @@ public class MovieQueryParamsDTO extends QueryParamsDTO {
     @Parameter(
             name = "user",
             description = "Identifiants des utilisateurs ayant soumis les films (UUID)",
-            example = "user=550e8400-e29b-41d4-a716-446655440000",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "user=550e8400-e29b-41d4-a716-446655440000"
     )
     @QueryParam("user")
     private List<UUID> userIds;
@@ -45,7 +45,8 @@ public class MovieQueryParamsDTO extends QueryParamsDTO {
     @Parameter(
             name = "from-release-date",
             description = "Filtrer les films sortis à partir de cette date (format ISO 8601)",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "2000-01-01"
     )
     @QueryParam("from-release-date")
     private LocalDate fromReleaseDate;
@@ -53,7 +54,8 @@ public class MovieQueryParamsDTO extends QueryParamsDTO {
     @Parameter(
             name = "to-release-date",
             description = "Filtrer les films sortis jusqu'à cette cette date (format ISO 8601)",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "2024-12-31"
     )
     @QueryParam("to-release-date")
     private LocalDate toReleaseDate;

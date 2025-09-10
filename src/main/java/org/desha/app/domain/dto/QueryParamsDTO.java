@@ -22,7 +22,8 @@ public class QueryParamsDTO {
     @Parameter(
             name = "page",
             description = "Numéro de la page à récupérer",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "0"
     )
     @QueryParam("page")
     @DefaultValue("0")
@@ -31,7 +32,8 @@ public class QueryParamsDTO {
     @Parameter(
             name = "size",
             description = "Nombre d’éléments par page",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "50"
     )
     @QueryParam("size")
     @DefaultValue("50")
@@ -39,8 +41,9 @@ public class QueryParamsDTO {
 
     @Parameter(
             name = "sort",
-            description = "Champ sur lequel appliquer le tri (ex: title, creationDate)",
-            in = ParameterIn.QUERY
+            description = "Champ sur lequel appliquer le tri",
+            in = ParameterIn.QUERY,
+            example = "title"
     )
     @QueryParam("sort")
     private String sort;
@@ -48,27 +51,64 @@ public class QueryParamsDTO {
     @Parameter(
             name = "direction",
             description = "Direction du tri : Ascending (croissant) ou Descending (décroissant)",
-            in = ParameterIn.QUERY
+            in = ParameterIn.QUERY,
+            example = "Ascending"
     )
     @QueryParam("direction")
     @DefaultValue("Ascending")
     private String direction;
 
+    @Parameter(
+            name = "term",
+            description = "Terme de recherche libre",
+            in = ParameterIn.QUERY,
+            example = "Inception"
+    )
     @QueryParam("term")
     private String term;
 
+    @Parameter(
+            name = "lang",
+            description = "Langue du contenu",
+            in = ParameterIn.QUERY,
+            example = "fr"
+    )
     @QueryParam("lang")
     private String lang;
 
+    @Parameter(
+            name = "from-creation-date",
+            description = "Date minimale de création de l'enregistrement (ISO 8601)",
+            in = ParameterIn.QUERY,
+            example = "2023-01-01T00:00:00"
+    )
     @QueryParam("from-creation-date")
     protected LocalDateTime fromCreationDate;
 
+    @Parameter(
+            name = "to-creation-date",
+            description = "Date maximale de création de l'enregistrement (ISO 8601)",
+            in = ParameterIn.QUERY,
+            example = "2024-12-31T23:59:59"
+    )
     @QueryParam("to-creation-date")
     protected LocalDateTime toCreationDate;
 
+    @Parameter(
+            name = "from-last-update",
+            description = "Date minimale de dernière mise à jour de l'enregistrement (ISO 8601)",
+            in = ParameterIn.QUERY,
+            example = "2023-01-01T00:00:00"
+    )
     @QueryParam("from-last-update")
     protected LocalDateTime fromLastUpdate;
 
+    @Parameter(
+            name = "to-last-update",
+            description = "Date maximale de dernière mise à jour de l'enregistrement (ISO 8601)",
+            in = ParameterIn.QUERY,
+            example = "2024-12-31T23:59:59"
+    )
     @QueryParam("to-last-update")
     protected LocalDateTime toLastUpdate;
 

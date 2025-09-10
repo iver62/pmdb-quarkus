@@ -3,6 +3,7 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Builder
@@ -11,22 +12,22 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 @Schema(description = "Représente un pays")
 public class CountryDTO {
 
-    @Schema(description = "Identifiant unique du pays", example = "1")
+    @Schema(description = "Identifiant unique du pays", type = SchemaType.NUMBER, examples = "1")
     private Long id;
 
-    @Schema(description = "Code numérique du pays selon la norme ISO 3166-1", example = "250")
+    @Schema(description = "Code numérique du pays selon la norme ISO 3166-1", type = SchemaType.INTEGER, examples = "250")
     private int code;
 
-    @Schema(description = "Code alpha-2 du pays selon la norme ISO 3166-1", example = "FR")
+    @Schema(description = "Code alpha-2 du pays selon la norme ISO 3166-1", type = SchemaType.STRING, examples = "FR")
     private String alpha2;
 
-    @Schema(description = "Code alpha-3 du pays selon la norme ISO 3166-1", example = "FRA")
+    @Schema(description = "Code alpha-3 du pays selon la norme ISO 3166-1", type = SchemaType.STRING, examples = "FRA")
     private String alpha3;
 
-    @Schema(description = "Nom du pays en anglais (GB)", example = "France")
+    @Schema(description = "Nom du pays en anglais (GB)", type = SchemaType.STRING, examples = "France")
     private String nomEnGb;
 
-    @Schema(description = "Nom du pays en français (FR)", example = "France")
+    @Schema(description = "Nom du pays en français (FR)", type = SchemaType.STRING, examples = "France")
     private String nomFrFr;
 
     public static CountryDTO build(Long id, int code, String alpha2, String alpha3, String nomEnGb, String nomFrFr) {

@@ -4,6 +4,8 @@ import jakarta.ws.rs.QueryParam;
 import lombok.Getter;
 import org.desha.app.domain.enums.PersonType;
 import org.desha.app.exception.InvalidDateException;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -14,21 +16,57 @@ import java.util.Set;
 @Getter
 public class PersonQueryParamsDTO extends QueryParamsDTO {
 
+    @Parameter(
+            name = "country",
+            description = "Identifiants des pays associés à la personne (ex: country=1&country=2)",
+            in = ParameterIn.QUERY,
+            example = "1"
+    )
     @QueryParam("country")
     private List<Integer> countryIds;
 
+    @Parameter(
+            name = "type",
+            description = "Types de personnes à filtrer (ex: ACTOR, DIRECTOR)",
+            in = ParameterIn.QUERY,
+            example = "ACTOR"
+    )
     @QueryParam("type")
     private Set<PersonType> personTypes;
 
+    @Parameter(
+            name = "from-birth-date",
+            description = "Date de naissance minimale (format : yyyy-MM-dd)",
+            in = ParameterIn.QUERY,
+            example = "1950-01-01"
+    )
     @QueryParam("from-birth-date")
     private LocalDate fromBirthDate;
 
+    @Parameter(
+            name = "to-birth-date",
+            description = "Date de naissance maximale (format : yyyy-MM-dd)",
+            in = ParameterIn.QUERY,
+            example = "2000-12-31"
+    )
     @QueryParam("to-birth-date")
     private LocalDate toBirthDate;
 
+    @Parameter(
+            name = "from-death-date",
+            description = "Date de décès minimale (format : yyyy-MM-dd)",
+            in = ParameterIn.QUERY,
+            example = "1990-01-01"
+    )
     @QueryParam("from-death-date")
     private LocalDate fromDeathDate;
 
+    @Parameter(
+            name = "to-death-date",
+            description = "Date de décès maximale (format : yyyy-MM-dd)",
+            in = ParameterIn.QUERY,
+            example = "2023-12-31"
+    )
     @QueryParam("to-death-date")
     private LocalDate toDeathDate;
 

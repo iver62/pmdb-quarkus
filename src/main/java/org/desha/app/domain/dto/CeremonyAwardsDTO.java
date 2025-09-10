@@ -19,6 +19,16 @@ public class CeremonyAwardsDTO {
     private LiteMovieDTO movie;
     private List<AwardDTO> awards;
 
+    public static CeremonyAwardsDTO build(Long id, CeremonyDTO ceremony, List<AwardDTO> awards) {
+        return
+                CeremonyAwardsDTO.builder()
+                        .id(id)
+                        .ceremony(ceremony)
+                        .awards(awards)
+                        .build()
+                ;
+    }
+
     public static CeremonyAwardsDTO build(Long id, CeremonyDTO ceremony, LiteMovieDTO movie, List<AwardDTO> awards) {
         return
                 CeremonyAwardsDTO.builder()
