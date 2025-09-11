@@ -8,9 +8,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.*;
-import org.desha.app.domain.entity.*;
+import org.desha.app.domain.entity.Category;
+import org.desha.app.domain.entity.Movie;
+import org.desha.app.domain.entity.MovieActor;
+import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.enums.NotificationType;
 import org.desha.app.domain.record.Repartition;
 import org.desha.app.exception.MovieUpdateException;
 import org.desha.app.exception.PhotoDeletionException;
@@ -27,7 +32,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,14 +53,15 @@ public class MovieService {
     private final CountryService countryService;
     private final FileService fileService;
     private final CategoryService categoryService;
+    private final NotificationService notificationService;
     private final StatsService statsService;
+    private final UserNotificationService userNotificationService;
 
     private final CeremonyAwardsRepository ceremonyAwardsRepository;
     private final CategoryRepository categoryRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
-    private final MovieTechnicianRepository movieTechnicianRepository;
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
 
@@ -77,10 +82,11 @@ public class MovieService {
             CountryRepository countryRepository,
             FileService fileService,
             CategoryService categoryService,
+            NotificationService notificationService,
             StatsService statsService,
+            UserNotificationService userNotificationService,
             MovieRepository movieRepository,
             MovieActorRepository movieActorRepository,
-            MovieTechnicianRepository movieTechnicianRepository,
             PersonRepository personRepository,
             UserRepository userRepository
     ) {
@@ -101,18 +107,19 @@ public class MovieService {
         this.categoryService = categoryService;
         this.movieRepository = movieRepository;
         this.movieActorRepository = movieActorRepository;
-        this.movieTechnicianRepository = movieTechnicianRepository;
         this.userRepository = userRepository;
         this.personRepository = personRepository;
+        this.notificationService = notificationService;
         this.statsService = statsService;
+        this.userNotificationService = userNotificationService;
     }
 
-    public Uni<Long> count(CriteriasDTO criteriasDTO) {
-        return movieRepository.countMovies(criteriasDTO);
+    public Uni<Long> count(CriteriaDTO criteriaDTO) {
+        return movieRepository.countMovies(criteriaDTO);
     }
 
-    public Uni<Long> countPersonsByMovie(Long id, CriteriasDTO criteriasDTO) {
-        return personRepository.countPersonsByMovie(id, criteriasDTO);
+    public Uni<Long> countPersonsByMovie(Long id, CriteriaDTO criteriaDTO) {
+        return personRepository.countPersonsByMovie(id, criteriaDTO);
     }
 
     public Uni<Long> countCountriesInMovies(String term, String lang) {
@@ -128,38 +135,38 @@ public class MovieService {
                 movieRepository.findByIdWithCountriesAndCategories(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                         .map(movieMapper::movieToMovieDTO)
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
                                     }
-                                    log.error("Erreur lors de la récupération du film: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération du film", 500);
+                                    log.error("Erreur lors de la récupération du film", throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération du film", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
     }
 
-    public Uni<List<MovieDTO>> getMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMovies(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 movieRepository
-                        .findMovies(page, sort, direction, criteriasDTO)
+                        .findMovies(page, sort, direction, criteriaDTO)
                         .map(movieMapper::movieWithAwardsListToDTOList)
-                        .onFailure().transform(e -> {
-                                    log.error("Erreur lors de la récupération des films: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des films", 500);
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des films", throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
     }
 
-    public Uni<List<MovieDTO>> getMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMovies(String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 movieRepository
-                        .findMovies(sort, direction, criteriasDTO)
+                        .findMovies(sort, direction, criteriaDTO)
                         .map(movieMapper::movieWithAwardsListToDTOList)
-                        .onFailure().transform(e -> {
-                                    log.error("Erreur lors de la récupération des films: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des films", 500);
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des films", throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -174,140 +181,44 @@ public class MovieService {
 
     public Uni<List<CountryDTO>> getCountriesInMovies(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
-                        .map(countryMapper::toDTOList)
-                        .onFailure().transform(e -> {
-                                    log.error("Erreur lors de la récupération des pays: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des pays", 500);
-                                }
-                        )
-                ;
+                Panache.withTransaction(() ->
+                        countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
+                                .invoke(countries -> log.info("COUNTRIES -> {}", countries))
+                                .map(countryMapper::toDTOList)
+                                .onFailure().transform(throwable -> {
+                                            log.error("Erreur lors de la récupération des pays", throwable);
+                                            return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                        }
+                                )
+                );
     }
 
     public Uni<List<CategoryDTO>> getCategoriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
         return
                 categoryRepository.findCategoriesInMovies(page, sort, direction, term)
                         .map(categoryMapper::toDTOList)
-                        .onFailure().transform(e -> {
-                                    log.error("Erreur lors de la récupération des catégories: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des catégories", 500);
-                                }
-                        )
+//                        .onFailure().transform(throwable -> {
+//                                    log.error("Erreur lors de la récupération des catégories", throwable);
+//                                    return new WebApplicationException("Erreur lors de la récupération des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+//                                }
+//                        )
                 ;
     }
 
-    public Uni<List<LitePersonDTO>> getPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<LitePersonDTO>> getPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                         .flatMap(movie ->
-                                personRepository.findPersonsByMovie(id, page, sort, direction, criteriasDTO)
+                                personRepository.findPersonsByMovie(id, page, sort, direction, criteriaDTO)
                                         .map(personMapper::toLiteDTOList)
                         )
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
                                     }
-                                    log.error("Erreur lors de la récupération des personnes pour le film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des personnes", 500);
-                                }
-                        )
-                ;
-    }
-
-    public Uni<List<MovieActorDTO>> getActorsByMovie(Long id) {
-        return
-                movieRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                        .chain(this::fetchAndMapActorList)
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
-                                    }
-                                    log.error("Erreur lors de la récupération du casting du film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération du casting", 500);
-                                }
-                        )
-                ;
-    }
-
-    /**
-     * Récupère un ensemble de techniciens associés à un film spécifique.
-     *
-     * @param id                L'identifiant du film.
-     * @param techniciansGetter Fonction permettant de récupérer le bon ensemble de techniciens depuis l'entité {@link Movie}.
-     * @param errorMessage      Message d'erreur en cas de liste non initialisée.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link PersonDTO} correspondant aux techniciens du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si la liste des techniciens n'est pas initialisée pour ce film.
-     */
-    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> getMovieTechniciansByMovie(Long id, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
-        return
-                movieRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                        .flatMap(movie ->
-                                Mutiny.fetch(techniciansGetter.apply(movie))
-                                        .onItem().ifNull().failWith(() -> new WebApplicationException(errorMessage))
-                                        .map(tList ->
-                                                tList.stream()
-                                                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
-                                                        .toList()
-                                        )
-                        )
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
-                                    }
-                                    log.error("Erreur lors de la récupération des techniciens du film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération du casting", 500);
-                                }
-                        )
-                ;
-    }
-
-    /**
-     * Récupère la liste des catégories associées à un film donné.
-     *
-     * @param id L'ID du film pour lequel récupérer les catégories.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link CategoryDTO} représentant les catégories du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si l'ensemble des catégories n'est pas initialisé pour ce film.
-     */
-    public Uni<Set<CategoryDTO>> getCategoriesByMovie(Long id) {
-        return
-                movieRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                        .flatMap(this::fetchAndMapCategorySet)
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
-                                    }
-                                    log.error("Erreur lors de la récupération des catégories du film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des catégories", 500);
-                                }
-                        )
-                ;
-    }
-
-    /**
-     * Récupère la liste des pays associés à un film donné.
-     *
-     * @param id L'ID du film pour lequel récupérer les pays.
-     * @return Un {@link Uni} contenant une liste de {@link CountryDTO} représentant les pays du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si l'ensemble des pays n'est pas initialisé pour ce film.
-     */
-    public Uni<Set<CountryDTO>> getCountriesByMovie(Long id) {
-        return
-                movieRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                        .flatMap(this::fetchAndMapCountrySet)
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
-                                    }
-                                    log.error("Erreur lors de la récupération des pays du film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des pays", 500);
+                                    log.error("Erreur lors de la récupération des personnes pour le film {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des personnes", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -345,6 +256,70 @@ public class MovieService {
                 ;
     }
 
+    public Uni<List<MovieActorDTO>> getActorsByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
+                        .chain(this::fetchAndMapActorList)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération du casting du film {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération du casting", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
+    }
+
+    /**
+     * Récupère la liste des catégories associées à un film donné.
+     *
+     * @param id L'ID du film pour lequel récupérer les catégories.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link CategoryDTO} représentant les catégories du film.
+     * @throws IllegalArgumentException Si le film n'existe pas.
+     * @throws IllegalStateException    Si l'ensemble des catégories n'est pas initialisé pour ce film.
+     */
+    public Uni<Set<CategoryDTO>> getCategoriesByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
+                        .flatMap(this::fetchAndMapCategorySet)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération des catégories du film {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
+    }
+
+    /**
+     * Récupère la liste des pays associés à un film donné.
+     *
+     * @param id L'ID du film pour lequel récupérer les pays.
+     * @return Un {@link Uni} contenant une liste de {@link CountryDTO} représentant les pays du film.
+     * @throws IllegalArgumentException Si le film n'existe pas.
+     * @throws IllegalStateException    Si l'ensemble des pays n'est pas initialisé pour ce film.
+     */
+    public Uni<Set<CountryDTO>> getCountriesByMovie(Long id) {
+        return
+                movieRepository.findById(id)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
+                        .flatMap(this::fetchAndMapCountrySet)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération des pays du film {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
+    }
+
     public Uni<Set<CeremonyAwardsDTO>> getCeremoniesAwardsByMovie(Long id) {
         return
                 movieRepository.findById(id)
@@ -356,7 +331,7 @@ public class MovieService {
                                         return e;
                                     }
                                     log.error("Erreur lors de la récupération des récompenses: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des récompenses", 500);
+                                    return new WebApplicationException("Erreur lors de la récupération des récompenses", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -419,88 +394,64 @@ public class MovieService {
         return
                 movieRepository.movieExists(movieDTO.getTitle(), movieDTO.getOriginalTitle())
                         .flatMap(exists -> {
-                            if (Boolean.TRUE.equals(exists)) {
-                                return Uni.createFrom().failure(new WebApplicationException("Ce film existe déjà", 409));
-                            }
-
-                            Movie movie = movieMapper.movieDTOtoMovie(movieDTO);
-
-                            return Panache.withTransaction(() ->
-                                            // Récupérer les pays et les catégories
-                                            countryService.getByIds(movieDTO.getCountries().stream().map(CountryDTO::getId).toList())
-                                                    .invoke(movie::setCountries)
-                                                    .chain(() -> categoryService.getByIds(movieDTO.getCategories().stream().map(CategoryDTO::getId).toList()))
-                                                    .invoke(movie::setCategories)
-                                                    .chain(() ->
-                                                            userRepository.findById(movieDTO.getUser().getId())
-                                                                    .invoke(user -> log.info("Movie created by {}", user.getUsername()))
-                                                    )
-                                                    .invoke(movie::setUser)
-                                                    .chain(() -> {
-                                                        if (Objects.nonNull(file)) {
-                                                            return uploadPoster(file)
-                                                                    .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
-                                                                    .invoke(movie::setPosterFileName);
-                                                        }
-                                                        movie.setPosterFileName(Movie.DEFAULT_POSTER);
-                                                        return Uni.createFrom().voidItem();
-                                                    })
-                                                    .replaceWith(movie)
-                                                    .chain(movieRepository::persist)
-                                                    .call(entity ->
-                                                            statsService.incrementNumberOfMovies()
-                                                                    .chain(() -> {
-                                                                        if (Objects.nonNull(movie.getCountries()) && !movie.getCountries().isEmpty()) {
-                                                                            return statsService.updateMoviesByCountryRepartition();
-                                                                        }
-                                                                        return Uni.createFrom().voidItem();
-                                                                    })
-                                                                    .chain(() -> {
-                                                                        if (Objects.nonNull(movie.getCategories()) && !movie.getCategories().isEmpty()) {
-                                                                            return statsService.updateMoviesByCategoryRepartition();
-                                                                        }
-                                                                        return Uni.createFrom().voidItem();
-                                                                    })
-                                                                    .replaceWith(entity)
-                                                    )
-                                                    .map(movieMapper::movieToMovieDTO) // Retourne le film après la transaction
-                                    )
-                                    .onFailure().transform(e -> {
-                                                log.error("Erreur lors de la création du film: {}", e.getMessage());
-                                                return new WebApplicationException("Erreur lors de la création du film", 500);
-                                            }
-                                    );
-                        });
-    }
-
-    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> saveTechnicians(
-            Long id,
-            List<MovieTechnicianDTO> movieTechnicianDTOList,
-            Function<Movie, List<T>> techniciansGetter,
-            BiFunction<Movie, MovieTechnicianDTO, Uni<T>> asyncTechnicianFactory,
-            String errorMessage
-    ) {
-        return
-                Panache.withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                                        .chain(movie ->
-                                                Mutiny.fetch(techniciansGetter.apply(movie))
-                                                        .invoke(existingTechnicians -> movie.removeObsoleteTechnicians(existingTechnicians, movieTechnicianDTOList)) // Supprimer les techniciens obsolètes
-                                                        .invoke(existingTechnicians -> movie.updateExistingTechnicians(existingTechnicians, movieTechnicianDTOList)) // Mettre à jour les techniciens existants
-                                                        .chain(existingTechnicians -> movie.addTechnicians(movieTechnicianDTOList, techniciansGetter, asyncTechnicianFactory)) // Ajouter les nouveaux techniciens
-                                                        .replaceWith(movie)
-                                        )
-                                        .chain(movieRepository::persist)
-                                        .call(movieTechnicianRepository::flush) // Force la génération des IDs
-                                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, errorMessage))
-                        )
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
+                                    if (Boolean.TRUE.equals(exists)) {
+                                        return Uni.createFrom().failure(new WebApplicationException("Ce film existe déjà", Response.Status.CONFLICT));
                                     }
-                                    log.error("Erreur lors de la mise à jour des techniciens pour le film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la mise à jour des producteurs", 500);
+
+                                    Movie movie = movieMapper.movieDTOtoMovie(movieDTO);
+
+                                    return
+                                            Panache.withTransaction(() ->
+                                                            // Récupérer les pays et les catégories et les affecter au film
+                                                            countryService.getByIds(movieDTO.getCountries().stream().map(CountryDTO::getId).toList())
+                                                                    .invoke(movie::setCountries)
+                                                                    .chain(() -> categoryService.getByIds(movieDTO.getCategories().stream().map(CategoryDTO::getId).toList()))
+                                                                    .invoke(movie::setCategories)
+                                                                    // Affecter l'utilisateur au film
+                                                                    .chain(() ->
+                                                                            userRepository.findById(movieDTO.getUser().getId())
+                                                                                    .invoke(user -> {
+                                                                                        log.info("Movie created by {}", user.getUsername());
+                                                                                        movie.setUser(user);
+                                                                                    })
+                                                                    )
+                                                                    .chain(() -> {
+                                                                        if (Objects.nonNull(file)) {
+                                                                            return uploadPoster(file)
+                                                                                    .onFailure().invoke(error -> log.error("Poster upload failed for movie {}: {}", movie.getTitle(), error.getMessage()))
+                                                                                    .invoke(movie::setPosterFileName);
+                                                                        }
+                                                                        movie.setPosterFileName(Movie.DEFAULT_POSTER);
+                                                                        return Uni.createFrom().voidItem();
+                                                                    })
+                                                                    .replaceWith(movie)
+                                                                    .chain(movieRepository::persist)
+                                                                    .call(entity ->
+                                                                            statsService.incrementNumberOfMovies()
+                                                                                    .chain(() -> {
+                                                                                        if (Objects.nonNull(movie.getCountries()) && !movie.getCountries().isEmpty()) {
+                                                                                            return statsService.updateMoviesByCountryRepartition();
+                                                                                        }
+                                                                                        return Uni.createFrom().voidItem();
+                                                                                    })
+                                                                                    .chain(() -> {
+                                                                                        if (Objects.nonNull(movie.getCategories()) && !movie.getCategories().isEmpty()) {
+                                                                                            return statsService.updateMoviesByCategoryRepartition();
+                                                                                        }
+                                                                                        return Uni.createFrom().voidItem();
+                                                                                    })
+                                                                    )
+                                                                    .call(entity -> notificationService.createNotification("Le film " + movie.getTitle() + " a été créé.", NotificationType.INFO)
+                                                                            .chain(userNotificationService::notifyAdmins)
+                                                                    )
+                                                                    .map(movieMapper::movieToMovieDTO) // Retourne le film après la transaction
+                                                    )
+                                                    .onFailure().transform(throwable -> {
+                                                                log.error("Erreur lors de la création du film", throwable);
+                                                                return new WebApplicationException("Erreur lors de la création du film", Response.Status.INTERNAL_SERVER_ERROR);
+                                                            }
+                                                    )
+                                            ;
                                 }
                         )
                 ;
@@ -525,14 +476,17 @@ public class MovieService {
                                         .chain(movieRepository::persist)
                                         .call(movieActorRepository::flush) // Force la génération des IDs
                                         .call(statsService::updateActorsStats)
+                                        .call(movie -> notificationService.createNotification("Le casting du film " + movie.getTitle() + " a été modifié.", NotificationType.INFO)
+                                                .chain(userNotificationService::notifyAdmins)
+                                        )
                                         .flatMap(this::fetchAndMapActorList) // Convertit les entités en DTO
                         )
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
                                     }
-                                    log.error("Erreur lors de la mise à jour du casting pour le film {}: {}", id, e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la mise à jour du casting", 500);
+                                    log.error("Erreur lors de la mise à jour du casting pour le film {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors de la mise à jour du casting", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -559,7 +513,7 @@ public class MovieService {
                                                                 )
                                                                 .chain(optionalCA -> optionalCA
                                                                         .map(existingCA -> existingCA.updateExistingCeremonyAwards(ceremonyAwardsDTO, personMap)) // S'il existe on le met à jour
-                                                                        .orElseGet(() -> ceremonyAwardsService.createNewCeremonyAwards(movie, ceremonyAwardsDTO, personMap) // Sinon on le crée et on l'ajoute à l'ensemble
+                                                                        .orElseGet(() -> ceremonyAwardsService.createNewCeremonyAwards(movie, ceremonyAwardsDTO, personMap) // Sinon, on le crée et on l'ajoute à l'ensemble
                                                                                 .invoke(ceremonyAwards -> movie.getCeremoniesAwards().add(ceremonyAwards))
                                                                         )
                                                                 )
@@ -567,6 +521,9 @@ public class MovieService {
                                                 .call(ceremonyAwardsRepository::persist)
                                                 .call(ceremonyAwardsRepository::flush)
                                                 .call(() -> movieRepository.persist(movie))
+                                                .call(ceremonyAwards -> notificationService.createNotification("Les récompenses du film " + movie.getTitle() + " ont été modifiées.", NotificationType.INFO)
+                                                        .chain(userNotificationService::notifyAdmins)
+                                                )
                                                 .map(ceremonyAwardsMapper::ceremonyAwardsToCeremonyAwardsDTO)
                                 )
                 );
@@ -623,13 +580,16 @@ public class MovieService {
                                         })
                                         .chain(movieRepository::persist)
                                         .call(movie -> statsService.updateMoviesByCategoryRepartition().replaceWith(movie))
+                                        .call(movie -> notificationService.createNotification("Les catégories du film " + movie.getTitle() + " ont été modifiées.", NotificationType.INFO)
+                                                .chain(userNotificationService::notifyAdmins)
+                                        )
                                         .flatMap(this::fetchAndMapCategorySet)
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            return new MovieUpdateException(Messages.ERROR_WHILE_UPDATING_CATEGORIES, e);
+                            return new MovieUpdateException(Messages.ERROR_WHILE_UPDATING_CATEGORIES, throwable);
                         })
                 ;
     }
@@ -665,57 +625,16 @@ public class MovieService {
                                         )
                                         .chain(movieRepository::persist)
                                         .call(movie -> statsService.updateMoviesByCountryRepartition().replaceWith(movie))
+                                        .call(movie -> notificationService.createNotification("Les pays du film " + movie.getTitle() + " ont été modifiés.", NotificationType.INFO)
+                                                .chain(userNotificationService::notifyAdmins)
+                                        )
                                         .flatMap(this::fetchAndMapCountrySet)
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            return new MovieUpdateException(Messages.ERROR_WHILE_UPDATING_COUNTRIES, e);
-                        })
-                ;
-    }
-
-    /**
-     * Ajoute des personnes à un film en fonction d'un ensemble de DTO et d'un service associé.
-     *
-     * @param id                     L'identifiant du film auquel les personnes doivent être ajoutées.
-     * @param movieTechnicianDTOList L'ensemble des personnes à ajouter, sous forme de DTO.
-     * @param techniciansGetter      Une fonction permettant de récupérer l'ensemble des personnes déjà associées au film.
-     * @param nullCheckErrorMessage  Le message d'erreur à utiliser en cas d'échec de l'opération.
-     * @return Une instance de {@link Uni} contenant l'ensemble des personnes ajoutées sous forme de {@link PersonDTO}.
-     * En cas d'erreur, une exception est levée avec un message approprié.
-     * @throws IllegalArgumentException Si le film n'est pas trouvé ou si certaines personnes sont introuvables.
-     * @throws IllegalStateException    Si une erreur se produit lors de la récupération des personnes après la mise à jour.
-     */
-    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> addTechnicians(
-            Long id,
-            List<MovieTechnicianDTO> movieTechnicianDTOList,
-            Function<Movie, List<T>> techniciansGetter,
-            BiFunction<Movie, MovieTechnicianDTO, Uni<T>> asyncTechnicianFactory,
-            String nullCheckErrorMessage,
-            String globalErrorMessage
-    ) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                                        .chain(movie ->
-                                                Mutiny.fetch(techniciansGetter.apply(movie))
-                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(nullCheckErrorMessage))
-                                                        .chain(existingTechnicians -> movie.addTechnicians(movieTechnicianDTOList, techniciansGetter, asyncTechnicianFactory)) // Ajouter les nouveaux techniciens
-                                                        .replaceWith(movie)
-                                        )
-                                        .chain(movieRepository::persist)
-                                        .call(movieTechnicianRepository::flush) // Force la génération des IDs
-                                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, nullCheckErrorMessage))
-                        )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
-                            }
-                            return new MovieUpdateException(globalErrorMessage, e);
+                            return new MovieUpdateException(Messages.ERROR_WHILE_UPDATING_COUNTRIES, throwable);
                         })
                 ;
     }
@@ -747,13 +666,16 @@ public class MovieService {
                                         .chain(movieRepository::persist)
                                         .call(movieActorRepository::flush) // Force la génération des IDs
                                         .call(statsService::updateActorsStats)
+                                        .call(movie -> notificationService.createNotification("Des acteurs ont été ajoutés au film " + movie.getTitle(), NotificationType.INFO)
+                                                .chain(userNotificationService::notifyAdmins)
+                                        )
                                         .flatMap(this::fetchAndMapActorList) // Convertit les entités en DTO
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            return new MovieUpdateException(Messages.ERROR_WHILE_ADDING_ACTORS, e);
+                            return new MovieUpdateException(Messages.ERROR_WHILE_ADDING_ACTORS, throwable);
                         })
                 ;
     }
@@ -788,12 +710,12 @@ public class MovieService {
                                         .flatMap(this::fetchAndMapCategorySet)
                                         .invoke(() -> log.info("Catégories ajoutées au film {}", movieId))
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            log.error("Erreur lors de l'ajout des catégories au film {} : {}", movieId, e.getMessage());
-                            return new MovieUpdateException(Messages.ERROR_WHILE_ADDING_CATEGORIES, e);
+                            log.error("Erreur lors de l'ajout des catégories au film {}", movieId, throwable);
+                            return new MovieUpdateException(Messages.ERROR_WHILE_ADDING_CATEGORIES, throwable);
                         })
                 ;
     }
@@ -801,7 +723,7 @@ public class MovieService {
     /**
      * Ajoute un ou plusieurs pays à un film existant.
      *
-     * @param movieId       L'identifiant du film auquel associer les pays.
+     * @param movieId       L'identifiant du film auquel les pays doivent être ajoutés.
      * @param countryDTOSet Un ensemble d'objets {@link CountryDTO} représentant les pays à ajouter.
      * @return Un {@link Uni} contenant un {@link Set} de {@link CountryDTO} mis à jour après l'ajout des pays.
      * @throws IllegalArgumentException si le film ou certains pays ne sont pas trouvés.
@@ -812,7 +734,7 @@ public class MovieService {
                 Panache
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_FILM))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getCountries())
                                                         .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.COUNTRIES_NOT_INITIALIZED))
@@ -828,49 +750,12 @@ public class MovieService {
                                         .flatMap(this::fetchAndMapCountrySet)
                                         .invoke(() -> log.info("Pays ajoutés au film {}", movieId))
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            log.error("Erreur lors de l'ajout des pays au film {} : {}", movieId, e.getMessage());
-                            return new MovieUpdateException(Messages.ERROR_WHILE_ADDING_COUNTRIES, e);
-                        })
-                ;
-    }
-
-    /**
-     * Retire une personne spécifique d'un film.
-     *
-     * @param movieId               L'identifiant du film.
-     * @param personId              L'identifiant de la personne à retirer.
-     * @param techniciansGetter     Fonction permettant d'obtenir la liste des personnes à modifier depuis l'entité {@link Movie}.
-     * @param nullCheckErrorMessage Message d'erreur si la liste des personnes n'est pas initialisée.
-     * @return Une {@link Uni} contenant un {@link Set} de {@link PersonDTO} :
-     * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws IllegalStateException    si la collection de personnes n'est pas initialisée pour ce film.
-     */
-    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> removeTechnician(
-            Long movieId,
-            Long personId,
-            Function<Movie, List<T>> techniciansGetter,
-            String nullCheckErrorMessage,
-            String globalMessage
-    ) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(movieId)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                                        .call(movie -> movie.removeTechnician(techniciansGetter, personId, nullCheckErrorMessage))
-                                        .chain(movieRepository::persist)
-                                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, nullCheckErrorMessage))
-                        )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
-                            }
-                            log.error("Erreur lors de la suppression du technicien {} du film {} : {}", personId, movieId, e.getMessage());
-                            return new MovieUpdateException(globalMessage, e);
+                            log.error("Erreur lors de l'ajout des pays au film {}", movieId, throwable);
+                            return new MovieUpdateException(Messages.ERROR_WHILE_ADDING_COUNTRIES, throwable);
                         })
                 ;
     }
@@ -881,8 +766,8 @@ public class MovieService {
      * @param movieId      L'identifiant du film dont l'acteur doit être retiré.
      * @param movieActorId L'identifiant de l'association acteur-film à supprimer.
      * @return Une instance de {@link Uni} contenant la liste mise à jour des associations film-acteur sous forme de {@link MovieActorDTO}.
-     * @throws IllegalArgumentException Si le film est introuvable.
-     * @throws IllegalStateException    Si la liste des acteurs du film ne peut pas être initialisée.
+     * @throws NotFoundException       Si le film est introuvable.
+     * @throws WebApplicationException Si la liste des acteurs du film ne peut pas être initialisée.
      */
     public Uni<List<MovieActorDTO>> removeMovieActor(Long movieId, Long movieActorId) {
         return
@@ -960,7 +845,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.COUNTRIES_NOT_INITIALIZED))
                                                         .invoke(countries -> movie.removeCountry(countryId))
                                                         .replaceWith(movie)
                                         )
@@ -969,12 +854,12 @@ public class MovieService {
                                         .flatMap(this::fetchAndMapCountrySet)
                                         .invoke(() -> log.info("Country {} removed from movie {}", countryId, movieId))
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            log.error("Erreur lors de la suppression du pays {} du film {} : {}", countryId, movieId, e.getMessage());
-                            return new MovieUpdateException(Messages.ERROR_WHILE_REMOVING_COUNTRY, e);
+                            log.error("Erreur lors de la suppression du pays {} du film {}", countryId, movieId, throwable);
+                            return new MovieUpdateException(Messages.ERROR_WHILE_REMOVING_COUNTRY, throwable);
                         })
                 ;
     }
@@ -1046,14 +931,17 @@ public class MovieService {
                                         .chain(movie -> updateCategoriesIfNeeded(movie, movieDTO))
                                         .chain(movie -> updateCountriesIfNeeded(movie, movieDTO))
                                         .chain(movie -> updateReleaseDateIfNeeded(movie, movieDTO))
+                                        .call(movie -> notificationService.createNotification("Le film " + movie.getTitle() + " a été modifié.", NotificationType.INFO)
+                                                .chain(userNotificationService::notifyAdmins)
+                                        )
                                         .map(movieMapper::movieToMovieDTO)
                         )
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
                                     }
-                                    log.error("Erreur lors de la modification du film: " + e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la modification du film", 500);
+                                    log.error("Erreur lors de la modification du film", throwable);
+                                    return new WebApplicationException("Erreur lors de la modification du film", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -1106,7 +994,7 @@ public class MovieService {
      * <p>
      * Cette méthode effectue la suppression d'un film dans une transaction.
      * Si l'identifiant fourni ne correspond à aucun film, la suppression échoue
-     * et retourne `false`.
+     * et retourne false.
      *
      * @param id L'identifiant du film à supprimer.
      * @return Un {@link Uni} contenant `true` si la suppression a réussi,
@@ -1134,12 +1022,12 @@ public class MovieService {
                                                 }
                                         )
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            log.error(e.getMessage());
-                            return new WebApplicationException("Erreur lors de la suppression du film", e);
+                            log.error("Erreur lors de la suppression du film", throwable);
+                            return new WebApplicationException("Erreur lors de la suppression du film", Response.Status.INTERNAL_SERVER_ERROR);
                         });
     }
 
@@ -1159,40 +1047,6 @@ public class MovieService {
         });
     }
 
-    /**
-     * Vide un ensemble de personnes (acteurs, réalisateurs, etc.) associé à un film.
-     * <p>
-     * Cette méthode permet de vider un ensemble spécifique de personnes associées à un film (comme les acteurs, réalisateurs, etc.).
-     * Elle récupère cet ensemble en appliquant une fonction (`peopleGetter`) sur le film et, si l'ensemble est initialisé,
-     * elle appelle la méthode `clearPersons` sur le film pour le vider. Si l'ensemble est nul ou si le film n'est pas trouvé,
-     * une exception est levée. Enfin, le film est persisté après l'opération.
-     *
-     * @param id                L'identifiant du film dont les personnes associées doivent être supprimées.
-     * @param techniciansGetter Une fonction permettant d'obtenir l'ensemble des personnes à partir du film (par exemple, acteurs ou réalisateurs).
-     * @param errorMessage      Le message d'erreur à utiliser si l'ensemble des personnes est nul.
-     * @return Un {@link Uni} contenant `true` si l'opération a été réalisée avec succès.
-     * @throws IllegalArgumentException Si le film n'est pas trouvé.
-     * @throws WebApplicationException  Si une erreur se produit lors de la suppression des personnes.
-     */
-    public <T extends MovieTechnician> Uni<Boolean> clearTechnicians(Long id, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                movieRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                                        .call(movie -> movie.clearPersons(techniciansGetter.apply(movie), errorMessage))
-                                        .call(movieRepository::persist)
-                                        .map(movie -> true)
-                        )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
-                            }
-                            log.error(e.getMessage());
-                            return new WebApplicationException("Erreur lors de la suppression des personnes", e);
-                        });
-    }
-
     public Uni<Boolean> clearActors(Long id) {
         return
                 Panache
@@ -1207,12 +1061,12 @@ public class MovieService {
                                         .call(movieRepository::persist)
                                         .map(movie -> true)
                         )
-                        .onFailure().transform(e -> {
-                            if (e instanceof WebApplicationException) {
-                                return e;
+                        .onFailure().transform(throwable -> {
+                            if (throwable instanceof WebApplicationException) {
+                                return throwable;
                             }
-                            log.error(e.getMessage());
-                            return new WebApplicationException("Erreur lors de la suppression des acteurs", e);
+                            log.error("Erreur lors de la suppression des acteurs", throwable);
+                            return new WebApplicationException("Erreur lors de la suppression des acteurs", Response.Status.INTERNAL_SERVER_ERROR);
                         });
     }
 
@@ -1320,23 +1174,11 @@ public class MovieService {
                 ;
     }
 
-    public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> fetchAndMapTechniciansList(Movie movie, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
-        return
-                Mutiny.fetch(techniciansGetter.apply(movie))
-                        .onItem().ifNull().failWith(() -> new WebApplicationException(errorMessage))
-                        .map(tList ->
-                                tList.stream()
-                                        .map(movieTechnicianMapper::toMovieTechnicianDTO)
-                                        .toList()
-                        )
-                ;
-    }
-
     /**
      * Récupère et convertit les catégories associées à un film en objets {@link CategoryDTO}.
      * <p>
      * Cette méthode utilise Mutiny pour récupérer les catégories d'un film
-     * et les transformer en un ensemble de DTOs. Si la liste des catégories est `null`,
+     * et les transformer en un ensemble de DTOs. Si la liste des catégories est null,
      * une exception est levée.
      *
      * @return Un {@link Uni} contenant un ensemble de {@link CategoryDTO}.
@@ -1354,7 +1196,7 @@ public class MovieService {
      * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
      * <p>
      * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des pays est `null`,
+     * et les transformer en un ensemble de DTOs. Si la liste des pays est null,
      * une exception est levée.
      *
      * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.

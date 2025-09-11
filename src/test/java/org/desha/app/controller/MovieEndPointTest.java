@@ -41,7 +41,7 @@ class MovieEndPointTest {
     MovieService movieService;
 
     @Test
-    void testCountMovies() {
+    void shouldReturnNumberSuccessfully() {
         when(movieService.count(any()))
                 .thenReturn(Uni.createFrom().item(55L));
 
@@ -55,7 +55,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetMovie() {
+    void shouldReturnMovieSuccessfully() {
         MovieDTO mockMovieDTO = Factory.mockMovieDTO();
 
         when(movieService.getById(any()))
@@ -72,11 +72,11 @@ class MovieEndPointTest {
                         "originalTitle", equalTo(mockMovieDTO.getOriginalTitle()),
                         "synopsis", equalTo(mockMovieDTO.getSynopsis()),
                         "releaseDate", equalTo(mockMovieDTO.getReleaseDate().toString()),
-                        "runningTime", equalTo(mockMovieDTO.getRunningTime().intValue()),
-                        "budget.value", equalTo(mockMovieDTO.getBudget().getValue().intValue()),
-                        "budget.currency", equalTo(mockMovieDTO.getBudget().getCurrency()),
-                        "boxOffice.value", equalTo(mockMovieDTO.getBoxOffice().getValue().intValue()),
-                        "boxOffice.currency", equalTo(mockMovieDTO.getBoxOffice().getCurrency()),
+                        "runningTime", equalTo(mockMovieDTO.getRunningTime()),
+                        "budget.value", equalTo(mockMovieDTO.getBudget().value()),
+                        "budget.currency", equalTo(mockMovieDTO.getBudget().currency()),
+                        "boxOffice.value", equalTo(mockMovieDTO.getBoxOffice().value()),
+                        "boxOffice.currency", equalTo(mockMovieDTO.getBoxOffice().currency()),
                         "posterFileName", equalTo(mockMovieDTO.getPosterFileName()),
                         "creationDate", equalTo(mockMovieDTO.getCreationDate().format(Utils.dateTimeFormatter)),
                         "lastUpdate", equalTo(mockMovieDTO.getLastUpdate().format(Utils.dateTimeFormatter))
@@ -85,7 +85,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void shouldReturnMoviesByTitle() {
+    void shouldReturnMoviesByTitleSuccessfully() {
         List<MovieDTO> mockMovieDTOList = Factory.mockMovieDTOList(5);
 
         when(movieService.getByTitle(any()))
@@ -114,19 +114,19 @@ class MovieEndPointTest {
                                 .map(movieDTO -> movieDTO.getReleaseDate().toString())
                                 .toArray(String[]::new)),
                         "runningTime", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getRunningTime().intValue())
+                                .map(MovieDTO::getRunningTime)
                                 .toArray(Integer[]::new)),
                         "budget.value", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBudget().value())
+                                .toArray(Long[]::new)),
                         "budget.currency", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getCurrency())
+                                .map(movieDTO -> movieDTO.getBudget().currency())
                                 .toArray(String[]::new)),
                         "boxOffice.value", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBoxOffice().value())
+                                .toArray(Long[]::new)),
                         "boxOffice.currency", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getCurrency())
+                                .map(movieDTO -> movieDTO.getBoxOffice().currency())
                                 .toArray(String[]::new)),
                         "posterFileName", Matchers.contains(mockMovieDTOList.stream()
                                 .map(MovieDTO::getPosterFileName)
@@ -156,7 +156,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void shouldReturnPaginatedMovies() {
+    void shouldReturnPaginatedMoviesSuccessfully() {
         final int size = 50;
         List<MovieDTO> mockMovieDTOList = Factory.mockMovieDTOList(60);
 
@@ -192,19 +192,19 @@ class MovieEndPointTest {
                                 .map(movieDTO -> movieDTO.getReleaseDate().toString())
                                 .toArray(String[]::new)),
                         "runningTime", Matchers.contains(mockMovieDTOSubList.stream()
-                                .map(movieDTO -> movieDTO.getRunningTime().intValue())
+                                .map(MovieDTO::getRunningTime)
                                 .toArray(Integer[]::new)),
                         "budget.value", Matchers.contains(mockMovieDTOSubList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBudget().value())
+                                .toArray(Long[]::new)),
                         "budget.currency", Matchers.contains(mockMovieDTOSubList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getCurrency())
+                                .map(movieDTO -> movieDTO.getBudget().currency())
                                 .toArray(String[]::new)),
                         "boxOffice.value", Matchers.contains(mockMovieDTOSubList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBoxOffice().value())
+                                .toArray(Long[]::new)),
                         "boxOffice.currency", Matchers.contains(mockMovieDTOSubList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getCurrency())
+                                .map(movieDTO -> movieDTO.getBoxOffice().currency())
                                 .toArray(String[]::new)),
                         "posterFileName", Matchers.contains(mockMovieDTOSubList.stream()
                                 .map(MovieDTO::getPosterFileName)
@@ -220,7 +220,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetMoviesEmpty() {
+    void shouldReturnNoContentWhenNoMoviesFound() {
         when(movieService.getMovies(any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
@@ -238,7 +238,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void shouldReturnAllMovies() {
+    void shouldReturnAllMoviesSuccessfully() {
         List<MovieDTO> mockMovieDTOList = Factory.mockMovieDTOList(60);
 
         when(movieService.getMovies(any(), any(), any()))
@@ -271,19 +271,19 @@ class MovieEndPointTest {
                                 .map(movieDTO -> movieDTO.getReleaseDate().toString())
                                 .toArray(String[]::new)),
                         "runningTime", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getRunningTime().intValue())
+                                .map(MovieDTO::getRunningTime)
                                 .toArray(Integer[]::new)),
                         "budget.value", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBudget().value())
+                                .toArray(Long[]::new)),
                         "budget.currency", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBudget().getCurrency())
+                                .map(movieDTO -> movieDTO.getBudget().currency())
                                 .toArray(String[]::new)),
                         "boxOffice.value", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getValue().intValue())
-                                .toArray(Integer[]::new)),
+                                .map(movieDTO -> movieDTO.getBoxOffice().value())
+                                .toArray(Long[]::new)),
                         "boxOffice.currency", Matchers.contains(mockMovieDTOList.stream()
-                                .map(movieDTO -> movieDTO.getBoxOffice().getCurrency())
+                                .map(movieDTO -> movieDTO.getBoxOffice().currency())
                                 .toArray(String[]::new)),
                         "posterFileName", Matchers.contains(mockMovieDTOList.stream()
                                 .map(MovieDTO::getPosterFileName)
@@ -314,7 +314,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCountriesInMovies() {
+    void shouldReturnCountriesInMoviesSuccessfully() {
         List<CountryDTO> mockCountryDTOList = Factory.mockCountryDTOList(20);
 
         when(movieService.getCountriesInMovies(any(), any(), any(), any(), any()))
@@ -353,7 +353,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCountriesInMoviesEmpty() {
+    void shouldReturnNoContentWhenNoCountriesInMovies() {
         when(movieService.getCountriesInMovies(any(), any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
@@ -371,7 +371,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCategoriesInMovies() {
+    void shouldReturnCategoriesInMoviesSuccessfully() {
         List<CategoryDTO> mockCategoryDTOList = Factory.mockCategoryDTOList(5);
 
         when(movieService.getCategoriesInMovies(any(), any(), any(), any()))
@@ -404,7 +404,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCategoriesInMoviesEmpty() {
+    void shouldReturnNoContentWhenNoCategoriesInMovies() {
         when(movieService.getCategoriesInMovies(any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
@@ -422,7 +422,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetPersonsByMovie() {
+    void shouldReturnPersonsByMovieSuccessfully() {
         List<LitePersonDTO> mockLitePersonDTOList = Factory.mockLitePersonDTOList(5);
 
         when(movieService.getPersonsByMovie(any(), any(), any(), any(), any()))
@@ -458,7 +458,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetPersonsByMovieEmpty() {
+    void shouldReturnNoContentWhenNoPersonsByMovie() {
         when(movieService.getPersonsByMovie(any(), any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
@@ -476,63 +476,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetActorsByMovie() {
-        List<MovieActorDTO> mockMovieActorDTOList = Factory.mockMovieActorDTOList(5);
-
-        when(movieService.getActorsByMovie(any()))
-                .thenReturn(Uni.createFrom().item(mockMovieActorDTOList));
-
-        given()
-                .when()
-                .get("/1/actors")
-                .then()
-                .statusCode(200)
-                .body("size()", Matchers.is(mockMovieActorDTOList.size()))
-                .body(
-                        "id", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(movieActorDTO -> movieActorDTO.getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.id", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(movieActorDTO -> movieActorDTO.getPerson().getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.name", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(movieActorDTO -> movieActorDTO.getPerson().getName())
-                                .toArray(String[]::new)),
-                        "person.photoFileName", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(movieActorDTO -> movieActorDTO.getPerson().getPhotoFileName())
-                                .toArray(String[]::new)),
-                        "person.dateOfBirth", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(movieActorDTO -> movieActorDTO.getPerson().getDateOfBirth().toString())
-                                .toArray(String[]::new)),
-                        "person.dateOfDeath", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(movieActorDTO -> movieActorDTO.getPerson().getDateOfDeath().toString())
-                                .toArray(String[]::new)),
-                        "role", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(MovieActorDTO::getRole)
-                                .toArray(String[]::new)),
-                        "rank", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
-                                .map(MovieActorDTO::getRank)
-                                .toArray(Integer[]::new))
-                )
-        ;
-    }
-
-    @Test
-    void testGetActorsByMovieEmpty() {
-        when(movieService.getActorsByMovie(any()))
-                .thenReturn(Uni.createFrom().item(Collections.emptyList()));
-
-        given()
-                .when()
-                .get("/1/actors")
-                .then()
-                .statusCode(204)
-                .body(Matchers.emptyOrNullString())
-        ;
-    }
-
-    @Test
-    void shouldReturnTechnicalTeam() {
+    void shouldReturnTechnicalTeamSuccessfully() {
         TechnicalTeamDTO mockTechnicalTeamDTO = Factory.mockTechnicalTeamDTO();
 
         when(movieService.getTechnicalTeam(any()))
@@ -602,70 +546,56 @@ class MovieEndPointTest {
         ;
     }
 
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void testGetTechniciansByMovie(String endpoint) {
-        List<MovieTechnicianDTO> mockMovieTechnicianDTOList = Factory.mockMovieTechnicianDTOList(5);
+    @Test
+    void shouldReturnActorsByMovieSuccessfully() {
+        List<MovieActorDTO> mockMovieActorDTOList = Factory.mockMovieActorDTOList(5);
 
-        when(movieService.getMovieTechniciansByMovie(any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(mockMovieTechnicianDTOList));
+        when(movieService.getActorsByMovie(any()))
+                .thenReturn(Uni.createFrom().item(mockMovieActorDTOList));
 
         given()
                 .when()
-                .get(endpoint)
+                .get("/1/actors")
                 .then()
                 .statusCode(200)
-                .body("size()", Matchers.is(mockMovieTechnicianDTOList.size()))
+                .body("size()", Matchers.is(mockMovieActorDTOList.size()))
                 .body(
-                        "id", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getId().intValue())
+                        "id", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(movieActorDTO -> movieActorDTO.getId().intValue())
                                 .toArray(Integer[]::new)),
-                        "person.id", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getId().intValue())
+                        "person.id", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(movieActorDTO -> movieActorDTO.getPerson().getId().intValue())
                                 .toArray(Integer[]::new)),
-                        "person.name", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getName())
+                        "person.name", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(movieActorDTO -> movieActorDTO.getPerson().getName())
                                 .toArray(String[]::new)),
-                        "person.photoFileName", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getPhotoFileName())
+                        "person.photoFileName", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(movieActorDTO -> movieActorDTO.getPerson().getPhotoFileName())
                                 .toArray(String[]::new)),
-                        "person.dateOfBirth", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfBirth().toString())
+                        "person.dateOfBirth", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(movieActorDTO -> movieActorDTO.getPerson().getDateOfBirth().toString())
                                 .toArray(String[]::new)),
-                        "person.dateOfDeath", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfDeath().toString())
+                        "person.dateOfDeath", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(movieActorDTO -> movieActorDTO.getPerson().getDateOfDeath().toString())
                                 .toArray(String[]::new)),
-                        "role", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(MovieTechnicianDTO::getRole)
-                                .toArray(String[]::new))
-                );
+                        "role", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(MovieActorDTO::getRole)
+                                .toArray(String[]::new)),
+                        "rank", Matchers.containsInAnyOrder(mockMovieActorDTOList.stream()
+                                .map(MovieActorDTO::getRank)
+                                .toArray(Integer[]::new))
+                )
+        ;
     }
 
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void testGetTechniciansByMovieEmpty(String endpoint) {
-        when(movieService.getMovieTechniciansByMovie(any(), any(), any()))
+    @Test
+    void shouldReturnNoContentWhenNoActorsByMovie() {
+        when(movieService.getActorsByMovie(any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
         given()
                 .when()
-                .get(endpoint)
+                .get("/1/actors")
                 .then()
                 .statusCode(204)
                 .body(Matchers.emptyOrNullString())
@@ -673,7 +603,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCategoriesByMovie() {
+    void shouldReturnCategoriesByMovieSuccessfully() {
         Set<CategoryDTO> mockCategoryDTOSet = Factory.mockCategoryDTOSet(5);
 
         when(movieService.getCategoriesByMovie(any()))
@@ -703,7 +633,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCategoriesByMovieEmpty() {
+    void shouldReturnNoContentWhenNoCategoriesByMovie() {
         when(movieService.getCategoriesByMovie(any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptySet()));
 
@@ -717,7 +647,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCountriesByMovie() {
+    void shouldReturnCountriesByMovieSuccessfully() {
         Set<CountryDTO> mockCountryDTOSet = Factory.mockCountryDTOSet(5);
 
         when(movieService.getCountriesByMovie(any()))
@@ -753,7 +683,7 @@ class MovieEndPointTest {
     }
 
     @Test
-    void testGetCountriesByMovieEmpty() {
+    void shouldReturnNoContentWhenNoCountriesByMovie() {
         when(movieService.getCountriesByMovie(any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptySet()));
 
@@ -917,11 +847,11 @@ class MovieEndPointTest {
                         "originalTitle", equalTo(savedMovieDTO.getOriginalTitle()),
                         "synopsis", equalTo(savedMovieDTO.getSynopsis()),
                         "releaseDate", equalTo(savedMovieDTO.getReleaseDate().toString()),
-                        "runningTime", equalTo(savedMovieDTO.getRunningTime().intValue()),
-                        "budget.value", equalTo(savedMovieDTO.getBudget().getValue().intValue()),
-                        "budget.currency", equalTo(savedMovieDTO.getBudget().getCurrency()),
-                        "boxOffice.value", equalTo(savedMovieDTO.getBoxOffice().getValue().intValue()),
-                        "boxOffice.currency", equalTo(savedMovieDTO.getBoxOffice().getCurrency()),
+                        "runningTime", equalTo(savedMovieDTO.getRunningTime()),
+                        "budget.value", equalTo(savedMovieDTO.getBudget().value()),
+                        "budget.currency", equalTo(savedMovieDTO.getBudget().currency()),
+                        "boxOffice.value", equalTo(savedMovieDTO.getBoxOffice().value()),
+                        "boxOffice.currency", equalTo(savedMovieDTO.getBoxOffice().currency()),
                         "posterFileName", equalTo(savedMovieDTO.getPosterFileName()),
                         "creationDate", equalTo(savedMovieDTO.getCreationDate().format(Utils.dateTimeFormatter)),
                         "lastUpdate", equalTo(savedMovieDTO.getLastUpdate().format(Utils.dateTimeFormatter))
@@ -964,7 +894,11 @@ class MovieEndPointTest {
                 .post()
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le titre du film n’a pas été fourni dans la requête"));
+                .body(
+                        "details", Matchers.is("Le titre du film est obligatoire"),
+                        "message", Matchers.is("Erreur de validation")
+                )
+        ;
 
         tempFile.delete();
     }
@@ -1006,11 +940,11 @@ class MovieEndPointTest {
                         "originalTitle", equalTo(mockMovieDTO.getOriginalTitle()),
                         "synopsis", equalTo(mockMovieDTO.getSynopsis()),
                         "releaseDate", equalTo(mockMovieDTO.getReleaseDate().toString()),
-                        "runningTime", equalTo(mockMovieDTO.getRunningTime().intValue()),
-                        "budget.value", equalTo(mockMovieDTO.getBudget().getValue().intValue()),
-                        "budget.currency", equalTo(mockMovieDTO.getBudget().getCurrency()),
-                        "boxOffice.value", equalTo(mockMovieDTO.getBoxOffice().getValue().intValue()),
-                        "boxOffice.currency", equalTo(mockMovieDTO.getBoxOffice().getCurrency()),
+                        "runningTime", equalTo(mockMovieDTO.getRunningTime()),
+                        "budget.value", equalTo(mockMovieDTO.getBudget().value()),
+                        "budget.currency", equalTo(mockMovieDTO.getBudget().currency()),
+                        "boxOffice.value", equalTo(mockMovieDTO.getBoxOffice().value()),
+                        "boxOffice.currency", equalTo(mockMovieDTO.getBoxOffice().currency()),
                         "posterFileName", equalTo(mockMovieDTO.getPosterFileName()),
                         "creationDate", equalTo(mockMovieDTO.getCreationDate().format(Utils.dateTimeFormatter)),
                         "lastUpdate", equalTo(mockMovieDTO.getLastUpdate().format(Utils.dateTimeFormatter))
@@ -1049,7 +983,11 @@ class MovieEndPointTest {
                 .put("/1")
                 .then()
                 .statusCode(400)
-                .body(equalTo("Le titre du film n’a pas été fourni dans la requête"));
+                .body(
+                        "details", Matchers.is("Le titre du film est obligatoire"),
+                        "message", Matchers.is("Erreur de validation")
+                )
+        ;
 
         tempFile.delete();
     }
@@ -1142,81 +1080,6 @@ class MovieEndPointTest {
                 .then()
                 .statusCode(400)
                 .body(equalTo("La liste des acteurs ne peut pas être nulle"))
-        ;
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void testSaveTechniciansByMovie(String endpoint) {
-        List<MovieTechnicianDTO> mockMovieTechnicianDTOList = Factory.mockMovieTechnicianDTOList(5);
-
-        when(movieService.saveTechnicians(any(), any(), any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(mockMovieTechnicianDTOList));
-
-        given()
-                .contentType("application/json")
-                .body(mockMovieTechnicianDTOList)
-                .when()
-                .put(endpoint)
-                .then()
-                .statusCode(200)
-                .body("size()", Matchers.is(mockMovieTechnicianDTOList.size()))
-                .body(
-                        "id", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.id", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.name", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getName())
-                                .toArray(String[]::new)),
-                        "person.photoFileName", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getPhotoFileName())
-                                .toArray(String[]::new)),
-                        "person.dateOfBirth", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfBirth().toString())
-                                .toArray(String[]::new)),
-                        "person.dateOfDeath", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfDeath().toString())
-                                .toArray(String[]::new)),
-                        "role", Matchers.containsInAnyOrder(mockMovieTechnicianDTOList.stream()
-                                .map(MovieTechnicianDTO::getRole)
-                                .toArray(String[]::new))
-                )
-        ;
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void shouldReturnNoContentWhenSavingEmptyTechnicians(String endpoint) {
-        when(movieService.saveTechnicians(any(), any(), any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(Collections.emptyList()));
-
-        given()
-                .contentType("application/json")
-                .body(Collections.emptyList())
-                .when()
-                .put(endpoint)
-                .then()
-                .statusCode(204)
-                .body(Matchers.emptyOrNullString())
         ;
     }
 
@@ -1399,79 +1262,7 @@ class MovieEndPointTest {
         ;
     }
 
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void testAddTechniciansByMovie(String endpoint) {
-        List<MovieTechnicianDTO> mockMovieTechnicianDTOList = Factory.mockMovieTechnicianDTOList(6);
 
-        when(movieService.addTechnicians(any(), any(), any(), any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(mockMovieTechnicianDTOList));
-
-        given()
-                .contentType("application/json")
-                .body(mockMovieTechnicianDTOList.subList(0, 3))
-                .when()
-                .patch(endpoint)
-                .then()
-                .statusCode(200)
-                .body("size()", Matchers.is(mockMovieTechnicianDTOList.size()))
-                .body(
-                        "id", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.id", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.name", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getName())
-                                .toArray(String[]::new)),
-                        "person.photoFileName", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getPhotoFileName())
-                                .toArray(String[]::new)),
-                        "person.dateOfBirth", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfBirth().toString())
-                                .toArray(String[]::new)),
-                        "person.dateOfDeath", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfDeath().toString())
-                                .toArray(String[]::new)),
-                        "role", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(MovieTechnicianDTO::getRole)
-                                .toArray(String[]::new))
-                );
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void testAddTechniciansByMovieEmpty(String endpoint) {
-        when(movieService.addTechnicians(any(), any(), any(), any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(Collections.emptyList()));
-
-        given()
-                .contentType("application/json")
-                .body(Collections.emptySet())
-                .when()
-                .patch(endpoint)
-                .then()
-                .statusCode(204)
-                .body(Matchers.emptyOrNullString())
-        ;
-    }
 
     @ParameterizedTest
     @MethodSource("provideTechnicianEndpointsAndErrorMessages")
@@ -1684,77 +1475,6 @@ class MovieEndPointTest {
                 .then()
                 .statusCode(400)
                 .body(equalTo("La liste des pays ne peut pas être nulle"));
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers/1", "/1/directors/1", "/1/assistant-directors/1", "/1/screenwriters/1",
-                    "/1/composers/1", "/1/musicians/1", "/1/photographers/1", "/1/costume-designers/1",
-                    "/1/set-designers/1", "/1/editors/1", "/1/casters/1", "/1/artists/1", "/1/sound-editors/1",
-                    "/1/vfx-supervisors/1", "/1/sfx-supervisors/1", "/1/makeup-artists/1", "/1/hair-dressers/1",
-                    "/1/stuntmen/1"
-            }
-    )
-    void testRemoveTechnicianFromMovie(String endpoint) {
-        List<MovieTechnicianDTO> mockMovieTechnicianDTOList = Factory.mockMovieTechnicianDTOList(6);
-
-        when(movieService.removeTechnician(any(), any(), any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(mockMovieTechnicianDTOList));
-
-        given()
-                .when()
-                .patch(endpoint)
-                .then()
-                .statusCode(200)
-                .body("size()", Matchers.is(mockMovieTechnicianDTOList.size()))
-                .body(
-                        "id", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.id", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getId().intValue())
-                                .toArray(Integer[]::new)),
-                        "person.name", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getName())
-                                .toArray(String[]::new)),
-                        "person.photoFileName", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getPhotoFileName())
-                                .toArray(String[]::new)),
-                        "person.dateOfBirth", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfBirth().toString())
-                                .toArray(String[]::new)),
-                        "person.dateOfDeath", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(dto -> dto.getPerson().getDateOfDeath().toString())
-                                .toArray(String[]::new)),
-                        "role", Matchers.contains(mockMovieTechnicianDTOList.stream()
-                                .map(MovieTechnicianDTO::getRole)
-                                .toArray(String[]::new))
-                )
-        ;
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers/1", "/1/directors/1", "/1/assistant-directors/1", "/1/screenwriters/1",
-                    "/1/composers/1", "/1/musicians/1", "/1/photographers/1", "/1/costume-designers/1",
-                    "/1/set-designers/1", "/1/editors/1", "/1/casters/1", "/1/artists/1", "/1/sound-editors/1",
-                    "/1/vfx-supervisors/1", "/1/sfx-supervisors/1", "/1/makeup-artists/1", "/1/hair-dressers/1",
-                    "/1/stuntmen/1"
-            }
-    )
-    void shouldReturn204IfTechniciansListIsEmpty(String endpoint) {
-        when(movieService.removeTechnician(any(), any(), any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(Collections.emptyList()));
-
-        given()
-                .when()
-                .patch(endpoint)
-                .then()
-                .statusCode(204)
-                .body(Matchers.emptyOrNullString())
-        ;
     }
 
     @Test
@@ -1979,29 +1699,6 @@ class MovieEndPointTest {
                 .delete("/1")
                 .then()
                 .statusCode(404)
-                .body(Matchers.emptyOrNullString())
-        ;
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                    "/1/producers", "/1/directors", "/1/assistant-directors", "/1/screenwriters",
-                    "/1/composers", "/1/musicians", "/1/photographers", "/1/costume-designers",
-                    "/1/set-designers", "/1/editors", "/1/casters", "/1/artists", "/1/sound-editors",
-                    "/1/vfx-supervisors", "/1/sfx-supervisors", "/1/makeup-artists", "/1/hair-dressers",
-                    "/1/stuntmen"
-            }
-    )
-    void shouldReturnNoContentWhenTechniciansAreRemoved(String endpoint) {
-        when(movieService.clearTechnicians(any(), any(), any()))
-                .thenReturn(Uni.createFrom().item(true));
-
-        given()
-                .when()
-                .delete(endpoint)
-                .then()
-                .statusCode(204)
                 .body(Matchers.emptyOrNullString())
         ;
     }
