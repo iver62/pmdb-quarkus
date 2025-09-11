@@ -34,7 +34,7 @@ class MovieTechnicianEndPointTest {
     void shouldReturnTechniciansByMovieSuccessfully(String endpoint) {
         List<MovieTechnicianDTO> mockMovieTechnicianDTOList = Factory.mockMovieTechnicianDTOList(5);
 
-        when(movieTechnicianService.getMovieTechniciansByMovie(any(), any(), any()))
+        when(movieTechnicianService.getMovieTechniciansByMovie(any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(mockMovieTechnicianDTOList));
 
         given()
@@ -79,7 +79,7 @@ class MovieTechnicianEndPointTest {
             }
     )
     void shouldReturnNoContentWhenNoTechniciansByMovie(String endpoint) {
-        when(movieTechnicianService.getMovieTechniciansByMovie(any(), any(), any()))
+        when(movieTechnicianService.getMovieTechniciansByMovie(any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
         given()
@@ -104,7 +104,7 @@ class MovieTechnicianEndPointTest {
     void testSaveTechniciansByMovie(String endpoint) {
         List<MovieTechnicianDTO> mockMovieTechnicianDTOList = Factory.mockMovieTechnicianDTOList(5);
 
-        when(movieTechnicianService.saveTechnicians(any(), any(), any(), any(), any()))
+        when(movieTechnicianService.saveTechnicians(any(), any(), any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(mockMovieTechnicianDTOList));
 
         given()
@@ -152,7 +152,7 @@ class MovieTechnicianEndPointTest {
             }
     )
     void shouldReturnNoContentWhenSavingEmptyTechnicians(String endpoint) {
-        when(movieTechnicianService.saveTechnicians(any(), any(), any(), any(), any()))
+        when(movieTechnicianService.saveTechnicians(any(), any(), any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(Collections.emptyList()));
 
         given()
@@ -322,7 +322,7 @@ class MovieTechnicianEndPointTest {
             }
     )
     void shouldReturnNoContentWhenTechniciansAreRemoved(String endpoint) {
-        when(movieTechnicianService.clearTechnicians(any(), any(), any()))
+        when(movieTechnicianService.clearTechnicians(any(), any(), any(), any()))
                 .thenReturn(Uni.createFrom().item(true));
 
         given()

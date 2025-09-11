@@ -153,7 +153,7 @@ public class MovieService {
                         .map(movieMapper::movieWithAwardsListToDTOList)
                         .onFailure().transform(throwable -> {
                                     log.error("Erreur lors de la récupération des films", throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_MOVIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -166,7 +166,7 @@ public class MovieService {
                         .map(movieMapper::movieWithAwardsListToDTOList)
                         .onFailure().transform(throwable -> {
                                     log.error("Erreur lors de la récupération des films", throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_MOVIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -183,11 +183,10 @@ public class MovieService {
         return
                 Panache.withTransaction(() ->
                         countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
-                                .invoke(countries -> log.info("COUNTRIES -> {}", countries))
                                 .map(countryMapper::toDTOList)
                                 .onFailure().transform(throwable -> {
                                             log.error("Erreur lors de la récupération des pays", throwable);
-                                            return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                            return new WebApplicationException(Messages.ERROR_WHILE_GETTING_COUNTRIES, Response.Status.INTERNAL_SERVER_ERROR);
                                         }
                                 )
                 );
@@ -197,11 +196,11 @@ public class MovieService {
         return
                 categoryRepository.findCategoriesInMovies(page, sort, direction, term)
                         .map(categoryMapper::toDTOList)
-//                        .onFailure().transform(throwable -> {
-//                                    log.error("Erreur lors de la récupération des catégories", throwable);
-//                                    return new WebApplicationException("Erreur lors de la récupération des catégories", Response.Status.INTERNAL_SERVER_ERROR);
-//                                }
-//                        )
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des catégories", throwable);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_CATEGORIES, Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
@@ -266,7 +265,7 @@ public class MovieService {
                                         return throwable;
                                     }
                                     log.error("Erreur lors de la récupération du casting du film {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération du casting", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_ACTORS, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -289,8 +288,8 @@ public class MovieService {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
-                                    log.error("Erreur lors de la récupération des catégories du film {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors de la récupération des catégories pour le film {}", id, throwable);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_CATEGORIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -314,7 +313,7 @@ public class MovieService {
                                         return throwable;
                                     }
                                     log.error("Erreur lors de la récupération des pays du film {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_COUNTRIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -486,7 +485,7 @@ public class MovieService {
                                         return throwable;
                                     }
                                     log.error("Erreur lors de la mise à jour du casting pour le film {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors de la mise à jour du casting", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_UPDATING_ACTORS, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -589,6 +588,7 @@ public class MovieService {
                             if (throwable instanceof WebApplicationException) {
                                 return throwable;
                             }
+                            log.error("Erreur lors de la mise à jour des catégories pour le film {}", id, throwable);
                             return new MovieUpdateException(Messages.ERROR_WHILE_UPDATING_CATEGORIES, throwable);
                         })
                 ;
@@ -634,6 +634,7 @@ public class MovieService {
                             if (throwable instanceof WebApplicationException) {
                                 return throwable;
                             }
+                            log.error("Erreur lors de la mise à jour des pays pour le film {}", id, throwable);
                             return new MovieUpdateException(Messages.ERROR_WHILE_UPDATING_COUNTRIES, throwable);
                         })
                 ;
@@ -659,7 +660,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getMovieActors())
-                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.ACTORS_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_ACTORS))
                                                         .chain(existingActors -> movie.addMovieActors(movieActorDTOList, asyncActorFactory)) // Ajouter les nouveaux acteurs
                                                         .replaceWith(movie)
                                         )
@@ -697,7 +698,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getCategories())
-                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.CATEGORIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_CATEGORIES))
                                                         .chain(categorySet ->
                                                                 categoryService.getByIds(categoryDTOSet.stream().map(CategoryDTO::getId).toList())
                                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Une ou plusieurs catégories sont introuvables"))
@@ -737,7 +738,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .flatMap(movie ->
                                                 Mutiny.fetch(movie.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_COUNTRIES))
                                                         .chain(countrySet ->
                                                                 countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
                                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
@@ -777,7 +778,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getMovieActors())
-                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.ACTORS_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_ACTORS))
                                                         .invoke(movieActorList -> movie.removeMovieActor(movieActorId))
                                                         .replaceWith(movie)
                                         )
@@ -810,7 +811,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCategories())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_CATEGORIES))
                                                         .invoke(categorySet -> movie.removeCategory(categoryId))
                                                         .replaceWith(movie)
                                         )
@@ -845,7 +846,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_COUNTRIES))
                                                         .invoke(countries -> movie.removeCountry(countryId))
                                                         .replaceWith(movie)
                                         )
@@ -885,7 +886,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCeremoniesAwards())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CEREMONY_AWARDS_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_CEREMONY_AWARDS))
                                                         .invoke(ceremonyAwardsSet -> movie.removeCeremonyAward(ceremonyAwardsId))
                                                         .replaceWith(movie)
                                         )
@@ -940,8 +941,8 @@ public class MovieService {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
-                                    log.error("Erreur lors de la modification du film", throwable);
-                                    return new WebApplicationException("Erreur lors de la modification du film", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors de la modification du film {}", id, throwable);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_UPDATING_MOVIE, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -1054,7 +1055,7 @@ public class MovieService {
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie -> Mutiny.fetch(movie.getMovieActors())
-                                                .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.ACTORS_NOT_INITIALIZED))
+                                                .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_ACTORS))
                                                 .invoke(movieActorList -> movie.clearActors())
                                                 .replaceWith(movie)
                                         )
@@ -1065,8 +1066,8 @@ public class MovieService {
                             if (throwable instanceof WebApplicationException) {
                                 return throwable;
                             }
-                            log.error("Erreur lors de la suppression des acteurs", throwable);
-                            return new WebApplicationException("Erreur lors de la suppression des acteurs", Response.Status.INTERNAL_SERVER_ERROR);
+                            log.error("Erreur lors de la suppression des acteurs du film {}", id, throwable);
+                            return new WebApplicationException(Messages.ERROR_WHILE_CLEARING_ACTORS, Response.Status.INTERNAL_SERVER_ERROR);
                         });
     }
 
@@ -1091,7 +1092,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCategories())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CATEGORIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_CATEGORIES))
                                                         .invoke(categorySet -> movie.clearCategories())
                                                         .replaceWith(movie)
                                         )
@@ -1101,7 +1102,8 @@ public class MovieService {
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
-                            return new WebApplicationException("Erreur lors de la suppression des catégories", throwable);
+                            log.error("Erreur lors de la suppression des catégories du film {}", id, throwable);
+                            return new WebApplicationException(Messages.ERROR_WHILE_CLEARING_CATEGORIES, throwable);
                         });
     }
 
@@ -1126,7 +1128,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
                                                         .invoke(countries -> movie.clearCountries())
                                                         .replaceWith(movie)
                                         )
@@ -1136,7 +1138,8 @@ public class MovieService {
                         )
                         .onFailure().transform(throwable -> {
                             log.error(throwable.getMessage());
-                            return new WebApplicationException("Erreur lors de la suppression des pays", throwable);
+                            log.error("Erreur lors de la suppression des pays du film {}", id, throwable);
+                            return new WebApplicationException(Messages.ERROR_WHILE_CLEARING_COUNTRIES, throwable);
                         });
     }
 
@@ -1148,7 +1151,7 @@ public class MovieService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(movie.getCeremoniesAwards())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.CEREMONY_AWARDS_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_CEREMONY_AWARDS))
                                                         .invoke(ceremonyAwardsSet -> movie.clearCeremoniesAwards())
                                                         .replaceWith(movie)
                                         )
@@ -1164,7 +1167,7 @@ public class MovieService {
     public Uni<List<MovieActorDTO>> fetchAndMapActorList(Movie movie) {
         return
                 Mutiny.fetch(movie.getMovieActors())
-                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.ACTORS_NOT_INITIALIZED))
+                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_ACTORS))
                         .map(movieActorList ->
                                 movieActorMapper.toDTOListWithoutMovie(movieActorList)
                                         .stream()
@@ -1187,7 +1190,7 @@ public class MovieService {
     public Uni<Set<CategoryDTO>> fetchAndMapCategorySet(Movie movie) {
         return
                 Mutiny.fetch(movie.getCategories())
-                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.CATEGORIES_NOT_INITIALIZED))
+                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_CATEGORIES))
                         .map(categoryMapper::toDTOSet)
                 ;
     }
@@ -1205,7 +1208,7 @@ public class MovieService {
     public Uni<Set<CountryDTO>> fetchAndMapCountrySet(Movie movie) {
         return
                 Mutiny.fetch(movie.getCountries())
-                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.COUNTRIES_NOT_INITIALIZED))
+                        .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.NULL_COUNTRIES))
                         .map(countryMapper::toDTOSet)
                 ;
     }
