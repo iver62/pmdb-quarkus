@@ -9,7 +9,7 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
@@ -26,35 +26,35 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 
-    public Uni<Long> countMovies(CriteriasDTO criteriasDTO) {
+    public Uni<Long> countMovies(CriteriaDTO criteriaDTO) {
         final String query = String.format("""
                 FROM Movie m
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
-                """, addClauses(criteriasDTO)
+                """, addClauses(criteriaDTO)
         );
 
         final Parameters params = addParameters(
-                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countMoviesByPerson(Person person, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countMoviesByPerson(Person person, CriteriaDTO criteriaDTO) {
         final String query = String.format("""
                        FROM Movie m
                        WHERE (%s)
                          AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
-                """, MovieRepositoryHelper.buildExistsClause(person), addClauses(criteriasDTO)
+                """, MovieRepositoryHelper.buildExistsClause(person), addClauses(criteriaDTO)
         );
 
         Parameters params = addParameters(
                 Parameters.with("person", person)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return count(query, params);
@@ -110,21 +110,6 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return find("id", id).firstResult();
     }
 
-    public Uni<List<Movie>> searchByTitle(String term) {
-        return
-                list(
-                        """
-                                SELECT DISTINCT m
-                                FROM Movie m
-                                LEFT JOIN FETCH m.countries
-                                LEFT JOIN FETCH m.categories
-                                WHERE LOWER(FUNCTION('unaccent', title)) LIKE LOWER(FUNCTION('unaccent', ?1))
-                                """,
-                        Sort.by("title"),
-                        "%" + term + "%"
-                );
-    }
-
     public Uni<Movie> findByIdWithCountriesAndCategories(Long id) {
         return
                 find("""
@@ -163,19 +148,19 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<MovieWithAwardsNumber>> findMovies(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMovies(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         final String query = String.format("""
                        SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                        FROM Movie m
                        WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         final Parameters params = addParameters(
-                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return
@@ -186,19 +171,19 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<MovieWithAwardsNumber>> findMovies(String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMovies(String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                 FROM Movie m
                 WHERE LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return
@@ -208,7 +193,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<MovieWithAwardsNumber>> findMoviesByPerson(Person person, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMoviesByPerson(Person person, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         final String query = String.format("""
                        SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                        FROM Movie m
@@ -216,13 +201,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                          AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, MovieRepositoryHelper.buildExistsClause(person), addClauses(criteriasDTO), addSort(sort, direction)
+                """, MovieRepositoryHelper.buildExistsClause(person), addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         Parameters params = addParameters(
                 Parameters.with("person", person)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return
@@ -233,39 +218,32 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                 ;
     }
 
-    public Uni<List<Movie>> findMoviesByCountry(Long id, String sort, Sort.Direction direction, String term) {
-        return
-                find("""
-                                FROM Movie m
-                                JOIN m.countries c
-                                LEFT JOIN FETCH m.awards
-                                WHERE c.id = :id
-                                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                                """,
-                        Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST),
-                        Parameters.with("id", id)
-                                .and("term", "%" + term + "%")
-                ).list();
+    public Uni<List<MovieWithAwardsNumber>> findMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
+        final String query = String.format("""
+                       SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
+                       FROM Movie m
+                       JOIN m.countries c
+                       WHERE c.id = :id
+                         AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
+                %s
+                %s
+                """, addClauses(criteriaDTO), addSort(sort, direction)
+        );
+
+        final Parameters params = addParameters(
+                Parameters.with("id", id)
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
+        );
+
+        return find(query, params)
+                .page(page)
+                .project(MovieWithAwardsNumber.class)
+                .list()
+                ;
     }
 
-    public Uni<List<Movie>> findMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, String term) {
-        return
-                find("""
-                                FROM Movie m
-                                JOIN m.countries c
-                                LEFT JOIN FETCH m.awards
-                                WHERE c.id = :id
-                                    AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
-                                """,
-                        Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST),
-                        Parameters.with("id", id)
-                                .and("term", "%" + term + "%")
-                )
-                        .page(page)
-                        .list();
-    }
-
-    public Uni<List<MovieWithAwardsNumber>> findMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieWithAwardsNumber>> findMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         final String query = String.format("""
                        SELECT m, COALESCE((SELECT awardsNumber FROM MovieAwardsNumber man WHERE man.movieId = m.id), 0) AS awardsNumber
                        FROM Movie m
@@ -274,13 +252,13 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
                          AND LOWER(FUNCTION('unaccent', m.title)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         final Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return
@@ -294,10 +272,16 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     public Uni<List<Repartition>> findMoviesCreationDateEvolution() {
         return
                 find("""
-                        SELECT CAST(FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY') AS string) AS mois_creation,
-                            SUM(COUNT(*)) OVER (ORDER BY FUNCTION('TO_CHAR', m.creationDate, 'MM-YYYY')) AS cumulative_count
-                        FROM Movie m
-                        GROUP BY mois_creation
+                        SELECT
+                            mois_creation,
+                            SUM(monthly_count) OVER (ORDER BY mois_creation) AS cumulative_count
+                        FROM (
+                            SELECT
+                                TO_CHAR(m.creationDate, 'MM-YYYY') AS mois_creation,
+                                COUNT(*) AS monthly_count
+                            FROM Movie m
+                            GROUP BY TO_CHAR(m.creationDate, 'MM-YYYY')
+                        ) AS sub
                         ORDER BY mois_creation
                         """
                 )
@@ -418,59 +402,59 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
         return String.format(" ORDER BY CASE WHEN m.%s IS NULL THEN 1 ELSE 0 END, m.%s %s", sort, sort, dir);
     }
 
-    private String addClauses(CriteriasDTO criteriasDTO) {
+    private String addClauses(CriteriaDTO criteriaDTO) {
         StringBuilder query = new StringBuilder();
 
-        Optional.ofNullable(criteriasDTO.getFromReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate >= :fromReleaseDate"));
-        Optional.ofNullable(criteriasDTO.getToReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate <= :toReleaseDate"));
-        Optional.ofNullable(criteriasDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND m.creationDate >= :fromCreationDate"));
-        Optional.ofNullable(criteriasDTO.getToCreationDate()).ifPresent(date -> query.append(" AND m.creationDate <= :toCreationDate"));
-        Optional.ofNullable(criteriasDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
-        Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getFromReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate >= :fromReleaseDate"));
+        Optional.ofNullable(criteriaDTO.getToReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate <= :toReleaseDate"));
+        Optional.ofNullable(criteriaDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND m.creationDate >= :fromCreationDate"));
+        Optional.ofNullable(criteriaDTO.getToCreationDate()).ifPresent(date -> query.append(" AND m.creationDate <= :toCreationDate"));
+        Optional.ofNullable(criteriaDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
 
-        if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getCategoryIds()) && !criteriaDTO.getCategoryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.categories ca WHERE ca.id IN :categoryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getCountryIds()) && !criteriaDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.countries c WHERE c.id IN :countryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getUserIds()) && !criteriasDTO.getUserIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getUserIds()) && !criteriaDTO.getUserIds().isEmpty()) {
             query.append(" AND m.user.id IN :userIds");
         }
 
         return query.toString();
     }
 
-    private Parameters addParameters(Parameters params, CriteriasDTO criteriasDTO) {
-        if (Objects.nonNull(criteriasDTO.getFromReleaseDate())) {
-            params.and("fromReleaseDate", criteriasDTO.getFromReleaseDate());
+    private Parameters addParameters(Parameters params, CriteriaDTO criteriaDTO) {
+        if (Objects.nonNull(criteriaDTO.getFromReleaseDate())) {
+            params.and("fromReleaseDate", criteriaDTO.getFromReleaseDate());
         }
-        if (Objects.nonNull(criteriasDTO.getToReleaseDate())) {
-            params.and("toReleaseDate", criteriasDTO.getToReleaseDate());
+        if (Objects.nonNull(criteriaDTO.getToReleaseDate())) {
+            params.and("toReleaseDate", criteriaDTO.getToReleaseDate());
         }
-        if (Objects.nonNull(criteriasDTO.getFromCreationDate())) {
-            params.and("fromCreationDate", criteriasDTO.getFromCreationDate());
+        if (Objects.nonNull(criteriaDTO.getFromCreationDate())) {
+            params.and("fromCreationDate", criteriaDTO.getFromCreationDate());
         }
-        if (Objects.nonNull(criteriasDTO.getToCreationDate())) {
-            params.and("toCreationDate", criteriasDTO.getToCreationDate());
+        if (Objects.nonNull(criteriaDTO.getToCreationDate())) {
+            params.and("toCreationDate", criteriaDTO.getToCreationDate());
         }
-        if (Objects.nonNull(criteriasDTO.getFromLastUpdate())) {
-            params.and("fromLastUpdate", criteriasDTO.getFromLastUpdate());
+        if (Objects.nonNull(criteriaDTO.getFromLastUpdate())) {
+            params.and("fromLastUpdate", criteriaDTO.getFromLastUpdate());
         }
-        if (Objects.nonNull(criteriasDTO.getToLastUpdate())) {
-            params.and("toLastUpdate", criteriasDTO.getToLastUpdate());
+        if (Objects.nonNull(criteriaDTO.getToLastUpdate())) {
+            params.and("toLastUpdate", criteriaDTO.getToLastUpdate());
         }
 
-        if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
-            params.and("categoryIds", criteriasDTO.getCategoryIds());
+        if (Objects.nonNull(criteriaDTO.getCategoryIds()) && !criteriaDTO.getCategoryIds().isEmpty()) {
+            params.and("categoryIds", criteriaDTO.getCategoryIds());
         }
-        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
-            params.and("countryIds", criteriasDTO.getCountryIds());
+        if (Objects.nonNull(criteriaDTO.getCountryIds()) && !criteriaDTO.getCountryIds().isEmpty()) {
+            params.and("countryIds", criteriaDTO.getCountryIds());
         }
-        if (Objects.nonNull(criteriasDTO.getUserIds()) && !criteriasDTO.getUserIds().isEmpty()) {
-            params.and("userIds", criteriasDTO.getUserIds());
+        if (Objects.nonNull(criteriaDTO.getUserIds()) && !criteriaDTO.getUserIds().isEmpty()) {
+            params.and("userIds", criteriaDTO.getUserIds());
         }
 
         return params;

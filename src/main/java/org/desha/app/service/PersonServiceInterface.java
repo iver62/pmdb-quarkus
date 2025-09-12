@@ -4,7 +4,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import org.desha.app.domain.dto.CountryDTO;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.entity.Person;
@@ -15,11 +15,11 @@ import java.util.Set;
 
 public interface PersonServiceInterface {
 
-    Uni<Long> countPersons(CriteriasDTO criteriasDTO);
+    Uni<Long> countPersons(CriteriaDTO criteriaDTO);
 
     Uni<Long> countCountries(String term, String lang);
 
-    Uni<Long> countMovies(Long personId, CriteriasDTO criteriasDTO);
+    Uni<Long> countMovies(Long personId, CriteriaDTO criteriaDTO);
 
     Uni<PersonDTO> getById(Long id);
 
@@ -27,15 +27,11 @@ public interface PersonServiceInterface {
 
     Uni<List<CountryDTO>> getCountries(Page page, String sort, Sort.Direction direction, String term, String lang);
 
-    Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO);
+    Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO);
 
     Uni<List<PersonDTO>> getAll();
 
-    Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction sortDirection, CriteriasDTO criteriasDTO);
-
-//    Uni<List<Movie>> addMovie(Long personId, Movie movie);
-
-//    Uni<List<Movie>> removeMovie(Long personId, Long movieId);
+    Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction sortDirection, CriteriaDTO criteriaDTO);
 
     Uni<PersonDTO> save(PersonDTO personDTO);
 

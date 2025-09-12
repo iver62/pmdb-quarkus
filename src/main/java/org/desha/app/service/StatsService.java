@@ -10,9 +10,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.desha.app.domain.dto.CriteriaDTO;
+import org.desha.app.domain.dto.MovieStatsDTO;
 import org.desha.app.domain.enums.PersonType;
-import org.desha.app.domain.dto.CriteriasDTO;
-import org.desha.app.domain.dto.MovieStats;
 import org.desha.app.domain.record.CountryRepartition;
 import org.desha.app.domain.record.Repartition;
 import org.desha.app.repository.MovieRepository;
@@ -38,7 +38,7 @@ public class StatsService {
     private List<Repartition> moviesNumberEvolution = new ArrayList<>();
     private List<Repartition> actorsNumberEvolution = new ArrayList<>();
 
-    private final BroadcastProcessor<MovieStats> statsProcessor = BroadcastProcessor.create();
+    private final BroadcastProcessor<MovieStatsDTO> statsProcessor = BroadcastProcessor.create();
 
     private final MovieRepository movieRepository;
     private final PersonRepository personRepository;
@@ -50,12 +50,11 @@ public class StatsService {
     }
 
     void onStart(@Observes StartupEvent ev) throws Throwable {
-        log.info("The application is starting...");
         VertxContextSupport.subscribeAndAwait(() ->
                 Panache.withSession(() ->
                         movieRepository.count()
                                 .invoke(movieCount::set)
-                                .chain(() -> personRepository.countPersons(CriteriasDTO.builder().personTypes(Set.of(PersonType.ACTOR)).build())
+                                .chain(() -> personRepository.countPersons(CriteriaDTO.builder().personTypes(Set.of(PersonType.ACTOR)).build())
                                         .invoke(actorCount::set))
                                 .chain(() -> movieRepository.findMoviesByReleaseDateRepartition()
                                         .invoke(repartition -> moviesByReleaseDateRepartition = repartition))
@@ -72,7 +71,7 @@ public class StatsService {
                                 .chain(() -> personRepository.findActorsCreationDateEvolution()
                                         .invoke(repartition -> actorsNumberEvolution = repartition))
                                 .invoke(() -> {
-                                    MovieStats stats = getCurrentStats();
+                                    MovieStatsDTO stats = getCurrentStats();
                                     statsProcessor.onNext(stats);
                                     log.info("MovieStats emitted: {}", stats);
                                 })
@@ -84,9 +83,9 @@ public class StatsService {
         statsProcessor.onNext(getCurrentStats());
     }
 
-    public MovieStats getCurrentStats() {
+    public MovieStatsDTO getCurrentStats() {
         return
-                MovieStats.build(
+                MovieStatsDTO.build(
                         movieCount.get(),
                         actorCount.get(),
                         moviesByReleaseDateRepartition,
@@ -99,7 +98,7 @@ public class StatsService {
                 );
     }
 
-    public Flow.Publisher<MovieStats> getStatsPublisher() {
+    public Flow.Publisher<MovieStatsDTO> getStatsPublisher() {
         return Multi.createBy().concatenating().streams(
                 Multi.createFrom().item(getCurrentStats()),
                 statsProcessor
@@ -140,7 +139,7 @@ public class StatsService {
     private Uni<Void> updateNumberOfActors() {
         return
                 Panache.withTransaction(() ->
-                        personRepository.countPersons(CriteriasDTO.builder().personTypes(Set.of(PersonType.ACTOR)).build())
+                        personRepository.countPersons(CriteriaDTO.builder().personTypes(Set.of(PersonType.ACTOR)).build())
                                 .invoke(aLong -> {
                                             actorCount.set(aLong);
                                             updateAndEmitStats();

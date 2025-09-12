@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
-import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 
 @ApplicationScoped
 @Slf4j
@@ -84,15 +83,15 @@ public class PersonService implements PersonServiceInterface {
         this.statsService = statsService;
     }
 
-    public Uni<Long> countPersons(CriteriasDTO criteriasDTO) {
-        return personRepository.countPersons(criteriasDTO);
+    public Uni<Long> countPersons(CriteriaDTO criteriaDTO) {
+        return personRepository.countPersons(criteriaDTO);
     }
 
-    public Uni<Long> countMovies(Long id, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countMovies(Long id, CriteriaDTO criteriaDTO) {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
-                        .chain(person -> movieRepository.countMoviesByPerson(person, criteriasDTO))
+                        .chain(person -> movieRepository.countMoviesByPerson(person, criteriaDTO))
                 ;
     }
 
@@ -116,7 +115,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
-                        .flatMap(person -> countryRepository.countMovieCategoriesByPerson(person, term))
+                        .flatMap(person -> categoryRepository.countMovieCategoriesByPerson(person, term))
                 ;
     }
 
@@ -141,18 +140,18 @@ public class PersonService implements PersonServiceInterface {
         return personRepository.findByIds(ids);
     }
 
-    public Uni<List<LitePersonDTO>> getLightPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<LitePersonDTO>> getLightPersons(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 personRepository
-                        .findPersons(page, sort, direction, criteriasDTO)
+                        .findPersons(page, sort, direction, criteriaDTO)
                         .map(personMapper::toLiteDTOList)
                 ;
     }
 
-    public Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<PersonDTO>> getPersons(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 personRepository
-                        .findPersonsWithMoviesNumber(page, sort, direction, criteriasDTO)
+                        .findPersonsWithMoviesNumber(page, sort, direction, criteriaDTO)
                         .map(personMapper::toDTOWithNumbersList)
                 ;
     }
@@ -160,7 +159,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<MovieActorDTO>> getRoles(Long id, Page page, String sort, Sort.Direction direction) {
         return
                 movieActorRepository.findMovieActorsByActor(id, page, sort, direction)
-                        .map(movieActorMapper::toDTOList)
+                        .map(movieActorMapper::toDTOListWithoutPerson)
                 ;
     }
 
@@ -168,13 +167,13 @@ public class PersonService implements PersonServiceInterface {
         return personRepository.listAll().map(personMapper::toDTOList);
     }
 
-    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMovies(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                         .chain(person ->
                                 movieRepository
-                                        .findMoviesByPerson(person, page, sort, direction, criteriasDTO)
+                                        .findMoviesByPerson(person, page, sort, direction, criteriaDTO)
                                         .map(movieMapper::toDTOWithAwardsNumberList)
                         )
                 ;
@@ -232,30 +231,6 @@ public class PersonService implements PersonServiceInterface {
                         )
                 ;
     }
-
-    /*@Override
-    public Uni<List<Movie>> addMovie(Long id, Movie movie) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                personRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .transformToUni(person -> person.addMovie(movie))
-                        )
-                ;
-    }*/
-
-   /* @Override
-    public Uni<List<Movie>> removeMovie(Long id, Long movieId) {
-        return
-                Panache
-                        .withTransaction(() ->
-                                personRepository.findById(id)
-                                        .onItem().ifNotNull()
-                                        .transformToUni(person -> person.removeMovie(movieId))
-                        )
-                ;
-    }*/
 
     public Uni<File> getPhoto(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {
@@ -316,26 +291,33 @@ public class PersonService implements PersonServiceInterface {
         return
                 Panache.withTransaction(() ->
                         personRepository.findById(id)
-                                .onItem().ifNull().failWith(() -> new WebApplicationException(Messages.PERSON_NOT_FOUND, NOT_FOUND))
+                                .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                                 .call(person -> countryService.getByIds(personDTO.getCountries())
                                         .onFailure().invoke(error -> log.error("Failed to fetch countries for person {}: {}", id, error.getMessage()))
                                         .invoke(person::setCountries)
                                 )
                                 .invoke(person -> person.updatePerson(personDTO))
                                 .call(person -> {
+                                    final String currentPhoto = person.getPhotoFileName();
+                                    final String dtoPhoto = personDTO.getPhotoFileName();
+
                                     if (Objects.nonNull(file)) {
                                         return uploadPhoto(file)
                                                 .onFailure().invoke(error -> log.error("Photo upload failed for person {}: {}", id, error.getMessage()))
                                                 .chain(uploadedFileName ->
-                                                        deletePhotoIfExists(person.getPhotoFileName()) // On supprime l'ancien fichier si ce n'est pas le fichier par défaut
+                                                        deletePhotoIfExists(currentPhoto) // On supprime l'ancien fichier si ce n'est pas le fichier par défaut
                                                                 .replaceWith(uploadedFileName)
                                                 )
                                                 .invoke(person::setPhotoFileName);
+                                    } else if (!Objects.equals(currentPhoto, dtoPhoto)) {
+                                        // Pas de nouveau fichier, mais différence → on remet la photo par défaut
+                                        return
+                                                deletePhotoIfExists(currentPhoto)
+                                                        .invoke(() -> person.setPhotoFileName(Person.DEFAULT_PHOTO))
+                                                ;
                                     }
-                                    return
-                                            deletePhotoIfExists(person.getPhotoFileName())
-                                                    .invoke(() -> person.setPhotoFileName(Person.DEFAULT_PHOTO))
-                                            ;
+                                    // Aucun changement de photo
+                                    return Uni.createFrom().item(person);
                                 })
                                 .map(personMapper::personToPersonDTO)
                 );
@@ -351,7 +333,7 @@ public class PersonService implements PersonServiceInterface {
                 fileService.deleteFile(PHOTOS_DIR, fileName);
                 return null;
             } catch (IOException e) {
-                log.error("Erreur lors de la suppression de la photo {}: {}", fileName, e.getCause().getLocalizedMessage());
+                log.error("Erreur lors de la suppression de la photo {}: {}", fileName, e.getMessage());
                 throw new PhotoDeletionException("Erreur lors de la suppression de la photo " + fileName);
             }
         });
@@ -389,7 +371,7 @@ public class PersonService implements PersonServiceInterface {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                                         .flatMap(person ->
                                                 Mutiny.fetch(person.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
                                                         .chain(countries ->
                                                                 countryService.getByIds(countryDTOSet.stream().map(CountryDTO::getId).toList())
                                                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException("Un ou plusieurs pays sont introuvables"))
@@ -411,7 +393,7 @@ public class PersonService implements PersonServiceInterface {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                                         .flatMap(person ->
                                                 Mutiny.fetch(person.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
                                                         .invoke(countries -> person.removeCountry(countryId))
                                                         .replaceWith(person)
                                         )
@@ -450,7 +432,7 @@ public class PersonService implements PersonServiceInterface {
                                         .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.PERSON_NOT_FOUND))
                                         .flatMap(person ->
                                                 Mutiny.fetch(person.getCountries())
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
                                                         .invoke(countries -> person.clearCountries())
                                                         .replaceWith(person)
                                         )
@@ -481,7 +463,7 @@ public class PersonService implements PersonServiceInterface {
     private Uni<Set<CountryDTO>> fetchAndMapCountries(Person person) {
         return
                 Mutiny.fetch(person.getCountries())
-                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.COUNTRIES_NOT_INITIALIZED))
+                        .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
                         .map(countryMapper::toDTOSet)
                 ;
     }

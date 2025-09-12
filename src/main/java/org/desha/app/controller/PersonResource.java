@@ -11,9 +11,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.desha.app.config.CustomHttpHeaders;
-import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.dto.*;
 import org.desha.app.domain.entity.*;
+import org.desha.app.domain.enums.PersonType;
 import org.desha.app.service.PersonService;
 import org.jboss.resteasy.reactive.PartType;
 import org.jboss.resteasy.reactive.RestForm;
@@ -42,7 +42,6 @@ public class PersonResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersonById(@RestPath Long id) {
         return
                 personService.getById(id)
@@ -52,7 +51,6 @@ public class PersonResource {
 
     @GET
     @Path("/{id}/light")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getLightPersonById(@RestPath Long id) {
         return
                 personService.getLightById(id)
@@ -62,19 +60,18 @@ public class PersonResource {
 
     @GET
     @Path("/light")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getLightPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -84,19 +81,18 @@ public class PersonResource {
     }
 
     @GET
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPersons(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams);
 
         return
-                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -107,7 +103,6 @@ public class PersonResource {
 
     @GET
     @Path("/{id}/roles")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getRolesByPerson(@RestPath Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(MovieActor.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, MovieActor.ALLOWED_SORT_FIELDS);
@@ -126,19 +121,18 @@ public class PersonResource {
 
     @GET
     @Path("/actors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getActors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ACTOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.ACTOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -149,19 +143,18 @@ public class PersonResource {
 
     @GET
     @Path("/directors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getDirectors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.DIRECTOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.DIRECTOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -172,19 +165,18 @@ public class PersonResource {
 
     @GET
     @Path("/assistant-directors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAssistantDirectors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ASSISTANT_DIRECTOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.ASSISTANT_DIRECTOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -195,19 +187,18 @@ public class PersonResource {
 
     @GET
     @Path("/screenwriters")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getScreenwriters(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SCREENWRITER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.SCREENWRITER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -218,19 +209,18 @@ public class PersonResource {
 
     @GET
     @Path("/producers")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getProducers(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.PRODUCER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.PRODUCER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -241,19 +231,18 @@ public class PersonResource {
 
     @GET
     @Path("/composers")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getComposers(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COMPOSER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.COMPOSER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -264,19 +253,18 @@ public class PersonResource {
 
     @GET
     @Path("/musicians")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMusicians(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.MUSICIAN);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.MUSICIAN);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -287,19 +275,18 @@ public class PersonResource {
 
     @GET
     @Path("/photographers")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhotographers(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.PHOTOGRAPHER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.PHOTOGRAPHER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -310,19 +297,18 @@ public class PersonResource {
 
     @GET
     @Path("/costume-designers")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCostumeDesigners(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.COSTUME_DESIGNER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.COSTUME_DESIGNER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -333,19 +319,18 @@ public class PersonResource {
 
     @GET
     @Path("/set-designers")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getSetDesigners(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SET_DESIGNER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.SET_DESIGNER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -356,19 +341,18 @@ public class PersonResource {
 
     @GET
     @Path("/editors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getEditors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.EDITOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.EDITOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -379,19 +363,18 @@ public class PersonResource {
 
     @GET
     @Path("/casters")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCasters(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.CASTER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.CASTER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -402,19 +385,18 @@ public class PersonResource {
 
     @GET
     @Path("/artists")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getArtists(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.ARTIST);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.ARTIST);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -425,19 +407,18 @@ public class PersonResource {
 
     @GET
     @Path("/sound-editors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getSoundEditors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SOUND_EDITOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.SOUND_EDITOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -448,19 +429,18 @@ public class PersonResource {
 
     @GET
     @Path("/makeup-artists")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMakeupArtists(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.MAKEUP_ARTIST);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.MAKEUP_ARTIST);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -471,19 +451,18 @@ public class PersonResource {
 
     @GET
     @Path("/vfx-supervisors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getVfxSupervisors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.VFX_SUPERVISOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.VFX_SUPERVISOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -494,19 +473,18 @@ public class PersonResource {
 
     @GET
     @Path("/sfx-supervisors")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getSfxSupervisors(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.SFX_SUPERVISOR);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.SFX_SUPERVISOR);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -517,19 +495,18 @@ public class PersonResource {
 
     @GET
     @Path("/hair-dressers")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getHairDressers(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.HAIR_DRESSER);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.HAIR_DRESSER);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -540,19 +517,18 @@ public class PersonResource {
 
     @GET
     @Path("/stuntmen")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getStuntmen(@BeanParam PersonQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams, PersonType.STUNT_MAN);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.STUNT_MAN);
 
         return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(personDTOList ->
-                                personService.countPersons(criteriasDTO).map(total ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -563,19 +539,18 @@ public class PersonResource {
 
     @GET
     @Path("/{id}/movies")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMoviesByPerson(@RestPath Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams);
 
         return
-                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                personService.getMovies(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .flatMap(movieList ->
-                                personService.countMovies(id, criteriasDTO)
+                                personService.countMovies(id, criteriaDTO)
                                         .map(total ->
                                                 movieList.isEmpty()
                                                         ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -588,7 +563,6 @@ public class PersonResource {
     @GET
     @Path("/photos/{fileName}")
     @Produces({"image/jpg", "image/jpeg", "image/png"})
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getPhoto(@PathParam("fileName") String fileName) {
         if (Objects.isNull(fileName) || fileName.isEmpty() || Objects.equals("undefined", fileName)) {
             log.warn("Invalid file request: {}", fileName);
@@ -620,7 +594,6 @@ public class PersonResource {
 
     @GET
     @Path("/countries")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
@@ -641,7 +614,6 @@ public class PersonResource {
 
     @GET
     @Path("/{id}/movies/countries")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMovieCountriesByPerson(@RestPath Long id, @BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
@@ -662,7 +634,6 @@ public class PersonResource {
 
     @GET
     @Path("/{id}/movies/categories")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getMovieCategoriesByPerson(@RestPath Long id, @BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
@@ -682,7 +653,6 @@ public class PersonResource {
 
     @GET
     @Path("/{id}/awards")
-    @RolesAllowed({"user", "admin"})
     public Uni<Response> getAwardsByPerson(@RestPath Long id) {
         return
                 personService.getAwardsByPerson(id).map(awardDTOS ->
@@ -719,7 +689,16 @@ public class PersonResource {
                 personService
                         .update(id, file, personDTO)
                         .onItem().ifNotNull().transform(person -> Response.ok(person).build())
-                        .onItem().ifNull().failWith(new NotFoundException("Person with ID " + id + " not found."));
+                        .onFailure().recoverWithItem(e -> {
+                                    log.error("Erreur lors de la modification de la personne: {}", e.getMessage());
+                                    return
+                                            Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                                    .entity("Erreur lors de la modification de la personne")
+                                                    .build()
+                                            ;
+                                }
+                        )
+                ;
     }
 
     @PUT
@@ -739,7 +718,7 @@ public class PersonResource {
                                         : Response.ok(countryDTOS).build()
                         )
                         .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
+                                    log.error("Erreur lors de la mise à jour des pays: {}", e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                             .entity("Erreur lors de la mise à jour des pays")
                                             .build();
@@ -765,7 +744,7 @@ public class PersonResource {
                                         : Response.ok(countryDTOS).build()
                         )
                         .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
+                                    log.error("Erreur lors de l'ajout des pays: {}", e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                             .entity("Erreur lors de l'ajout des pays")
                                             .build();
@@ -787,7 +766,7 @@ public class PersonResource {
                                         : Response.ok(countryDTOS).build()
                         )
                         .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
+                                    log.error("Erreur lors de la suppression du pays: {}", e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                             .entity("Erreur lors de la suppression du pays")
                                             .build();
@@ -805,7 +784,7 @@ public class PersonResource {
                         .deletePerson(id)
                         .onItem().ifNotNull().transform(person -> Response.ok(person).build())
                         .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
+                                    log.error("Erreur lors de la suppression de la personne: {}", e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                             .entity("Erreur lors de la suppression de la personne")
                                             .build();
@@ -816,14 +795,14 @@ public class PersonResource {
 
     @DELETE
     @Path("/{id}/countries")
-    @RolesAllowed("admin")
+    @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCountries(@RestPath Long id) {
         return
                 personService
                         .clearCountries(id)
                         .onItem().ifNotNull().transform(person -> Response.ok(person).build())
                         .onFailure().recoverWithItem(e -> {
-                                    log.error(e.getMessage());
+                                    log.error("Erreur lors de la suppression des pays: {}", e.getMessage());
                                     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                                             .entity("Erreur lors de la suppression des pays")
                                             .build();

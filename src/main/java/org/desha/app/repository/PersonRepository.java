@@ -7,7 +7,7 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Person;
 import org.desha.app.domain.enums.PersonType;
 import org.desha.app.domain.record.PersonWithMoviesNumber;
@@ -22,55 +22,55 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return count();
     }
 
-    public Uni<Long> countPersons(CriteriasDTO criteriasDTO) {
+    public Uni<Long> countPersons(CriteriaDTO criteriaDTO) {
         String query = String.format("""
                      FROM Person p
                      WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
-                """, addClauses(criteriasDTO)
+                """, addClauses(criteriaDTO)
         );
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countPersonsByMovie(Long id, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countPersonsByMovie(Long id, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN MoviePerson mp ON p.id = mp.personId
                 WHERE mp.movieId = :id
                     AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
-                """, addClauses(criteriasDTO)
+                """, addClauses(criteriaDTO)
         );
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return count(query, params);
     }
 
-    public Uni<Long> countByCountry(Long id, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countByCountry(Long id, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN p.countries c
                 WHERE c.id = :id
                     AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
-                """, addClauses(criteriasDTO)
+                """, addClauses(criteriaDTO)
         );
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return count(query, params);
@@ -83,24 +83,24 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return list("id IN ?1", ids);
     }
 
-    public Uni<List<Person>> findPersons(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Person>> findPersons(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 WHERE LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return find(query, params).page(page).list();
     }
 
-    public Uni<List<Person>> findPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Person>> findPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 SELECT p
                 FROM Person p
@@ -109,19 +109,19 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                     AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return find(query, params).page(page).list();
     }
 
-    public Uni<List<PersonWithMoviesNumber>> findPersonsWithMoviesNumber(Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<PersonWithMoviesNumber>> findPersonsWithMoviesNumber(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 SELECT p, COALESCE((SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id), 0) AS moviesNumber, COUNT(a) AS awardsNumber
                 FROM Person p
@@ -130,12 +130,12 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 %s
                 GROUP BY p
                 %s
-                """, addClauses(criteriasDTO), addSort(sort, direction)
+                """, addClauses(criteriaDTO), addSort(sort, direction)
         );
 
         Parameters params = addParameters(
-                Parameters.with("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                Parameters.with("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         return
@@ -146,20 +146,20 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 ;
     }
 
-    public Uni<List<Person>> findPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<Person>> findPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN p.countries c
                 WHERE c.id = :id
                     AND LOWER(FUNCTION('unaccent', p.name)) LIKE LOWER(FUNCTION('unaccent', :term))
                 %s
-                """, addClauses(criteriasDTO)
+                """, addClauses(criteriaDTO)
         );
 
         Parameters params = addParameters(
                 Parameters.with("id", id)
-                        .and("term", "%" + StringUtils.defaultString(criteriasDTO.getTerm()) + "%"),
-                criteriasDTO
+                        .and("term", "%" + StringUtils.defaultString(criteriaDTO.getTerm()) + "%"),
+                criteriaDTO
         );
 
         Sort finalSort = Sort.by(sort, direction, Sort.NullPrecedence.NULLS_LAST);
@@ -216,59 +216,59 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return String.format(" ORDER BY CASE WHEN p.%s IS NULL THEN 1 ELSE 0 END, p.%s %s", sort, sort, dir);
     }
 
-    private String addClauses(CriteriasDTO criteriasDTO) {
+    private String addClauses(CriteriaDTO criteriaDTO) {
         StringBuilder query = new StringBuilder();
 
-        Optional.ofNullable(criteriasDTO.getFromBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth >= :fromBirthDate"));
-        Optional.ofNullable(criteriasDTO.getToBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth <= :toBirthDate"));
-        Optional.ofNullable(criteriasDTO.getFromDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath >= :fromDeathDate"));
-        Optional.ofNullable(criteriasDTO.getToDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath <= :toDeathDate"));
-        Optional.ofNullable(criteriasDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND p.creationDate >= :fromCreationDate"));
-        Optional.ofNullable(criteriasDTO.getToCreationDate()).ifPresent(date -> query.append(" AND p.creationDate <= :toCreationDate"));
-        Optional.ofNullable(criteriasDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate >= :fromLastUpdate"));
-        Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate <= :toLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getFromBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth >= :fromBirthDate"));
+        Optional.ofNullable(criteriaDTO.getToBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth <= :toBirthDate"));
+        Optional.ofNullable(criteriaDTO.getFromDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath >= :fromDeathDate"));
+        Optional.ofNullable(criteriaDTO.getToDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath <= :toDeathDate"));
+        Optional.ofNullable(criteriaDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND p.creationDate >= :fromCreationDate"));
+        Optional.ofNullable(criteriaDTO.getToCreationDate()).ifPresent(date -> query.append(" AND p.creationDate <= :toCreationDate"));
+        Optional.ofNullable(criteriaDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate >= :fromLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate <= :toLastUpdate"));
 
-        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getCountryIds()) && !criteriaDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM p.countries c WHERE c.id IN :countryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getPersonTypes()) && !criteriasDTO.getPersonTypes().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getPersonTypes()) && !criteriaDTO.getPersonTypes().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM p.types t WHERE t IN :personTypes)");
         }
 
         return query.toString();
     }
 
-    private Parameters addParameters(Parameters params, CriteriasDTO criteriasDTO) {
-        if (Objects.nonNull(criteriasDTO.getFromBirthDate())) {
-            params.and("fromBirthDate", criteriasDTO.getFromBirthDate());
+    private Parameters addParameters(Parameters params, CriteriaDTO criteriaDTO) {
+        if (Objects.nonNull(criteriaDTO.getFromBirthDate())) {
+            params.and("fromBirthDate", criteriaDTO.getFromBirthDate());
         }
-        if (Objects.nonNull(criteriasDTO.getToBirthDate())) {
-            params.and("toBirthDate", criteriasDTO.getToBirthDate());
+        if (Objects.nonNull(criteriaDTO.getToBirthDate())) {
+            params.and("toBirthDate", criteriaDTO.getToBirthDate());
         }
-        if (Objects.nonNull(criteriasDTO.getFromDeathDate())) {
-            params.and("fromDeathDate", criteriasDTO.getFromDeathDate());
+        if (Objects.nonNull(criteriaDTO.getFromDeathDate())) {
+            params.and("fromDeathDate", criteriaDTO.getFromDeathDate());
         }
-        if (Objects.nonNull(criteriasDTO.getToDeathDate())) {
-            params.and("toDeathDate", criteriasDTO.getToDeathDate());
+        if (Objects.nonNull(criteriaDTO.getToDeathDate())) {
+            params.and("toDeathDate", criteriaDTO.getToDeathDate());
         }
-        if (Objects.nonNull(criteriasDTO.getFromCreationDate())) {
-            params.and("fromCreationDate", criteriasDTO.getFromCreationDate());
+        if (Objects.nonNull(criteriaDTO.getFromCreationDate())) {
+            params.and("fromCreationDate", criteriaDTO.getFromCreationDate());
         }
-        if (Objects.nonNull(criteriasDTO.getToCreationDate())) {
-            params.and("toCreationDate", criteriasDTO.getToCreationDate());
+        if (Objects.nonNull(criteriaDTO.getToCreationDate())) {
+            params.and("toCreationDate", criteriaDTO.getToCreationDate());
         }
-        if (Objects.nonNull(criteriasDTO.getFromLastUpdate())) {
-            params.and("fromLastUpdate", criteriasDTO.getFromLastUpdate());
+        if (Objects.nonNull(criteriaDTO.getFromLastUpdate())) {
+            params.and("fromLastUpdate", criteriaDTO.getFromLastUpdate());
         }
-        if (Objects.nonNull(criteriasDTO.getToLastUpdate())) {
-            params.and("toLastUpdate", criteriasDTO.getToLastUpdate());
+        if (Objects.nonNull(criteriaDTO.getToLastUpdate())) {
+            params.and("toLastUpdate", criteriaDTO.getToLastUpdate());
         }
-        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
-            params.and("countryIds", criteriasDTO.getCountryIds());
+        if (Objects.nonNull(criteriaDTO.getCountryIds()) && !criteriaDTO.getCountryIds().isEmpty()) {
+            params.and("countryIds", criteriaDTO.getCountryIds());
         }
-        if (Objects.nonNull(criteriasDTO.getPersonTypes()) && !criteriasDTO.getPersonTypes().isEmpty()) {
-            params.and("personTypes", criteriasDTO.getPersonTypes());
+        if (Objects.nonNull(criteriaDTO.getPersonTypes()) && !criteriaDTO.getPersonTypes().isEmpty()) {
+            params.and("personTypes", criteriaDTO.getPersonTypes());
         }
         return params;
     }

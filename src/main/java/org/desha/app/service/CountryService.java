@@ -71,7 +71,7 @@ public class CountryService {
     public Uni<Long> countMoviesByCountry(Long countryId, String term) {
         return
                 movieRepository.countMoviesByCountry(countryId, term)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_COUNTRY))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
@@ -89,17 +89,17 @@ public class CountryService {
      * en utilisant les repositories correspondants.
      *
      * <p>Cette méthode appelle la méthode {@link PersonRepository#countByCountry} pour effectuer la requête
-     * de comptage des personnes filtrées par pays et les critères fournis dans {@link CriteriasDTO}.</p>
+     * de comptage des personnes filtrées par pays et les critères fournis dans {@link CriteriaDTO}.</p>
      *
      * @param countryId    L'ID du pays pour lequel les personnes doivent être comptées.
-     * @param criteriasDTO Un objet contenant des critères supplémentaires pour filtrer les résultats de la recherche comme un terme de recherche sur le nom.
+     * @param criteriaDTO Un objet contenant des critères supplémentaires pour filtrer les résultats de la recherche comme un terme de recherche sur le nom.
      * @return Un objet {@link Uni<Long>} représentant le nombre de personnes associées au pays spécifié,
      * selon les critères de recherche et de filtrage.
      */
-    public Uni<Long> countPersonsByCountry(Long countryId, CriteriasDTO criteriasDTO) {
+    public Uni<Long> countPersonsByCountry(Long countryId, CriteriaDTO criteriaDTO) {
         return
-                personRepository.countByCountry(countryId, criteriasDTO)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                personRepository.countByCountry(countryId, criteriaDTO)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_COUNTRY))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
@@ -165,10 +165,10 @@ public class CountryService {
         return countryRepository.findByIds(ids).map(HashSet::new);
     }
 
-    public Uni<List<MovieDTO>> getMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMoviesByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
-                movieRepository.findMoviesByCountry(id, page, sort, direction, criteriasDTO)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                movieRepository.findMoviesByCountry(id, page, sort, direction, criteriaDTO)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_COUNTRY))
                         .map(movieWithAwardsNumberList ->
                                 movieWithAwardsNumberList
                                         .stream()
@@ -177,9 +177,6 @@ public class CountryService {
 
                         )
                         .onFailure().transform(throwable -> {
-                                    if (throwable instanceof WebApplicationException) {
-                                        return throwable;
-                                    }
                                     log.error("Erreur lors de la récupération des films appartenant au pays {}", id, throwable);
                                     return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
@@ -195,13 +192,13 @@ public class CountryService {
      * @param page         L'objet de pagination définissant l'index et la taille des résultats.
      * @param sort         Le champ sur lequel effectuer le tri.
      * @param direction    La direction du tri (ASC ou DESC).
-     * @param criteriasDTO Les critères de filtrage pour affiner la recherche.
-     * @return Une instance de {@link Uni<List<PersonDTO>>} contenant la liste des personnes sous forme de DTOs.
+     * @param criteriaDTO Les critères de filtrage pour affiner la recherche.
+     * @return Une instance de {@link Uni<List<LitePersonDTO>>} contenant la liste des personnes sous forme de DTOs.
      */
-    public Uni<List<LitePersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<LitePersonDTO>> getPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
-                personRepository.findPersonsByCountry(id, page, sort, direction, criteriasDTO)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_COUNTRY))
+                personRepository.findPersonsByCountry(id, page, sort, direction, criteriaDTO)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_COUNTRY))
                         .map(personMapper::toLiteDTOList)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {

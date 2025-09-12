@@ -2,7 +2,7 @@ package org.desha.app.helper;
 
 import io.quarkus.panache.common.Sort;
 import org.apache.commons.lang3.StringUtils;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Person;
 
 import java.util.Objects;
@@ -36,23 +36,23 @@ public class PersonRepositoryHelper extends SqlHelper {
         return String.format(" ORDER BY CASE WHEN p.%s IS NULL THEN 1 ELSE 0 END, p.%s %s", sort, sort, dir);
     }
 
-    public static String addClauses(CriteriasDTO criteriasDTO) {
+    public static String addClauses(CriteriaDTO criteriaDTO) {
         StringBuilder query = new StringBuilder();
 
-        Optional.ofNullable(criteriasDTO.getFromBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth >= :fromBirthDate"));
-        Optional.ofNullable(criteriasDTO.getToBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth <= :toBirthDate"));
-        Optional.ofNullable(criteriasDTO.getFromDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath >= :fromDeathDate"));
-        Optional.ofNullable(criteriasDTO.getToDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath <= :toDeathDate"));
-        Optional.ofNullable(criteriasDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND p.creationDate >= :fromCreationDate"));
-        Optional.ofNullable(criteriasDTO.getToCreationDate()).ifPresent(date -> query.append(" AND p.creationDate <= :toCreationDate"));
-        Optional.ofNullable(criteriasDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate >= :fromLastUpdate"));
-        Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate <= :toLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getFromBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth >= :fromBirthDate"));
+        Optional.ofNullable(criteriaDTO.getToBirthDate()).ifPresent(date -> query.append(" AND p.dateOfBirth <= :toBirthDate"));
+        Optional.ofNullable(criteriaDTO.getFromDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath >= :fromDeathDate"));
+        Optional.ofNullable(criteriaDTO.getToDeathDate()).ifPresent(date -> query.append(" AND p.dateOfDeath <= :toDeathDate"));
+        Optional.ofNullable(criteriaDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND p.creationDate >= :fromCreationDate"));
+        Optional.ofNullable(criteriaDTO.getToCreationDate()).ifPresent(date -> query.append(" AND p.creationDate <= :toCreationDate"));
+        Optional.ofNullable(criteriaDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate >= :fromLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND p.lastUpdate <= :toLastUpdate"));
 
-        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getCountryIds()) && !criteriaDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM p.countries c WHERE c.id IN :countryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getPersonTypes()) && !criteriasDTO.getPersonTypes().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getPersonTypes()) && !criteriaDTO.getPersonTypes().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM p.types t WHERE t IN :personTypes)");
         }
 

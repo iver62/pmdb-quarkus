@@ -4,7 +4,7 @@ import io.quarkus.panache.common.Sort;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.enums.PersonType;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
 
@@ -65,25 +65,25 @@ public class MovieRepositoryHelper extends SqlHelper {
         return String.format(" ORDER BY CASE WHEN m.%s IS NULL THEN 1 ELSE 0 END, m.%s %s", sort, sort, dir);
     }
 
-    public String addClauses(CriteriasDTO criteriasDTO) {
+    public String addClauses(CriteriaDTO criteriaDTO) {
         StringBuilder query = new StringBuilder();
 
-        Optional.ofNullable(criteriasDTO.getFromReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate >= :fromReleaseDate"));
-        Optional.ofNullable(criteriasDTO.getToReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate <= :toReleaseDate"));
-        Optional.ofNullable(criteriasDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND m.creationDate >= :fromCreationDate"));
-        Optional.ofNullable(criteriasDTO.getToCreationDate()).ifPresent(date -> query.append(" AND m.creationDate <= :toCreationDate"));
-        Optional.ofNullable(criteriasDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
-        Optional.ofNullable(criteriasDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getFromReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate >= :fromReleaseDate"));
+        Optional.ofNullable(criteriaDTO.getToReleaseDate()).ifPresent(date -> query.append(" AND m.releaseDate <= :toReleaseDate"));
+        Optional.ofNullable(criteriaDTO.getFromCreationDate()).ifPresent(date -> query.append(" AND m.creationDate >= :fromCreationDate"));
+        Optional.ofNullable(criteriaDTO.getToCreationDate()).ifPresent(date -> query.append(" AND m.creationDate <= :toCreationDate"));
+        Optional.ofNullable(criteriaDTO.getFromLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate >= :fromLastUpdate"));
+        Optional.ofNullable(criteriaDTO.getToLastUpdate()).ifPresent(date -> query.append(" AND m.lastUpdate <= :toLastUpdate"));
 
-        if (Objects.nonNull(criteriasDTO.getCategoryIds()) && !criteriasDTO.getCategoryIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getCategoryIds()) && !criteriaDTO.getCategoryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.categories c WHERE c.id IN :categoryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getCountryIds()) && !criteriasDTO.getCountryIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getCountryIds()) && !criteriaDTO.getCountryIds().isEmpty()) {
             query.append(" AND EXISTS (SELECT 1 FROM m.countries c WHERE c.id IN :countryIds)");
         }
 
-        if (Objects.nonNull(criteriasDTO.getUserIds()) && !criteriasDTO.getUserIds().isEmpty()) {
+        if (Objects.nonNull(criteriaDTO.getUserIds()) && !criteriaDTO.getUserIds().isEmpty()) {
             query.append(" AND m.user.id IN :userIds");
         }
 

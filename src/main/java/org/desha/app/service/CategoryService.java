@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CategoryDTO;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.entity.Category;
 import org.desha.app.mapper.CategoryMapper;
@@ -20,6 +20,7 @@ import org.desha.app.mapper.MovieMapper;
 import org.desha.app.repository.CategoryRepository;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.utils.Messages;
+import org.hibernate.exception.ConstraintViolationException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -61,13 +62,13 @@ public class CategoryService {
     public Uni<Long> countMoviesByCategory(Long id, String term) {
         return
                 movieRepository.countMoviesByCategory(id, term)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CATEGORY))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CATEGORY))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
                                     log.error("Erreur lors du comptage des films pour la catégorie {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors du comptage des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException("Erreur lors du comptage des films pour la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -76,7 +77,7 @@ public class CategoryService {
     public Uni<CategoryDTO> getById(Long id) {
         return
                 categoryRepository.findById(id)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CATEGORY))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CATEGORY))
                         .map(categoryMapper::categoryToCategoryDTO)
                         .onFailure().transform(e -> {
                                     if (e instanceof WebApplicationException) {
@@ -105,10 +106,10 @@ public class CategoryService {
         return categoryRepository.findByIds(ids).map(HashSet::new);
     }
 
-    public Uni<List<MovieDTO>> getMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, CriteriasDTO criteriasDTO) {
+    public Uni<List<MovieDTO>> getMoviesByCategory(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
-                movieRepository.findMoviesByCategory(id, page, sort, direction, criteriasDTO)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CATEGORY))
+                movieRepository.findMoviesByCategory(id, page, sort, direction, criteriaDTO)
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CATEGORY))
                         .map(movieWithAwardsNumberList ->
                                 movieWithAwardsNumberList
                                         .stream()
@@ -116,8 +117,11 @@ public class CategoryService {
                                         .toList()
 
                         )
-                        .onFailure().transform(err -> {
-                                    log.error("Erreur lors de la récupération des films appartenant à la catégorie {}: {}", id, err.getMessage());
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération des films appartenant à la catégorie {}", id, throwable);
                                     return new WebApplicationException("Erreur lors de la récupération des films pour la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
@@ -140,7 +144,15 @@ public class CategoryService {
                             Category category = categoryMapper.dtoToEntity(categoryDTO);
                             return categoryRepository.persist(category);
                         })
+                        .onFailure(ConstraintViolationException.class).transform(throwable -> {
+                                    log.error("Contrainte violée lors de la création de la catégorie", throwable);
+                                    return new WebApplicationException("Erreur, La catégorie existe déjà ou ne respecte pas les contraintes de validation", Response.Status.CONFLICT);
+                                }
+                        )
                         .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
                                     log.error("Erreur lors de la création de la catégorie", throwable);
                                     return new WebApplicationException("Erreur lors de la création de la catégorie", Response.Status.INTERNAL_SERVER_ERROR);
                                 }

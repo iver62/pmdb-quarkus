@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.desha.app.config.CustomHttpHeaders;
 import org.desha.app.domain.dto.CategoryDTO;
-import org.desha.app.domain.dto.CriteriasDTO;
+import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.dto.MovieQueryParamsDTO;
 import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.domain.entity.Category;
@@ -20,7 +20,6 @@ import org.desha.app.domain.entity.Movie;
 import org.desha.app.service.CategoryService;
 import org.desha.app.utils.Messages;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.headers.Header;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -64,16 +63,6 @@ public class CategoryResource {
             description = "Nombre de catégories trouvé",
             content = @Content(schema = @Schema(implementation = Long.class))
     )
-    @Parameter(name = "term", description = "Terme de recherche pour filtrer les catégories sur le nom", in = ParameterIn.QUERY)
-    @Parameter(name = "lang", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "sort", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "direction", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "page", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "size", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-creation-date", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-last-update", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "to-creation-date", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "to-last-update", in = ParameterIn.QUERY, hidden = true)
     public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         return
                 categoryService.count(queryParams.getTerm())
@@ -137,12 +126,6 @@ public class CategoryResource {
             responseCode = "400",
             description = "Paramètres de tri invalides"
     )
-    @Parameter(name = "term", description = "Terme de recherche pour filtrer les catégories sur le nom", in = ParameterIn.QUERY)
-    @Parameter(name = "lang", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-creation-date", description = "Filtrer les catégories créées à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "from-last-update", description = "Filtrer les catégories créées à partir cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-creation-date", description = "Filtrer les catégories mises à jour jusqu'à cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-last-update", description = "Filtrer les catégories mises à jour jusqu’à cette date (format ISO 8601)", in = ParameterIn.QUERY)
     public Uni<Response> getCategories(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Category.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Category.ALLOWED_SORT_FIELDS);
@@ -190,12 +173,6 @@ public class CategoryResource {
             description = "Catégorie non trouvée"
     )
     @Parameter(name = "id", description = "Identifiant de la catégorie", required = true)
-    @Parameter(name = "term", description = "Terme de recherche pour filtrer les films sur le titre", in = ParameterIn.QUERY)
-    @Parameter(name = "lang", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-creation-date", description = "Filtrer les films créés à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "from-last-update", description = "Filtrer les films mis à jour à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-creation-date", description = "Filtrer les films créés jusqu'à cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-last-update", description = "Filtrer les films mis à jour jusqu’à cette date (format ISO 8601)", in = ParameterIn.QUERY)
     public Uni<Response> getMoviesByCategory(@RestPath @NotNull Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_CATEGORY_ID);
 
@@ -204,10 +181,10 @@ public class CategoryResource {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams);
 
         return
-                categoryService.getMoviesByCategory(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                categoryService.getMoviesByCategory(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .onItem().ifNull().continueWith(List::of)
                         .flatMap(movieList ->
                                 categoryService.countMoviesByCategory(id, queryParams.getTerm()).map(total ->
@@ -237,7 +214,6 @@ public class CategoryResource {
     )
     @RequestBody(
             description = "Les informations de la catégorie à créer",
-            required = true,
             content = @Content(schema = @Schema(implementation = CategoryDTO.class))
     )
     public Uni<Response> createCategory(@Valid CategoryDTO categoryDTO) {
@@ -286,7 +262,6 @@ public class CategoryResource {
     @Parameter(name = "id", description = "Identifiant de la catégorie", required = true)
     @RequestBody(
             description = "Informations de la catégorie à mettre à jour",
-            required = true,
             content = @Content(schema = @Schema(implementation = CategoryDTO.class))
     )
     public Uni<Response> updateCategory(@RestPath Long id, @Valid CategoryDTO categoryDTO) {
@@ -329,6 +304,7 @@ public class CategoryResource {
             responseCode = "404",
             description = "Catégorie non trouvée"
     )
+    @Parameter(name = "id", description = "Identifiant de la catégorie", required = true)
     public Uni<Response> deleteCategory(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
 

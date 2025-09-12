@@ -199,10 +199,10 @@ public class CountryResource {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Movie.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Movie.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams);
 
         return
-                countryService.getMoviesByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                countryService.getMoviesByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .onItem().ifNull().continueWith(List::of)
                         .flatMap(movieList ->
                                 countryService.countMoviesByCountry(id, queryParams.getTerm()).map(total ->
@@ -244,13 +244,13 @@ public class CountryResource {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
 
-        CriteriasDTO criteriasDTO = CriteriasDTO.build(queryParams);
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams);
 
         return
-                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriasDTO)
+                countryService.getPersonsByCountry(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
                         .onItem().ifNull().continueWith(List::of)
                         .flatMap(personDTOList ->
-                                countryService.countPersonsByCountry(id, criteriasDTO).map(total ->
+                                countryService.countPersonsByCountry(id, criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
