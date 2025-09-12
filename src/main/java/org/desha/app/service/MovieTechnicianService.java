@@ -72,7 +72,7 @@ public class MovieTechnicianService {
             List<MovieTechnicianDTO> movieTechnicianDTOList,
             Function<Movie, List<T>> techniciansGetter,
             BiFunction<Movie, MovieTechnicianDTO, Uni<T>> asyncTechnicianFactory,
-            String errorMessage,
+            String nullCheckErrorMessage,
             String globalErrorMessage
     ) {
         return
@@ -81,6 +81,7 @@ public class MovieTechnicianService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(techniciansGetter.apply(movie))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(nullCheckErrorMessage))
                                                         .invoke(existingTechnicians -> movie.removeObsoleteTechnicians(existingTechnicians, movieTechnicianDTOList)) // Supprimer les techniciens obsolètes
                                                         .invoke(existingTechnicians -> movie.updateExistingTechnicians(existingTechnicians, movieTechnicianDTOList)) // Mettre à jour les techniciens existants
                                                         .chain(existingTechnicians -> movie.addTechnicians(movieTechnicianDTOList, techniciansGetter, asyncTechnicianFactory)) // Ajouter les nouveaux techniciens
@@ -91,7 +92,7 @@ public class MovieTechnicianService {
                                         .call(movie -> notificationService.createNotification("Les techniciens du film " + movie.getTitle() + " ont été modifiés.", NotificationType.INFO)
                                                 .chain(userNotificationService::notifyAdmins)
                                         )
-                                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, errorMessage))
+                                        .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, nullCheckErrorMessage))
                         )
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -152,7 +153,12 @@ public class MovieTechnicianService {
                         .withTransaction(() ->
                                 movieRepository.findById(movieId)
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                                        .call(movie -> movie.removeTechnician(techniciansGetter, personId, nullCheckErrorMessage))
+                                        .chain(movie ->
+                                                Mutiny.fetch(techniciansGetter.apply(movie))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(nullCheckErrorMessage))
+                                                        .invoke(techniciansList -> movie.removeTechnician(techniciansList, personId))
+                                                        .replaceWith(movie)
+                                        )
                                         .chain(movieRepository::persist)
                                         .flatMap(movie -> fetchAndMapTechniciansList(movie, techniciansGetter, nullCheckErrorMessage))
                         )
@@ -169,7 +175,7 @@ public class MovieTechnicianService {
     public <T extends MovieTechnician> Uni<Boolean> clearTechnicians(
             Long id,
             Function<Movie, List<T>> techniciansGetter,
-            String errorMessage,
+            String nullCheckErrorMessage,
             String globalMessage
     ) {
         return
@@ -177,8 +183,13 @@ public class MovieTechnicianService {
                         .withTransaction(() ->
                                 movieRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                                        .call(movie -> movie.clearPersons(techniciansGetter.apply(movie), errorMessage))
-                                        .call(movieRepository::persist)
+                                        .chain(movie ->
+                                                Mutiny.fetch(techniciansGetter.apply(movie))
+                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(nullCheckErrorMessage))
+                                                        .invoke(movie::clearTechnicians)
+                                                        .replaceWith(movie)
+                                        )
+                                        .chain(movieRepository::persist)
                                         .map(movie -> true)
                         )
                         .onFailure().transform(throwable -> {
