@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.dto.MovieStatsDTO;
 import org.desha.app.domain.enums.PersonType;
-import org.desha.app.domain.record.CountryRepartition;
 import org.desha.app.domain.record.Repartition;
 import org.desha.app.repository.MovieRepository;
 import org.desha.app.repository.PersonRepository;
@@ -32,7 +31,7 @@ public class StatsService {
     private final AtomicLong actorCount = new AtomicLong(0);
     private List<Repartition> moviesByReleaseDateRepartition = new ArrayList<>();
     private List<Repartition> moviesByCategoryRepartition = new ArrayList<>();
-    private List<CountryRepartition> moviesByCountryRepartition = new ArrayList<>();
+    private List<Repartition> moviesByCountryRepartition = new ArrayList<>();
     private List<Repartition> moviesByUserRepartition = new ArrayList<>();
     private List<Repartition> moviesByCreationDateRepartition = new ArrayList<>();
     private List<Repartition> moviesNumberEvolution = new ArrayList<>();
