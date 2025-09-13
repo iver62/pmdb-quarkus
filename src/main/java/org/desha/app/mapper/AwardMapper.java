@@ -18,9 +18,9 @@ public interface AwardMapper {
 
     @Mapping(target = "persons", source = "personSet")
     @Mapping(target = "ceremonyAwards", source = "ceremonyAwards", qualifiedByName = "liteCeremonyAwards")
-    AwardDTO awardToAwardDTO(Award entity);
+    AwardDTO todDTO(Award entity);
 
-    Award awardDTOtoAward(AwardDTO dto);
+    Award toEntity(AwardDTO awardDTO);
 
     List<AwardDTO> toDTOList(List<Award> entityList);
 

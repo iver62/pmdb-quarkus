@@ -5,6 +5,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -12,6 +13,7 @@ import org.desha.app.domain.dto.AwardDTO;
 import org.desha.app.service.AwardService;
 import org.desha.app.utils.Messages;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -25,7 +27,7 @@ import java.util.Objects;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 
-@Path("awards")
+@Path("/awards")
 @ApplicationScoped
 @APIResponse(responseCode = "401", description = "Utilisateur non authentifié")
 @APIResponse(responseCode = "403", description = "Accès interdit")
@@ -41,7 +43,7 @@ public class AwardResource {
     }
 
     @GET
-    @Path("{id}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Récupérer une récompense par son ID",
@@ -54,8 +56,8 @@ public class AwardResource {
     )
     @APIResponse(responseCode = "400", description = "Identifiant invalide")
     @APIResponse(responseCode = "404", description = "Récompense non trouvée")
-    @Parameter(name = "id", description = "Identifiant de la récompense", required = true)
-    public Uni<Response> getAward(@RestPath Long id) {
+    @Parameter(name = "id", description = "Identifiant de la récompense", required = true, in = ParameterIn.PATH)
+    public Uni<Response> getAward(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_AWARD_ID);
 
         return
@@ -65,7 +67,7 @@ public class AwardResource {
     }
 
     @PUT
-    @Path("{id}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("admin")
     @Operation(
@@ -92,13 +94,12 @@ public class AwardResource {
             responseCode = "422",
             description = "Identifiant du corps de la requête différent de celui de l'URL"
     )
-    @Parameter(name = "id", description = "Identifiant de la récompense", required = true)
+    @Parameter(name = "id", description = "Identifiant de la récompense", required = true, in = ParameterIn.PATH)
     @RequestBody(
             description = "Informations de la récompense à mettre à jour",
-            required = true,
             content = @Content(schema = @Schema(implementation = AwardDTO.class))
     )
-    public Uni<Response> updateAward(@RestPath Long id, @Valid AwardDTO awardDTO) {
+    public Uni<Response> updateAward(@RestPath @NotNull Long id, @Valid AwardDTO awardDTO) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_AWARD_ID);
 
         if (Objects.isNull(awardDTO)) {
@@ -116,7 +117,7 @@ public class AwardResource {
     }
 
     @DELETE
-    @Path("{id}")
+    @Path("/{id}")
     @RolesAllowed({"user", "admin"})
     @Operation(
             summary = "Supprimer une récompense",
@@ -137,7 +138,8 @@ public class AwardResource {
             responseCode = "404",
             description = "Récompense non trouvée"
     )
-    public Uni<Response> deleteAward(@RestPath Long id) {
+    @Parameter(name = "id", description = "Identifiant de la récompense", required = true, in = ParameterIn.PATH)
+    public Uni<Response> deleteAward(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_AWARD_ID);
 
         return
@@ -146,7 +148,6 @@ public class AwardResource {
                                 ? Response.status(NO_CONTENT).build()
                                 : Response.status(NOT_FOUND).build()
                         )
-
                 ;
     }
 

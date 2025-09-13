@@ -4,11 +4,11 @@ import io.quarkus.hibernate.reactive.panache.Panache;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.AwardDTO;
 import org.desha.app.domain.dto.LitePersonDTO;
 import org.desha.app.domain.entity.Person;
@@ -39,21 +39,23 @@ public class AwardService {
     }
 
     /**
-     * Récupère une récompense (Award) par son identifiant et la transforme en DTO.
+     * Récupère une récompense ({@link AwardDTO}) à partir de son identifiant.
+     * <p>
+     * Si aucune récompense ne correspond à l'identifiant fourni, une exception {@link NotFoundException} est levée.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
      *
-     * <p>Cette méthode recherche l'entité {@code Award} correspondant à l'identifiant fourni.
-     * Si elle est trouvée, elle est transformée en {@link AwardDTO}. Si aucune récompense n'est trouvée,
-     * une exception {@link IllegalArgumentException} est levée.</p>
-     *
-     * @param id l'identifiant de la récompense à récupérer
-     * @return un {@link Uni} contenant le {@link AwardDTO} correspondant
-     * @throws IllegalArgumentException si aucune récompense n'est trouvée avec l'identifiant donné
+     * @param id L’identifiant de la récompense à récupérer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant la {@link AwardDTO} correspondant à l’identifiant fourni.
+     * @throws NotFoundException       si aucune récompense n’est trouvée pour l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération de la récompense.
      */
-    public Uni<AwardDTO> getAward(Long id) {
+    public Uni<AwardDTO> getAward(@NotNull Long id) {
         return
                 awardRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_AWARD))
-                        .map(awardMapper::awardToAwardDTO)
+                        .map(awardMapper::todDTO)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
@@ -65,6 +67,17 @@ public class AwardService {
                 ;
     }
 
+    /**
+     * Récupère la liste des personnes associées aux récompenses fournies.
+     * <p>
+     * Pour chaque {@link AwardDTO} de la liste {@code awardDTOList}, cette méthode extrait les personnes associées,
+     * filtre les identifiants non nuls, supprime les doublons et retourne la liste correspondante de {@link Person}.
+     * <p>
+     * Si aucune personne n’est associée aux récompenses fournies, la méthode retourne une liste vide.
+     *
+     * @param awardDTOList La liste des récompenses à partir desquelles récupérer les personnes. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} émettant une {@link List} de {@link Person} associée aux récompenses fournies.
+     */
     public Uni<List<Person>> getPersonsByAwards(List<AwardDTO> awardDTOList) {
         return
                 personService.getByIds(
@@ -79,30 +92,29 @@ public class AwardService {
     }
 
     /**
-     * Met à jour une récompense (Award) existante avec les données fournies dans le DTO.
+     * Met à jour une récompense existante avec les informations fournies dans un {@link AwardDTO}.
+     * <p>
+     * Si aucune récompense ne correspond à l’identifiant {@code id}, une exception {@link NotFoundException} est levée.
+     * La méthode applique les modifications à l’entité existante et retourne le {@link AwardDTO} mis à jour.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la transaction, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
      *
-     * <p>Cette méthode recherche une récompense avec l'identifiant spécifié. Si une récompense est trouvée,
-     * ses attributs sont mis à jour avec les valeurs fournies dans le {@link AwardDTO}. Les champs sont capitalisés
-     * avant d'être enregistrés. Si aucune récompense n'est trouvée avec l'identifiant donné, une exception
-     * {@link IllegalArgumentException} est levée.</p>
-     *
-     * @param id       l'identifiant de la récompense à mettre à jour
-     * @param awardDTO l'objet contenant les nouvelles données pour la mise à jour de la récompense
-     * @return un {@link Uni} contenant la récompense mise à jour après la transaction
-     * @throws IllegalArgumentException si aucune récompense n'est trouvée avec l'identifiant donné
+     * @param id       L’identifiant de la récompense à mettre à jour. Ne peut pas être {@code null}.
+     * @param awardDTO Les données à appliquer pour la mise à jour de la récompense.
+     * @return Un {@link Uni} émettant le {@link AwardDTO} mis à jour.
+     * @throws NotFoundException       si aucune récompense ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la mise à jour de la récompense.
      */
-    public Uni<AwardDTO> updateAward(Long id, AwardDTO awardDTO) {
+    public Uni<AwardDTO> updateAward(@NotNull Long id, AwardDTO awardDTO) {
         return
                 Panache
                         .withTransaction(() ->
                                 awardRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_AWARD))
-                                        .invoke(entity -> {
-                                            entity.setName(StringUtils.capitalize(awardDTO.getName().trim()));
-                                            entity.setYear(awardDTO.getYear());
-                                        })
+                                        .invoke(award -> award.updateAward(awardDTO))
                                         .call(category -> awardRepository.flush())
-                                        .map(awardMapper::awardToAwardDTO)
+                                        .map(awardMapper::todDTO)
                         )
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -116,16 +128,20 @@ public class AwardService {
     }
 
     /**
-     * Supprime une récompense (Award) par son identifiant.
+     * Supprime une récompense existante à partir de son identifiant.
+     * <p>
+     * Si aucune récompense ne correspond à l’identifiant {@code id}, une exception {@link NotFoundException} est levée.
+     * La suppression est effectuée dans une transaction et retourne un indicateur de succès.
+     * <p>
+     * En cas d’erreur lors de la suppression, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
      *
-     * <p>Cette méthode effectue l'opération de suppression dans une transaction à l'aide de Panache.
-     * Si la récompense avec l'identifiant donné n'existe pas, une exception est levée.</p>
-     *
-     * @param id l'identifiant de la récompense à supprimer
-     * @return un {@link Uni} contenant {@code true} si la suppression a réussi
-     * @throws IllegalArgumentException si aucune récompense n'est trouvée avec l'identifiant fourni
+     * @param id L’identifiant de la récompense à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} émettant {@code true} si la suppression a réussi.
+     * @throws NotFoundException       si aucune récompense ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la suppression de la récompense.
      */
-    public Uni<Boolean> deleteAward(Long id) {
+    public Uni<Boolean> deleteAward(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->

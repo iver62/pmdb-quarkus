@@ -78,6 +78,11 @@ public class Award extends PanacheEntityBase {
         return newAward;
     }
 
+    public void updateAward(AwardDTO awardDTO) {
+        setName(StringUtils.capitalize(awardDTO.getName().trim()));
+        setYear(awardDTO.getYear());
+    }
+
     public void updateAward(AwardDTO awardDTO, Map<Long, Person> personMap) {
         setName(StringUtils.capitalize(StringUtils.defaultString(awardDTO.getName()).trim()));
         setYear(awardDTO.getYear());
