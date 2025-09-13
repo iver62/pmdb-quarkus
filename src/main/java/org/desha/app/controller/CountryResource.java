@@ -66,16 +66,6 @@ public class CountryResource {
             content = @Content(schema = @Schema(implementation = Long.class))
     )
     @APIResponse(responseCode = "400", description = "Paramètres de requête invalides")
-    @Parameter(name = "term", description = "Terme de recherche pour filtrer les pays", in = ParameterIn.QUERY)
-    @Parameter(name = "lang", description = "Langue de retour des données", example = "fr", in = ParameterIn.QUERY)
-    @Parameter(name = "sort", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "direction", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "page", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "size", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-creation-date", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-last-update", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "to-creation-date", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "to-last-update", in = ParameterIn.QUERY, hidden = true)
     public Uni<Response> count(@BeanParam QueryParamsDTO queryParams) {
         String finalLang = queryParams.validateLang();
 
@@ -99,13 +89,7 @@ public class CountryResource {
     )
     @APIResponse(responseCode = "400", description = "ID invalide")
     @APIResponse(responseCode = "404", description = "Aucun pays trouvé pour cet ID")
-    @Parameter(
-            name = "id",
-            description = "Identifiant unique du pays",
-            in = ParameterIn.PATH,
-            required = true,
-            example = "42"
-    )
+    @Parameter(name = "id", description = "Identifiant unique du pays", in = ParameterIn.PATH, required = true, example = "42")
     public Uni<Response> getCountry(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
 
@@ -128,12 +112,6 @@ public class CountryResource {
     )
     @APIResponse(responseCode = "204", description = "Aucun pays trouvé")
     @APIResponse(responseCode = "400", description = "Paramètres de requête invalides")
-    @Parameter(name = "term", description = "Terme de recherche à appliquer au nom du pays", in = ParameterIn.QUERY, example = "fra")
-    @Parameter(name = "lang", description = "Langue", in = ParameterIn.QUERY, example = "fr")
-    @Parameter(name = "from-creation-date", hidden = true, in = ParameterIn.QUERY)
-    @Parameter(name = "from-last-update", hidden = true, in = ParameterIn.QUERY)
-    @Parameter(name = "to-creation-date", hidden = true, in = ParameterIn.QUERY)
-    @Parameter(name = "to-last-update", hidden = true, in = ParameterIn.QUERY)
     public Uni<Response> getCountries(@BeanParam QueryParamsDTO queryParams) {
         String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Country.DEFAULT_SORT);
         queryParams.validateSortField(finalSort, Country.ALLOWED_SORT_FIELDS);
@@ -187,12 +165,6 @@ public class CountryResource {
     @APIResponse(responseCode = "400", description = "Requête invalide")
     @APIResponse(responseCode = "404", description = "Pays non trouvé")
     @Parameter(name = "id", description = "Identifiant du pays", required = true, in = ParameterIn.PATH)
-    @Parameter(name = "term", description = "Terme de recherche à appliquer au titre du film", in = ParameterIn.QUERY, example = "gla")
-    @Parameter(name = "lang", hidden = true, in = ParameterIn.QUERY)
-    @Parameter(name = "from-creation-date", description = "Filtrer les films créés à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "from-last-update", description = "Filtrer les films mis à jour à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-creation-date", description = "Filtrer les films créés jusqu'à cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-last-update", description = "Filtrer les films mis à jour jusqu’à cette date (format ISO 8601)", in = ParameterIn.QUERY)
     public Uni<Response> getMoviesByCountry(@RestPath @NotNull Long id, @BeanParam MovieQueryParamsDTO queryParams) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
 
@@ -214,6 +186,8 @@ public class CountryResource {
                 ;
     }
 
+    @GET
+    @Path("/{id}/persons")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
             summary = "Récupère les personnes associées à un pays",
@@ -228,14 +202,6 @@ public class CountryResource {
     @APIResponse(responseCode = "400", description = "Requête invalide")
     @APIResponse(responseCode = "404", description = "Pays non trouvé")
     @Parameter(name = "id", description = "Identifiant du pays", required = true, in = ParameterIn.PATH)
-    @Parameter(name = "term", description = "Terme de recherche à appliquer au nom des personnes", in = ParameterIn.QUERY, example = "gla")
-    @Parameter(name = "lang", hidden = true, in = ParameterIn.QUERY)
-    @Parameter(name = "from-creation-date", description = "Filtrer les personnes créées à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "from-last-update", description = "Filtrer les personnes mises à jour à partir de cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-creation-date", description = "Filtrer les personnes créées jusqu'à cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @Parameter(name = "to-last-update", description = "Filtrer les personnes mises à jour jusqu’à cette date (format ISO 8601)", in = ParameterIn.QUERY)
-    @GET
-    @Path("/{id}/persons")
     public Uni<Response> getPersonsByCountry(@RestPath @NotNull Long id, @BeanParam PersonQueryParamsDTO queryParams) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
 
@@ -275,12 +241,7 @@ public class CountryResource {
     @APIResponse(responseCode = "400", description = "Requête invalide")
     @APIResponse(responseCode = "404", description = "Pays non trouvé")
     @APIResponse(responseCode = "422", description = "L'identifiant du pays ne correspond pas à celui de la requête")
-    @Parameter(
-            name = "id",
-            description = "Identifiant du pays à mettre à jour",
-            required = true,
-            in = ParameterIn.PATH
-    )
+    @Parameter(name = "id", description = "Identifiant du pays à mettre à jour", required = true, in = ParameterIn.PATH)
     public Uni<Response> update(@RestPath @NotNull Long id, @Valid CountryDTO countryDTO) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_COUNTRY_ID);
 

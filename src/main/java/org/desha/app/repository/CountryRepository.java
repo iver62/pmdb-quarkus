@@ -5,6 +5,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -22,12 +23,18 @@ public class CountryRepository implements PanacheRepository<Country> {
     private static final String NOM_FR_FR = "nomFrFr";
 
     /**
-     * Compte le nombre de pays dont le nom en français correspond partiellement au terme recherché.
+     * Compte le nombre de pays correspondant à un terme donné et à une langue spécifiée.
+     * <p>
+     * Si {@code term} est {@code null}, la méthode retourne le nombre total de pays existants.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     * <p>
      *
-     * @param term Le terme à rechercher dans le nom des pays (insensible à la casse).
-     * @return Un {@link Uni} contenant le nombre total de pays correspondant au critère de recherche.
+     * @param term Le terme de recherche utilisé pour filtrer les pays. Peut être {@code null} pour compter tous les pays.
+     * @param lang La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} contenant le nombre de pays correspondant aux critères fournis.
      */
-    public Uni<Long> countCountries(String term, String lang) {
+    public Uni<Long> countCountries(@Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         final String query = String.format(
@@ -35,17 +42,22 @@ public class CountryRepository implements PanacheRepository<Country> {
                 field
         );
 
-        return count(query, "%" + term + "%");
+        return count(query, "%" + StringUtils.defaultString(term) + "%");
     }
 
     /**
-     * Cmpte le nombre de pays uniques liés aux films et applique une recherche insensible aux accents
-     * et à la casse sur le nom du pays.
+     * Compte le nombre de pays associés à au moins un film et correspondant éventuellement à un terme de recherche,
+     * en tenant compte de la langue spécifiée.
+     * <p>
+     * Si {@code term} est {@code null}, tous les pays associés à des films sont comptés.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
      *
-     * @param term Le terme de recherche à appliquer sur le nom du pays (insensible aux accents et à la casse).
-     * @return Un {@link Uni} contenant le nombre de pays distincts correspondant au terme de recherche.
+     * @param term Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} contenant le nombre de pays correspondant aux critères et associés à au moins un film.
      */
-    public Uni<Long> countCountriesInMovies(String term, String lang) {
+    public Uni<Long> countCountriesInMovies(@Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         final String query = String.format("""
@@ -63,7 +75,19 @@ public class CountryRepository implements PanacheRepository<Country> {
         return count(query, Parameters.with("term", "%" + StringUtils.defaultString(term) + "%"));
     }
 
-    public Uni<Long> countPersonCountries(String term, String lang) {
+    /**
+     * Compte le nombre de pays associés à au moins une personne et correspondant éventuellement à un terme de recherche,
+     * en tenant compte de la langue spécifiée.
+     * <p>
+     * Si {@code term} est {@code null}, tous les pays associés à des personnes sont comptés.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     *
+     * @param term Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} contenant le nombre de pays correspondant aux critères et associés à au moins une personne.
+     */
+    public Uni<Long> countPersonCountries(@Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         final String query = String.format("""
@@ -81,7 +105,20 @@ public class CountryRepository implements PanacheRepository<Country> {
         return count(query, Parameters.with("term", "%" + StringUtils.defaultString(term) + "%"));
     }
 
-    public Uni<Long> countMovieCountriesByPerson(Person person, String term, String lang) {
+    /**
+     * Compte le nombre de pays associés aux films liés à une personne spécifique,
+     * et correspondant éventuellement à un terme de recherche, en tenant compte de la langue spécifiée.
+     * <p>
+     * Si {@code term} est {@code null}, tous les pays associés aux films de la personne sont comptés.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     *
+     * @param person La personne dont on souhaite considérer les films. Ne peut pas être {@code null}.
+     * @param term   Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang   La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} contenant le nombre de pays correspondant aux critères et associés aux films de la personne.
+     */
+    public Uni<Long> countMovieCountriesByPerson(Person person, @Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         return count(String.format("""
@@ -101,33 +138,53 @@ public class CountryRepository implements PanacheRepository<Country> {
     }
 
     /**
-     * Récupère une liste de pays en fonction de leurs identifiants.
+     * Récupère une liste de pays correspondant aux identifiants fournis.
+     * <p>
+     * Si la liste {@code ids} est vide ou {@code null}, la méthode retourne une liste vide.
      *
-     * @param ids la liste des identifiants des pays à récupérer.
-     * @return un {@link Uni<List<Country>>} contenant la liste des pays correspondant aux identifiants fournis.
+     * @param ids La liste des identifiants des pays à récupérer. Peut être {@code null}.
+     * @return Un {@link Uni} émettant une {@link List} de {@link Country} correspondant aux identifiants fournis.
      */
     public Uni<List<Country>> findByIds(List<Long> ids) {
         return list("id IN ?1", ids);
     }
 
     /**
-     * Récupère une liste de pays dont le nom en français correspond au terme recherché.
+     * Récupère une liste triée de pays correspondant éventuellement à un terme de recherche.
+     * <p>
+     * La recherche s'effectue sur le champ français ({@code nomFrFr}) et ignore la casse et les accents grâce à la fonction SQL 'unaccent'.
+     * Si {@code term} est {@code null}, tous les pays sont retournés.
      *
-     * @param sort      Le champ par lequel trier les résultats.
-     * @param direction La direction du tri (ascendante ou descendante).
-     * @param term      Le terme de recherche à filtrer (insensible à la casse).
-     * @return Une {@link Uni<List<Country>} contenant la liste des pays correspondant à la recherche.
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @return Un {@link Uni} émettant une {@link List} de {@link Country} correspondant aux critères fournis.
      */
-    public Uni<List<Country>> findCountries(String sort, Sort.Direction direction, String term) {
+    public Uni<List<Country>> findCountries(String sort, Sort.Direction direction, @Nullable String term) {
         return
                 find(
                         "LOWER(FUNCTION('unaccent', nomFrFr)) LIKE LOWER(FUNCTION('unaccent', :term))",
                         Sort.by(sort, direction),
-                        Parameters.with("term", "%" + term + "%")
+                        Parameters.with("term", "%" + StringUtils.defaultString(term) + "%")
                 ).list();
     }
 
-    public Uni<List<Country>> findCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
+    /**
+     * Récupère une liste paginée et triée de pays correspondant éventuellement à un terme de recherche,
+     * en tenant compte de la langue spécifiée.
+     * <p>
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * Si {@code term} est {@code null}, tous les pays sont retournés.
+     *
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang      La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} émettant une {@link List} de {@link Country} correspondant aux critères fournis.
+     */
+    public Uni<List<Country>> findCountries(Page page, String sort, Sort.Direction direction, @Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         final String query = String.format(
@@ -136,12 +193,27 @@ public class CountryRepository implements PanacheRepository<Country> {
         );
 
         return
-                find(query, Sort.by(sort, direction), Parameters.with("term", "%" + term + "%"))
+                find(query, Sort.by(sort, direction), Parameters.with("term", "%" + StringUtils.defaultString(term) + "%"))
                         .page(page)
                         .list();
     }
 
-    public Uni<List<Country>> findCountriesInMovies(Page page, String sort, Sort.Direction direction, String term, String lang) {
+    /**
+     * Récupère une liste paginée et triée de pays associés à des films correspondant éventuellement à un terme de recherche et
+     * tenant compte de la langue spécifiée.
+     * <p>
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * Si {@code term} est {@code null}, tous les pays associés à des films sont retournés.
+     *
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang      La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} émettant une {@link List} de {@link Country} correspondant aux critères fournis.
+     */
+    public Uni<List<Country>> findCountriesInMovies(Page page, String sort, Sort.Direction direction, @Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         String query = String.format("""
@@ -159,7 +231,22 @@ public class CountryRepository implements PanacheRepository<Country> {
                 ;
     }
 
-    public Uni<List<Country>> findPersonCountries(Page page, String sort, Sort.Direction direction, String term, String lang) {
+    /**
+     * Récupère une liste paginée et triée de pays associés à des personnes correspondant éventuellement à un terme de recherche
+     * et tenant compte de la langue spécifiée.
+     * <p>
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * Si {@code term} est {@code null}, tous les pays associés à des personnes sont retournés.
+     *
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang      La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} émettant une {@link List} de {@link Country} correspondant aux critères fournis.
+     */
+    public Uni<List<Country>> findPersonCountries(Page page, String sort, Sort.Direction direction, @Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         final String query = String.format("""
@@ -177,7 +264,23 @@ public class CountryRepository implements PanacheRepository<Country> {
                 ;
     }
 
-    public Uni<List<Country>> findMovieCountriesByPerson(Person person, Page page, String sort, Sort.Direction direction, String term, String lang) {
+    /**
+     * Récupère une liste paginée et triée de pays associés aux films liés à une personne spécifique correspondant éventuellement à un
+     * terme de recherche et tenant compte de la langue spécifiée.
+     * <p>
+     * La recherche ignore la casse et les accents grâce à l'utilisation de la fonction SQL 'unaccent'.
+     * Le champ utilisé pour la comparaison dépend de la langue fournie : {@code NOM_EN_GB} pour "en", {@code NOM_FR_FR} sinon.
+     * Si {@code term} est {@code null}, tous les pays associés aux films de la personne sont retournés.
+     *
+     * @param person    La personne dont on souhaite considérer les films. Ne peut pas être {@code null}.
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang      La langue utilisée pour la recherche ("en" pour anglais, autre pour français).
+     * @return Un {@link Uni} émettant une {@link List} de {@link Country} correspondant aux critères fournis.
+     */
+    public Uni<List<Country>> findMovieCountriesByPerson(Person person, Page page, String sort, Sort.Direction direction, @Nullable String term, String lang) {
         final String field = "en".equalsIgnoreCase(lang) ? NOM_EN_GB : NOM_FR_FR;
 
         final String query = String.format("""

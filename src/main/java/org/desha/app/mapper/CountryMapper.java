@@ -14,7 +14,7 @@ import java.util.Set;
 )
 public interface CountryMapper {
 
-    CountryDTO countryToCountryDTO(Country entity);
+    CountryDTO toDTO(Country entity);
 
     List<CountryDTO> toDTOList(List<Country> countryList);
 
