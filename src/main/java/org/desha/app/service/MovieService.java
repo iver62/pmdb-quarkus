@@ -6,6 +6,7 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -57,8 +58,8 @@ public class MovieService {
     private final StatsService statsService;
     private final UserNotificationService userNotificationService;
 
-    private final CeremonyAwardsRepository ceremonyAwardsRepository;
     private final CategoryRepository categoryRepository;
+    private final CeremonyAwardsRepository ceremonyAwardsRepository;
     private final CountryRepository countryRepository;
     private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
@@ -114,23 +115,122 @@ public class MovieService {
         this.userNotificationService = userNotificationService;
     }
 
+    /**
+     * Compte le nombre de films correspondant aux critères fournis.
+     * <p>
+     * Si {@code criteriaDTO} contient des filtres spécifiques (par titre, catégorie, pays, personne, etc.),
+     * le comptage ne prendra en compte que les films correspondant à ces critères.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param criteriaDTO Les critères de filtrage à appliquer. Peut être {@code null} pour compter tous les films.
+     * @return Un {@link Uni} contenant le nombre de films correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors du comptage.
+     */
     public Uni<Long> count(CriteriaDTO criteriaDTO) {
-        return movieRepository.countMovies(criteriaDTO);
+        return
+                movieRepository.countMovies(criteriaDTO)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors du comptage des films", throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des films", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
-    public Uni<Long> countPersonsByMovie(Long id, CriteriaDTO criteriaDTO) {
-        return personRepository.countPersonsByMovie(id, criteriaDTO);
+    /**
+     * Compte le nombre de personnes associées à un film spécifique, en fonction des critères fournis.
+     * <p>
+     * Si {@code criteriaDTO} contient des filtres (par rôle, âge, pays, etc.), le comptage ne prendra en compte
+     * que les personnes correspondant à ces critères.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param id          L’identifiant du film pour lequel compter les personnes. Ne peut pas être {@code null}.
+     * @param criteriaDTO Les critères de filtrage à appliquer. Peut être {@code null} pour compter toutes les personnes liées au film.
+     * @return Un {@link Uni} contenant le nombre de personnes correspondant aux critères pour le film donné.
+     * @throws WebApplicationException si une erreur survient lors du comptage.
+     */
+    public Uni<Long> countPersonsByMovie(@NotNull Long id, CriteriaDTO criteriaDTO) {
+        return
+                personRepository.countPersonsByMovie(id, criteriaDTO)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors du comptage des personnes pour le film {}", id, throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des personnes", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
+    /**
+     * Compte le nombre de pays associés aux films correspondant éventuellement à un terme de recherche.
+     * <p>
+     * La recherche s'effectue sur le nom du pays, en ignorant la casse et les accents.
+     * Le paramètre {@code lang} permet de sélectionner la langue du nom à utiliser pour la recherche.
+     * <p>
+     * Si {@code term} est {@code null}, tous les pays associés à au moins un film sont comptés.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param term La chaîne utilisée pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang La langue utilisée pour le nom du pays (par exemple "fr" ou "en").
+     * @return Un {@link Uni} contenant le nombre de pays correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors du comptage.
+     */
     public Uni<Long> countCountriesInMovies(String term, String lang) {
-        return countryRepository.countCountriesInMovies(term, lang);
+        return
+                countryRepository.countCountriesInMovies(term, lang)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors du comptage des pays", throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
+    /**
+     * Compte le nombre de catégories associées aux films correspondant éventuellement à un terme de recherche.
+     * <p>
+     * La recherche s'effectue sur le nom de la catégorie, en ignorant la casse et les accents.
+     * <p>
+     * Si {@code term} est {@code null}, toutes les catégories associées à au moins un film sont comptées.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param term Le terme de recherche utilisé pour filtrer les catégories. Peut être {@code null}.
+     * @return Un {@link Uni} contenant le nombre de catégories correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors du comptage.
+     */
     public Uni<Long> countCategoriesInMovies(String term) {
-        return categoryRepository.countCategoriesInMovies(term);
+        return
+                categoryRepository.countCategoriesInMovies(term)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors du comptage des catégories", throwable);
+                                    return new WebApplicationException("Erreur lors du comptage des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
-    public Uni<MovieDTO> getById(Long id) {
+    /**
+     * Récupère un film ({@link MovieDTO}) à partir de son identifiant.
+     * <p>
+     * La méthode récupère également les pays et catégories associés au film.
+     * Si aucun film ne correspond à l'identifiant fourni, une exception {@link NotFoundException} est levée.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param id L’identifiant du film à récupérer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant le {@link MovieDTO} correspondant à l’identifiant fourni.
+     * @throws NotFoundException       si aucun film n’est trouvé pour l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération du film.
+     */
+    public Uni<MovieDTO> getById(@NotNull Long id) {
         return
                 movieRepository.findByIdWithCountriesAndCategories(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
@@ -146,6 +246,22 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère une liste paginée et triée de films correspondant aux critères fournis.
+     * <p>
+     * Les films sont récupérés avec leurs informations sur les récompenses et sont mappés en {@link MovieDTO}.
+     * Si {@code criteriaDTO} contient des filtres (titre, catégorie, pays, personne, etc.), seuls les films correspondant
+     * à ces critères sont retournés.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param page        Les informations de pagination à appliquer (index et taille de page).
+     * @param sort        Le champ sur lequel appliquer le tri.
+     * @param direction   La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param criteriaDTO Les critères de filtrage à appliquer. Peut être {@code null} pour récupérer tous les films.
+     * @return Un {@link Uni} contenant une {@link List} de {@link MovieDTO} correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des films.
+     */
     public Uni<List<MovieDTO>> getMovies(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 movieRepository
@@ -159,6 +275,21 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère une liste triée de films correspondant aux critères fournis.
+     * <p>
+     * Les films sont récupérés avec leurs informations sur les récompenses et sont mappés en {@link MovieDTO}.
+     * Si {@code criteriaDTO} contient des filtres (titre, catégorie, pays, personne, etc.), seuls les films correspondant
+     * à ces critères sont retournés.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param sort        Le champ sur lequel appliquer le tri.
+     * @param direction   La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param criteriaDTO Les critères de filtrage à appliquer. Peut être {@code null} pour récupérer tous les films.
+     * @return Un {@link Uni} contenant une {@link List} de {@link MovieDTO} correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des films.
+     */
     public Uni<List<MovieDTO>> getMovies(String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 movieRepository
@@ -172,26 +303,72 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère une liste de films correspondant exactement au titre fourni.
+     * <p>
+     * Les films récupérés sont mappés en {@link MovieDTO}.
+     * Si aucun film ne correspond au titre fourni, une liste vide est retournée.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param title Le titre exact des films à rechercher. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant une {@link List} de {@link MovieDTO} correspondant au titre fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des films.
+     */
     public Uni<List<MovieDTO>> getByTitle(String title) {
         return
                 movieRepository.list("title", title)
                         .map(movieMapper::movieListToDTOList)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des films", throwable);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_MOVIES, Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
                 ;
     }
 
+    /**
+     * Récupère une liste paginée et triée de pays associés à des films, éventuellement filtrée par un terme de recherche.
+     * <p>
+     * La recherche s'effectue sur le nom du pays, en ignorant la casse et les accents. Le paramètre {@code lang} permet
+     * de sélectionner la langue du nom à utiliser pour la recherche.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les pays par nom. Peut être {@code null}.
+     * @param lang      La langue utilisée pour le nom du pays (par exemple "fr" ou "en").
+     * @return Un {@link Uni} contenant une {@link List} de {@link CountryDTO} correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des pays.
+     */
     public Uni<List<CountryDTO>> getCountriesInMovies(Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
-                Panache.withTransaction(() ->
-                        countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
-                                .map(countryMapper::toDTOList)
-                                .onFailure().transform(throwable -> {
-                                            log.error("Erreur lors de la récupération des pays", throwable);
-                                            return new WebApplicationException(Messages.ERROR_WHILE_GETTING_COUNTRIES, Response.Status.INTERNAL_SERVER_ERROR);
-                                        }
-                                )
-                );
+                countryRepository.findCountriesInMovies(page, sort, direction, term, lang)
+                        .map(countryMapper::toDTOList)
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des pays", throwable);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_COUNTRIES, Response.Status.INTERNAL_SERVER_ERROR);
+                                }
+                        )
+                ;
     }
 
+    /**
+     * Récupère une liste paginée et triée de catégories associées à des films, éventuellement filtrée par un terme de recherche.
+     * <p>
+     * La recherche s'effectue sur le nom de la catégorie, en ignorant la casse et les accents.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param sort      Le champ sur lequel appliquer le tri.
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les catégories par nom. Peut être {@code null}.
+     * @return Un {@link Uni} contenant une {@link List} de {@link CategoryDTO} correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des catégories.
+     */
     public Uni<List<CategoryDTO>> getCategoriesInMovies(Page page, String sort, Sort.Direction direction, String term) {
         return
                 categoryRepository.findCategoriesInMovies(page, sort, direction, term)
@@ -204,7 +381,27 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<LitePersonDTO>> getPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
+    /**
+     * Récupère une liste paginée et triée de personnes associées à un film spécifique, en fonction des critères fournis.
+     * <p>
+     * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link NotFoundException} est levée.
+     * <p>
+     * Les personnes récupérées sont mappées en {@link LitePersonDTO}. Les critères de filtrage peuvent inclure
+     * le rôle, le pays, l’âge, ou d’autres informations définies dans {@link CriteriaDTO}.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée
+     * avec un statut HTTP 500.
+     *
+     * @param id          L’identifiant du film dont on souhaite récupérer les personnes. Ne peut pas être {@code null}.
+     * @param page        Les informations de pagination à appliquer (index et taille de page).
+     * @param sort        Le champ sur lequel appliquer le tri.
+     * @param direction   La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param criteriaDTO Les critères de filtrage à appliquer. Peut être {@code null} pour récupérer toutes les personnes.
+     * @return Un {@link Uni} contenant une {@link List} de {@link LitePersonDTO} correspondant aux critères fournis.
+     * @throws NotFoundException       si aucun film ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des personnes.
+     */
+    public Uni<List<LitePersonDTO>> getPersonsByMovie(@NotNull Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
@@ -223,7 +420,21 @@ public class MovieService {
                 ;
     }
 
-    public Uni<TechnicalTeamDTO> getTechnicalTeam(Long id) {
+    /**
+     * Récupère l’équipe technique complète associée à un film spécifique.
+     * <p>
+     * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link IllegalArgumentException} est levée.
+     * <p>
+     * L’équipe technique est composée de producteurs, réalisateurs, assistants réalisateurs, scénaristes,
+     * compositeurs, musiciens, photographes, costumiers, décorateurs, monteurs, directeurs de casting,
+     * artistes, ingénieurs du son, superviseurs VFX/SFX, maquilleurs, coiffeurs et cascadeurs.
+     * Chaque catégorie est mappée en DTO grâce à {@link MovieTechnicianMapper}.
+     *
+     * @param id L’identifiant du film dont on souhaite récupérer l’équipe technique. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant un {@link TechnicalTeamDTO} représentant l’équipe technique complète du film.
+     * @throws IllegalArgumentException si aucun film ne correspond à l’identifiant fourni.
+     */
+    public Uni<TechnicalTeamDTO> getTechnicalTeam(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -255,7 +466,19 @@ public class MovieService {
                 ;
     }
 
-    public Uni<List<MovieActorDTO>> getActorsByMovie(Long id) {
+    /**
+     * Récupère la liste des acteurs associés à un film donné.
+     * <p>
+     * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link NotFoundException} est levée.
+     * <p>
+     * Les acteurs récupérés sont ensuite mappés en objets {@link MovieActorDTO}.
+     *
+     * @param id L’identifiant du film dont on souhaite récupérer le casting. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant une liste de {@link MovieActorDTO} représentant les acteurs du film.
+     * @throws NotFoundException       si aucun film ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération du casting.
+     */
+    public Uni<List<MovieActorDTO>> getActorsByMovie(@NotNull Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
@@ -272,14 +495,18 @@ public class MovieService {
     }
 
     /**
-     * Récupère la liste des catégories associées à un film donné.
+     * Récupère l’ensemble des catégories associées à un film donné.
+     * <p>
+     * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link NotFoundException} est levée.
+     * <p>
+     * Les catégories sont ensuite mappées en objets {@link CategoryDTO}.
      *
-     * @param id L'ID du film pour lequel récupérer les catégories.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link CategoryDTO} représentant les catégories du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si l'ensemble des catégories n'est pas initialisé pour ce film.
+     * @param id L’identifiant du film dont on souhaite récupérer les catégories. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant un ensemble de {@link CategoryDTO} représentant les catégories associées au film.
+     * @throws NotFoundException       si aucun film ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des catégories.
      */
-    public Uni<Set<CategoryDTO>> getCategoriesByMovie(Long id) {
+    public Uni<Set<CategoryDTO>> getCategoriesByMovie(@NotNull Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
@@ -296,14 +523,18 @@ public class MovieService {
     }
 
     /**
-     * Récupère la liste des pays associés à un film donné.
+     * Récupère l’ensemble des pays associés à un film donné.
+     * <p>
+     * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link NotFoundException} est levée.
+     * <p>
+     * Les pays sont ensuite mappés en objets {@link CountryDTO}.
      *
-     * @param id L'ID du film pour lequel récupérer les pays.
-     * @return Un {@link Uni} contenant une liste de {@link CountryDTO} représentant les pays du film.
-     * @throws IllegalArgumentException Si le film n'existe pas.
-     * @throws IllegalStateException    Si l'ensemble des pays n'est pas initialisé pour ce film.
+     * @param id L’identifiant du film dont on souhaite récupérer les pays. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO} représentant les pays associés au film.
+     * @throws NotFoundException       si aucun film ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des pays.
      */
-    public Uni<Set<CountryDTO>> getCountriesByMovie(Long id) {
+    public Uni<Set<CountryDTO>> getCountriesByMovie(@NotNull Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
@@ -319,7 +550,19 @@ public class MovieService {
                 ;
     }
 
-    public Uni<Set<CeremonyAwardsDTO>> getCeremoniesAwardsByMovie(Long id) {
+    /**
+     * Récupère l’ensemble des cérémonies et récompenses associées à un film donné.
+     * <p>
+     * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link NotFoundException} est levée.
+     * <p>
+     * Les récompenses sont ensuite récupérées via le dépôt des cérémonies et transformées en objets {@link CeremonyAwardsDTO}.
+     *
+     * @param id L’identifiant du film dont on souhaite récupérer les cérémonies et récompenses. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant un ensemble de {@link CeremonyAwardsDTO} représentant les cérémonies et récompenses du film.
+     * @throws NotFoundException       si aucun film ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des récompenses.
+     */
+    public Uni<Set<CeremonyAwardsDTO>> getCeremoniesAwardsByMovie(@NotNull Long id) {
         return
                 movieRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
@@ -336,6 +579,16 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère l’évolution du nombre de films en fonction de leur date de création.
+     * <p>
+     * Cette méthode interroge le dépôt des films pour obtenir une liste de répartitions ({@link Repartition}) représentant l’évolution
+     * statistique dans le temps.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, l’exception est interceptée et loggée, puis transmise telle quelle.
+     *
+     * @return Un {@link Uni} contenant une liste de {@link Repartition} représentant l’évolution des films par date de création.
+     */
     public Uni<List<Repartition>> getMoviesCreationDateEvolution() {
         return
                 movieRepository.findMoviesCreationDateEvolution()
@@ -345,6 +598,16 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère la répartition des films en fonction de leur date de création.
+     * <p>
+     * Cette méthode interroge le dépôt des films afin d’obtenir une liste de répartitions ({@link Repartition}) représentant la distribution
+     * des films selon leur année ou période de création.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, l’exception est interceptée, loggée puis transmise telle quelle.
+     *
+     * @return Un {@link Uni} contenant une liste de {@link Repartition} représentant la répartition des films par date de création.
+     */
     public Uni<List<Repartition>> getMoviesCreationDateRepartition() {
         return
                 movieRepository.findMoviesByCreationDateRepartition()
@@ -354,6 +617,16 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère la répartition des films en fonction de leur date de sortie.
+     * <p>
+     * Cette méthode interroge le dépôt des films afin d’obtenir une liste de répartitions ({@link Repartition}) représentant la distribution
+     * des films selon leur date ou année de sortie.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, l’exception est interceptée, loggée puis transmise telle quelle.
+     *
+     * @return Un {@link Uni} contenant une liste de {@link Repartition} représentant la répartition des films par date de sortie.
+     */
     public Uni<List<Repartition>> getMoviesReleaseDateRepartition() {
         return
                 movieRepository.findMoviesByReleaseDateRepartition()
@@ -363,6 +636,18 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Récupère l’affiche (poster) d’un film à partir de son nom de fichier.
+     * <p>
+     * Si le nom du fichier est {@code null} ou vide, la méthode renvoie l’affiche par défaut.
+     * Si le fichier spécifié n’est pas trouvé, un avertissement est loggé et l’affiche par défaut est retournée.
+     * <p>
+     * Cette méthode s’appuie sur le {@code fileService} pour accéder aux fichiers stockés dans le répertoire des affiches.
+     *
+     * @param fileName Le nom du fichier de l’affiche à récupérer. Peut être {@code null} ou vide.
+     * @return Un {@link Uni} contenant l’objet {@link File} correspondant à l’affiche trouvée, ou l’affiche par défaut si
+     * le fichier est manquant ou non spécifié.
+     */
     public Uni<File> getPoster(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank()) {
             log.warn("Poster name is missing, returning default poster.");
@@ -376,6 +661,17 @@ public class MovieService {
                 });
     }
 
+    /**
+     * Charge un fichier d’affiche (poster) vers le système de stockage.
+     * <p>
+     * Si le fichier est invalide (nul, vide ou corrompu), la méthode logge un avertissement et retourne le nom de l’affiche par défaut.
+     * En cas d’échec lors du téléversement (exception du {@code fileService}), une erreur est loggée et le nom de l’affiche par défaut
+     * est retourné.
+     * </p>
+     *
+     * @param file L’objet {@link FileUpload} représentant le fichier à téléverser. Peut être {@code null} ou contenir un fichier vide.
+     * @return Un {@link Uni} contenant le nom du fichier uploadé, ou {@link Movie#DEFAULT_POSTER} en cas d’échec ou si le fichier est invalide.
+     */
     private Uni<String> uploadPoster(FileUpload file) {
         if (Objects.isNull(file) || Objects.isNull(file.uploadedFile()) || file.fileName().isBlank()) {
             log.warn("Invalid or missing file. Using default poster.");
@@ -456,8 +752,30 @@ public class MovieService {
                 ;
     }
 
+    /**
+     * Met à jour le casting d’un film donné en fonction d’une liste de nouveaux acteurs.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *   <li>Charge le film par son identifiant et échoue avec une {@link NotFoundException} si celui-ci n’existe pas.</li>
+     *   <li>Supprime les acteurs obsolètes qui ne figurent plus dans la nouvelle liste.</li>
+     *   <li>Met à jour les acteurs existants avec les nouvelles informations fournies.</li>
+     *   <li>Ajoute les nouveaux acteurs via la fonction asynchrone fournie ({@code asyncActorFactory}).</li>
+     *   <li>Persiste les modifications et force la génération des identifiants.</li>
+     *   <li>Met à jour les statistiques des acteurs.</li>
+     *   <li>Crée une notification d’information et l’envoie aux administrateurs.</li>
+     * </ul>
+     * Enfin, les entités d’acteurs sont converties en objets {@link MovieActorDTO} et retournées.
+     *
+     * @param id                 L’identifiant du film dont le casting doit être mis à jour. Ne peut pas être {@code null}.
+     * @param movieActorsDTOList La nouvelle liste des acteurs du film. Peut contenir des acteurs existants (mise à jour) et/ou de nouveaux acteurs (ajout).
+     * @param asyncActorFactory  Une fonction asynchrone permettant de créer un {@link MovieActor} à partir d’un {@link Movie} et d’un {@link MovieActorDTO}.
+     * @return Un {@link Uni} contenant la liste mise à jour des acteurs du film sous forme de {@link MovieActorDTO}.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException si une erreur survient lors du processus de mise à jour du casting.
+     */
     public Uni<List<MovieActorDTO>> saveCast(
-            Long id,
+            @NotNull Long id,
             List<MovieActorDTO> movieActorsDTOList,
             BiFunction<Movie, MovieActorDTO, Uni<MovieActor>> asyncActorFactory
     ) {
@@ -491,7 +809,32 @@ public class MovieService {
                 ;
     }
 
-    public Uni<CeremonyAwardsDTO> saveCeremonyAwards(Long movieId, CeremonyAwardsDTO ceremonyAwardsDTO) {
+    /**
+     * Crée ou met à jour les récompenses d’un film pour une cérémonie donnée.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *   <li>Charge le film par son identifiant et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *   <li>Récupère les personnes associées aux récompenses fournies via {@code awardService}.</li>
+     *   <li>Vérifie si un {@link org.desha.app.domain.entity.CeremonyAwards} existe déjà pour la cérémonie spécifiée :
+     *       <ul>
+     *         <li>Si oui, les récompenses existantes sont mises à jour.</li>
+     *         <li>Sinon, un nouvel objet {@link org.desha.app.domain.entity.CeremonyAwards} est créé et ajouté au film.</li>
+     *       </ul>
+     *   </li>
+     *   <li>Persiste et force la génération des identifiants des {@link org.desha.app.domain.entity.CeremonyAwards}.</li>
+     *   <li>Persiste les modifications du film.</li>
+     *   <li>Crée une notification d’information et l’envoie aux administrateurs.</li>
+     * </ul>
+     * Enfin, l’objet {@link org.desha.app.domain.entity.CeremonyAwards} résultant est transformé en {@link CeremonyAwardsDTO} et retourné.
+     *
+     * @param movieId           L’identifiant du film pour lequel les récompenses doivent être sauvegardées. Ne peut pas être {@code null}.
+     * @param ceremonyAwardsDTO L’objet {@link CeremonyAwardsDTO} contenant les informations des récompenses à créer ou mettre à jour.
+     * @return Un {@link Uni} contenant le {@link CeremonyAwardsDTO} créé ou mis à jour.
+     * @throws NotFoundException       si le film correspondant à l’identifiant fourni n’existe pas.
+     * @throws WebApplicationException si une erreur survient lors du processus de création ou de mise à jour des récompenses.
+     */
+    public Uni<CeremonyAwardsDTO> saveCeremonyAwards(@NotNull Long movieId, CeremonyAwardsDTO ceremonyAwardsDTO) {
         return
                 Panache.withTransaction(() ->
                         movieRepository.findById(movieId)
@@ -529,18 +872,28 @@ public class MovieService {
     }
 
     /**
-     * Met à jour les catégories associés à un film donné.
+     * Met à jour les catégories associées à un film donné.
      * <p>
-     * Cette méthode associe de nouvelles catégories ou met à jour les catégories existantes
-     * d'un film en fonction des identifiants fournis dans {@code categoryDTOSet}.
-     * Les catégories sans identifiant sont créées avant d'être associées au film.
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *   <li>Charge le film par son identifiant et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *   <li>Crée les nouvelles catégories qui n’ont pas d’identifiant via {@code categoryService.create}.</li>
+     *   <li>Récupère les catégories existantes correspondant aux identifiants fournis.</li>
+     *   <li>Assigne l’ensemble complet de catégories au film et met à jour la date de dernière modification.</li>
+     *   <li>Persiste le film avec ses nouvelles catégories.</li>
+     *   <li>Met à jour les statistiques des films par catégorie.</li>
+     *   <li>Crée une notification d’information et l’envoie aux administrateurs.</li>
+     * </ul>
+     * Enfin, les entités {@link Category} associées au film sont converties en {@link CategoryDTO} et retournées.
      *
-     * @param id             L'identifiant du film dont les catégories doivent être mises à jour.
-     * @param categoryDTOSet Un ensemble de {@link CategoryDTO} représentant les catégories à associer.
-     * @return Un {@link Uni} contenant l'ensemble des catégories mises à jour sous forme de {@link CategoryDTO}.
-     * @throws IllegalArgumentException si le film n'est pas trouvé.
+     * @param id             L’identifiant du film dont les catégories doivent être mises à jour. Ne peut pas être {@code null}.
+     * @param categoryDTOSet L’ensemble des {@link CategoryDTO} représentant les catégories à associer au film.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CategoryDTO} mises à jour.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws MovieUpdateException    si une erreur survient lors de la mise à jour des catégories du film.
+     * @throws WebApplicationException si une autre erreur non prévue survient.
      */
-    public Uni<Set<CategoryDTO>> saveCategories(Long id, Set<CategoryDTO> categoryDTOSet) {
+    public Uni<Set<CategoryDTO>> saveCategories(@NotNull Long id, Set<CategoryDTO> categoryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
@@ -597,14 +950,25 @@ public class MovieService {
     /**
      * Met à jour les pays associés à un film donné.
      * <p>
-     * Cette méthode met à jour les pays associés à un film en fonction des identifiants fournis dans {@code countryDTOSet}.
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *   <li>Charge le film par son identifiant et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *   <li>Récupère les pays existants correspondant aux identifiants fournis via {@code countryService.getByIds}.</li>
+     *   <li>Assigne l’ensemble complet de pays au film et met à jour la date de dernière modification.</li>
+     *   <li>Persiste le film avec ses nouveaux pays.</li>
+     *   <li>Met à jour les statistiques des films par pays.</li>
+     *   <li>Crée une notification d’information et l’envoie aux administrateurs.</li>
+     * </ul>
+     * Enfin, les entités {@link org.desha.app.domain.entity.Country} associées au film sont converties en {@link CountryDTO} et retournées.
      *
-     * @param id            L'identifiant du film dont les pays doivent être mis à jour.
-     * @param countryDTOSet Un ensemble de {@link CountryDTO} représentant les pays à associer.
-     * @return Un {@link Uni} contenant l'ensemble des pays mis à jour sous forme de {@link CountryDTO}.
-     * @throws IllegalArgumentException si le film n'est pas trouvé.
+     * @param id            L’identifiant du film dont les pays doivent être mis à jour. Ne peut pas être {@code null}.
+     * @param countryDTOSet L’ensemble des {@link CountryDTO} représentant les pays à associer au film.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CountryDTO} mis à jour.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws MovieUpdateException    si une erreur survient lors de la mise à jour des pays du film.
+     * @throws WebApplicationException si une autre erreur non prévue survient.
      */
-    public Uni<Set<CountryDTO>> saveCountries(Long id, Set<CountryDTO> countryDTOSet) {
+    public Uni<Set<CountryDTO>> saveCountries(@NotNull Long id, Set<CountryDTO> countryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
@@ -641,16 +1005,29 @@ public class MovieService {
     }
 
     /**
-     * Ajoute une liste d'acteurs à un film existant.
+     * Ajoute de nouveaux acteurs à un film existant.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *   <li>Charge le film par son identifiant et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *   <li>Récupère la liste des acteurs existants du film et échoue avec une {@link WebApplicationException} si elle est {@code null}.</li>
+     *   <li>Ajoute les acteurs fournis dans {@code movieActorDTOList} via la fonction {@code asyncActorFactory}.</li>
+     *   <li>Persiste les modifications du film et force la génération des identifiants des nouveaux acteurs.</li>
+     *   <li>Met à jour les statistiques des acteurs.</li>
+     *   <li>Crée une notification pour signaler l’ajout des acteurs et notifie les administrateurs.</li>
+     * </ul>
+     * Enfin, les entités {@link MovieActor} sont converties en {@link MovieActorDTO} et retournées.
      *
-     * @param id                L'identifiant du film auquel les acteurs doivent être ajoutés.
-     * @param movieActorDTOList Un ensemble d'objets {@link MovieActorDTO} représentant les acteurs à ajouter.
-     * @return Un {@link Uni} contenant un {@link List} de {@link MovieActorDTO} mis à jour après l'ajout des acteurs.
-     * @throws IllegalArgumentException si le film ou certains acteurs ne sont pas trouvés.
-     * @throws IllegalStateException    si la liste des acteurs n'est pas initialisée pour ce film.
+     * @param id                L’identifiant du film auquel les acteurs doivent être ajoutés. Ne peut pas être {@code null}.
+     * @param movieActorDTOList La liste des {@link MovieActorDTO} représentant les acteurs à ajouter.
+     * @param asyncActorFactory Une fonction asynchrone permettant de créer un {@link MovieActor} à partir d’un {@link Movie} et d’un {@link MovieActorDTO}.
+     * @return Un {@link Uni} contenant la liste des {@link MovieActorDTO} ajoutés au film.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException si la liste d’acteurs du film est {@code null} ou qu’une erreur inattendue survient.
+     * @throws MovieUpdateException    si une erreur survient lors de l’ajout des acteurs.
      */
     public Uni<List<MovieActorDTO>> addMovieActors(
-            Long id,
+            @NotNull Long id,
             List<MovieActorDTO> movieActorDTOList,
             BiFunction<Movie, MovieActorDTO, Uni<MovieActor>> asyncActorFactory
     ) {
@@ -682,15 +1059,27 @@ public class MovieService {
     }
 
     /**
-     * Ajoute une ou plusieurs catégories à un film existant.
+     * Ajoute des catégories à un film existant.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code movieId} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Récupère l’ensemble des catégories déjà associées au film et échoue avec une {@link WebApplicationException} si l’ensemble est {@code null}.</li>
+     *     <li>Récupère les entités {@link Category} correspondant aux identifiants des {@link CategoryDTO} fournis et échoue avec une {@link IllegalArgumentException} si une ou plusieurs catégories sont introuvables.</li>
+     *     <li>Ajoute les catégories récupérées au film.</li>
+     *     <li>Persiste les modifications et met à jour les statistiques liées aux répartitions des films par catégorie.</li>
+     *     <li>Convertit l’ensemble des catégories du film en {@link CategoryDTO} et les retourne.</li>
+     * </ul>
      *
-     * @param movieId        L'identifiant du film auquel les catégories doivent être ajoutées.
-     * @param categoryDTOSet Un ensemble d'objets {@link CategoryDTO} représentant les catégories à ajouter.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link CategoryDTO} mis à jour après l'ajout des catégories.
-     * @throws IllegalArgumentException si le film ou certaines catégories ne sont pas trouvés.
-     * @throws IllegalStateException    si l'ensemble des catégories n'est pas initialisé pour ce film.
+     * @param movieId        L’identifiant du film auquel les catégories doivent être ajoutées. Ne peut pas être {@code null}.
+     * @param categoryDTOSet L’ensemble des {@link CategoryDTO} représentant les catégories à ajouter.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CategoryDTO} ajoutées au film.
+     * @throws NotFoundException        si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException  si l’ensemble des catégories du film est {@code null}.
+     * @throws IllegalArgumentException si une ou plusieurs catégories fournies sont introuvables.
+     * @throws MovieUpdateException     si une erreur survient lors de l’ajout des catégories.
      */
-    public Uni<Set<CategoryDTO>> addCategories(Long movieId, Set<CategoryDTO> categoryDTOSet) {
+    public Uni<Set<CategoryDTO>> addCategories(@NotNull Long movieId, Set<CategoryDTO> categoryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
@@ -722,15 +1111,27 @@ public class MovieService {
     }
 
     /**
-     * Ajoute un ou plusieurs pays à un film existant.
+     * Ajoute des pays à un film existant.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code movieId} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Récupère l’ensemble des pays déjà associés au film et échoue avec une {@link WebApplicationException} si l’ensemble est {@code null}.</li>
+     *     <li>Récupère les entités {@link org.desha.app.domain.entity.Country} correspondant aux identifiants des {@link CountryDTO} fournis et échoue avec une {@link IllegalArgumentException} si un ou plusieurs pays sont introuvables.</li>
+     *     <li>Ajoute les pays récupérés au film.</li>
+     *     <li>Persiste les modifications et met à jour les statistiques liées aux répartitions des films par pays.</li>
+     *     <li>Convertit l’ensemble des pays du film en {@link CountryDTO} et les retourne.</li>
+     * </ul>
      *
-     * @param movieId       L'identifiant du film auquel les pays doivent être ajoutés.
-     * @param countryDTOSet Un ensemble d'objets {@link CountryDTO} représentant les pays à ajouter.
-     * @return Un {@link Uni} contenant un {@link Set} de {@link CountryDTO} mis à jour après l'ajout des pays.
-     * @throws IllegalArgumentException si le film ou certains pays ne sont pas trouvés.
-     * @throws IllegalStateException    si l'ensemble des pays n'est pas initialisé pour ce film.
+     * @param movieId       L’identifiant du film auquel les pays doivent être ajoutés. Ne peut pas être {@code null}.
+     * @param countryDTOSet L’ensemble des {@link CountryDTO} représentant les pays à ajouter.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CountryDTO} ajoutés au film.
+     * @throws NotFoundException        si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException  si l’ensemble des pays du film est {@code null}.
+     * @throws IllegalArgumentException si un ou plusieurs pays fournis sont introuvables.
+     * @throws MovieUpdateException     si une erreur survient lors de l’ajout des pays.
      */
-    public Uni<Set<CountryDTO>> addCountries(Long movieId, Set<CountryDTO> countryDTOSet) {
+    public Uni<Set<CountryDTO>> addCountries(@NotNull Long movieId, Set<CountryDTO> countryDTOSet) {
         return
                 Panache
                         .withTransaction(() ->
@@ -762,15 +1163,25 @@ public class MovieService {
     }
 
     /**
-     * Supprime une association entre un film et un acteur spécifique.
+     * Supprime un acteur d’un film existant.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code movieId} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Récupère la liste des acteurs associés au film et échoue avec une {@link WebApplicationException} si la liste est {@code null}.</li>
+     *     <li>Supprime l’acteur identifié par {@code movieActorId} de la liste des acteurs du film.</li>
+     *     <li>Persiste les modifications du film.</li>
+     *     <li>Convertit la liste des acteurs restants en {@link MovieActorDTO} et la retourne.</li>
+     * </ul>
      *
-     * @param movieId      L'identifiant du film dont l'acteur doit être retiré.
-     * @param movieActorId L'identifiant de l'association acteur-film à supprimer.
-     * @return Une instance de {@link Uni} contenant la liste mise à jour des associations film-acteur sous forme de {@link MovieActorDTO}.
-     * @throws NotFoundException       Si le film est introuvable.
-     * @throws WebApplicationException Si la liste des acteurs du film ne peut pas être initialisée.
+     * @param movieId      L’identifiant du film dont l’acteur doit être supprimé. Ne peut pas être {@code null}.
+     * @param movieActorId L’identifiant de l’acteur à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant la liste des {@link MovieActorDTO} restants après la suppression.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException si la liste des acteurs du film est {@code null}.
+     * @throws MovieUpdateException    si une erreur survient lors de la suppression de l’acteur.
      */
-    public Uni<List<MovieActorDTO>> removeMovieActor(Long movieId, Long movieActorId) {
+    public Uni<List<MovieActorDTO>> removeMovieActor(@NotNull Long movieId, @NotNull Long movieActorId) {
         return
                 Panache
                         .withTransaction(() ->
@@ -796,14 +1207,27 @@ public class MovieService {
     }
 
     /**
-     * Supprime une catégorie d'un film existant.
+     * Supprime une catégorie d’un film existant.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code movieId} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Récupère l’ensemble des catégories associées au film et échoue avec une {@link IllegalStateException} si l’ensemble est {@code null}.</li>
+     *     <li>Supprime la catégorie identifiée par {@code categoryId} de l’ensemble des catégories du film.</li>
+     *     <li>Persiste les modifications du film.</li>
+     *     <li>Met à jour les statistiques des films par catégorie.</li>
+     *     <li>Convertit l’ensemble des catégories restantes en {@link CategoryDTO} et le retourne.</li>
+     * </ul>
      *
-     * @param movieId    L'identifiant du film dont la catégorie doit être supprimée.
-     * @param categoryId L'identifiant de la catégorie à supprimer du film.
-     * @return Un {@link Uni} contenant un objet {@link MovieDTO} mis à jour après la suppression de la catégorie.
-     * - Provoque une erreur avec un message explicite si le film ou certaines catégories ne sont pas trouvés.
+     * @param movieId    L’identifiant du film dont la catégorie doit être supprimée. Ne peut pas être {@code null}.
+     * @param categoryId L’identifiant de la catégorie à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CategoryDTO} restants après la suppression.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws IllegalStateException   si l’ensemble des catégories du film est {@code null}.
+     * @throws MovieUpdateException    si une erreur survient lors de la suppression de la catégorie.
+     * @throws WebApplicationException si une erreur non prévue survient lors de l’opération.
      */
-    public Uni<Set<CategoryDTO>> removeCategory(Long movieId, Long categoryId) {
+    public Uni<Set<CategoryDTO>> removeCategory(@NotNull Long movieId, @NotNull Long categoryId) {
         return
                 Panache
                         .withTransaction(() ->
@@ -831,14 +1255,26 @@ public class MovieService {
     }
 
     /**
-     * Supprime l'association entre un film et un pays donné.
+     * Supprime un pays d’un film existant.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code movieId} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Récupère l’ensemble des pays associés au film et échoue avec une {@link WebApplicationException} si l’ensemble est {@code null}.</li>
+     *     <li>Supprime le pays identifié par {@code countryId} de l’ensemble des pays du film.</li>
+     *     <li>Persiste les modifications du film.</li>
+     *     <li>Met à jour les statistiques des films par pays.</li>
+     *     <li>Convertit l’ensemble des pays restants en {@link CountryDTO} et le retourne.</li>
+     * </ul>
      *
-     * @param movieId   L'identifiant du film dont on veut retirer un pays associé.
-     * @param countryId L'identifiant du pays à dissocier du film.
-     * @return Un {@link Uni} contenant un {@link MovieDTO} mis à jour après suppression de l'association.
-     * - Provoque une erreur si le film n'est pas trouvé.
+     * @param movieId   L’identifiant du film dont le pays doit être supprimé. Ne peut pas être {@code null}.
+     * @param countryId L’identifiant du pays à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CountryDTO} restants après la suppression.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException si l’ensemble des pays du film est {@code null} ou qu’une erreur non prévue survient.
+     * @throws MovieUpdateException    si une erreur survient lors de la suppression du pays.
      */
-    public Uni<Set<CountryDTO>> removeCountry(Long movieId, Long countryId) {
+    public Uni<Set<CountryDTO>> removeCountry(@NotNull Long movieId, @NotNull Long countryId) {
         return
                 Panache
                         .withTransaction(() ->
@@ -866,19 +1302,25 @@ public class MovieService {
     }
 
     /**
-     * Supprime toutes les récompenses associées à un film donné.
+     * Supprime une cérémonie de récompenses d’un film existant.
      * <p>
-     * Cette méthode permet de vider la collection des récompenses associées à un film en supprimant toutes les entrées
-     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
-     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code movieId} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Récupère l’ensemble des cérémonies de récompenses associées au film et échoue avec une {@link IllegalStateException} si cet ensemble est {@code null}.</li>
+     *     <li>Supprime la cérémonie de récompenses identifiée par {@code ceremonyAwardsId} de l’ensemble du film.</li>
+     *     <li>Persiste les modifications du film.</li>
+     *     <li>Convertit l’ensemble restant des cérémonies en {@link CeremonyAwardsDTO} et le retourne.</li>
+     * </ul>
      *
-     * @param movieId L'identifiant du film pour lequel les récompenses doivent être supprimées.
-     * @return Un {@link Uni} contenant {@code true} si la suppression des récompenses a réussi,
-     * ou une exception sera levée en cas d'erreur.
-     * @throws WebApplicationException Si une erreur survient lors de la suppression des récompenses (par exemple,
-     *                                 en cas de film introuvable ou d'erreur de persistance).
+     * @param movieId          L’identifiant du film dont la cérémonie de récompenses doit être supprimée. Ne peut pas être {@code null}.
+     * @param ceremonyAwardsId L’identifiant de la cérémonie de récompenses à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant l’ensemble des {@link CeremonyAwardsDTO} restants après la suppression.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws IllegalStateException   si l’ensemble des cérémonies de récompenses du film est {@code null}.
+     * @throws WebApplicationException si une erreur survient lors de la suppression de la cérémonie.
      */
-    public Uni<Set<CeremonyAwardsDTO>> removeCeremonyAwards(Long movieId, Long ceremonyAwardsId) {
+    public Uni<Set<CeremonyAwardsDTO>> removeCeremonyAwards(@NotNull Long movieId, @NotNull Long ceremonyAwardsId) {
         return
                 Panache
                         .withTransaction(() ->
@@ -899,7 +1341,33 @@ public class MovieService {
                         });
     }
 
-    public Uni<MovieDTO> updateMovie(Long id, FileUpload file, MovieDTO movieDTO) {
+    /**
+     * Met à jour les informations d’un film existant, y compris ses catégories, pays, date de sortie et affiche.
+     * <p>
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code id} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Met à jour les informations générales du film à partir de {@code movieDTO}.</li>
+     *     <li>Gère l’affiche du film :
+     *         <ul>
+     *             <li>Si un nouveau fichier {@code file} est fourni, il remplace l’affiche existante (sauf si c’est l’affiche par défaut) et supprime l’ancienne.</li>
+     *             <li>Si aucun fichier n’est fourni mais que le nom de l’affiche change, on remet l’affiche par défaut après suppression de l’affiche actuelle.</li>
+     *             <li>Si aucun changement d’affiche n’est nécessaire, on conserve l’affiche actuelle.</li>
+     *         </ul>
+     *     </li>
+     *     <li>Met à jour les catégories, pays et date de sortie si nécessaire.</li>
+     *     <li>Envoie une notification indiquant que le film a été modifié.</li>
+     *     <li>Retourne le DTO mis à jour du film.</li>
+     * </ul>
+     *
+     * @param id       L’identifiant du film à mettre à jour. Ne peut pas être {@code null}.
+     * @param file     Le nouveau fichier d’affiche à uploader. Peut être {@code null} si l’affiche ne change pas.
+     * @param movieDTO Les informations du film à mettre à jour. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant le {@link MovieDTO} mis à jour.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException si une erreur survient lors de la mise à jour du film ou de l’affiche.
+     */
+    public Uni<MovieDTO> updateMovie(@NotNull Long id, FileUpload file, MovieDTO movieDTO) {
         return
                 Panache
                         .withTransaction(() ->
@@ -991,17 +1459,24 @@ public class MovieService {
     }
 
     /**
-     * Supprime un film par son identifiant.
+     * Supprime un film existant ainsi que ses relations associées (pays, catégories, affiche).
      * <p>
-     * Cette méthode effectue la suppression d'un film dans une transaction.
-     * Si l'identifiant fourni ne correspond à aucun film, la suppression échoue
-     * et retourne false.
+     * Cette méthode effectue les opérations suivantes dans une transaction :
+     * <ul>
+     *     <li>Charge le film correspondant à l’identifiant {@code id} et échoue avec une {@link NotFoundException} si le film n’existe pas.</li>
+     *     <li>Supprime les associations entre le film et ses pays.</li>
+     *     <li>Supprime les associations entre le film et ses catégories.</li>
+     *     <li>Supprime le film de la base de données.</li>
+     *     <li>Met à jour les statistiques des films : décrémente le nombre total de films et recalcul les répartitions par pays et par catégories.</li>
+     *     <li>Supprime le fichier d’affiche du film si celui-ci n’est pas l’affiche par défaut.</li>
+     * </ul>
      *
-     * @param id L'identifiant du film à supprimer.
-     * @return Un {@link Uni} contenant `true` si la suppression a réussi,
-     * `false` si aucun film avec cet identifiant n'existe.
+     * @param id L’identifiant du film à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant {@code true} si la suppression a réussi.
+     * @throws NotFoundException       si le film correspondant à l’identifiant n’existe pas.
+     * @throws WebApplicationException si une erreur survient lors de la suppression du film ou de ses relations.
      */
-    public Uni<Boolean> deleteMovie(Long id) {
+    public Uni<Boolean> deleteMovie(@NotNull Long id) {
         return
                 Panache.withTransaction(() ->
                                 movieRepository.findById(id)
@@ -1032,6 +1507,18 @@ public class MovieService {
                         });
     }
 
+    /**
+     * Supprime le fichier d’affiche d’un film si celui-ci existe et n’est pas l’affiche par défaut.
+     * <p>
+     * Cette méthode vérifie d’abord que le nom de fichier n’est pas {@code null}, vide ou égal à {@link Movie#DEFAULT_POSTER}.
+     * Si c’est le cas, aucune suppression n’est effectuée et la méthode retourne immédiatement.
+     * <p>
+     * En cas d’erreur lors de la suppression du fichier, une {@link PhotoDeletionException} est levée.
+     *
+     * @param fileName Le nom du fichier à supprimer. Peut être {@code null} ou vide, auquel cas rien n’est fait.
+     * @return Un {@link Uni} qui se complète lorsque l’opération de suppression est terminée.
+     * @throws PhotoDeletionException si une erreur survient lors de la suppression du fichier.
+     */
     public Uni<Void> deletePosterIfExists(String fileName) {
         if (Objects.isNull(fileName) || fileName.isBlank() || Objects.equals(fileName, Movie.DEFAULT_POSTER)) {
             return Uni.createFrom().voidItem();
@@ -1048,7 +1535,21 @@ public class MovieService {
         });
     }
 
-    public Uni<Boolean> clearActors(Long id) {
+    /**
+     * Supprime tous les acteurs associés à un film donné.
+     * <p>
+     * La méthode récupère le film correspondant à l'identifiant fourni et supprime tous les acteurs liés.
+     * Si le film n’existe pas, une {@link NotFoundException} est levée.
+     * Si la liste des acteurs est {@code null}, une {@link WebApplicationException} est levée.
+     * <p>
+     * L’opération est effectuée dans une transaction et persiste les changements.
+     *
+     * @param id L’identifiant du film dont les acteurs doivent être supprimés. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant {@code true} si l’opération a réussi.
+     * @throws NotFoundException       si le film n’est pas trouvé.
+     * @throws WebApplicationException si la liste des acteurs est {@code null} ou en cas d’erreur lors de la suppression.
+     */
+    public Uni<Boolean> clearActors(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1074,17 +1575,19 @@ public class MovieService {
     /**
      * Supprime toutes les catégories associées à un film donné.
      * <p>
-     * Cette méthode permet de vider la collection des catégories associée à un film en supprimant toutes les entrées
-     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
-     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
+     * La méthode récupère le film correspondant à l'identifiant fourni et supprime toutes les catégories liées. Elle met également à jour
+     * la répartition des films par catégorie via le service de statistiques. Si le film n’existe pas, une {@link NotFoundException} est levée.
+     * Si la liste des catégories est {@code null}, une {@link IllegalStateException} est levée.
+     * <p>
+     * L’opération est effectuée dans une transaction et persiste les changements.
      *
-     * @param id L'identifiant du film pour lequel les catégories doivent être supprimées.
-     * @return Un {@link Uni} contenant {@code true} si la suppression des catégories a réussi,
-     * ou une exception sera levée en cas d'erreur.
-     * @throws WebApplicationException Si une erreur survient lors de la suppression des catégories (par exemple,
-     *                                 en cas de film introuvable ou d'erreur de persistance).
+     * @param id L’identifiant du film dont les catégories doivent être supprimées. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant {@code true} si l’opération a réussi.
+     * @throws NotFoundException       si le film n’est pas trouvé.
+     * @throws IllegalStateException   si la liste des catégories est {@code null}.
+     * @throws WebApplicationException en cas d’erreur lors de la suppression des catégories.
      */
-    public Uni<Boolean> clearCategories(Long id) {
+    public Uni<Boolean> clearCategories(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1110,17 +1613,19 @@ public class MovieService {
     /**
      * Supprime tous les pays associés à un film donné.
      * <p>
-     * Cette méthode permet de vider la collection des pays associés à un film en supprimant toutes les entrées
-     * de cette collection. Elle effectue cette opération dans une transaction et persiste les changements
-     * dans la base de données. Si le film avec l'ID spécifié n'existe pas, une exception est levée.
+     * La méthode récupère le film correspondant à l'identifiant fourni et supprime tous les pays liés. Elle met également à jour
+     * la répartition des films par pays via le service de statistiques. Si le film n’existe pas, une {@link NotFoundException} est levée.
+     * Si la liste des pays est {@code null}, une {@link IllegalStateException} est levée.
+     * <p>
+     * L’opération est effectuée dans une transaction et persiste les changements.
      *
-     * @param id L'identifiant du film pour lequel les pays doivent être supprimés.
-     * @return Un {@link Uni} contenant {@code true} si la suppression des pays a réussi,
-     * ou une exception sera levée en cas d'erreur.
-     * @throws WebApplicationException Si une erreur survient lors de la suppression des pays (par exemple,
-     *                                 en cas de film introuvable ou d'erreur de persistance).
+     * @param id L’identifiant du film dont les pays doivent être supprimés. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant {@code true} si l’opération a réussi.
+     * @throws NotFoundException       si le film n’est pas trouvé.
+     * @throws IllegalStateException   si la liste des pays est {@code null}.
+     * @throws WebApplicationException en cas d’erreur lors de la suppression des pays.
      */
-    public Uni<Boolean> clearCountries(Long id) {
+    public Uni<Boolean> clearCountries(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1143,7 +1648,20 @@ public class MovieService {
                         });
     }
 
-    public Uni<Boolean> clearCeremoniesAwards(Long id) {
+    /**
+     * Supprime toutes les récompenses associées à un film donné.
+     * <p>
+     * La méthode récupère le film correspondant à l'identifiant fourni et supprime toutes les cérémonies et récompenses liées.
+     * L’opération est effectuée dans une transaction et persiste les changements. Si le film n’existe pas, une {@link NotFoundException}
+     * est levée. Si la liste des cérémonies et récompenses est {@code null}, une {@link IllegalStateException} est levée.
+     *
+     * @param id L’identifiant du film dont les récompenses doivent être supprimées. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant {@code true} si l’opération a réussi.
+     * @throws NotFoundException       si le film n’est pas trouvé.
+     * @throws IllegalStateException   si la liste des cérémonies et récompenses est {@code null}.
+     * @throws WebApplicationException en cas d’erreur lors de la suppression des récompenses.
+     */
+    public Uni<Boolean> clearCeremoniesAwards(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->
@@ -1164,6 +1682,18 @@ public class MovieService {
                         });
     }
 
+    /**
+     * Récupère et mappe la liste des acteurs d’un film en DTO triés par rang.
+     * <p>
+     * Cette méthode charge la liste des acteurs associée au film fourni, la convertit en {@link MovieActorDTO} (sans inclure
+     * les informations du film), puis trie les DTO par leur rang ({@code rank}) en plaçant les valeurs nulles à la fin.
+     * <p>
+     * Si la liste des acteurs est {@code null}, une {@link WebApplicationException} est levée.
+     *
+     * @param movie Le film dont les acteurs doivent être récupérés. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant la liste triée des {@link MovieActorDTO}.
+     * @throws WebApplicationException si la liste des acteurs du film est {@code null}.
+     */
     public Uni<List<MovieActorDTO>> fetchAndMapActorList(Movie movie) {
         return
                 Mutiny.fetch(movie.getMovieActors())
@@ -1178,14 +1708,15 @@ public class MovieService {
     }
 
     /**
-     * Récupère et convertit les catégories associées à un film en objets {@link CategoryDTO}.
+     * Récupère et mappe l'ensemble des catégories d’un film en DTO.
      * <p>
-     * Cette méthode utilise Mutiny pour récupérer les catégories d'un film
-     * et les transformer en un ensemble de DTOs. Si la liste des catégories est null,
-     * une exception est levée.
+     * Cette méthode charge l'ensemble des catégories associées au film fourni, puis les convertit en {@link CategoryDTO}.
+     * <p>
+     * Si l'ensemble des catégories est {@code null}, une {@link WebApplicationException} est levée.
      *
-     * @return Un {@link Uni} contenant un ensemble de {@link CategoryDTO}.
-     * @throws IllegalStateException si l'ensemble des catégories n'est pas initialisé.
+     * @param movie Le film dont les catégories doivent être récupérées. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant l'ensemble des {@link CategoryDTO}.
+     * @throws WebApplicationException si l'ensemble des catégories du film est {@code null}.
      */
     public Uni<Set<CategoryDTO>> fetchAndMapCategorySet(Movie movie) {
         return
@@ -1196,14 +1727,15 @@ public class MovieService {
     }
 
     /**
-     * Récupère et convertit les pays associés à un film en objets {@link CountryDTO}.
+     * Récupère et mappe l'ensemble des pays d’un film en DTO.
      * <p>
-     * Cette méthode utilise Mutiny pour récupérer les pays liés à un film
-     * et les transformer en un ensemble de DTOs. Si la liste des pays est null,
-     * une exception est levée.
+     * Cette méthode charge l'ensemble des pays associés au film fourni, puis les convertit en {@link CountryDTO}.
+     * <p>
+     * Si l'ensemble des pays est {@code null}, une {@link WebApplicationException} est levée.
      *
-     * @return Un {@link Uni} contenant un ensemble de {@link CountryDTO}.
-     * @throws IllegalStateException si la liste des pays n'est pas initialisée.
+     * @param movie Le film dont les pays doivent être récupérés. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant l'ensemble des {@link CountryDTO}.
+     * @throws WebApplicationException si l'ensemble des pays du film est {@code null}.
      */
     public Uni<Set<CountryDTO>> fetchAndMapCountrySet(Movie movie) {
         return

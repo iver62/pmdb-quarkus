@@ -47,6 +47,8 @@ public interface MovieMapper {
     @Mapping(target = "budgetCurrency", source = "budget.currency")
     @Mapping(target = "boxOffice", source = "boxOffice.value")
     @Mapping(target = "boxOfficeCurrency", source = "boxOffice.currency")
+    @Mapping(target = "categories", ignore = true)
+    @Mapping(target = "countries", ignore = true)
     Movie movieDTOtoMovie(MovieDTO dto);
 
     List<MovieDTO> movieListToDTOList(List<Movie> movieList);
