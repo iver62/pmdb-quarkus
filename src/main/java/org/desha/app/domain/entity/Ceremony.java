@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CeremonyDTO;
@@ -33,6 +34,18 @@ public class Ceremony extends PanacheEntityBase {
                         .name(StringUtils.capitalize(StringUtils.defaultString(name).trim()))
                         .build()
                 ;
+    }
+
+    /**
+     * Met à jour les informations de la cérémonie à partir d'un {@link CeremonyDTO}.
+     * <p>
+     * Actuellement, cette méthode met à jour uniquement le nom de la cérémonie,
+     * en supprimant les espaces superflus et en capitalisant la première lettre.
+     *
+     * @param ceremonyDTO Les données de la cérémonie à appliquer. Ne peut pas être {@code null}.
+     */
+    public void updateCeremony(@NotNull CeremonyDTO ceremonyDTO) {
+        setName(StringUtils.capitalize(ceremonyDTO.getName().trim()));
     }
 
 }

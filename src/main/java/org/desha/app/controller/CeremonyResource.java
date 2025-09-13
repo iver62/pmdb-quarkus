@@ -137,7 +137,6 @@ public class CeremonyResource {
     )
     @RequestBody(
             description = "Les informations de la cérémonie à créer",
-            required = true,
             content = @Content(schema = @Schema(implementation = CategoryDTO.class))
     )
     public Uni<Response> createCeremony(@Valid CeremonyDTO ceremonyDTO) {
@@ -186,7 +185,6 @@ public class CeremonyResource {
     @Parameter(name = "id", description = "Identifiant de la cérémonie", required = true)
     @RequestBody(
             description = "Informations de la cérémonie à mettre à jour",
-            required = true,
             content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
     )
     public Uni<Response> updateCeremony(@RestPath Long id, @Valid CeremonyDTO ceremonyDTO) {

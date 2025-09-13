@@ -7,11 +7,11 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CeremonyDTO;
 import org.desha.app.domain.entity.Ceremony;
 import org.desha.app.mapper.CeremonyMapper;
@@ -37,11 +37,24 @@ public class CeremonyService {
         this.ceremonyRepository = ceremonyRepository;
     }
 
+    /**
+     * Récupère une cérémonie ({@link CeremonyDTO}) à partir de son identifiant.
+     * <p>
+     * Si aucune cérémonie ne correspond à l'identifiant fourni, une exception {@link NotFoundException} est levée.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la requête, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param id L’identifiant de la cérémonie à récupérer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant la {@link CeremonyDTO} correspondant à l’identifiant fourni.
+     * @throws NotFoundException       si aucune cérémonie n’est trouvée pour l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la récupération de la cérémonie.
+     */
     @WithSession
-    public Uni<CeremonyDTO> getCeremony(Long id) {
+    public Uni<CeremonyDTO> getCeremony(@NotNull Long id) {
         return
                 ceremonyRepository.findById(id)
-                        .onItem().ifNull().failWith(new NotFoundException(Messages.NOT_FOUND_CEREMONY))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CEREMONY))
                         .map(ceremonyMapper::ceremonyToCeremonyDTO)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -55,13 +68,20 @@ public class CeremonyService {
     }
 
     /**
-     * Récupère la liste des cérémonies correspondant à un terme de recherche donné,
-     * avec pagination et tri.
+     * Récupère une liste paginée et triée de cérémonies, éventuellement filtrée par un terme de recherche,
+     * et retourne le résultat sous forme de {@link CeremonyDTO}.
+     * <p>
+     * La recherche s'effectue sur le champ {@code name} et ignore la casse et les accents.
+     * Si {@code term} est {@code null}, toutes les cérémonies sont retournées.
+     * <p>
+     * En cas d’erreur lors de la récupération, une exception {@link WebApplicationException} est levée
+     * avec un statut HTTP 500.
      *
-     * @param page      la pagination à appliquer (index de page, taille de page)
-     * @param direction la direction du tri (ASC ou DESC)
-     * @param term      le terme à rechercher (filtre sur le nom de la cérémonie)
-     * @return un {@link Uni} contenant la liste des noms de cérémonies correspondantes
+     * @param page      Les informations de pagination à appliquer (index et taille de page).
+     * @param direction La direction du tri (ASC ou DESC), définie par {@link Sort.Direction}.
+     * @param term      Un terme de recherche optionnel pour filtrer les cérémonies par nom. Peut être {@code null}.
+     * @return Un {@link Uni} contenant un {@link Set} de {@link CeremonyDTO} correspondant aux critères fournis.
+     * @throws WebApplicationException si une erreur survient lors de la récupération des cérémonies.
      */
     @WithSession
     public Uni<Set<CeremonyDTO>> getCeremonies(Page page, Sort.Direction direction, String term) {
@@ -76,6 +96,17 @@ public class CeremonyService {
                 ;
     }
 
+    /**
+     * Crée une nouvelle cérémonie à partir des informations fournies dans un {@link CeremonyDTO}.
+     * <p>
+     * La création est effectuée dans une transaction et retourne le {@link CeremonyDTO} correspondant à l’entité persistée.
+     * <p>
+     * En cas d’erreur lors de la création, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param ceremonyDTO Les données de la cérémonie à créer.
+     * @return Un {@link Uni} contenant le {@link CeremonyDTO} correspondant à la cérémonie créée.
+     * @throws WebApplicationException si une erreur survient lors de la création de la cérémonie.
+     */
     public Uni<CeremonyDTO> create(CeremonyDTO ceremonyDTO) {
         return
                 Panache
@@ -92,22 +123,53 @@ public class CeremonyService {
                 ;
     }
 
+    /**
+     * Recherche une cérémonie existante à partir de l'identifiant fourni dans {@link CeremonyDTO},
+     * ou crée une nouvelle cérémonie si l'identifiant est {@code null}.
+     * <p>
+     * Si {@code ceremonyDTO.getId()} est non nul mais qu'aucune cérémonie ne correspond à cet identifiant,
+     * une exception {@link IllegalArgumentException} est levée.
+     * <p>
+     * Si l'identifiant est {@code null}, la méthode persiste une nouvelle entité {@link Ceremony} construite
+     * à partir des informations du {@link CeremonyDTO}.
+     *
+     * @param ceremonyDTO Les données de la cérémonie à rechercher ou créer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant la {@link Ceremony} trouvée ou créée.
+     * @throws IllegalArgumentException si l'identifiant est fourni mais aucune cérémonie correspondante n’est trouvée.
+     */
     public Uni<Ceremony> findOrCreateCeremony(CeremonyDTO ceremonyDTO) {
         return
                 Objects.nonNull(ceremonyDTO.getId())
-                        ? ceremonyRepository.findById(ceremonyDTO.getId())
-                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_CEREMONY))
-                        : ceremonyRepository.persist(ceremonyMapper.ceremonyDTOtoCeremony(ceremonyDTO))
+                        ?
+                        ceremonyRepository.findById(ceremonyDTO.getId())
+                                .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_CEREMONY))
+                        :
+                        ceremonyRepository.persist(ceremonyMapper.ceremonyDTOtoCeremony(ceremonyDTO))
                 ;
     }
 
-    public Uni<CeremonyDTO> update(Long id, CeremonyDTO ceremonyDTO) {
+    /**
+     * Met à jour une cérémonie existante avec les informations fournies dans un {@link CeremonyDTO}.
+     * <p>
+     * Si aucune cérémonie ne correspond à l’identifiant {@code id}, une exception {@link NotFoundException} est levée.
+     * La méthode applique les modifications à l’entité existante et retourne le {@link CeremonyDTO} mis à jour.
+     * <p>
+     * En cas d’erreur lors de l’exécution de la transaction, une exception {@link WebApplicationException}
+     * est levée avec un statut HTTP 500.
+     *
+     * @param id          L’identifiant de la cérémonie à mettre à jour. Ne peut pas être {@code null}.
+     * @param ceremonyDTO Les données à appliquer pour la mise à jour de la cérémonie.
+     * @return Un {@link Uni} émettant le {@link CeremonyDTO} mis à jour.
+     * @throws NotFoundException       si aucune cérémonie ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la mise à jour de la cérémonie.
+     */
+    public Uni<CeremonyDTO> update(@NotNull Long id, CeremonyDTO ceremonyDTO) {
         return
                 Panache
                         .withTransaction(() ->
                                 ceremonyRepository.findById(id)
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CEREMONY))
-                                        .invoke(ceremony -> ceremony.setName(StringUtils.capitalize(ceremonyDTO.getName().trim())))
+                                        .invoke(ceremony -> ceremony.updateCeremony(ceremonyDTO))
                                         .call(ceremony -> ceremonyRepository.flush())
                                         .map(ceremonyMapper::ceremonyToCeremonyDTO)
                         )
@@ -122,7 +184,20 @@ public class CeremonyService {
                 ;
     }
 
-    public Uni<Boolean> deleteCeremony(Long id) {
+    /**
+     * Supprime une cérémonie existante à partir de son identifiant.
+     * <p>
+     * Si aucune cérémonie ne correspond à l’identifiant {@code id}, une exception {@link NotFoundException} est levée.
+     * La suppression est effectuée dans une transaction et retourne un indicateur de succès.
+     * <p>
+     * En cas d’erreur lors de la suppression, une exception {@link WebApplicationException} est levée avec un statut HTTP 500.
+     *
+     * @param id L’identifiant de la cérémonie à supprimer. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} émettant {@code true} si la suppression a réussi.
+     * @throws NotFoundException       si aucune cérémonie ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException si une erreur survient lors de la suppression de la cérémonie.
+     */
+    public Uni<Boolean> deleteCeremony(@NotNull Long id) {
         return
                 Panache
                         .withTransaction(() ->
