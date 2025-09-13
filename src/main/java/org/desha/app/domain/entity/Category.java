@@ -1,14 +1,14 @@
 package org.desha.app.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.AuditCategoryListener;
+import org.desha.app.domain.dto.CategoryDTO;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -33,7 +33,7 @@ public class Category extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @NotEmpty(message = "Le nom ne peut pas être vide")
+    @NotBlank(message = "Le nom de la catégorie ne peut pas être vide")
     @Column(name = "nom", nullable = false, unique = true)
     private String name;
 
@@ -43,9 +43,8 @@ public class Category extends PanacheEntityBase {
     @Column(name = "date_mise_a_jour")
     private LocalDateTime lastUpdate;
 
-    @JsonIgnore
     @ManyToMany(mappedBy = "categories")
-    private Set<Movie> movies = new HashSet<>();
+    private final Set<Movie> movies = new HashSet<>();
 
     public static Category build(Long id, String name) {
         return
@@ -65,6 +64,10 @@ public class Category extends PanacheEntityBase {
     @PreUpdate
     public void onUpdate() {
         this.lastUpdate = LocalDateTime.now();
+    }
+
+    public void updateCategory(CategoryDTO categoryDTO) {
+        setName(StringUtils.capitalize(categoryDTO.getName().trim()));
     }
 
     @Override

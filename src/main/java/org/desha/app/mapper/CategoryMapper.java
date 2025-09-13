@@ -18,14 +18,14 @@ import java.util.Set;
 public interface CategoryMapper {
 
     @Mapping(target = "name", source = "name", qualifiedByName = "capitalize")
-    Category dtoToEntity(CategoryDTO entity);
+    Category toEntity(CategoryDTO entity);
 
-    CategoryDTO categoryToCategoryDTO(Category entity);
+    CategoryDTO toDTO(Category entity);
 
     @Named("toLiteCategoryDTO")
     @Mapping(target = "creationDate", ignore = true)
     @Mapping(target = "lastUpdate", ignore = true)
-    CategoryDTO toLiteCategoryDTO(Category entity);
+    CategoryDTO toLiteDTO(Category entity);
 
     List<CategoryDTO> toDTOList(List<Category> categoryList);
 
