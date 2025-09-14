@@ -15,7 +15,6 @@ import org.desha.app.domain.dto.QueryParamsDTO;
 import org.desha.app.service.CeremonyService;
 import org.desha.app.utils.Messages;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.headers.Header;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -23,6 +22,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.RestPath;
 
@@ -34,9 +34,20 @@ import static jakarta.ws.rs.core.Response.Status.*;
 
 @Path("ceremonies")
 @ApplicationScoped
-@APIResponse(responseCode = "401", description = "Utilisateur non authentifié")
-@APIResponse(responseCode = "403", description = "Accès interdit")
-@APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+@APIResponses(value = {
+        @APIResponse(
+                responseCode = "401",
+                description = "Utilisateur non authentifié"
+        ),
+        @APIResponse(
+                responseCode = "403",
+                description = "Accès interdit"
+        ),
+        @APIResponse(
+                responseCode = "500",
+                description = "Erreur interne du serveur"
+        )
+})
 @Tag(name = "Cérémonies", description = "Opérations liées aux cérémonies")
 public class CeremonyResource {
 
@@ -54,13 +65,21 @@ public class CeremonyResource {
             summary = "Récupérer une cérémonie par son ID",
             description = "Retourne les informations d'une cérémonie si elle existe dans la base de données."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Cérémonie trouvée",
-            content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
-    )
-    @APIResponse(responseCode = "400", description = "Identifiant invalide")
-    @APIResponse(responseCode = "404", description = "Cérémonie non trouvée")
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Cérémonie trouvée",
+                    content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Cérémonie non trouvée"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant de la cérémonie", required = true)
     public Uni<Response> getCeremony(@RestPath Long id) {
         return
@@ -75,38 +94,34 @@ public class CeremonyResource {
             summary = "Récupérer les cérémonies avec pagination, tri et recherche",
             description = "Retourne la liste des cérémonies avec prise en charge de la pagination, du tri et de la recherche par nom."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Liste des cérémonies trouvée",
-            content = @Content(schema = @Schema(implementation = List.class)),
-            headers = {
-                    @Header(
-                            name = "X-Total-Count",
-                            description = "Nombre total de cérémonies correspondant aux critères",
-                            schema = @Schema(type = SchemaType.NUMBER)
-                    )
-            }
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune cérémonie trouvée avec les critères fournis",
-            headers = {
-                    @Header(name = "X-Total-Count",
-                            description = "Nombre total de cérémonies correspondant aux critères",
-                            schema = @Schema(type = SchemaType.NUMBER)
-                    )
-            }
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Paramètres de tri invalides"
-    )
-    @Parameter(name = "term", description = "Terme de recherche pour filtrer les cérémonies sur le nom", in = ParameterIn.QUERY)
-    @Parameter(name = "lang", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-creation-date", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "from-last-update", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "to-creation-date", in = ParameterIn.QUERY, hidden = true)
-    @Parameter(name = "to-last-update", in = ParameterIn.QUERY, hidden = true)
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des cérémonies trouvée",
+                    content = @Content(schema = @Schema(implementation = List.class)),
+                    headers = {
+                            @Header(
+                                    name = "X-Total-Count",
+                                    description = "Nombre total de cérémonies correspondant aux critères",
+                                    schema = @Schema(type = SchemaType.NUMBER)
+                            )
+                    }
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune cérémonie trouvée avec les critères fournis",
+                    headers = {
+                            @Header(name = "X-Total-Count",
+                                    description = "Nombre total de cérémonies correspondant aux critères",
+                                    schema = @Schema(type = SchemaType.NUMBER)
+                            )
+                    }
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Paramètres de tri invalides"
+            )
+    })
     public Uni<Response> getCeremonies(@BeanParam QueryParamsDTO queryParamsDTO) {
         return
                 ceremonyService.getCeremonies(Page.of(queryParamsDTO.getPageIndex(), queryParamsDTO.getSize()), queryParamsDTO.validateSortDirection(), queryParamsDTO.getTerm())
@@ -126,15 +141,17 @@ public class CeremonyResource {
             summary = "Créer une nouvelle cérémonie",
             description = "Permet de créer une nouvelle cérémonie. Le champ `id` ne doit pas être renseigné dans la requête."
     )
-    @APIResponse(
-            responseCode = "201",
-            description = "Cérémonie créée avec succès",
-            content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide (champ manquant ou ID fourni)"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "201",
+                    description = "Cérémonie créée avec succès",
+                    content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide (champ manquant ou ID fourni)"
+            )
+    })
     @RequestBody(
             description = "Les informations de la cérémonie à créer",
             content = @Content(schema = @Schema(implementation = CategoryDTO.class))
@@ -165,23 +182,25 @@ public class CeremonyResource {
                     Le champ `id` dans le corps de la requête doit correspondre à celui de l'URL.
                     """
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Cérémonie mise à jour avec succès",
-            content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide (nom manquant ou corps absent)"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Cérémonie non trouvée"
-    )
-    @APIResponse(
-            responseCode = "422",
-            description = "Identifiant du corps de la requête différent de celui de l'URL"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Cérémonie mise à jour avec succès",
+                    content = @Content(schema = @Schema(implementation = CeremonyDTO.class))
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide (nom manquant ou corps absent)"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Cérémonie non trouvée"
+            ),
+            @APIResponse(
+                    responseCode = "422",
+                    description = "Identifiant du corps de la requête différent de celui de l'URL"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant de la cérémonie", required = true)
     @RequestBody(
             description = "Informations de la cérémonie à mettre à jour",
@@ -210,22 +229,23 @@ public class CeremonyResource {
     @Operation(
             summary = "Supprimer une cérémonie",
             description = """
-                    Supprime une cérémonie à partir de son identifiant.
-                    Retourne 204 si la suppression a réussi, 404 si la cérémonie n'existe pas.
-                    """
+                    Supprime une cérémonie à partir de son identifiant. Retourne 204 si la suppression a réussi, 404 si
+                     la cérémonie n'existe pas."""
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Cérémonie supprimée avec succès"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Cérémonie non trouvée"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Cérémonie supprimée avec succès"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Cérémonie non trouvée"
+            )
+    })
     public Uni<Response> deleteCeremony(@RestPath Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
 

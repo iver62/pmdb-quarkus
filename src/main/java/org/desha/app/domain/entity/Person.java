@@ -22,7 +22,7 @@ import java.util.*;
 @Builder
 @Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Person extends PanacheEntityBase implements Comparable<Person> {
+public class Person extends PanacheEntityBase {
 
     public static final String DEFAULT_PHOTO = "default-photo.jpg";
     public static final String DEFAULT_SORT = "name";
@@ -32,7 +32,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @Column(name = "nom")
+    @Column(name = "nom", nullable = false)
     private String name;
 
     @Column(name = "photo")
@@ -51,61 +51,61 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     private LocalDateTime lastUpdate;
 
     @OneToMany(mappedBy = "person")
-    private List<MovieActor> playedMovies = new ArrayList<>();
+    private final List<MovieActor> playedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieProducer> producedMovies = new ArrayList<>();
+    private final List<MovieProducer> producedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieDirector> directedMovies = new ArrayList<>();
+    private final List<MovieDirector> directedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieAssistantDirector> assistantDirectedMovies = new ArrayList<>();
+    private final List<MovieAssistantDirector> assistantDirectedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieScreenwriter> writtenMovies = new ArrayList<>();
+    private final List<MovieScreenwriter> writtenMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieComposer> composedMovies = new ArrayList<>();
+    private final List<MovieComposer> composedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieMusician> musicalMovies = new ArrayList<>();
+    private final List<MovieMusician> musicalMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MoviePhotographer> photographedMovies = new ArrayList<>();
+    private final List<MoviePhotographer> photographedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieCostumeDesigner> costumeDesignedMovies = new ArrayList<>();
+    private final List<MovieCostumeDesigner> costumeDesignedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieSetDesigner> setDesignedMovies = new ArrayList<>();
+    private final List<MovieSetDesigner> setDesignedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieEditor> editedMovies = new ArrayList<>();
+    private final List<MovieEditor> editedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieCaster> castedMovies = new ArrayList<>();
+    private final List<MovieCaster> castedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieArtist> artistMovies = new ArrayList<>();
+    private final List<MovieArtist> artistMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieSoundEditor> soundEditedMovies = new ArrayList<>();
+    private final List<MovieSoundEditor> soundEditedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieVfxSupervisor> vfxSupervisedMovies = new ArrayList<>();
+    private final List<MovieVfxSupervisor> vfxSupervisedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieSfxSupervisor> sfxSupervisedMovies = new ArrayList<>();
+    private final List<MovieSfxSupervisor> sfxSupervisedMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieMakeupArtist> makeupMovies = new ArrayList<>();
+    private final List<MovieMakeupArtist> makeupMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieHairDresser> hairStyledMovies = new ArrayList<>();
+    private final List<MovieHairDresser> hairStyledMovies = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
-    private List<MovieStuntman> stuntMovies = new ArrayList<>();
+    private final List<MovieStuntman> stuntMovies = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(name = "lnk_pays_personne", joinColumns = @JoinColumn(name = "fk_personne"), inverseJoinColumns = @JoinColumn(name = "fk_pays"))
@@ -166,7 +166,7 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
     }
 
     public void addType(PersonType type) {
-        this.types.add(type);
+        types.add(type);
     }
 
     public void removeCountry(Long id) {
@@ -177,11 +177,4 @@ public class Person extends PanacheEntityBase implements Comparable<Person> {
         countries.clear();
     }
 
-    @Override
-    public int compareTo(Person p) {
-        return Comparator
-                .comparing(Person::getName, Comparator.nullsLast(String::compareToIgnoreCase))
-                .thenComparing(Person::getId, Comparator.nullsLast(Long::compareTo))
-                .compare(this, p);
-    }
 }

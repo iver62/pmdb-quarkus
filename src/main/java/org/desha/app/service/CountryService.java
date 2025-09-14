@@ -128,7 +128,7 @@ public class CountryService {
      */
     public Uni<Long> countPersonsByCountry(@NotNull Long countryId, CriteriaDTO criteriaDTO) {
         return
-                personRepository.countByCountry(countryId, criteriaDTO)
+                personRepository.countPersonsByCountry(countryId, criteriaDTO)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_COUNTRY))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -189,7 +189,7 @@ public class CountryService {
                         .map(countryMapper::toDTOList)
                         .onFailure().transform(throwable -> {
                                     log.error("Erreur lors de la récupération des pays", throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_COUNTRIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -213,7 +213,7 @@ public class CountryService {
                         .map(countryMapper::toDTOList)
                         .onFailure().transform(throwable -> {
                                     log.error("Erreur lors de la récupération des pays", throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_COUNTRIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -278,7 +278,7 @@ public class CountryService {
                         )
                         .onFailure().transform(throwable -> {
                                     log.error("Erreur lors de la récupération des films appartenant au pays {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération des films", Response.Status.INTERNAL_SERVER_ERROR);
+                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_MOVIES, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;

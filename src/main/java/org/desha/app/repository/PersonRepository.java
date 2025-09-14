@@ -6,6 +6,7 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Person;
@@ -18,10 +19,16 @@ import java.util.*;
 @ApplicationScoped
 public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
 
-    public Uni<Long> countAll() {
-        return count();
-    }
-
+    /**
+     * Compte le nombre de personnes correspondant à un terme donné.
+     * <p>
+     * Si le paramètre {@link CriteriaDTO#getTerm()} est {@code null}, la méthode retourne le nombre total de personnes existantes.
+     * Si un terme est fourni, elle compte uniquement les personnes dont le nom correspond (en ignorant les accents et la casse).
+     *
+     * @param criteriaDTO Les critères de recherche, notamment le terme {@code term} pour filtrer les personnes.
+     *                    Peut être {@code null} pour compter toutes les personnes.
+     * @return Un {@link Uni} contenant le nombre de personnes correspondant au critère.
+     */
     public Uni<Long> countPersons(CriteriaDTO criteriaDTO) {
         String query = String.format("""
                      FROM Person p
@@ -38,7 +45,20 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return count(query, params);
     }
 
-    public Uni<Long> countPersonsByMovie(Long id, CriteriaDTO criteriaDTO) {
+    /**
+     * Compte le nombre de personnes associées à un film donné correspondant à un terme de recherche.
+     * <p>
+     * Si le paramètre {@link CriteriaDTO#getTerm()} est {@code null}, la méthode retourne le nombre total de personnes
+     * associées au film spécifié par {@code id}.
+     * Si un terme est fourni, elle compte uniquement les personnes dont le nom correspond (en ignorant les accents et la casse)
+     * et qui sont liées au film.
+     *
+     * @param id          L'identifiant unique du film pour lequel compter les personnes.
+     * @param criteriaDTO Les critères de recherche, notamment le terme {@code term} pour filtrer les personnes.
+     *                    Peut être {@code null} pour compter toutes les personnes liées au film.
+     * @return Un {@link Uni} contenant le nombre de personnes correspondant au critère pour le film spécifié.
+     */
+    public Uni<Long> countPersonsByMovie(@NotNull Long id, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN MoviePerson mp ON p.id = mp.personId
@@ -57,7 +77,20 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return count(query, params);
     }
 
-    public Uni<Long> countByCountry(Long id, CriteriaDTO criteriaDTO) {
+    /**
+     * Compte le nombre de personnes associées à un pays donné correspondant à un terme de recherche.
+     * <p>
+     * Si le paramètre {@link CriteriaDTO#getTerm()} est {@code null}, la méthode retourne le nombre total de personnes
+     * associées au pays spécifié par {@code id}.
+     * Si un terme est fourni, elle compte uniquement les personnes dont le nom correspond (en ignorant les accents et la casse)
+     * et qui sont liées au pays.
+     *
+     * @param id          L'identifiant unique du pays pour lequel compter les personnes.
+     * @param criteriaDTO Les critères de recherche, notamment le terme {@code term} pour filtrer les personnes.
+     *                    Peut être {@code null} pour compter toutes les personnes liées au pays.
+     * @return Un {@link Uni} contenant le nombre de personnes correspondant au critère pour le pays spécifié.
+     */
+    public Uni<Long> countPersonsByCountry(@NotNull Long id, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN p.countries c
@@ -76,6 +109,17 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return count(query, params);
     }
 
+    /**
+     * Récupère une liste de personnes correspondant aux identifiants fournis.
+     * <p>
+     * Si la liste {@code ids} est {@code null} ou vide, la méthode retourne une liste vide.
+     * Sinon, elle renvoie toutes les personnes dont l'identifiant figure dans la liste {@code ids}.
+     * <p>
+     * Cette méthode nève pas d'exception si aucun identifiant n'est trouvé, elle retourne simplement une liste vide.
+     *
+     * @param ids La liste des identifiants de personnes à récupérer. Peut être {@code null} ou vide.
+     * @return Un {@link Uni} contenant la liste des {@link Person} correspondant aux identifiants fournis.
+     */
     public Uni<List<Person>> findByIds(List<Long> ids) {
         if (Objects.isNull(ids) || ids.isEmpty()) {
             return Uni.createFrom().item(Collections.emptyList());
@@ -83,6 +127,21 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return list("id IN ?1", ids);
     }
 
+    /**
+     * Recherche et retourne une liste de personnes correspondant aux critères fournis, avec pagination et tri.
+     * <p>
+     * La recherche se fait sur le nom des personnes, en ignorant la casse et les accents.
+     * Les critères supplémentaires peuvent être passés via {@link CriteriaDTO}.
+     * Le tri et la pagination sont appliqués selon les paramètres fournis.
+     * <p>
+     * Si aucun résultat n’est trouvé, la méthode retourne une liste vide.
+     *
+     * @param page        La page à récupérer (numéro de page et taille de page) pour la pagination.
+     * @param sort        Le champ sur lequel trier les résultats. Doit appartenir aux champs autorisés.
+     * @param direction   La direction du tri ({@link Sort.Direction#Ascending} ou {@link Sort.Direction#Descending}).
+     * @param criteriaDTO Les critères de filtrage supplémentaires. Peut être {@code null} pour ne pas filtrer.
+     * @return Un {@link Uni} contenant la liste des {@link Person} correspondant aux critères.
+     */
     public Uni<List<Person>> findPersons(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
@@ -100,7 +159,23 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return find(query, params).page(page).list();
     }
 
-    public Uni<List<Person>> findPersonsByMovie(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
+    /**
+     * Recherche et retourne une liste de personnes associées à un film spécifique, avec pagination et tri.
+     * <p>
+     * La recherche se fait sur le nom des personnes, en ignorant la casse et les accents.
+     * Les critères supplémentaires peuvent être passés via {@link CriteriaDTO}.
+     * Le tri et la pagination sont appliqués selon les paramètres fournis.
+     * <p>
+     * Si aucun résultat n’est trouvé, la méthode retourne une liste vide.
+     *
+     * @param id          L'identifiant du film pour lequel récupérer les personnes.
+     * @param page        La page à récupérer (numéro de page et taille de page) pour la pagination.
+     * @param sort        Le champ sur lequel trier les résultats. Doit appartenir aux champs autorisés.
+     * @param direction   La direction du tri ({@link Sort.Direction#Ascending} ou {@link Sort.Direction#Descending}).
+     * @param criteriaDTO Les critères de filtrage supplémentaires. Peut être {@code null} pour ne pas filtrer.
+     * @return Un {@link Uni} contenant la liste des {@link Person} associées au film correspondant aux critères.
+     */
+    public Uni<List<Person>> findPersonsByMovie(@NotNull Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 SELECT p
                 FROM Person p
@@ -121,6 +196,22 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
         return find(query, params).page(page).list();
     }
 
+    /**
+     * Recherche et retourne une liste de personnes avec le nombre de films associés et le nombre de récompenses,
+     * en appliquant la pagination et le tri spécifiés.
+     * <p>
+     * La recherche se fait sur le nom des personnes, en ignorant la casse et les accents.
+     * Le nombre de films par personne est récupéré via la table {@code PersonMoviesNumber}.
+     * Le nombre de récompenses est calculé via un {@code LEFT JOIN} sur la relation {@code awards}.
+     * <p>
+     * Si aucun résultat n’est trouvé, la méthode retourne une liste vide.
+     *
+     * @param page        La page à récupérer (numéro de page et taille de page) pour la pagination.
+     * @param sort        Le champ sur lequel trier les résultats. Doit appartenir aux champs autorisés.
+     * @param direction   La direction du tri ({@link Sort.Direction#Ascending} ou {@link Sort.Direction#Descending}).
+     * @param criteriaDTO Les critères de filtrage supplémentaires. Peut être {@code null} pour ne pas filtrer.
+     * @return Un {@link Uni} contenant la liste des {@link PersonWithMoviesNumber} correspondant aux critères.
+     */
     public Uni<List<PersonWithMoviesNumber>> findPersonsWithMoviesNumber(Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 SELECT p, COALESCE((SELECT moviesNumber FROM PersonMoviesNumber pmn WHERE pmn.personId = p.id), 0) AS moviesNumber, COUNT(a) AS awardsNumber
@@ -146,7 +237,20 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 ;
     }
 
-    public Uni<List<Person>> findPersonsByCountry(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
+    /**
+     * Recherche et retourne une liste de personnes associées à un pays donné, en appliquant la pagination et le tri spécifiés.
+     * <p>
+     * La recherche se fait sur le nom des personnes, en ignorant la casse et les accents.
+     * Si aucun résultat n’est trouvé, la méthode retourne une liste vide.
+     *
+     * @param id          L'identifiant du pays pour lequel rechercher les personnes. Ne peut pas être {@code null}.
+     * @param page        La page à récupérer (numéro de page et taille de page) pour la pagination.
+     * @param sort        Le champ sur lequel trier les résultats. Doit appartenir aux champs autorisés.
+     * @param direction   La direction du tri ({@link Sort.Direction#Ascending} ou {@link Sort.Direction#Descending}).
+     * @param criteriaDTO Les critères de filtrage supplémentaires. Peut être {@code null} pour ne pas filtrer.
+     * @return Un {@link Uni} contenant la liste des {@link Person} correspondant au critère de pays et aux filtres.
+     */
+    public Uni<List<Person>> findPersonsByCountry(@NotNull Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         String query = String.format("""
                 FROM Person p
                 JOIN p.countries c
@@ -169,6 +273,17 @@ public class PersonRepository implements PanacheRepositoryBase<Person, Long> {
                 .list();
     }
 
+    /**
+     * Retourne l'évolution cumulée du nombre de personnes de type {@link PersonType#ACTOR} créées par mois.
+     * <p>
+     * Chaque enregistrement contient le mois (format "MM-YYYY") et le nombre cumulatif d'acteurs créés jusqu'à ce mois.
+     * La méthode utilise la fonction SQL de fenêtrage {@code SUM(...) OVER (ORDER BY mois_creation)} pour calculer le cumul.
+     * <p>
+     * Si aucun acteur n’a été créé, la méthode retourne une liste vide.
+     *
+     * @return Un {@link Uni} contenant une liste de {@link Repartition}, chaque élément représentant
+     * le mois et le nombre cumulé d’acteurs créés.
+     */
     public Uni<List<Repartition>> findActorsCreationDateEvolution() {
         return
                 find("""

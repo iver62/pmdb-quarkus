@@ -83,6 +83,9 @@ public class Movie extends PanacheEntityBase {
     private User user;
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieActor> movieActors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieProducer> movieProducers = new ArrayList<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -135,9 +138,6 @@ public class Movie extends PanacheEntityBase {
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieStuntman> movieStuntmen = new ArrayList<>();
-
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MovieActor> movieActors = new ArrayList<>();
 
     @ManyToMany(cascade = {CascadeType.ALL, CascadeType.MERGE})
     @JoinTable(

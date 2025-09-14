@@ -19,6 +19,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.RestPath;
 
@@ -29,9 +30,20 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 
 @Path("/awards")
 @ApplicationScoped
-@APIResponse(responseCode = "401", description = "Utilisateur non authentifié")
-@APIResponse(responseCode = "403", description = "Accès interdit")
-@APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+@APIResponses(value = {
+        @APIResponse(
+                responseCode = "401",
+                description = "Utilisateur non authentifié"
+        ),
+        @APIResponse(
+                responseCode = "403",
+                description = "Accès interdit"
+        ),
+        @APIResponse(
+                responseCode = "500",
+                description = "Erreur interne du serveur"
+        )
+})
 @Tag(name = "Récompenses", description = "Opérations liées aux récompenses")
 public class AwardResource {
 
@@ -49,13 +61,21 @@ public class AwardResource {
             summary = "Récupérer une récompense par son ID",
             description = "Retourne les informations d'une récompense si elle existe dans la base de données."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Récompense trouvée",
-            content = @Content(schema = @Schema(implementation = AwardDTO.class))
-    )
-    @APIResponse(responseCode = "400", description = "Identifiant invalide")
-    @APIResponse(responseCode = "404", description = "Récompense non trouvée")
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Récompense trouvée",
+                    content = @Content(schema = @Schema(implementation = AwardDTO.class))
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Récompense non trouvée"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant de la récompense", required = true, in = ParameterIn.PATH)
     public Uni<Response> getAward(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_AWARD_ID);
@@ -77,23 +97,25 @@ public class AwardResource {
                     Le champ `id` dans le corps de la requête doit correspondre à celui de l'URL.
                     """
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Récompense mise à jour avec succès",
-            content = @Content(schema = @Schema(implementation = AwardDTO.class))
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide (nom manquant ou corps absent)"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Récompense non trouvée"
-    )
-    @APIResponse(
-            responseCode = "422",
-            description = "Identifiant du corps de la requête différent de celui de l'URL"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Récompense mise à jour avec succès",
+                    content = @Content(schema = @Schema(implementation = AwardDTO.class))
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide (nom manquant ou corps absent)"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Récompense non trouvée"
+            ),
+            @APIResponse(
+                    responseCode = "422",
+                    description = "Identifiant du corps de la requête différent de celui de l'URL"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant de la récompense", required = true, in = ParameterIn.PATH)
     @RequestBody(
             description = "Informations de la récompense à mettre à jour",
@@ -126,18 +148,20 @@ public class AwardResource {
                     Retourne 204 si la suppression a réussi, ou 404 si la récompense n'existe pas.
                     """
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Récompense supprimée avec succès"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Récompense non trouvée"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Récompense supprimée avec succès"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Récompense non trouvée"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant de la récompense", required = true, in = ParameterIn.PATH)
     public Uni<Response> deleteAward(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_AWARD_ID);

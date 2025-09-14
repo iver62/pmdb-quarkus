@@ -42,8 +42,7 @@ public class QueryParamsDTO {
     @Parameter(
             name = "sort",
             description = "Champ sur lequel appliquer le tri",
-            in = ParameterIn.QUERY,
-            example = "title"
+            in = ParameterIn.QUERY
     )
     @QueryParam("sort")
     private String sort;
@@ -61,8 +60,7 @@ public class QueryParamsDTO {
     @Parameter(
             name = "term",
             description = "Terme de recherche libre",
-            in = ParameterIn.QUERY,
-            example = "Inception"
+            in = ParameterIn.QUERY
     )
     @QueryParam("term")
     private String term;

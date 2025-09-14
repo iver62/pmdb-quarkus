@@ -48,9 +48,20 @@ import static jakarta.ws.rs.core.Response.Status.CREATED;
 @Path("/movies")
 @ApplicationScoped
 @Slf4j
-@APIResponse(responseCode = "401", description = "Utilisateur non authentifié")
-@APIResponse(responseCode = "403", description = "Accès interdit")
-@APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+@APIResponses(value = {
+        @APIResponse(
+                responseCode = "401",
+                description = "Utilisateur non authentifié"
+        ),
+        @APIResponse(
+                responseCode = "403",
+                description = "Accès interdit"
+        ),
+        @APIResponse(
+                responseCode = "500",
+                description = "Erreur interne du serveur"
+        )
+})
 @Tag(name = "Films", description = "Opérations liées aux films")
 public class MovieResource {
 
@@ -736,7 +747,8 @@ public class MovieResource {
                             schema = @Schema(implementation = MovieDTO.class)
                     )
             )
-            @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO) {
+            @RestForm @PartType(MediaType.APPLICATION_JSON) @Valid MovieDTO movieDTO
+    ) {
         if (Objects.isNull(movieDTO)) {
             throw new BadRequestException("Aucune information sur le film n’a été fournie dans la requête");
         }
@@ -936,8 +948,7 @@ public class MovieResource {
     @Operation(
             summary = "Met à jour les pays d'un film",
             description = """
-                    Permet de sauvegarder ou mettre à jour la liste des pays associés à un film.
-                    Chaque pays est représenté par un CountryDTO.
+                    Permet de sauvegarder ou mettre à jour la liste des pays associés à un film. Chaque pays est représenté par un CountryDTO.
                     Si aucune donnée n'est fournie, la réponse sera vide."""
     )
     @APIResponse(
@@ -959,10 +970,6 @@ public class MovieResource {
     @APIResponse(
             responseCode = "404",
             description = "Film introuvable pour l'identifiant fourni"
-    )
-    @APIResponse(
-            responseCode = "500",
-            description = "Erreur serveur lors de la mise à jour des pays"
     )
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> saveCountries(@RestPath @NotNull Long id, Set<CountryDTO> countryDTOS) {
