@@ -17,8 +17,10 @@ import java.util.Set;
 )
 public interface PersonMapper {
 
+    Person toEntity(PersonDTO dto);
+
     @Mapping(target = "awards", ignore = true)
-    PersonDTO personToPersonDTO(Person entity);
+    PersonDTO toDTO(Person entity);
 
     @Mapping(target = "id", source = "person.id")
     @Mapping(target = "name", source = "person.name")
@@ -32,7 +34,7 @@ public interface PersonMapper {
     @Mapping(target = "numberOfAwards", source = "awardsNumber")
     PersonDTO personWithMoviesNumberToPersonDTO(PersonWithMoviesNumber entity);
 
-    LitePersonDTO personToLitePersonDTO(Person entity);
+    LitePersonDTO toLiteDTO(Person entity);
 
     List<PersonDTO> toDTOList(List<Person> personList);
 

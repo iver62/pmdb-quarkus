@@ -131,20 +131,6 @@ public class Person extends PanacheEntityBase {
         this.lastUpdate = LocalDateTime.now();
     }
 
-    public static Person build(String name, String photoFileName, LocalDate dateOfBirth, LocalDate dateOfDeath, Set<PersonType> types, LocalDateTime creationDate, LocalDateTime lastUpdate) {
-        return
-                Person.builder()
-                        .name(StringUtils.defaultString(name).trim())
-                        .photoFileName(Optional.ofNullable(photoFileName).orElse(DEFAULT_PHOTO))
-                        .dateOfBirth(dateOfBirth)
-                        .dateOfDeath(dateOfDeath)
-                        .types(types)
-                        .creationDate(creationDate)
-                        .lastUpdate(lastUpdate)
-                        .build()
-                ;
-    }
-
     public static Person build(String name, String photoFileName) {
         return
                 Person.builder()

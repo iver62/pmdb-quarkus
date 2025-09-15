@@ -276,7 +276,7 @@ public class PersonService implements PersonServiceInterface {
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .call(person -> Mutiny.fetch(person.getCountries()).invoke(person::setCountries))
-                        .map(personMapper::personToPersonDTO)
+                        .map(personMapper::toDTO)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
@@ -307,7 +307,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 personRepository.findById(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
-                        .map(personMapper::personToLitePersonDTO)
+                        .map(personMapper::toLiteDTO)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
@@ -702,19 +702,8 @@ public class PersonService implements PersonServiceInterface {
     public Uni<PersonDTO> save(PersonDTO personDTO) {
         return
                 Panache.withTransaction(() ->
-                                        personRepository.persist(
-//                                TODO: convertir avec le mapper
-                                                        Person.build(
-                                                                personDTO.getName(),
-                                                                personDTO.getPhotoFileName(),
-                                                                personDTO.getDateOfBirth(),
-                                                                personDTO.getDateOfDeath(),
-                                                                personDTO.getTypes(),
-                                                                personDTO.getCreationDate(),
-                                                                personDTO.getLastUpdate()
-                                                        )
-                                                )
-                                                .map(personMapper::personToPersonDTO)
+                                personRepository.persist(personMapper.toEntity(personDTO))
+                                        .map(personMapper::toDTO)
                         )
                         .onFailure().transform(throwable -> {
                                     log.error("Erreur lors de la création de la personne: {}", personDTO, throwable);
@@ -783,7 +772,7 @@ public class PersonService implements PersonServiceInterface {
                                             // Aucun changement de photo
                                             return Uni.createFrom().item(person);
                                         })
-                                        .map(personMapper::personToPersonDTO)
+                                        .map(personMapper::toDTO)
                         )
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -959,7 +948,6 @@ public class PersonService implements PersonServiceInterface {
                                                         .invoke(countries -> person.removeCountry(countryId))
                                                         .replaceWith(person)
                                         )
-                                        // TODO: enlever persist ?
                                         .chain(personRepository::persist)
                                         .flatMap(this::fetchAndMapCountries)
                         )
