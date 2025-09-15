@@ -132,8 +132,8 @@ public class MovieService {
         return
                 movieRepository.countMovies(criteriaDTO)
                         .onFailure().transform(throwable -> {
-                                    log.error("Erreur lors du comptage des films", throwable);
-                                    return new WebApplicationException("Erreur lors du comptage des films", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur interne lors du comptage des films avec critères={}", criteriaDTO, throwable);
+                                    return new WebApplicationException("Impossible de compter les films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -157,8 +157,8 @@ public class MovieService {
         return
                 personRepository.countPersonsByMovie(id, criteriaDTO)
                         .onFailure().transform(throwable -> {
-                                    log.error("Erreur lors du comptage des personnes pour le film {}", id, throwable);
-                                    return new WebApplicationException("Erreur lors du comptage des personnes", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur interne lors du comptage des personnes associées au film [id={}], critères={}", id, criteriaDTO, throwable);
+                                    return new WebApplicationException("Impossible de compter les personnes liées à ce film", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -184,8 +184,8 @@ public class MovieService {
         return
                 countryRepository.countCountriesInMovies(term, lang)
                         .onFailure().transform(throwable -> {
-                                    log.error("Erreur lors du comptage des pays", throwable);
-                                    return new WebApplicationException("Erreur lors du comptage des pays", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors du comptage des pays dans les films avec filtre [term={}, lang={}]", term, lang, throwable);
+                                    return new WebApplicationException("Impossible de compter les pays des films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -209,8 +209,8 @@ public class MovieService {
         return
                 categoryRepository.countCategoriesInMovies(term)
                         .onFailure().transform(throwable -> {
-                                    log.error("Erreur lors du comptage des catégories", throwable);
-                                    return new WebApplicationException("Erreur lors du comptage des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors du comptage des catégories dans les films avec le filtre {}", term, throwable);
+                                    return new WebApplicationException("Impossible de compter les catégories des films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -239,8 +239,8 @@ public class MovieService {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
-                                    log.error("Erreur lors de la récupération du film", throwable);
-                                    return new WebApplicationException("Erreur lors de la récupération du film", Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors de la récupération du film avec l'ID {}", id, throwable);
+                                    return new WebApplicationException("Impossible de récupérer les informations du film", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -268,8 +268,8 @@ public class MovieService {
                         .findMovies(page, sort, direction, criteriaDTO)
                         .map(movieMapper::movieWithAwardsListToDTOList)
                         .onFailure().transform(throwable -> {
-                                    log.error("Erreur lors de la récupération des films", throwable);
-                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_MOVIES, Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors de la récupération de la liste des films avec les critères {}", criteriaDTO, throwable);
+                                    return new WebApplicationException("Impossible de récupérer la liste des films", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -438,30 +438,33 @@ public class MovieService {
         return
                 Panache
                         .withTransaction(() ->
-                                movieRepository.findByIdWithTechnicalTeam(id)
-                                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_FILM))
-                                        .map(movie ->
-                                                TechnicalTeamDTO.build(
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieProducers()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieDirectors()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieAssistantDirectors()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieScreenwriters()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieComposers()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieMusicians()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMoviePhotographers()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieCostumeDesigners()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieSetDesigners()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieEditors()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieCasters()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieArtists()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieSoundEditors()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieVfxSupervisors()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieSfxSupervisors()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieMakeupArtists()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieHairDressers()),
-                                                        movieTechnicianMapper.toDTOList(movie.getMovieStuntmen())
+                                        movieRepository.findTechnicalTeam(id)
+                                                .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_FILM))
+                                                .map(technicalTeam ->
+//                                                TODO: utiliser le mapper
+                                                                TechnicalTeamDTO.build(
+                                                                        Map.ofEntries(
+                                                                                Map.entry("producers", movieTechnicianMapper.toDTOList(technicalTeam.getMovieProducers())),
+                                                                                Map.entry("directors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieDirectors())),
+                                                                                Map.entry("assistantDirectors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieAssistantDirectors())),
+                                                                                Map.entry("screenwriters", movieTechnicianMapper.toDTOList(technicalTeam.getMovieScreenwriters())),
+                                                                                Map.entry("composers", movieTechnicianMapper.toDTOList(technicalTeam.getMovieComposers())),
+                                                                                Map.entry("musicians", movieTechnicianMapper.toDTOList(technicalTeam.getMovieMusicians())),
+                                                                                Map.entry("photographers", movieTechnicianMapper.toDTOList(technicalTeam.getMoviePhotographers())),
+                                                                                Map.entry("costumeDesigners", movieTechnicianMapper.toDTOList(technicalTeam.getMovieCostumeDesigners())),
+                                                                                Map.entry("setDesigners", movieTechnicianMapper.toDTOList(technicalTeam.getMovieSetDesigners())),
+                                                                                Map.entry("editors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieEditors())),
+                                                                                Map.entry("casters", movieTechnicianMapper.toDTOList(technicalTeam.getMovieCasters())),
+                                                                                Map.entry("artists", movieTechnicianMapper.toDTOList(technicalTeam.getMovieArtists())),
+                                                                                Map.entry("soundEditors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieSoundEditors())),
+                                                                                Map.entry("vfxSupervisors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieVfxSupervisors())),
+                                                                                Map.entry("sfxSupervisors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieSfxSupervisors())),
+                                                                                Map.entry("makeupArtists", movieTechnicianMapper.toDTOList(technicalTeam.getMovieMakeupArtists())),
+                                                                                Map.entry("hairDressers", movieTechnicianMapper.toDTOList(technicalTeam.getMovieHairDressers())),
+                                                                                Map.entry("stuntmen", movieTechnicianMapper.toDTOList(technicalTeam.getMovieStuntmen()))
+                                                                        )
+                                                                )
                                                 )
-                                        )
                         )
                 ;
     }

@@ -6,7 +6,9 @@ import lombok.Getter;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -68,46 +70,27 @@ public class TechnicalTeamDTO {
     @Schema(description = "Liste des cascadeurs", type = SchemaType.ARRAY)
     private List<MovieTechnicianDTO> stuntmen;
 
-    public static TechnicalTeamDTO build(
-            final List<MovieTechnicianDTO> producers,
-            final List<MovieTechnicianDTO> directors,
-            final List<MovieTechnicianDTO> assistantDirectors,
-            final List<MovieTechnicianDTO> screenwriters,
-            final List<MovieTechnicianDTO> composers,
-            final List<MovieTechnicianDTO> musicians,
-            final List<MovieTechnicianDTO> photographers,
-            final List<MovieTechnicianDTO> costumeDesigners,
-            final List<MovieTechnicianDTO> setDesigners,
-            final List<MovieTechnicianDTO> editors,
-            final List<MovieTechnicianDTO> casters,
-            final List<MovieTechnicianDTO> artists,
-            final List<MovieTechnicianDTO> soundEditors,
-            final List<MovieTechnicianDTO> vfxSupervisors,
-            final List<MovieTechnicianDTO> sfxSupervisors,
-            final List<MovieTechnicianDTO> makeupArtists,
-            final List<MovieTechnicianDTO> hairDressers,
-            final List<MovieTechnicianDTO> stuntmen
-    ) {
+    public static TechnicalTeamDTO build(final Map<String, List<MovieTechnicianDTO>> rolesMap) {
         return
                 TechnicalTeamDTO.builder()
-                        .producers(producers)
-                        .directors(directors)
-                        .assistantDirectors(assistantDirectors)
-                        .screenwriters(screenwriters)
-                        .composers(composers)
-                        .musicians(musicians)
-                        .photographers(photographers)
-                        .costumeDesigners(costumeDesigners)
-                        .setDesigners(setDesigners)
-                        .editors(editors)
-                        .casters(casters)
-                        .artists(artists)
-                        .soundEditors(soundEditors)
-                        .vfxSupervisors(vfxSupervisors)
-                        .sfxSupervisors(sfxSupervisors)
-                        .makeupArtists(makeupArtists)
-                        .hairDressers(hairDressers)
-                        .stuntmen(stuntmen)
+                        .producers(rolesMap.getOrDefault("producers", Collections.emptyList()))
+                        .directors(rolesMap.getOrDefault("directors", Collections.emptyList()))
+                        .assistantDirectors(rolesMap.getOrDefault("assistantDirectors", Collections.emptyList()))
+                        .screenwriters(rolesMap.getOrDefault("screenwriters", Collections.emptyList()))
+                        .composers(rolesMap.getOrDefault("composers", Collections.emptyList()))
+                        .musicians(rolesMap.getOrDefault("musicians", Collections.emptyList()))
+                        .photographers(rolesMap.getOrDefault("photographers", Collections.emptyList()))
+                        .costumeDesigners(rolesMap.getOrDefault("costumeDesigners", Collections.emptyList()))
+                        .setDesigners(rolesMap.getOrDefault("setDesigners", Collections.emptyList()))
+                        .editors(rolesMap.getOrDefault("editors", Collections.emptyList()))
+                        .casters(rolesMap.getOrDefault("casters", Collections.emptyList()))
+                        .artists(rolesMap.getOrDefault("artists", Collections.emptyList()))
+                        .soundEditors(rolesMap.getOrDefault("soundEditors", Collections.emptyList()))
+                        .vfxSupervisors(rolesMap.getOrDefault("vfxSupervisors", Collections.emptyList()))
+                        .sfxSupervisors(rolesMap.getOrDefault("sfxSupervisors", Collections.emptyList()))
+                        .makeupArtists(rolesMap.getOrDefault("makeupArtists", Collections.emptyList()))
+                        .hairDressers(rolesMap.getOrDefault("hairDressers", Collections.emptyList()))
+                        .stuntmen(rolesMap.getOrDefault("stuntmen", Collections.emptyList()))
                         .build()
                 ;
     }

@@ -5,7 +5,7 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class Messages {
 
-    public final String ERROR_WHILE_GETTING_MOVIES = "Erreur lors de la récupération des films";
+    public final String ERROR_WHILE_GETTING_MOVIES = "Impossible de récupérer la liste des films";
     public final String ERROR_WHILE_GETTING_ACTORS = "Erreur lors de la récupération du casting";
     public final String ERROR_WHILE_GETTING_DIRECTORS = "Erreur lors de la récupération des réalisateurs";
     public final String ERROR_WHILE_GETTING_PRODUCERS = "Erreur lors de la récupération des producteurs";
@@ -129,6 +129,7 @@ public class Messages {
     public final String NOT_FOUND_CATEGORY = "Catégorie introuvable";
     public final String NOT_FOUND_CEREMONY = "Cérémonie introuvable";
     public final String NOT_FOUND_COUNTRY = "Pays introuvable";
+    public final String NOT_FOUND_PERSON = "Personne introuvable";
     public final String NOT_FOUND_USER = "Utilisateur introuvable";
 
     public final String NULL_ACTORS = "Erreur, la liste des acteurs est nulle";
@@ -153,6 +154,4 @@ public class Messages {
     public final String NULL_CATEGORIES = "Erreur, l'ensemble des catégories est null";
     public final String NULL_CEREMONY_AWARDS = "Erreur, l'ensemble des cérémonies est nul";
     public final String NULL_COUNTRIES = "Erreur, l'ensemble des pays est nul";
-
-    public final String PERSON_NOT_FOUND = "Personne introuvable";
 }

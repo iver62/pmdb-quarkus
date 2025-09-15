@@ -2,8 +2,7 @@ package org.desha.app.mapper;
 
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.entity.MovieActor;
-import org.mapstruct.Mapper;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 import java.util.List;
 import java.util.Set;
@@ -14,9 +13,22 @@ import java.util.Set;
 )
 public interface MovieActorMapper {
 
-    MovieActorDTO toMovieActorDTO(MovieActor entity);
+    MovieActorDTO toDTO(MovieActor entity);
 
-    List<MovieActorDTO> toDTOList(List<MovieActor> entityList);
+    @Named("withoutMovie")
+    @Mapping(target = "movie", ignore = true)
+    MovieActorDTO toDTOWithoutMovie(MovieActor entity);
+
+    @Named("withoutPersonAndRank")
+    @Mapping(target = "person", ignore = true)
+    @Mapping(target = "rank", ignore = true)
+    MovieActorDTO toDTOWithoutPerson(MovieActor entity);
+
+    @IterableMapping(qualifiedByName = "withoutMovie")
+    List<MovieActorDTO> toDTOListWithoutMovie(List<MovieActor> entityList);
+
+    @IterableMapping(qualifiedByName = "withoutPersonAndRank")
+    List<MovieActorDTO> toDTOListWithoutPerson(List<MovieActor> entityList);
 
     Set<MovieActorDTO> toDTOSet(Set<MovieActor> entitySet);
 }

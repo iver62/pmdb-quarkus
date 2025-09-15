@@ -17,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MovieActor extends PanacheEntityBase implements Comparable<MovieActor> {
+public class MovieActor extends PanacheEntityBase {
 
     public static final String DEFAULT_SORT = "movie.title";
     public static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", DEFAULT_SORT, "movie.originalTitle", "movie.releaseDate", "role");
@@ -64,10 +64,5 @@ public class MovieActor extends PanacheEntityBase implements Comparable<MovieAct
 
     public String toString() {
         return id + " / " + person.getId() + ": " + person.getName() + " -> " + role + " (" + rank + ")";
-    }
-
-    @Override
-    public int compareTo(MovieActor o) {
-        return rank.compareTo(o.getRank());
     }
 }

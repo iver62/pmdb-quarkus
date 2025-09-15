@@ -37,109 +37,109 @@ public class MovieTechnicianResource {
     @GET
     @Path("/producers")
     public Uni<Response> getProducers(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieProducers, Messages.NULL_PRODUCERS, Messages.ERROR_WHILE_GETTING_PRODUCERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieProducers(), Messages.NULL_PRODUCERS, Messages.ERROR_WHILE_GETTING_PRODUCERS);
     }
 
     @GET
     @Path("/directors")
     public Uni<Response> getDirectors(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieDirectors, Messages.NULL_DIRECTORS, Messages.ERROR_WHILE_GETTING_DIRECTORS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieDirectors(), Messages.NULL_DIRECTORS, Messages.ERROR_WHILE_GETTING_DIRECTORS);
     }
 
     @GET
     @Path("/assistant-directors")
     public Uni<Response> getAssistantDirectors(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieAssistantDirectors, Messages.NULL_ASSISTANT_DIRECTORS, Messages.ERROR_WHILE_GETTING_ASSISTANT_DIRECTORS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieAssistantDirectors(), Messages.NULL_ASSISTANT_DIRECTORS, Messages.ERROR_WHILE_GETTING_ASSISTANT_DIRECTORS);
     }
 
     @GET
     @Path("/screenwriters")
     public Uni<Response> getScreenwriters(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieScreenwriters, Messages.NULL_SCREENWRITERS, Messages.ERROR_WHILE_GETTING_SCREENWRITERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieScreenwriters(), Messages.NULL_SCREENWRITERS, Messages.ERROR_WHILE_GETTING_SCREENWRITERS);
     }
 
     @GET
     @Path("/composers")
     public Uni<Response> getComposers(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieComposers, Messages.NULL_COMPOSERS, Messages.ERROR_WHILE_GETTING_COMPOSERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieComposers(), Messages.NULL_COMPOSERS, Messages.ERROR_WHILE_GETTING_COMPOSERS);
     }
 
     @GET
     @Path("/musicians")
     public Uni<Response> getMusicians(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieMusicians, Messages.NULL_MUSICIANS, Messages.ERROR_WHILE_GETTING_MUSICIANS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieMusicians(), Messages.NULL_MUSICIANS, Messages.ERROR_WHILE_GETTING_MUSICIANS);
     }
 
     @GET
     @Path("/photographers")
     public Uni<Response> getPhotographers(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMoviePhotographers, Messages.NULL_PHOTOGRAPHERS, Messages.ERROR_WHILE_GETTING_PHOTOGRAPHERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMoviePhotographers(), Messages.NULL_PHOTOGRAPHERS, Messages.ERROR_WHILE_GETTING_PHOTOGRAPHERS);
     }
 
     @GET
     @Path("/costume-designers")
     public Uni<Response> getCostumeDesigners(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieCostumeDesigners, Messages.NULL_COSTUME_DESIGNERS, Messages.ERROR_WHILE_GETTING_COSTUME_DESIGNERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieCostumeDesigners(), Messages.NULL_COSTUME_DESIGNERS, Messages.ERROR_WHILE_GETTING_COSTUME_DESIGNERS);
     }
 
     @GET
     @Path("/set-designers")
     public Uni<Response> getSetDesigners(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieSetDesigners, Messages.NULL_SET_DESIGNERS, Messages.ERROR_WHILE_GETTING_SET_DESIGNERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieSetDesigners(), Messages.NULL_SET_DESIGNERS, Messages.ERROR_WHILE_GETTING_SET_DESIGNERS);
     }
 
     @GET
     @Path("/editors")
     public Uni<Response> getEditors(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieEditors, Messages.NULL_EDITORS, Messages.ERROR_WHILE_GETTING_EDITORS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieEditors(), Messages.NULL_EDITORS, Messages.ERROR_WHILE_GETTING_EDITORS);
     }
 
     @GET
     @Path("/casters")
     public Uni<Response> getCasters(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieCasters, Messages.NULL_CASTERS, Messages.ERROR_WHILE_GETTING_CASTERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieCasters(), Messages.NULL_CASTERS, Messages.ERROR_WHILE_GETTING_CASTERS);
     }
 
     @GET
     @Path("/artists")
     public Uni<Response> getArtists(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieArtists, Messages.NULL_ARTISTS, Messages.ERROR_WHILE_GETTING_ARTISTS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieArtists(), Messages.NULL_ARTISTS, Messages.ERROR_WHILE_GETTING_ARTISTS);
     }
 
     @GET
     @Path("/sound-editors")
     public Uni<Response> getSoundEditors(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieSoundEditors, Messages.NULL_SOUND_EDITORS, Messages.ERROR_WHILE_GETTING_SOUND_EDITORS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieSoundEditors(), Messages.NULL_SOUND_EDITORS, Messages.ERROR_WHILE_GETTING_SOUND_EDITORS);
     }
 
     @GET
     @Path("/vfx-supervisors")
     public Uni<Response> getVfxSupervisors(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieVfxSupervisors, Messages.NULL_VFX_SUPERVISORS, Messages.ERROR_WHILE_GETTING_VFX_SUPERVISORS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieVfxSupervisors(), Messages.NULL_VFX_SUPERVISORS, Messages.ERROR_WHILE_GETTING_VFX_SUPERVISORS);
     }
 
     @GET
     @Path("/sfx-supervisors")
     public Uni<Response> getSfxSupervisors(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieSfxSupervisors, Messages.NULL_SFX_SUPERVISORS, Messages.ERROR_WHILE_GETTING_SFX_SUPERVISORS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieSfxSupervisors(), Messages.NULL_SFX_SUPERVISORS, Messages.ERROR_WHILE_GETTING_SFX_SUPERVISORS);
     }
 
     @GET
     @Path("/makeup-artists")
     public Uni<Response> getMakeupArtists(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieMakeupArtists, Messages.NULL_MAKEUP_ARTISTS, Messages.ERROR_WHILE_GETTING_MAKEUP_ARTISTS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieMakeupArtists(), Messages.NULL_MAKEUP_ARTISTS, Messages.ERROR_WHILE_GETTING_MAKEUP_ARTISTS);
     }
 
     @GET
     @Path("/hair-dressers")
     public Uni<Response> getHairDressers(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieHairDressers, Messages.NULL_HAIRDRESSERS, Messages.ERROR_WHILE_GETTING_HAIRDRESSERS);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieHairDressers(), Messages.NULL_HAIRDRESSERS, Messages.ERROR_WHILE_GETTING_HAIRDRESSERS);
     }
 
     @GET
     @Path("/stuntmen")
     public Uni<Response> getStuntmen(@RestPath Long id) {
-        return getTechniciansByMovieResponse(id, Movie::getMovieStuntmen, Messages.NULL_STUNTMEN, Messages.ERROR_WHILE_GETTING_STUNTMEN);
+        return getTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieStuntmen(), Messages.NULL_STUNTMEN, Messages.ERROR_WHILE_GETTING_STUNTMEN);
     }
 
     private <T extends MovieTechnician> Uni<Response> getTechniciansByMovieResponse(
@@ -169,7 +169,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieProducers,
+                        movie -> movie.getTechnicalTeam().getMovieProducers(),
                         preparePerson(PersonType.PRODUCER, MovieProducer::build),
                         Messages.NULL_PRODUCERS,
                         Messages.ERROR_WHILE_UPDATING_PRODUCERS
@@ -184,7 +184,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieDirectors,
+                        movie -> movie.getTechnicalTeam().getMovieDirectors(),
                         preparePerson(PersonType.DIRECTOR, MovieDirector::build),
                         Messages.NULL_DIRECTORS,
                         Messages.ERROR_WHILE_UPDATING_DIRECTORS
@@ -199,7 +199,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieAssistantDirectors,
+                        movie -> movie.getTechnicalTeam().getMovieAssistantDirectors(),
                         preparePerson(PersonType.ASSISTANT_DIRECTOR, MovieAssistantDirector::build),
                         Messages.NULL_ASSISTANT_DIRECTORS,
                         Messages.ERROR_WHILE_UPDATING_ASSISTANT_DIRECTORS
@@ -214,7 +214,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieScreenwriters,
+                        movie -> movie.getTechnicalTeam().getMovieScreenwriters(),
                         preparePerson(PersonType.SCREENWRITER, MovieScreenwriter::build),
                         Messages.NULL_SCREENWRITERS,
                         Messages.ERROR_WHILE_UPDATING_SCREENWRITERS
@@ -229,7 +229,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieComposers,
+                        movie -> movie.getTechnicalTeam().getMovieComposers(),
                         preparePerson(PersonType.COMPOSER, MovieComposer::build),
                         Messages.NULL_COMPOSERS,
                         Messages.ERROR_WHILE_UPDATING_COMPOSERS
@@ -244,7 +244,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieMusicians,
+                        movie -> movie.getTechnicalTeam().getMovieMusicians(),
                         preparePerson(PersonType.MUSICIAN, MovieMusician::build),
                         Messages.NULL_MUSICIANS,
                         Messages.ERROR_WHILE_UPDATING_MUSICIANS
@@ -259,7 +259,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMoviePhotographers,
+                        movie -> movie.getTechnicalTeam().getMoviePhotographers(),
                         preparePerson(PersonType.PHOTOGRAPHER, MoviePhotographer::build),
                         Messages.NULL_PHOTOGRAPHERS,
                         Messages.ERROR_WHILE_UPDATING_PHOTOGRAPHERS
@@ -274,7 +274,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieCostumeDesigners,
+                        movie -> movie.getTechnicalTeam().getMovieCostumeDesigners(),
                         preparePerson(PersonType.COSTUME_DESIGNER, MovieCostumeDesigner::build),
                         Messages.NULL_COSTUME_DESIGNERS,
                         Messages.ERROR_WHILE_UPDATING_COSTUME_DESIGNERS
@@ -289,7 +289,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieSetDesigners,
+                        movie -> movie.getTechnicalTeam().getMovieSetDesigners(),
                         preparePerson(PersonType.SET_DESIGNER, MovieSetDesigner::build),
                         Messages.NULL_SET_DESIGNERS,
                         Messages.ERROR_WHILE_UPDATING_SET_DESIGNERS
@@ -304,7 +304,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieEditors,
+                        movie -> movie.getTechnicalTeam().getMovieEditors(),
                         preparePerson(PersonType.EDITOR, MovieEditor::build),
                         Messages.NULL_EDITORS,
                         Messages.ERROR_WHILE_UPDATING_EDITORS
@@ -319,7 +319,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieCasters,
+                        movie -> movie.getTechnicalTeam().getMovieCasters(),
                         preparePerson(PersonType.CASTER, MovieCaster::build),
                         Messages.NULL_CASTERS,
                         Messages.ERROR_WHILE_UPDATING_CASTERS
@@ -334,7 +334,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieArtists,
+                        movie -> movie.getTechnicalTeam().getMovieArtists(),
                         preparePerson(PersonType.ARTIST, MovieArtist::build),
                         Messages.NULL_ARTISTS,
                         Messages.ERROR_WHILE_UPDATING_ARTISTS
@@ -349,7 +349,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieSoundEditors,
+                        movie -> movie.getTechnicalTeam().getMovieSoundEditors(),
                         preparePerson(PersonType.SOUND_EDITOR, MovieSoundEditor::build),
                         Messages.NULL_SOUND_EDITORS,
                         Messages.ERROR_WHILE_UPDATING_SOUND_EDITORS
@@ -364,7 +364,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieVfxSupervisors,
+                        movie -> movie.getTechnicalTeam().getMovieVfxSupervisors(),
                         preparePerson(PersonType.VFX_SUPERVISOR, MovieVfxSupervisor::build),
                         Messages.NULL_VFX_SUPERVISORS,
                         Messages.ERROR_WHILE_UPDATING_VFX_SUPERVISORS
@@ -379,7 +379,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieSfxSupervisors,
+                        movie -> movie.getTechnicalTeam().getMovieSfxSupervisors(),
                         preparePerson(PersonType.SFX_SUPERVISOR, MovieSfxSupervisor::build),
                         Messages.NULL_SFX_SUPERVISORS,
                         Messages.ERROR_WHILE_UPDATING_SFX_SUPERVISORS
@@ -394,7 +394,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieMakeupArtists,
+                        movie -> movie.getTechnicalTeam().getMovieMakeupArtists(),
                         preparePerson(PersonType.MAKEUP_ARTIST, MovieMakeupArtist::build),
                         Messages.NULL_MAKEUP_ARTISTS,
                         Messages.ERROR_WHILE_UPDATING_MAKEUP_ARTISTS
@@ -410,7 +410,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieHairDressers,
+                        movie -> movie.getTechnicalTeam().getMovieHairDressers(),
                         preparePerson(PersonType.HAIR_DRESSER, MovieHairDresser::build),
                         Messages.NULL_HAIRDRESSERS,
                         Messages.ERROR_WHILE_UPDATING_HAIRDRESSERS
@@ -425,7 +425,7 @@ public class MovieTechnicianResource {
                 saveTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieStuntmen,
+                        movie -> movie.getTechnicalTeam().getMovieStuntmen(),
                         preparePerson(PersonType.STUNT_MAN, MovieStuntman::build),
                         Messages.NULL_STUNTMEN,
                         Messages.ERROR_WHILE_UPDATING_STUNTMEN
@@ -465,7 +465,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieProducers,
+                        movie -> movie.getTechnicalTeam().getMovieProducers(),
                         preparePerson(PersonType.PRODUCER, MovieProducer::build),
                         Messages.NULL_PRODUCERS,
                         Messages.ERROR_WHILE_ADDING_PRODUCERS
@@ -480,7 +480,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieDirectors,
+                        movie -> movie.getTechnicalTeam().getMovieDirectors(),
                         preparePerson(PersonType.DIRECTOR, MovieDirector::build),
                         Messages.NULL_DIRECTORS,
                         Messages.ERROR_WHILE_ADDING_DIRECTORS
@@ -495,7 +495,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieAssistantDirectors,
+                        movie -> movie.getTechnicalTeam().getMovieAssistantDirectors(),
                         preparePerson(PersonType.ASSISTANT_DIRECTOR, MovieAssistantDirector::build),
                         Messages.NULL_ASSISTANT_DIRECTORS,
                         Messages.ERROR_WHILE_ADDING_ASSISTANT_DIRECTORS
@@ -510,7 +510,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieScreenwriters,
+                        movie -> movie.getTechnicalTeam().getMovieScreenwriters(),
                         preparePerson(PersonType.SCREENWRITER, MovieScreenwriter::build),
                         Messages.NULL_SCREENWRITERS,
                         Messages.ERROR_WHILE_ADDING_SCREENWRITERS
@@ -525,7 +525,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieComposers,
+                        movie -> movie.getTechnicalTeam().getMovieComposers(),
                         preparePerson(PersonType.COMPOSER, MovieComposer::build),
                         Messages.NULL_COMPOSERS,
                         Messages.ERROR_WHILE_ADDING_COMPOSERS
@@ -540,7 +540,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieMusicians,
+                        movie -> movie.getTechnicalTeam().getMovieMusicians(),
                         preparePerson(PersonType.MUSICIAN, MovieMusician::build),
                         Messages.NULL_MUSICIANS,
                         Messages.ERROR_WHILE_ADDING_MUSICIANS
@@ -555,7 +555,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMoviePhotographers,
+                        movie -> movie.getTechnicalTeam().getMoviePhotographers(),
                         preparePerson(PersonType.PHOTOGRAPHER, MoviePhotographer::build),
                         Messages.NULL_PHOTOGRAPHERS,
                         Messages.ERROR_WHILE_ADDING_PHOTOGRAPHERS
@@ -570,7 +570,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieCostumeDesigners,
+                        movie -> movie.getTechnicalTeam().getMovieCostumeDesigners(),
                         preparePerson(PersonType.COSTUME_DESIGNER, MovieCostumeDesigner::build),
                         Messages.NULL_COSTUME_DESIGNERS,
                         Messages.ERROR_WHILE_ADDING_COSTUME_DESIGNERS
@@ -585,7 +585,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieSetDesigners,
+                        movie -> movie.getTechnicalTeam().getMovieSetDesigners(),
                         preparePerson(PersonType.SET_DESIGNER, MovieSetDesigner::build),
                         Messages.NULL_SET_DESIGNERS,
                         Messages.ERROR_WHILE_ADDING_SET_DESIGNERS
@@ -600,7 +600,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieEditors,
+                        movie -> movie.getTechnicalTeam().getMovieEditors(),
                         preparePerson(PersonType.EDITOR, MovieEditor::build),
                         Messages.NULL_EDITORS,
                         Messages.ERROR_WHILE_ADDING_EDITORS
@@ -615,7 +615,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieCasters,
+                        movie -> movie.getTechnicalTeam().getMovieCasters(),
                         preparePerson(PersonType.CASTER, MovieCaster::build),
                         Messages.NULL_CASTERS,
                         Messages.ERROR_WHILE_ADDING_CASTERS
@@ -630,7 +630,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieArtists,
+                        movie -> movie.getTechnicalTeam().getMovieArtists(),
                         preparePerson(PersonType.ARTIST, MovieArtist::build),
                         Messages.NULL_ARTISTS,
                         Messages.ERROR_WHILE_ADDING_ARTISTS
@@ -645,7 +645,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieSoundEditors,
+                        movie -> movie.getTechnicalTeam().getMovieSoundEditors(),
                         preparePerson(PersonType.SOUND_EDITOR, MovieSoundEditor::build),
                         Messages.NULL_SOUND_EDITORS,
                         Messages.ERROR_WHILE_ADDING_SOUND_EDITORS
@@ -660,7 +660,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieVfxSupervisors,
+                        movie -> movie.getTechnicalTeam().getMovieVfxSupervisors(),
                         preparePerson(PersonType.VFX_SUPERVISOR, MovieVfxSupervisor::build),
                         Messages.NULL_VFX_SUPERVISORS,
                         Messages.ERROR_WHILE_ADDING_VFX_SUPERVISORS
@@ -675,7 +675,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieSfxSupervisors,
+                        movie -> movie.getTechnicalTeam().getMovieSfxSupervisors(),
                         preparePerson(PersonType.SFX_SUPERVISOR, MovieSfxSupervisor::build),
                         Messages.NULL_SFX_SUPERVISORS,
                         Messages.ERROR_WHILE_ADDING_SFX_SUPERVISORS
@@ -690,7 +690,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieMakeupArtists,
+                        movie -> movie.getTechnicalTeam().getMovieMakeupArtists(),
                         preparePerson(PersonType.MAKEUP_ARTIST, MovieMakeupArtist::build),
                         Messages.NULL_MAKEUP_ARTISTS,
                         Messages.ERROR_WHILE_ADDING_MAKEUP_ARTISTS
@@ -705,7 +705,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieHairDressers,
+                        movie -> movie.getTechnicalTeam().getMovieHairDressers(),
                         preparePerson(PersonType.HAIR_DRESSER, MovieHairDresser::build),
                         Messages.NULL_HAIRDRESSERS,
                         Messages.ERROR_WHILE_ADDING_HAIRDRESSERS
@@ -720,7 +720,7 @@ public class MovieTechnicianResource {
                 addTechniciansByMovieResponse(
                         id,
                         movieTechnicianDTOList,
-                        Movie::getMovieStuntmen,
+                        movie -> movie.getTechnicalTeam().getMovieStuntmen(),
                         preparePerson(PersonType.STUNT_MAN, MovieStuntman::build),
                         Messages.NULL_STUNTMEN,
                         Messages.ERROR_WHILE_ADDING_STUNTMEN
@@ -767,7 +767,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieProducers,
+                        movie -> movie.getTechnicalTeam().getMovieProducers(),
                         Messages.NULL_PRODUCERS,
                         Messages.ERROR_WHILE_REMOVING_PRODUCER
                 );
@@ -781,7 +781,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieDirectors,
+                        movie -> movie.getTechnicalTeam().getMovieDirectors(),
                         Messages.NULL_DIRECTORS,
                         Messages.ERROR_WHILE_REMOVING_DIRECTOR
                 );
@@ -795,7 +795,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieDirectors,
+                        movie -> movie.getTechnicalTeam().getMovieDirectors(),
                         Messages.NULL_ASSISTANT_DIRECTORS,
                         Messages.ERROR_WHILE_REMOVING_ASSISTANT_DIRECTOR
                 );
@@ -809,7 +809,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieScreenwriters,
+                        movie -> movie.getTechnicalTeam().getMovieScreenwriters(),
                         Messages.NULL_SCREENWRITERS,
                         Messages.ERROR_WHILE_REMOVING_SCREENWRITER
                 );
@@ -823,7 +823,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieComposers,
+                        movie -> movie.getTechnicalTeam().getMovieComposers(),
                         Messages.NULL_COMPOSERS,
                         Messages.ERROR_WHILE_REMOVING_COMPOSER
                 );
@@ -837,7 +837,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieMusicians,
+                        movie -> movie.getTechnicalTeam().getMovieMusicians(),
                         Messages.NULL_MUSICIANS,
                         Messages.ERROR_WHILE_REMOVING_MUSICIAN
                 );
@@ -851,7 +851,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMoviePhotographers,
+                        movie -> movie.getTechnicalTeam().getMoviePhotographers(),
                         Messages.NULL_PHOTOGRAPHERS,
                         Messages.ERROR_WHILE_REMOVING_PHOTOGRAPHER
                 );
@@ -865,7 +865,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieCostumeDesigners,
+                        movie -> movie.getTechnicalTeam().getMovieCostumeDesigners(),
                         Messages.NULL_COSTUME_DESIGNERS,
                         Messages.ERROR_WHILE_REMOVING_COSTUME_DESIGNER
                 );
@@ -879,7 +879,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieSetDesigners,
+                        movie -> movie.getTechnicalTeam().getMovieSetDesigners(),
                         Messages.NULL_SET_DESIGNERS,
                         Messages.ERROR_WHILE_REMOVING_SET_DESIGNER
                 );
@@ -893,7 +893,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieEditors,
+                        movie -> movie.getTechnicalTeam().getMovieEditors(),
                         Messages.NULL_EDITORS,
                         Messages.ERROR_WHILE_REMOVING_EDITOR
                 );
@@ -907,7 +907,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieCasters,
+                        movie -> movie.getTechnicalTeam().getMovieCasters(),
                         Messages.NULL_CASTERS,
                         Messages.ERROR_WHILE_REMOVING_CASTER
                 );
@@ -921,7 +921,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieArtists,
+                        movie -> movie.getTechnicalTeam().getMovieArtists(),
                         Messages.NULL_ARTISTS,
                         Messages.ERROR_WHILE_REMOVING_ARTIST
                 );
@@ -935,7 +935,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieSoundEditors,
+                        movie -> movie.getTechnicalTeam().getMovieSoundEditors(),
                         Messages.NULL_SOUND_EDITORS,
                         Messages.ERROR_WHILE_REMOVING_SOUND_EDITOR
                 );
@@ -949,7 +949,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieVfxSupervisors,
+                        movie -> movie.getTechnicalTeam().getMovieVfxSupervisors(),
                         Messages.NULL_VFX_SUPERVISORS,
                         Messages.ERROR_WHILE_REMOVING_VFX_SUPERVISOR
                 );
@@ -963,7 +963,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieSfxSupervisors,
+                        movie -> movie.getTechnicalTeam().getMovieSfxSupervisors(),
                         Messages.NULL_SFX_SUPERVISORS,
                         Messages.ERROR_WHILE_REMOVING_SFX_SUPERVISOR
                 );
@@ -977,7 +977,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieMakeupArtists,
+                        movie -> movie.getTechnicalTeam().getMovieMakeupArtists(),
                         Messages.NULL_MAKEUP_ARTISTS,
                         Messages.ERROR_WHILE_REMOVING_MAKEUP_ARTIST
                 );
@@ -991,7 +991,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieHairDressers,
+                        movie -> movie.getTechnicalTeam().getMovieHairDressers(),
                         Messages.NULL_HAIRDRESSERS,
                         Messages.ERROR_WHILE_REMOVING_HAIRDRESSER
                 );
@@ -1005,7 +1005,7 @@ public class MovieTechnicianResource {
                 removeTechnicianByMovieResponse(
                         movieId,
                         personId,
-                        Movie::getMovieStuntmen,
+                        movie -> movie.getTechnicalTeam().getMovieStuntmen(),
                         Messages.NULL_STUNTMEN,
                         Messages.ERROR_WHILE_REMOVING_STUNTMAN
                 );
@@ -1042,126 +1042,126 @@ public class MovieTechnicianResource {
     @Path("/producers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteProducers(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieProducers, Messages.NULL_PRODUCERS, Messages.ERROR_WHILE_CLEARING_PRODUCERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieProducers(), Messages.NULL_PRODUCERS, Messages.ERROR_WHILE_CLEARING_PRODUCERS);
     }
 
     @DELETE
     @Path("/directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteDirectors(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieDirectors, Messages.NULL_DIRECTORS, Messages.ERROR_WHILE_CLEARING_DIRECTORS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieDirectors(), Messages.NULL_DIRECTORS, Messages.ERROR_WHILE_CLEARING_DIRECTORS);
     }
 
     @DELETE
     @Path("/assistant-directors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteAssistantDirectors(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieAssistantDirectors, Messages.NULL_ASSISTANT_DIRECTORS, Messages.ERROR_WHILE_CLEARING_ASSISTANT_DIRECTORS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieAssistantDirectors(), Messages.NULL_ASSISTANT_DIRECTORS, Messages.ERROR_WHILE_CLEARING_ASSISTANT_DIRECTORS);
     }
 
     @DELETE
     @Path("/screenwriters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteScreenwriters(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieScreenwriters, Messages.NULL_SCREENWRITERS, Messages.ERROR_WHILE_CLEARING_SCREENWRITERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieScreenwriters(), Messages.NULL_SCREENWRITERS, Messages.ERROR_WHILE_CLEARING_SCREENWRITERS);
     }
 
     @DELETE
     @Path("/composers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteComposers(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieComposers, Messages.NULL_COMPOSERS, Messages.ERROR_WHILE_CLEARING_COMPOSERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieComposers(), Messages.NULL_COMPOSERS, Messages.ERROR_WHILE_CLEARING_COMPOSERS);
     }
 
     @DELETE
     @Path("/musicians")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteMusicians(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieMusicians, Messages.NULL_MUSICIANS, Messages.ERROR_WHILE_CLEARING_MUSICIANS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieMusicians(), Messages.NULL_MUSICIANS, Messages.ERROR_WHILE_CLEARING_MUSICIANS);
     }
 
     @DELETE
     @Path("/set-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSetDesigners(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieSetDesigners, Messages.NULL_SET_DESIGNERS, Messages.ERROR_WHILE_CLEARING_SET_DESIGNERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieSetDesigners(), Messages.NULL_SET_DESIGNERS, Messages.ERROR_WHILE_CLEARING_SET_DESIGNERS);
     }
 
     @DELETE
     @Path("/costume-designers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCostumeDesigners(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieCostumeDesigners, Messages.NULL_COSTUME_DESIGNERS, Messages.ERROR_WHILE_CLEARING_COSTUME_DESIGNERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieCostumeDesigners(), Messages.NULL_COSTUME_DESIGNERS, Messages.ERROR_WHILE_CLEARING_COSTUME_DESIGNERS);
     }
 
     @DELETE
     @Path("/photographers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deletePhotographers(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMoviePhotographers, Messages.NULL_PHOTOGRAPHERS, Messages.ERROR_WHILE_CLEARING_PHOTOGRAPHERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMoviePhotographers(), Messages.NULL_PHOTOGRAPHERS, Messages.ERROR_WHILE_CLEARING_PHOTOGRAPHERS);
     }
 
     @DELETE
     @Path("/editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteEditors(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieEditors, Messages.NULL_EDITORS, Messages.ERROR_WHILE_CLEARING_EDITORS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieEditors(), Messages.NULL_EDITORS, Messages.ERROR_WHILE_CLEARING_EDITORS);
     }
 
     @DELETE
     @Path("/casters")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteCasters(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieCasters, Messages.NULL_CASTERS, Messages.ERROR_WHILE_CLEARING_CASTERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieCasters(), Messages.NULL_CASTERS, Messages.ERROR_WHILE_CLEARING_CASTERS);
     }
 
     @DELETE
     @Path("/artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteArtists(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieArtists, Messages.NULL_ARTISTS, Messages.ERROR_WHILE_CLEARING_ARTISTS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieArtists(), Messages.NULL_ARTISTS, Messages.ERROR_WHILE_CLEARING_ARTISTS);
     }
 
     @DELETE
     @Path("/sound-editors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSoundEditors(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieSoundEditors, Messages.NULL_SOUND_EDITORS, Messages.ERROR_WHILE_CLEARING_SOUND_EDITORS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieSoundEditors(), Messages.NULL_SOUND_EDITORS, Messages.ERROR_WHILE_CLEARING_SOUND_EDITORS);
     }
 
     @DELETE
     @Path("/vfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteVfxSupervisors(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieVfxSupervisors, Messages.NULL_VFX_SUPERVISORS, Messages.ERROR_WHILE_CLEARING_VFX_SUPERVISORS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieVfxSupervisors(), Messages.NULL_VFX_SUPERVISORS, Messages.ERROR_WHILE_CLEARING_VFX_SUPERVISORS);
     }
 
     @DELETE
     @Path("/sfx-supervisors")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteSfxSupervisors(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieVfxSupervisors, Messages.NULL_SFX_SUPERVISORS, Messages.ERROR_WHILE_CLEARING_SFX_SUPERVISORS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieVfxSupervisors(), Messages.NULL_SFX_SUPERVISORS, Messages.ERROR_WHILE_CLEARING_SFX_SUPERVISORS);
     }
 
     @DELETE
     @Path("/{id}/makeup-artists")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteMakeupArtists(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieMakeupArtists, Messages.NULL_MAKEUP_ARTISTS, Messages.ERROR_WHILE_CLEARING_MAKEUP_ARTISTS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieMakeupArtists(), Messages.NULL_MAKEUP_ARTISTS, Messages.ERROR_WHILE_CLEARING_MAKEUP_ARTISTS);
     }
 
     @DELETE
     @Path("/hair-dressers")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteHairDressers(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieHairDressers, Messages.NULL_HAIRDRESSERS, Messages.ERROR_WHILE_CLEARING_HAIRDRESSERS);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieHairDressers(), Messages.NULL_HAIRDRESSERS, Messages.ERROR_WHILE_CLEARING_HAIRDRESSERS);
     }
 
     @DELETE
     @Path("/stuntmen")
     @RolesAllowed({"user", "admin"})
     public Uni<Response> deleteStuntmen(@RestPath Long id) {
-        return clearTechniciansByMovieResponse(id, Movie::getMovieStuntmen, Messages.NULL_STUNTMEN, Messages.ERROR_WHILE_CLEARING_STUNTMEN);
+        return clearTechniciansByMovieResponse(id, movie -> movie.getTechnicalTeam().getMovieStuntmen(), Messages.NULL_STUNTMEN, Messages.ERROR_WHILE_CLEARING_STUNTMEN);
     }
 
     private <T extends MovieTechnician> Uni<Response> clearTechniciansByMovieResponse(

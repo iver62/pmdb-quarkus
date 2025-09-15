@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Movie;
 import org.desha.app.domain.entity.Person;
+import org.desha.app.domain.entity.TechnicalTeam;
 import org.desha.app.domain.record.MovieWithAwardsNumber;
 import org.desha.app.domain.record.Repartition;
 import org.desha.app.helper.MovieRepositoryHelper;
@@ -199,28 +200,28 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
      * @return Un {@link Uni} contenant le film correspondant avec toutes ses relations d'équipe technique chargées,
      * ou {@code null} si aucun film n'existe avec cet identifiant.
      */
-    public Uni<Movie> findByIdWithTechnicalTeam(Long id) {
+    public Uni<TechnicalTeam> findTechnicalTeam(Long id) {
         return
                 findById(id)
-                        .call(movie ->
-                                Mutiny.fetch(movie.getMovieProducers()).invoke(movie::setMovieProducers)
-                                        .call(() -> Mutiny.fetch(movie.getMovieDirectors()).invoke(movie::setMovieDirectors))
-                                        .call(() -> Mutiny.fetch(movie.getMovieAssistantDirectors()).invoke(movie::setMovieAssistantDirectors))
-                                        .call(() -> Mutiny.fetch(movie.getMovieScreenwriters()).invoke(movie::setMovieScreenwriters))
-                                        .call(() -> Mutiny.fetch(movie.getMovieComposers()).invoke(movie::setMovieComposers))
-                                        .call(() -> Mutiny.fetch(movie.getMovieMusicians()).invoke(movie::setMovieMusicians))
-                                        .call(() -> Mutiny.fetch(movie.getMoviePhotographers()).invoke(movie::setMoviePhotographers))
-                                        .call(() -> Mutiny.fetch(movie.getMovieCostumeDesigners()).invoke(movie::setMovieCostumeDesigners))
-                                        .call(() -> Mutiny.fetch(movie.getMovieSetDesigners()).invoke(movie::setMovieSetDesigners))
-                                        .call(() -> Mutiny.fetch(movie.getMovieEditors()).invoke(movie::setMovieEditors))
-                                        .call(() -> Mutiny.fetch(movie.getMovieCasters()).invoke(movie::setMovieCasters))
-                                        .call(() -> Mutiny.fetch(movie.getMovieArtists()).invoke(movie::setMovieArtists))
-                                        .call(() -> Mutiny.fetch(movie.getMovieSoundEditors()).invoke(movie::setMovieSoundEditors))
-                                        .call(() -> Mutiny.fetch(movie.getMovieVfxSupervisors()).invoke(movie::setMovieVfxSupervisors))
-                                        .call(() -> Mutiny.fetch(movie.getMovieSfxSupervisors()).invoke(movie::setMovieSfxSupervisors))
-                                        .call(() -> Mutiny.fetch(movie.getMovieMakeupArtists()).invoke(movie::setMovieMakeupArtists))
-                                        .call(() -> Mutiny.fetch(movie.getMovieHairDressers()).invoke(movie::setMovieHairDressers))
-                                        .call(() -> Mutiny.fetch(movie.getMovieStuntmen()).invoke(movie::setMovieStuntmen))
+                        .map(Movie::getTechnicalTeam)
+                        .call(technicalTeam -> Mutiny.fetch(technicalTeam.getMovieProducers()).invoke(technicalTeam::setMovieProducers)
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieDirectors()).invoke(technicalTeam::setMovieDirectors))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieAssistantDirectors()).invoke(technicalTeam::setMovieAssistantDirectors))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieScreenwriters()).invoke(technicalTeam::setMovieScreenwriters))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieComposers()).invoke(technicalTeam::setMovieComposers))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieMusicians()).invoke(technicalTeam::setMovieMusicians))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMoviePhotographers()).invoke(technicalTeam::setMoviePhotographers))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieCostumeDesigners()).invoke(technicalTeam::setMovieCostumeDesigners))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieSetDesigners()).invoke(technicalTeam::setMovieSetDesigners))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieEditors()).invoke(technicalTeam::setMovieEditors))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieCasters()).invoke(technicalTeam::setMovieCasters))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieArtists()).invoke(technicalTeam::setMovieArtists))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieSoundEditors()).invoke(technicalTeam::setMovieSoundEditors))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieVfxSupervisors()).invoke(technicalTeam::setMovieVfxSupervisors))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieSfxSupervisors()).invoke(technicalTeam::setMovieSfxSupervisors))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieMakeupArtists()).invoke(technicalTeam::setMovieMakeupArtists))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieHairDressers()).invoke(technicalTeam::setMovieHairDressers))
+                                .chain(() -> Mutiny.fetch(technicalTeam.getMovieStuntmen()).invoke(technicalTeam::setMovieStuntmen))
                         )
                 ;
     }

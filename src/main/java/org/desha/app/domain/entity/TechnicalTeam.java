@@ -1,74 +1,73 @@
 package org.desha.app.domain.entity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.OneToMany;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
+@Embeddable
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class TechnicalTeam {
 
-    private List<MovieTechnician> producers;
-    private List<MovieTechnician> directors;
-    private List<MovieTechnician> assistantDirectors;
-    private List<MovieTechnician> screenwriters;
-    private List<MovieTechnician> composers;
-    private List<MovieTechnician> musicians;
-    private List<MovieTechnician> photographers;
-    private List<MovieTechnician> costumeDesigners;
-    private List<MovieTechnician> setDesigners;
-    private List<MovieTechnician> editors;
-    private List<MovieTechnician> casters;
-    private List<MovieTechnician> artists;
-    private List<MovieTechnician> soundEditors;
-    private List<MovieTechnician> vfxSupervisors;
-    private List<MovieTechnician> sfxSupervisors;
-    private List<MovieTechnician> makeupArtists;
-    private List<MovieTechnician> hairDressers;
-    private List<MovieTechnician> stuntmen;
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieProducer> movieProducers = new ArrayList<>();
 
-    public static TechnicalTeam build(
-            final List<MovieTechnician> producers,
-            final List<MovieTechnician> directors,
-            final List<MovieTechnician> assistantDirectors,
-            final List<MovieTechnician> screenwriters,
-            final List<MovieTechnician> composers,
-            final List<MovieTechnician> musicians,
-            final List<MovieTechnician> photographers,
-            final List<MovieTechnician> costumeDesigners,
-            final List<MovieTechnician> setDesigners,
-            final List<MovieTechnician> editors,
-            final List<MovieTechnician> casters,
-            final List<MovieTechnician> artists,
-            final List<MovieTechnician> soundEditors,
-            final List<MovieTechnician> vfxSupervisors,
-            final List<MovieTechnician> sfxSupervisors,
-            final List<MovieTechnician> makeupArtists,
-            final List<MovieTechnician> hairDressers,
-            final List<MovieTechnician> stuntmen
-    ) {
-        return TechnicalTeam.builder()
-                .producers(producers)
-                .directors(directors)
-                .assistantDirectors(assistantDirectors)
-                .screenwriters(screenwriters)
-                .composers(composers)
-                .musicians(musicians)
-                .photographers(photographers)
-                .costumeDesigners(costumeDesigners)
-                .setDesigners(setDesigners)
-                .editors(editors)
-                .casters(casters)
-                .artists(artists)
-                .soundEditors(soundEditors)
-                .vfxSupervisors(vfxSupervisors)
-                .sfxSupervisors(sfxSupervisors)
-                .makeupArtists(makeupArtists)
-                .hairDressers(hairDressers)
-                .stuntmen(stuntmen)
-                .build();
-    }
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieDirector> movieDirectors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieAssistantDirector> movieAssistantDirectors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieScreenwriter> movieScreenwriters = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieComposer> movieComposers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieMusician> movieMusicians = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MoviePhotographer> moviePhotographers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieCostumeDesigner> movieCostumeDesigners = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieSetDesigner> movieSetDesigners = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieEditor> movieEditors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieCaster> movieCasters = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieArtist> movieArtists = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieSoundEditor> movieSoundEditors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieVfxSupervisor> movieVfxSupervisors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieSfxSupervisor> movieSfxSupervisors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieMakeupArtist> movieMakeupArtists = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieHairDresser> movieHairDressers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieStuntman> movieStuntmen = new ArrayList<>();
+
 }
