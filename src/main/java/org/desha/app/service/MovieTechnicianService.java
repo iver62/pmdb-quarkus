@@ -60,7 +60,7 @@ public class MovieTechnicianService {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
-                                    log.error("{} pour le film {}", globalErrorMessage, id, throwable);
+                                    log.error("Erreur lors de la récupération des techniciens pour le film {}", id, throwable);
                                     return new WebApplicationException(globalErrorMessage, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
@@ -98,7 +98,7 @@ public class MovieTechnicianService {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
-                                    log.error("{} pour le film {}", globalErrorMessage, id, throwable);
+                                    log.error("Erreur lors de la mise à jour des techniciens du film {}", id, throwable);
                                     return new WebApplicationException(globalErrorMessage, Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
@@ -135,7 +135,7 @@ public class MovieTechnicianService {
                             if (throwable instanceof WebApplicationException) {
                                 return throwable;
                             }
-                            log.error("{} pour le film {}", globalErrorMessage, id, throwable);
+                            log.error("Erreur lors de l'ajout des techniciens du film {}", id, throwable);
                             return new MovieUpdateException(globalErrorMessage, throwable);
                         })
                 ;
@@ -196,7 +196,7 @@ public class MovieTechnicianService {
                             if (throwable instanceof WebApplicationException) {
                                 return throwable;
                             }
-                            log.error("{} pour le film {}", globalMessage, id, throwable);
+                            log.error("Erreur lors de la suppression de tous les techniciens pour le film {}", id, throwable);
                             return new WebApplicationException(globalMessage, Response.Status.INTERNAL_SERVER_ERROR);
                         });
     }

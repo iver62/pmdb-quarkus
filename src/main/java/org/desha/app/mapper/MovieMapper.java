@@ -23,7 +23,7 @@ public interface MovieMapper {
     @Mapping(target = "user", source = "user", qualifiedByName = "toLiteUserDTO")
     @Mapping(target = "categories", source = "categories", qualifiedByName = "toLiteCategoryDTO")
     @Mapping(target = "movieActors", ignore = true)
-    MovieDTO movieToMovieDTO(Movie entity);
+    MovieDTO toDTO(Movie entity);
 
     @Mapping(target = "id", source = "movie.id")
     @Mapping(target = "title", source = "movie.title")

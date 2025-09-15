@@ -6,7 +6,6 @@ import lombok.experimental.UtilityClass;
 public class Messages {
 
     public final String ERROR_WHILE_GETTING_MOVIES = "Impossible de récupérer la liste des films";
-    public final String ERROR_WHILE_GETTING_ACTORS = "Erreur lors de la récupération du casting";
     public final String ERROR_WHILE_GETTING_DIRECTORS = "Erreur lors de la récupération des réalisateurs";
     public final String ERROR_WHILE_GETTING_PRODUCERS = "Erreur lors de la récupération des producteurs";
     public final String ERROR_WHILE_GETTING_ASSISTANT_DIRECTORS = "Erreur lors de la récupération des assistants réalisateurs";

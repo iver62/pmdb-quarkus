@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -488,9 +487,6 @@ class MovieEndPointTest {
                 .then()
                 .statusCode(200)
                 .body(
-                        "producers.id", Matchers.contains(mockTechnicalTeamDTO.getProducers().stream()
-                                .map(dto -> dto.getId().intValue())
-                                .toArray(Integer[]::new)),
                         "directors.id", Matchers.contains(mockTechnicalTeamDTO.getDirectors().stream()
                                 .map(dto -> dto.getId().intValue())
                                 .toArray(Integer[]::new)),
@@ -498,6 +494,9 @@ class MovieEndPointTest {
                                 .map(dto -> dto.getId().intValue())
                                 .toArray(Integer[]::new)),
                         "screenwriters.id", Matchers.contains(mockTechnicalTeamDTO.getScreenwriters().stream()
+                                .map(dto -> dto.getId().intValue())
+                                .toArray(Integer[]::new)),
+                        "producers.id", Matchers.contains(mockTechnicalTeamDTO.getProducers().stream()
                                 .map(dto -> dto.getId().intValue())
                                 .toArray(Integer[]::new)),
                         "composers.id", Matchers.contains(mockTechnicalTeamDTO.getComposers().stream()
@@ -512,7 +511,7 @@ class MovieEndPointTest {
                         "costumeDesigners.id", Matchers.contains(mockTechnicalTeamDTO.getCostumeDesigners().stream()
                                 .map(dto -> dto.getId().intValue())
                                 .toArray(Integer[]::new)),
-                        "setDesigners.id", Matchers.contains(mockTechnicalTeamDTO.getSetDesigners().stream()
+                        "stageDesigners.id", Matchers.contains(mockTechnicalTeamDTO.getStageDesigners().stream()
                                 .map(dto -> dto.getId().intValue())
                                 .toArray(Integer[]::new)),
                         "editors.id", Matchers.contains(mockTechnicalTeamDTO.getEditors().stream()
@@ -1261,7 +1260,6 @@ class MovieEndPointTest {
                 .body(Matchers.equalTo("La liste des récompenses ne peut pas être nulle"))
         ;
     }
-
 
 
     @ParameterizedTest

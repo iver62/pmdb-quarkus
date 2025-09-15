@@ -132,7 +132,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Long> countMoviesByPerson(@NotNull Long id, CriteriaDTO criteriaDTO) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .chain(person -> movieRepository.countMoviesByPerson(person, criteriaDTO))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -214,7 +214,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Long> countMovieCountriesByPerson(@NotNull Long id, String term, String lang) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .flatMap(person -> countryRepository.countMovieCountriesByPerson(person, term, lang))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -245,7 +245,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Long> countMovieCategoriesByPerson(@NotNull Long id, String term) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .flatMap(person -> categoryRepository.countMovieCategoriesByPerson(person, term))
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -274,7 +274,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<PersonDTO> getById(@NotNull Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .call(person -> Mutiny.fetch(person.getCountries()).invoke(person::setCountries))
                         .map(personMapper::personToPersonDTO)
                         .onFailure().transform(throwable -> {
@@ -306,7 +306,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<LitePersonDTO> getLightById(@NotNull Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .map(personMapper::personToLitePersonDTO)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
@@ -461,7 +461,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<MovieDTO>> getMoviesByPerson(Long id, Page page, String sort, Sort.Direction direction, CriteriaDTO criteriaDTO) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .chain(person ->
                                 movieRepository
                                         .findMoviesByPerson(person, page, sort, direction, criteriaDTO)
@@ -532,7 +532,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<CountryDTO>> getMovieCountriesByPerson(@NotNull Long id, Page page, String sort, Sort.Direction direction, String term, String lang) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .flatMap(person ->
                                 countryRepository.findMovieCountriesByPerson(person, page, sort, direction, term, lang)
                                         .map(countryMapper::toDTOList)
@@ -572,7 +572,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<List<CategoryDTO>> getMovieCategoriesByPerson(@NotNull Long id, Page page, String sort, Sort.Direction direction, String term) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .flatMap(person ->
                                 categoryRepository.findMovieCategoriesByPerson(person, page, sort, direction, term)
                                         .map(categoryMapper::toDTOList)
@@ -605,7 +605,7 @@ public class PersonService implements PersonServiceInterface {
     public Uni<Set<CeremonyAwardsDTO>> getAwardsByPerson(@NotNull Long id) {
         return
                 personRepository.findById(id)
-                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                         .flatMap(
                                 person -> Mutiny.fetch(person.getAwards())
                                         .map(awardMapper::toDTOList)
@@ -755,7 +755,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 Panache.withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                                         .call(person -> countryService.getByIds(personDTO.getCountries())
                                                 .onFailure().invoke(error -> log.error("Échec de la récupération des pays associés à la personne avec l'ID {} : {}", id, error.getMessage()))
                                                 .invoke(person::setCountries)
@@ -846,7 +846,7 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                                         .chain(person ->
                                                 countryService.getByIds(
                                                                 countryDTOSet.stream()
@@ -899,7 +899,7 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                                         .flatMap(person ->
                                                 Mutiny.fetch(person.getCountries())
                                                         .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
@@ -952,7 +952,7 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(personId)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                                         .flatMap(person ->
                                                 Mutiny.fetch(person.getCountries())
                                                         .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))
@@ -994,7 +994,7 @@ public class PersonService implements PersonServiceInterface {
         return
                 Panache.withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                                         .flatMap(person -> {
                                                     final String photoFileName = person.getPhotoFileName();
                                                     return
@@ -1035,7 +1035,7 @@ public class PersonService implements PersonServiceInterface {
                 Panache
                         .withTransaction(() ->
                                 personRepository.findById(id)
-                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.PERSON_NOT_FOUND))
+                                        .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_PERSON))
                                         .flatMap(person ->
                                                 Mutiny.fetch(person.getCountries())
                                                         .onItem().ifNull().failWith(() -> new IllegalStateException(Messages.NULL_COUNTRIES))

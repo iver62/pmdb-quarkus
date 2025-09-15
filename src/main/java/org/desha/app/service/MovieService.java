@@ -44,16 +44,16 @@ public class MovieService {
     private final CategoryMapper categoryMapper;
     private final CeremonyAwardsMapper ceremonyAwardsMapper;
     private final CountryMapper countryMapper;
-    private final MovieMapper movieMapper;
     private final MovieActorMapper movieActorMapper;
-    private final MovieTechnicianMapper movieTechnicianMapper;
+    private final MovieMapper movieMapper;
     private final PersonMapper personMapper;
+    private final TechnicalTeamMapper technicalTeamMapper;
 
     private final AwardService awardService;
+    private final CategoryService categoryService;
     private final CeremonyAwardsService ceremonyAwardsService;
     private final CountryService countryService;
     private final FileService fileService;
-    private final CategoryService categoryService;
     private final NotificationService notificationService;
     private final StatsService statsService;
     private final UserNotificationService userNotificationService;
@@ -61,8 +61,8 @@ public class MovieService {
     private final CategoryRepository categoryRepository;
     private final CeremonyAwardsRepository ceremonyAwardsRepository;
     private final CountryRepository countryRepository;
-    private final MovieRepository movieRepository;
     private final MovieActorRepository movieActorRepository;
+    private final MovieRepository movieRepository;
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
 
@@ -73,21 +73,21 @@ public class MovieService {
             CountryMapper countryMapper,
             MovieMapper movieMapper,
             MovieActorMapper movieActorMapper,
-            MovieTechnicianMapper movieTechnicianMapper,
             PersonMapper personMapper,
-            CeremonyAwardsRepository ceremonyAwardsRepository,
+            TechnicalTeamMapper technicalTeamMapper,
             AwardService awardService,
             CeremonyAwardsService ceremonyAwardsService,
-            CountryService countryService,
             CategoryRepository categoryRepository,
-            CountryRepository countryRepository,
+            CountryService countryService,
             FileService fileService,
             CategoryService categoryService,
             NotificationService notificationService,
             StatsService statsService,
             UserNotificationService userNotificationService,
-            MovieRepository movieRepository,
+            CeremonyAwardsRepository ceremonyAwardsRepository,
+            CountryRepository countryRepository,
             MovieActorRepository movieActorRepository,
+            MovieRepository movieRepository,
             PersonRepository personRepository,
             UserRepository userRepository
     ) {
@@ -96,8 +96,8 @@ public class MovieService {
         this.countryMapper = countryMapper;
         this.movieMapper = movieMapper;
         this.movieActorMapper = movieActorMapper;
-        this.movieTechnicianMapper = movieTechnicianMapper;
         this.personMapper = personMapper;
+        this.technicalTeamMapper = technicalTeamMapper;
         this.ceremonyAwardsRepository = ceremonyAwardsRepository;
         this.awardService = awardService;
         this.ceremonyAwardsService = ceremonyAwardsService;
@@ -234,7 +234,7 @@ public class MovieService {
         return
                 movieRepository.findByIdWithCountriesAndCategories(id)
                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
-                        .map(movieMapper::movieToMovieDTO)
+                        .map(movieMapper::toDTO)
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
@@ -421,50 +421,29 @@ public class MovieService {
     }
 
     /**
-     * Récupère l’équipe technique complète associée à un film spécifique.
+     * Récupère l'équipe technique associée à un film donné.
      * <p>
      * Si le film correspondant à l’identifiant {@code id} n’existe pas, une exception {@link IllegalArgumentException} est levée.
      * <p>
-     * L’équipe technique est composée de producteurs, réalisateurs, assistants réalisateurs, scénaristes,
-     * compositeurs, musiciens, photographes, costumiers, décorateurs, monteurs, directeurs de casting,
-     * artistes, ingénieurs du son, superviseurs VFX/SFX, maquilleurs, coiffeurs et cascadeurs.
-     * Chaque catégorie est mappée en DTO grâce à {@link MovieTechnicianMapper}.
+     * L'équipe technique récupérée est ensuite mappée en objet {@link TechnicalTeamDTO}.
      *
-     * @param id L’identifiant du film dont on souhaite récupérer l’équipe technique. Ne peut pas être {@code null}.
-     * @return Un {@link Uni} contenant un {@link TechnicalTeamDTO} représentant l’équipe technique complète du film.
+     * @param id L’identifiant du film dont on souhaite récupérer l'équipe technique. Ne peut pas être {@code null}.
+     * @return Un {@link Uni} contenant un {@link TechnicalTeamDTO} représentant l'équipe technique du film.
      * @throws IllegalArgumentException si aucun film ne correspond à l’identifiant fourni.
+     * @throws WebApplicationException  si une erreur survient lors de la récupération de l'équipe technique.
      */
     public Uni<TechnicalTeamDTO> getTechnicalTeam(@NotNull Long id) {
         return
-                Panache
-                        .withTransaction(() ->
-                                        movieRepository.findTechnicalTeam(id)
-                                                .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_FILM))
-                                                .map(technicalTeam ->
-//                                                TODO: utiliser le mapper
-                                                                TechnicalTeamDTO.build(
-                                                                        Map.ofEntries(
-                                                                                Map.entry("producers", movieTechnicianMapper.toDTOList(technicalTeam.getMovieProducers())),
-                                                                                Map.entry("directors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieDirectors())),
-                                                                                Map.entry("assistantDirectors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieAssistantDirectors())),
-                                                                                Map.entry("screenwriters", movieTechnicianMapper.toDTOList(technicalTeam.getMovieScreenwriters())),
-                                                                                Map.entry("composers", movieTechnicianMapper.toDTOList(technicalTeam.getMovieComposers())),
-                                                                                Map.entry("musicians", movieTechnicianMapper.toDTOList(technicalTeam.getMovieMusicians())),
-                                                                                Map.entry("photographers", movieTechnicianMapper.toDTOList(technicalTeam.getMoviePhotographers())),
-                                                                                Map.entry("costumeDesigners", movieTechnicianMapper.toDTOList(technicalTeam.getMovieCostumeDesigners())),
-                                                                                Map.entry("setDesigners", movieTechnicianMapper.toDTOList(technicalTeam.getMovieSetDesigners())),
-                                                                                Map.entry("editors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieEditors())),
-                                                                                Map.entry("casters", movieTechnicianMapper.toDTOList(technicalTeam.getMovieCasters())),
-                                                                                Map.entry("artists", movieTechnicianMapper.toDTOList(technicalTeam.getMovieArtists())),
-                                                                                Map.entry("soundEditors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieSoundEditors())),
-                                                                                Map.entry("vfxSupervisors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieVfxSupervisors())),
-                                                                                Map.entry("sfxSupervisors", movieTechnicianMapper.toDTOList(technicalTeam.getMovieSfxSupervisors())),
-                                                                                Map.entry("makeupArtists", movieTechnicianMapper.toDTOList(technicalTeam.getMovieMakeupArtists())),
-                                                                                Map.entry("hairDressers", movieTechnicianMapper.toDTOList(technicalTeam.getMovieHairDressers())),
-                                                                                Map.entry("stuntmen", movieTechnicianMapper.toDTOList(technicalTeam.getMovieStuntmen()))
-                                                                        )
-                                                                )
-                                                )
+                movieRepository.findTechnicalTeam(id)
+                        .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_FILM))
+                        .map(technicalTeamMapper::toDTO)
+                        .onFailure().transform(throwable -> {
+                                    if (throwable instanceof WebApplicationException) {
+                                        return throwable;
+                                    }
+                                    log.error("Erreur lors de la récupération de l'équipe technique du film avec l'ID {}", id, throwable);
+                                    return new WebApplicationException("Impossible de récupérer l'équipe technique du film", Response.Status.INTERNAL_SERVER_ERROR);
+                                }
                         )
                 ;
     }
@@ -490,8 +469,8 @@ public class MovieService {
                                     if (throwable instanceof WebApplicationException) {
                                         return throwable;
                                     }
-                                    log.error("Erreur lors de la récupération du casting du film {}", id, throwable);
-                                    return new WebApplicationException(Messages.ERROR_WHILE_GETTING_ACTORS, Response.Status.INTERNAL_SERVER_ERROR);
+                                    log.error("Erreur lors de la récupération du casting du film avec l'ID {}", id, throwable);
+                                    return new WebApplicationException("Impossible de récupérer le casting du film", Response.Status.INTERNAL_SERVER_ERROR);
                                 }
                         )
                 ;
@@ -742,7 +721,7 @@ public class MovieService {
                                                                     .call(entity -> notificationService.createNotification("Le film " + movie.getTitle() + " a été créé.", NotificationType.INFO)
                                                                             .chain(userNotificationService::notifyAdmins)
                                                                     )
-                                                                    .map(movieMapper::movieToMovieDTO) // Retourne le film après la transaction
+                                                                    .map(movieMapper::toDTO) // Retourne le film après la transaction
                                                     )
                                                     .onFailure().transform(throwable -> {
                                                                 log.error("Erreur lors de la création du film", throwable);
@@ -1406,7 +1385,7 @@ public class MovieService {
                                         .call(movie -> notificationService.createNotification("Le film " + movie.getTitle() + " a été modifié.", NotificationType.INFO)
                                                 .chain(userNotificationService::notifyAdmins)
                                         )
-                                        .map(movieMapper::movieToMovieDTO)
+                                        .map(movieMapper::toDTO)
                         )
                         .onFailure().transform(throwable -> {
                                     if (throwable instanceof WebApplicationException) {

@@ -3,6 +3,7 @@ package org.desha.app.domain.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
+@Setter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Équipe technique associée à un film, regroupée par rôle")
@@ -41,7 +43,7 @@ public class TechnicalTeamDTO {
     private List<MovieTechnicianDTO> costumeDesigners;
 
     @Schema(description = "Liste des décorateurs de plateau", type = SchemaType.ARRAY)
-    private List<MovieTechnicianDTO> setDesigners;
+    private List<MovieTechnicianDTO> stageDesigners;
 
     @Schema(description = "Liste des monteurs", type = SchemaType.ARRAY)
     private List<MovieTechnicianDTO> editors;
@@ -73,15 +75,15 @@ public class TechnicalTeamDTO {
     public static TechnicalTeamDTO build(final Map<String, List<MovieTechnicianDTO>> rolesMap) {
         return
                 TechnicalTeamDTO.builder()
-                        .producers(rolesMap.getOrDefault("producers", Collections.emptyList()))
                         .directors(rolesMap.getOrDefault("directors", Collections.emptyList()))
                         .assistantDirectors(rolesMap.getOrDefault("assistantDirectors", Collections.emptyList()))
                         .screenwriters(rolesMap.getOrDefault("screenwriters", Collections.emptyList()))
+                        .producers(rolesMap.getOrDefault("producers", Collections.emptyList()))
                         .composers(rolesMap.getOrDefault("composers", Collections.emptyList()))
                         .musicians(rolesMap.getOrDefault("musicians", Collections.emptyList()))
                         .photographers(rolesMap.getOrDefault("photographers", Collections.emptyList()))
                         .costumeDesigners(rolesMap.getOrDefault("costumeDesigners", Collections.emptyList()))
-                        .setDesigners(rolesMap.getOrDefault("setDesigners", Collections.emptyList()))
+                        .stageDesigners(rolesMap.getOrDefault("stageDesigners", Collections.emptyList()))
                         .editors(rolesMap.getOrDefault("editors", Collections.emptyList()))
                         .casters(rolesMap.getOrDefault("casters", Collections.emptyList()))
                         .artists(rolesMap.getOrDefault("artists", Collections.emptyList()))

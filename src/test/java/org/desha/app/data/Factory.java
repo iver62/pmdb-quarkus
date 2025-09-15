@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.time.Year;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -26,7 +27,7 @@ public class Factory {
                         Utils.generateAlphabeticString(20),
                         Utils.generateAlphabeticString(200),
                         Utils.generateRandomDate(),
-                        Utils.randomLong(1, 500),
+                        Utils.randomInteger(1, 500),
                         Utils.randomLong(1, 1000000),
                         Utils.generateAlphabeticString(10),
                         Utils.randomLong(1, 1000000),
@@ -51,24 +52,26 @@ public class Factory {
     public TechnicalTeamDTO mockTechnicalTeamDTO() {
         return
                 TechnicalTeamDTO.build(
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)),
-                        mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))
+                        Map.ofEntries(
+                                Map.entry("producers", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("directors", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("assistantDirectors", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("screenwriters", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("composers", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("musicians", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("photographers", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("costumeDesigners", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("setDesigners", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("editors", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("casters", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("artists", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("soundEditors", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("vfxSupervisors", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("sfxSupervisors", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("makeupArtists", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("hairDressers", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10))),
+                                Map.entry("stuntmen", mockMovieTechnicianDTOList(Utils.randomInteger(1, 10)))
+                        )
                 );
     }
 
