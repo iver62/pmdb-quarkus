@@ -136,7 +136,7 @@ public class Person extends PanacheEntityBase {
                 Person.builder()
                         .name(StringUtils.defaultString(name).trim())
                         .photoFileName(Optional.ofNullable(photoFileName).orElse(DEFAULT_PHOTO))
-                        .types(new HashSet<>())
+                        .types(new HashSet<>()) // TODO: à supprimer
                         .build()
                 ;
     }

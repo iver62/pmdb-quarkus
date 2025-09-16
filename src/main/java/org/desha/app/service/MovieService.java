@@ -848,7 +848,7 @@ public class MovieService {
                                                 .call(ceremonyAwards -> notificationService.createNotification("Les récompenses du film " + movie.getTitle() + " ont été modifiées.", NotificationType.INFO)
                                                         .chain(userNotificationService::notifyAdmins)
                                                 )
-                                                .map(ceremonyAwardsMapper::ceremonyAwardsToCeremonyAwardsDTO)
+                                                .map(ceremonyAwardsMapper::toDTO)
                                 )
                 );
     }

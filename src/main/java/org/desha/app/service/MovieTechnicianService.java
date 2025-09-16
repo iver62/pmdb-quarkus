@@ -42,6 +42,29 @@ public class MovieTechnicianService {
         this.userNotificationService = userNotificationService;
     }
 
+    /**
+     * Récupère la liste des techniciens d’un film donné et les convertit en DTO.
+     * <p>
+     * Cette méthode effectue les étapes suivantes :
+     * <ul>
+     *     <li>Recherche le film par son identifiant via {@link MovieRepository#findById(Long)}.
+     *         Si aucun film n’est trouvé, une {@link NotFoundException} est levée.</li>
+     *     <li>Récupère la liste des techniciens à partir du film en utilisant {@code techniciansGetter}.
+     *         Si la liste est nulle, une {@link WebApplicationException} est levée avec le message fourni.</li>
+     *     <li>Transforme la liste des techniciens en liste de {@link MovieTechnicianDTO} via {@code movieTechnicianMapper}.</li>
+     *     <li>En cas d’exception non gérée, la méthode log l’erreur et renvoie une {@link WebApplicationException}
+     *         avec le message global et le statut HTTP 500.</li>
+     * </ul>
+     *
+     * @param <T>                le type de technicien du film héritant de {@link MovieTechnician}
+     * @param id                 l’identifiant du film dont on souhaite récupérer les techniciens
+     * @param techniciansGetter  fonction permettant d’extraire la liste des techniciens d’un {@link Movie}
+     * @param errorMessage       message d’erreur à utiliser si la liste de techniciens est nulle
+     * @param globalErrorMessage message d’erreur global en cas d’échec inattendu lors de la récupération
+     * @return un {@link Uni} contenant la liste des {@link MovieTechnicianDTO} du film
+     * @throws NotFoundException       si le film n’existe pas
+     * @throws WebApplicationException si la liste des techniciens est nulle ou en cas d’erreur serveur
+     */
     public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> getMovieTechniciansByMovie(
             Long id,
             Function<Movie, List<T>> techniciansGetter,
@@ -67,6 +90,34 @@ public class MovieTechnicianService {
                 ;
     }
 
+    /**
+     * Sauvegarde et met à jour la liste des techniciens pour un film donné.
+     * <p>
+     * Cette méthode effectue les étapes suivantes de manière transactionnelle :
+     * <ul>
+     *     <li>Recherche le film par son identifiant via {@link MovieRepository#findById(Long)}.
+     *         Si aucun film n’est trouvé, une {@link NotFoundException} est levée.</li>
+     *     <li>Récupère la liste des techniciens existants via {@code techniciansGetter}.
+     *         Si la liste est nulle, une {@link WebApplicationException} est levée avec le message fourni.</li>
+     *     <li>Supprime les techniciens obsolètes de la liste existante via {@link Movie#removeObsoleteTechnicians(List, List)}.</li>
+     *     <li>Met à jour les techniciens existants via {@link Movie#updateExistingTechnicians(List, List)}.</li>
+     *     <li>Ajoute les nouveaux techniciens à l’aide de {@code asyncTechnicianFactory} via {@link Movie#addTechnicians(List, Function, BiFunction)}.</li>
+     *     <li>Persiste les modifications du film et force la génération des identifiants via {@link MovieTechnicianRepository#flush()}.</li>
+     *     <li>Crée une notification sur la modification des techniciens et informe les administrateurs.</li>
+     *     <li>Récupère enfin la liste mise à jour des techniciens et la convertit en {@link MovieTechnicianDTO}.</li>
+     * </ul>
+     *
+     * @param <T>                    le type de technicien du film héritant de {@link MovieTechnician}
+     * @param id                     l’identifiant du film pour lequel les techniciens doivent être mis à jour
+     * @param movieTechnicianDTOList la liste des DTO représentant les techniciens à sauvegarder ou mettre à jour
+     * @param techniciansGetter      fonction permettant d’extraire la liste des techniciens existants d’un {@link Movie}
+     * @param asyncTechnicianFactory fonction asynchrone qui transforme un {@link MovieTechnicianDTO} en entité technicien spécifique au film
+     * @param nullCheckErrorMessage  message d’erreur à utiliser si la liste de techniciens est nulle
+     * @param globalErrorMessage     message d’erreur global en cas d’échec inattendu lors de la sauvegarde
+     * @return un {@link Uni} contenant la liste mise à jour des {@link MovieTechnicianDTO} du film
+     * @throws NotFoundException       si le film n’existe pas
+     * @throws WebApplicationException si la liste des techniciens est nulle ou en cas d’erreur serveur
+     */
     public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> saveTechnicians(
             Long id,
             List<MovieTechnicianDTO> movieTechnicianDTOList,
@@ -105,6 +156,33 @@ public class MovieTechnicianService {
                 ;
     }
 
+    /**
+     * Ajoute une liste de techniciens à un film donné.
+     * <p>
+     * Cette méthode effectue les étapes suivantes de manière transactionnelle :
+     * <ul>
+     *     <li>Recherche le film par son identifiant via {@link MovieRepository#findById(Long)}.
+     *         Si aucun film n’est trouvé, une {@link NotFoundException} est levée.</li>
+     *     <li>Récupère la liste des techniciens existants via {@code techniciansGetter}.
+     *         Si la liste est nulle, une {@link WebApplicationException} est levée avec le message fourni.</li>
+     *     <li>Ajoute les nouveaux techniciens à l’aide de {@code asyncTechnicianFactory} via {@link Movie#addTechnicians(List, Function, BiFunction)}.</li>
+     *     <li>Persiste les modifications du film et force la génération des identifiants via {@link MovieTechnicianRepository#flush()}.</li>
+     *     <li>Crée une notification indiquant l’ajout des techniciens et informe les administrateurs.</li>
+     *     <li>Récupère enfin la liste mise à jour des techniciens et la convertit en {@link MovieTechnicianDTO}.</li>
+     * </ul>
+     *
+     * @param <T>                    le type de technicien du film héritant de {@link MovieTechnician}
+     * @param id                     l’identifiant du film auquel les techniciens doivent être ajoutés
+     * @param movieTechnicianDTOList la liste des DTO représentant les techniciens à ajouter
+     * @param techniciansGetter      fonction permettant d’extraire la liste des techniciens existants d’un {@link Movie}
+     * @param asyncTechnicianFactory fonction asynchrone qui transforme un {@link MovieTechnicianDTO} en entité technicien spécifique au film
+     * @param nullCheckErrorMessage  message d’erreur à utiliser si la liste de techniciens est nulle
+     * @param globalErrorMessage     message d’erreur global en cas d’échec inattendu lors de l’ajout
+     * @return un {@link Uni} contenant la liste mise à jour des {@link MovieTechnicianDTO} du film
+     * @throws NotFoundException       si le film n’existe pas
+     * @throws WebApplicationException si la liste des techniciens est nulle
+     * @throws MovieUpdateException    en cas d’erreur serveur lors de l’ajout des techniciens
+     */
     public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> addTechnicians(
             Long id,
             List<MovieTechnicianDTO> movieTechnicianDTOList,
@@ -141,6 +219,31 @@ public class MovieTechnicianService {
                 ;
     }
 
+    /**
+     * Supprime un technicien spécifique d’un film donné.
+     * <p>
+     * Cette méthode effectue les étapes suivantes de manière transactionnelle :
+     * <ul>
+     *     <li>Recherche le film par son identifiant via {@link MovieRepository#findById(Long)}.
+     *         Si aucun film n’est trouvé, une {@link NotFoundException} est levée.</li>
+     *     <li>Récupère la liste des techniciens existants via {@code techniciansGetter}.
+     *         Si la liste est nulle, une {@link WebApplicationException} est levée avec le message fourni.</li>
+     *     <li>Supprime le technicien identifié par {@code personId} de la liste des techniciens du film via {@link Movie#removeTechnician(List, Long)}.</li>
+     *     <li>Persiste les modifications du film.</li>
+     *     <li>Récupère enfin la liste mise à jour des techniciens et la convertit en {@link MovieTechnicianDTO}.</li>
+     * </ul>
+     *
+     * @param <T>                   le type de technicien du film héritant de {@link MovieTechnician}
+     * @param movieId               l’identifiant du film dont on souhaite supprimer un technicien
+     * @param personId              l’identifiant de la personne (technicien) à supprimer
+     * @param techniciansGetter     fonction permettant d’extraire la liste des techniciens existants d’un {@link Movie}
+     * @param nullCheckErrorMessage message d’erreur à utiliser si la liste des techniciens est nulle
+     * @param globalMessage         message d’erreur global en cas d’échec inattendu lors de la suppression
+     * @return un {@link Uni} contenant la liste mise à jour des {@link MovieTechnicianDTO} du film
+     * @throws NotFoundException       si le film n’existe pas
+     * @throws WebApplicationException si la liste des techniciens est nulle
+     * @throws MovieUpdateException    en cas d’erreur serveur lors de la suppression du technicien
+     */
     public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> removeTechnician(
             Long movieId,
             Long personId,
@@ -172,6 +275,31 @@ public class MovieTechnicianService {
                 ;
     }
 
+    /**
+     * Supprime tous les techniciens associés à un film donné.
+     * <p>
+     * Cette méthode effectue les étapes suivantes de manière transactionnelle :
+     * <ul>
+     *     <li>Recherche le film par son identifiant via {@link MovieRepository#findById(Long)}.
+     *         Si aucun film n’est trouvé, une {@link NotFoundException} est levée.</li>
+     *     <li>Récupère la liste des techniciens existants via {@code techniciansGetter}.
+     *         Si la liste est nulle, une {@link WebApplicationException} est levée avec le message fourni.</li>
+     *     <li>Supprime tous les techniciens du film via {@link Movie#clearTechnicians(List)}.</li>
+     *     <li>Persiste les modifications du film.</li>
+     *     <li>Renvoie {@code true} si l’opération s’est déroulée avec succès.</li>
+     * </ul>
+     * Les erreurs inattendues sont transformées en {@link WebApplicationException} avec le
+     * message {@code globalMessage} et un statut HTTP 500.
+     *
+     * @param <T>                   le type de technicien du film héritant de {@link MovieTechnician}
+     * @param id                    l’identifiant du film dont on souhaite supprimer tous les techniciens
+     * @param techniciansGetter     fonction permettant d’extraire la liste des techniciens existants d’un {@link Movie}
+     * @param nullCheckErrorMessage message d’erreur à utiliser si la liste des techniciens est nulle
+     * @param globalMessage         message d’erreur global en cas d’échec inattendu lors de la suppression
+     * @return un {@link Uni} contenant {@code true} si tous les techniciens ont été supprimés avec succès
+     * @throws NotFoundException       si le film n’existe pas
+     * @throws WebApplicationException si la liste des techniciens est nulle ou en cas d’erreur serveur
+     */
     public <T extends MovieTechnician> Uni<Boolean> clearTechnicians(
             Long id,
             Function<Movie, List<T>> techniciansGetter,
@@ -185,7 +313,7 @@ public class MovieTechnicianService {
                                         .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_FILM))
                                         .chain(movie ->
                                                 Mutiny.fetch(techniciansGetter.apply(movie))
-                                                        .onItem().ifNull().failWith(() -> new IllegalStateException(nullCheckErrorMessage))
+                                                        .onItem().ifNull().failWith(() -> new WebApplicationException(nullCheckErrorMessage))
                                                         .invoke(movie::clearTechnicians)
                                                         .replaceWith(movie)
                                         )
@@ -201,6 +329,23 @@ public class MovieTechnicianService {
                         });
     }
 
+    /**
+     * Récupère la liste des techniciens d’un film et la transforme en DTO.
+     * <p>
+     * Cette méthode effectue les étapes suivantes :
+     * <ul>
+     *     <li>Récupère la liste des techniciens du film via {@code techniciansGetter}.</li>
+     *     <li>Si la liste est nulle, lève une {@link WebApplicationException} avec le message fourni.</li>
+     *     <li>Transforme chaque {@link MovieTechnician} en {@link MovieTechnicianDTO} via {@link MovieTechnicianMapper#toDTOList(List)}.</li>
+     * </ul>
+     *
+     * @param <T>               le type de technicien du film héritant de {@link MovieTechnician}
+     * @param movie             le film dont on souhaite récupérer les techniciens
+     * @param techniciansGetter fonction permettant d’extraire la liste des techniciens existants du film
+     * @param errorMessage      message d’erreur à utiliser si la liste des techniciens est nulle
+     * @return un {@link Uni} contenant la liste des {@link MovieTechnicianDTO} du film
+     * @throws WebApplicationException si la liste des techniciens est nulle
+     */
     public <T extends MovieTechnician> Uni<List<MovieTechnicianDTO>> fetchAndMapTechniciansList(Movie movie, Function<Movie, List<T>> techniciansGetter, String errorMessage) {
         return
                 Mutiny.fetch(techniciansGetter.apply(movie))

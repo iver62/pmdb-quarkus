@@ -19,6 +19,7 @@ import org.desha.app.service.CountryService;
 import org.desha.app.utils.Messages;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -67,7 +68,12 @@ public class CountryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Nombre de pays correspondant aux critères",
-                    content = @Content(schema = @Schema(implementation = Long.class))
+                    content = @Content(
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = Long.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "400",
@@ -94,7 +100,12 @@ public class CountryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Le pays a été trouvé",
-                    content = @Content(schema = @Schema(implementation = CountryDTO.class))
+                    content = @Content(
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "400",
@@ -125,7 +136,13 @@ public class CountryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Liste des pays trouvée",
-                    content = @Content(schema = @Schema(implementation = CountryDTO.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "204",
@@ -184,7 +201,12 @@ public class CountryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Liste des films trouvés",
-                    content = @Content(schema = @Schema(implementation = MovieDTO.class))
+                    content = @Content(
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = MovieDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "204",
@@ -232,7 +254,12 @@ public class CountryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Liste des personnes trouvés",
-                    content = @Content(schema = @Schema(implementation = PersonDTO.class))
+                    content = @Content(
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = PersonDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "204",
@@ -283,7 +310,12 @@ public class CountryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Pays mis à jour avec succès",
-                    content = @Content(schema = @Schema(implementation = CountryDTO.class))
+                    content = @Content(
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "400",

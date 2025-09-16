@@ -27,6 +27,7 @@ import org.eclipse.microprofile.openapi.annotations.headers.Header;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameters;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -111,8 +112,8 @@ public class MovieResource {
                     responseCode = "200",
                     description = "Film trouvé",
                     content = @Content(
-                            mediaType = "application/json"
-//                            schema = @Schema(implementation = MovieDTO.class)
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MovieDTO.class)
                     )
             ),
             @APIResponse(
@@ -145,17 +146,23 @@ public class MovieResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Liste des films trouvés",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON
-//                            schema = @Schema(implementation = MovieDTO.class, type = SchemaType.ARRAY)
-                    ),
                     headers = {
                             @Header(
                                     name = CustomHttpHeaders.X_TOTAL_COUNT,
                                     description = "Nombre total d’éléments correspondant à la recherche",
-                                    schema = @Schema(type = SchemaType.INTEGER, examples = "124")
+                                    schema = @Schema(
+                                            type = SchemaType.INTEGER,
+                                            examples = "124"
+                                    )
                             )
-                    }
+                    },
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = MovieDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "204",
@@ -166,6 +173,7 @@ public class MovieResource {
                     description = "Paramètres de recherche invalides"
             )
     })
+
     public Uni<Response> getMovies(@BeanParam MovieQueryParamsDTO queryParams) {
         queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
 
@@ -276,7 +284,10 @@ public class MovieResource {
                     description = "Liste des catégories trouvées",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = CategoryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CategoryDTO.class
+                            )
                     ),
                     headers = {
                             @Header(
@@ -343,17 +354,20 @@ public class MovieResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Liste des personnes trouvées",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON
-//                            schema = @Schema(implementation = PersonDTO.class, type = SchemaType.ARRAY)
-                    ),
                     headers = {
                             @Header(
                                     name = CustomHttpHeaders.X_TOTAL_COUNT,
                                     description = "Nombre total de personnes correspondant à la recherche",
                                     schema = @Schema(type = SchemaType.INTEGER, examples = "42")
                             )
-                    }
+                    },
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = PersonDTO.class
+                            )
+                    )
             ),
             @APIResponse(
                     responseCode = "204",
@@ -436,26 +450,28 @@ public class MovieResource {
             summary = "Récupère les acteurs d'un film",
             description = "Retourne la liste des acteurs associés à un film donné."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Liste des acteurs du film",
-            content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = PersonDTO.class)
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des acteurs du film",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PersonDTO.class)
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun acteur trouvé pour ce film"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "ID de film invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun acteur trouvé pour ce film"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "ID de film invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> getActorsByMovie(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -479,24 +495,26 @@ public class MovieResource {
                     Renvoie l'ensemble des catégories associées à un film spécifique.
                     Si aucune catégorie n'est trouvée, retourne un code HTTP 204 No Content."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Liste des catégories récupérée avec succès",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = CategoryDTO.class, type = SchemaType.ARRAY))
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune catégorie trouvée pour ce film"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant du film invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film non trouvé"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des catégories récupérée avec succès",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = CategoryDTO.class, type = SchemaType.ARRAY))
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune catégorie trouvée pour ce film"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant du film invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film non trouvé"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> getCategories(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -520,24 +538,30 @@ public class MovieResource {
                     Renvoie l'ensemble des pays liés à un film spécifique.
                     Si aucun pays n'est trouvé, retourne un code HTTP 204 No Content."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Liste des pays récupérée avec succès",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = CountryDTO.class, type = SchemaType.ARRAY))
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun pays trouvé pour ce film"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant du film invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film non trouvé"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des pays récupérée avec succès",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun pays trouvé pour ce film"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant du film invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film non trouvé"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> getCountries(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -561,24 +585,30 @@ public class MovieResource {
                     Renvoie l'ensemble des récompenses liées à un film spécifique.
                     Si aucune cérémonie ou récompense n'est trouvée, retourne un code HTTP 204 No Content."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Liste des récompenses récupérées avec succès",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = CeremonyAwardsDTO.class, type = SchemaType.ARRAY))
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune récompense trouvée pour ce film"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant du film invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film non trouvé"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des récompenses récupérées avec succès",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CeremonyAwardsDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune récompense trouvée pour ce film"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant du film invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film non trouvé"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> getCeremoniesAwards(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -606,7 +636,11 @@ public class MovieResource {
             responseCode = "200",
             description = "Répartition récupérée avec succès",
             content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = Repartition.class, type = SchemaType.ARRAY))
+                    schema = @Schema(
+                            type = SchemaType.ARRAY,
+                            implementation = Repartition.class
+                    )
+            )
     )
     public Uni<Response> getMoviesCreationDateEvolution() {
         return
@@ -627,7 +661,11 @@ public class MovieResource {
             responseCode = "200",
             description = "Répartition récupérée avec succès",
             content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = Repartition.class, type = SchemaType.ARRAY))
+                    schema = @Schema(
+                            type = SchemaType.ARRAY,
+                            implementation = Repartition.class
+                    )
+            )
     )
     public Uni<Response> getMoviesRepartitionByCreationDate() {
         return
@@ -648,7 +686,11 @@ public class MovieResource {
             responseCode = "200",
             description = "Répartition récupérée avec succès",
             content = @Content(mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = Repartition.class, type = SchemaType.ARRAY))
+                    schema = @Schema(
+                            type = SchemaType.ARRAY,
+                            implementation = Repartition.class
+                    )
+            )
     )
     public Uni<Response> getMoviesRepartitionByDecade() {
         return
@@ -666,22 +708,27 @@ public class MovieResource {
                     Renvoie l'image de l'affiche du film correspondant au nom de fichier fourni.
                     Le type MIME est détecté automatiquement."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Affiche récupérée avec succès",
-            content = @Content(
-                    mediaType = "image/*",
-                    schema = @Schema(type = SchemaType.STRING, format = "binary")
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Affiche récupérée avec succès",
+                    content = @Content(
+                            mediaType = "image/*",
+                            schema = @Schema(
+                                    type = SchemaType.STRING,
+                                    format = "binary"
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Nom de fichier invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Affiche introuvable"
             )
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Nom de fichier invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Affiche introuvable"
-    )
+    })
     public Uni<Response> getPoster(String fileName) {
         if (Objects.isNull(fileName) || fileName.isEmpty() || Objects.equals("undefined", fileName)) {
             log.warn("Invalid file request: {}", fileName);
@@ -717,18 +764,20 @@ public class MovieResource {
             summary = "Crée un nouveau film",
             description = "Permet de créer un film en envoyant un fichier pour l'affiche et les informations du film en JSON."
     )
-    @APIResponse(
-            responseCode = "201",
-            description = "Film créé avec succès",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = MovieDTO.class)
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "201",
+                    description = "Film créé avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = MovieDTO.class)
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple informations manquantes ou ID défini dans MovieDTO"
             )
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple informations manquantes ou ID défini dans MovieDTO"
-    )
+    })
     public Uni<Response> create(
             @RequestBody(
                     description = "Fichier de l'affiche du film à uploader",
@@ -777,26 +826,28 @@ public class MovieResource {
                     Permet de mettre à jour les informations d'un film en envoyant un fichier pour l'affiche et les informations du film en JSON.
                     L'identifiant du film dans l'URL doit correspondre à celui dans le DTO."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Film mis à jour avec succès",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = MovieDTO.class)
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Film mis à jour avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = MovieDTO.class)
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple informations manquantes, titre manquant ou DTO nul"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
+            ),
+            @APIResponse(
+                    responseCode = "422",
+                    description = "L'identifiant du film dans le DTO ne correspond pas à celui de l'URL"
             )
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple informations manquantes, titre manquant ou DTO nul"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
-    @APIResponse(
-            responseCode = "422",
-            description = "L'identifiant du film dans le DTO ne correspond pas à celui de l'URL"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> update(
             @RestPath @NotNull Long id,
@@ -849,26 +900,31 @@ public class MovieResource {
                     Chaque acteur est représenté par un MovieActorDTO contenant son rôle et son rang.
                     Si aucun acteur n'est fourni, la réponse sera vide."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Casting mis à jour avec succès",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = MovieActorDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Casting mis à jour avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = MovieActorDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun acteur n'a été ajouté ou mis à jour"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple liste des acteurs nulle"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun acteur n'a été ajouté ou mis à jour"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple liste des acteurs nulle"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> saveCast(@RestPath @NotNull Long id, List<MovieActorDTO> movieActorsList) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -903,26 +959,31 @@ public class MovieResource {
                     Chaque catégorie est représentée par un CategoryDTO.
                     Si aucune catégorie n'est fournie, la réponse sera vide."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Catégories mises à jour avec succès",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CategoryDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Catégories mises à jour avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CategoryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune catégorie n'a été ajoutée ou mise à jour"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple liste des catégories nulle"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune catégorie n'a été ajoutée ou mise à jour"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple liste des catégories nulle"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> saveCategories(@RestPath @NotNull Long id, Set<CategoryDTO> categoryDTOS) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -951,26 +1012,31 @@ public class MovieResource {
                     Permet de sauvegarder ou mettre à jour la liste des pays associés à un film. Chaque pays est représenté par un CountryDTO.
                     Si aucune donnée n'est fournie, la réponse sera vide."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Pays mis à jour avec succès",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CountryDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Pays mis à jour avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun pays n'a été ajouté ou mis à jour"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple liste des pays nulle"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun pays n'a été ajouté ou mis à jour"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple liste des pays nulle"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> saveCountries(@RestPath @NotNull Long id, Set<CountryDTO> countryDTOS) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -999,22 +1065,27 @@ public class MovieResource {
                     Permet de sauvegarder ou mettre à jour une cérémonie de récompenses associée à un film.
                     La cérémonie est représentée par un objet CeremonyAwardsDTO."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Récompense du film ajoutée ou mise à jour avec succès",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = CeremonyAwardsDTO.class)
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Récompense du film ajoutée ou mise à jour avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CeremonyAwardsDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple CeremonyAwardsDTO null"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple CeremonyAwardsDTO null"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> saveCeremonyAwards(@RestPath @NotNull Long id, CeremonyAwardsDTO ceremonyAwardsDTO) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1036,26 +1107,31 @@ public class MovieResource {
             summary = "Ajoute des acteurs à un film",
             description = "Permet d'ajouter une liste d'acteurs à un film existant. Chaque acteur est représenté par un objet MovieActorDTO."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Acteurs ajoutés avec succès au film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = MovieActorDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Acteurs ajoutés avec succès au film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = MovieActorDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun acteur n'a été ajouté"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple la liste des acteurs est nulle"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun acteur n'a été ajouté"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple la liste des acteurs est nulle"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> addMovieActors(@RestPath @NotNull Long id, List<MovieActorDTO> movieActorDTOList) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1087,26 +1163,31 @@ public class MovieResource {
             summary = "Ajoute des catégories à un film",
             description = "Permet d'ajouter une liste de catégories à un film existant. Chaque catégorie est représentée par un objet CategoryDTO."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Catégories ajoutées avec succès au film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CategoryDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Catégories ajoutées avec succès au film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CategoryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune catégorie n'a été ajoutée"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple la liste des catégories est nulle"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune catégorie n'a été ajoutée"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple la liste des catégories est nulle"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> addCategories(@RestPath @NotNull Long id, Set<CategoryDTO> categoryDTOS) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1133,26 +1214,31 @@ public class MovieResource {
             summary = "Ajoute des pays à un film",
             description = "Permet d'ajouter une liste de pays à un film existant. Chaque pays est représenté par un objet CountryDTO."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Pays ajoutés avec succès au film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CountryDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Pays ajoutés avec succès au film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun pays n'a été ajouté"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple la liste des pays est nulle"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun pays n'a été ajouté"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple la liste des pays est nulle"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> addCountries(@RestPath @NotNull Long id, Set<CountryDTO> countryDTOS) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1179,28 +1265,35 @@ public class MovieResource {
             summary = "Supprime un acteur d'un film",
             description = "Permet de retirer un acteur d'un film existant en utilisant l'identifiant du film et l'identifiant de l'acteur."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Acteur supprimé avec succès du film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = MovieActorDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Acteur supprimé avec succès du film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = MovieActorDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun acteur n'a été supprimé"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple identifiants invalides"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film ou acteur introuvable pour les identifiants fournis"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun acteur n'a été supprimé"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple identifiants invalides"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film ou acteur introuvable pour les identifiants fournis"
-    )
-    @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
-    @Parameter(name = "personId", description = "Identifiant unique de la personne", required = true, example = "123", in = ParameterIn.PATH)
+    })
+    @Parameters(value = {
+            @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, in = ParameterIn.PATH, example = "123"),
+            @Parameter(name = "personId", description = "Identifiant unique de la personne", required = true, in = ParameterIn.PATH, example = "123")
+    })
     public Uni<Response> removeMovieActor(@RestPath @NotNull Long movieId, @RestPath @NotNull Long personId) {
         ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
         ValidationUtils.validateIdOrThrow(personId, Messages.INVALID_PERSON_ID);
@@ -1223,28 +1316,35 @@ public class MovieResource {
             summary = "Supprime une catégorie d'un film",
             description = "Permet de retirer une catégorie d'un film existant en utilisant l'identifiant du film et l'identifiant de la catégorie."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Catégorie supprimée avec succès du film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CategoryDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Catégorie supprimée avec succès du film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CategoryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune catégorie n'a été supprimée"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple identifiants invalides"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film ou catégorie introuvable pour les identifiants fournis"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune catégorie n'a été supprimée"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple identifiants invalides"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film ou catégorie introuvable pour les identifiants fournis"
-    )
-    @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
-    @Parameter(name = "categoryId", description = "Identifiant unique de la catégorie", required = true, example = "1", in = ParameterIn.PATH)
+    })
+    @Parameters(value = {
+            @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH),
+            @Parameter(name = "categoryId", description = "Identifiant unique de la catégorie", required = true, example = "1", in = ParameterIn.PATH)
+    })
     public Uni<Response> removeCategory(@RestPath @NotNull Long movieId, @RestPath @NotNull Long categoryId) {
         ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
         ValidationUtils.validateIdOrThrow(categoryId, Messages.INVALID_CATEGORY_ID);
@@ -1267,28 +1367,35 @@ public class MovieResource {
             summary = "Supprime un pays d'un film",
             description = "Permet de retirer un pays associé à un film existant en utilisant l'identifiant du film et l'identifiant du pays."
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Pays supprimé avec succès du film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CountryDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Pays supprimé avec succès du film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun pays n'a été supprimé"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple identifiants invalides"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film ou pays introuvable pour les identifiants fournis"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucun pays n'a été supprimé"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple identifiants invalides"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film ou pays introuvable pour les identifiants fournis"
-    )
-    @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
-    @Parameter(name = "countryId", description = "Identifiant unique du pays", required = true, example = "1", in = ParameterIn.PATH)
+    })
+    @Parameters(value = {
+            @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH),
+            @Parameter(name = "countryId", description = "Identifiant unique du pays", required = true, example = "1", in = ParameterIn.PATH)
+    })
     public Uni<Response> removeCountry(@RestPath @NotNull Long movieId, @RestPath @NotNull Long countryId) {
         ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
         ValidationUtils.validateIdOrThrow(countryId, Messages.INVALID_COUNTRY_ID);
@@ -1308,31 +1415,40 @@ public class MovieResource {
     @Path("/{movieId}/ceremonies-awards/{ceremonyAwardsId}")
     @RolesAllowed({"user", "admin"})
     @Operation(
-            summary = "Supprime une récompense d'une cérémonie d'un film",
-            description = "Permet de retirer une récompense associée à un film pour une cérémonie donnée en utilisant l'identifiant du film et l'identifiant de la récompense."
+            summary = "Supprime une cérémonie d'un film",
+            description = """
+                    Permet de supprimer des récompenses groupées en cérémonie associées à un film en utilisant l'identifiant 
+                    du film et l'identifiant de la cérémonie."""
     )
-    @APIResponse(
-            responseCode = "200",
-            description = "Récompense supprimée avec succès du film",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON
-//                    array = @ArraySchema(schema = @Schema(implementation = CeremonyAwardsDTO.class))
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Récompense supprimée avec succès du film",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CeremonyAwardsDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucune récompense n'a été supprimée"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, par exemple identifiants invalides"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film ou récompense introuvable pour les identifiants fournis"
             )
-    )
-    @APIResponse(
-            responseCode = "204",
-            description = "Aucune récompense n'a été supprimée"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, par exemple identifiants invalides"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film ou récompense introuvable pour les identifiants fournis"
-    )
-    @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
-    @Parameter(name = "ceremonyAwardsId", description = "Identifiant unique de la cérémonie", required = true, example = "1", in = ParameterIn.PATH)
+    })
+    @Parameters(value = {
+            @Parameter(name = "movieId", description = "Identifiant unique du film", required = true, in = ParameterIn.PATH, example = "123"),
+            @Parameter(name = "ceremonyAwardsId", description = "Identifiant unique de la cérémonie", required = true, in = ParameterIn.PATH, example = "1")
+    })
     public Uni<Response> removeCeremonyAwards(@RestPath @NotNull Long movieId, @RestPath @NotNull Long ceremonyAwardsId) {
         ValidationUtils.validateIdOrThrow(movieId, Messages.INVALID_MOVIE_ID);
         ValidationUtils.validateIdOrThrow(ceremonyAwardsId, Messages.INVALID_CEREMONY_AWARDS_ID);
@@ -1353,20 +1469,24 @@ public class MovieResource {
     @RolesAllowed("admin")
     @Operation(
             summary = "Supprime un film",
-            description = "Permet de supprimer un film existant en utilisant son identifiant unique. Supprime également l'affiche associée et met à jour les statistiques liées aux films."
+            description = """
+                    Permet de supprimer un film existant en utilisant son identifiant unique. Supprime également l'affiche associée
+                     et met à jour les statistiques liées aux films."""
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Film supprimé avec succès, aucun contenu retourné"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Requête invalide, identifiant du film manquant ou invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Film supprimé avec succès, aucun contenu retourné"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Requête invalide, identifiant du film manquant ou invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> delete(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1388,18 +1508,20 @@ public class MovieResource {
             summary = "Supprime tous les acteurs d'un film",
             description = "Permet de supprimer l'ensemble des acteurs associés à un film donné en utilisant son identifiant unique."
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Acteurs supprimés avec succès, aucun contenu retourné"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant du film manquant ou invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Acteurs supprimés avec succès, aucun contenu retourné"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant du film manquant ou invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> deleteActors(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1417,18 +1539,20 @@ public class MovieResource {
             summary = "Supprime toutes les catégories d'un film",
             description = "Permet de supprimer l'ensemble des catégories associées à un film donné en utilisant son identifiant unique."
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Catégories supprimées avec succès, aucun contenu retourné"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant du film manquant ou invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Catégories supprimées avec succès, aucun contenu retourné"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant du film manquant ou invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> deleteCategories(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1444,18 +1568,20 @@ public class MovieResource {
             summary = "Supprime tous les pays d'un film",
             description = "Permet de supprimer l'ensemble des pays associés à un film donné en utilisant son identifiant unique."
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Pays supprimés avec succès, aucun contenu retourné"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant du film manquant ou invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable pour l'identifiant fourni"
-    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Pays supprimés avec succès, aucun contenu retourné"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant du film manquant ou invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable pour l'identifiant fourni"
+            )
+    })
     @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
     public Uni<Response> deleteCountries(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
@@ -1467,22 +1593,24 @@ public class MovieResource {
     @Path("/{id}/ceremonies-awards")
     @RolesAllowed({"user", "admin"})
     @Operation(
-            summary = "Supprime toutes les récompenses associées à un film",
-            description = "Vide la collection des récompenses pour le film donné. Renvoie HTTP 204 si l'opération réussit."
+            summary = "Supprime toutes les cérémonies associées à un film",
+            description = "Vide la collection des cérémonies pour le film donné. Renvoie HTTP 204 si l'opération réussit."
     )
-    @APIResponse(
-            responseCode = "204",
-            description = "Récompenses supprimés avec succès"
-    )
-    @APIResponse(
-            responseCode = "400",
-            description = "Identifiant de film invalide"
-    )
-    @APIResponse(
-            responseCode = "404",
-            description = "Film introuvable"
-    )
-    @Parameter(name = "id", description = "Identifiant unique du film", required = true, example = "123", in = ParameterIn.PATH)
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Récompenses supprimés avec succès"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Identifiant de film invalide"
+            ),
+            @APIResponse(
+                    responseCode = "404",
+                    description = "Film introuvable"
+            )
+    })
+    @Parameter(name = "id", description = "Identifiant unique du film", required = true, in = ParameterIn.PATH, example = "123")
     public Uni<Response> deleteCeremoniesAwards(@RestPath @NotNull Long id) {
         ValidationUtils.validateIdOrThrow(id, Messages.INVALID_MOVIE_ID);
 

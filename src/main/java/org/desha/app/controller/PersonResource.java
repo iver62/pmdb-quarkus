@@ -137,7 +137,10 @@ public class PersonResource {
                     description = "Liste des personnes récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -182,7 +185,10 @@ public class PersonResource {
                     description = "Liste des personnes récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = PersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = PersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -228,7 +234,10 @@ public class PersonResource {
                     description = "Liste des rôles récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = String.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -255,6 +264,55 @@ public class PersonResource {
                 personService.getRoles(id, Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection())
                         .flatMap(personDTOList ->
                                 personService.countRolesByPerson(id).map(total ->
+                                        personDTOList.isEmpty()
+                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
+                                )
+                        )
+                ;
+    }
+
+    @GET
+    @Path("/directors")
+    @Operation(
+            summary = "Récupère la liste paginée des réalisateurs",
+            description = """
+                    Permet de récupérer une liste paginée des personnes de type DIRECTOR.
+                    Les résultats peuvent être filtrés selon les critères de recherche et triés selon les paramètres fournis."""
+    )
+    @APIResponses(value = {
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Liste des réalisateurs récupérée avec succès",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
+                    )
+            ),
+            @APIResponse(
+                    responseCode = "204",
+                    description = "Aucun réalisateur correspondant aux critères"
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "Paramètres de requête invalides (ex: dates incohérentes ou champ de tri non autorisé)"
+            )
+    })
+    public Uni<Response> getDirectors(@BeanParam PersonQueryParamsDTO queryParams) {
+        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
+
+        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
+        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
+
+        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.DIRECTOR);
+
+        return
+                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
+                        .flatMap(personDTOList ->
+                                personService.countPersons(criteriaDTO).map(total ->
                                         personDTOList.isEmpty()
                                                 ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
                                                 : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
@@ -310,52 +368,6 @@ public class PersonResource {
     }
 
     @GET
-    @Path("/directors")
-    @Operation(
-            summary = "Récupère la liste paginée des réalisateurs",
-            description = """
-                    Permet de récupérer une liste paginée des personnes de type DIRECTOR.
-                    Les résultats peuvent être filtrés selon les critères de recherche et triés selon les paramètres fournis."""
-    )
-    @APIResponses(value = {
-            @APIResponse(
-                    responseCode = "200",
-                    description = "Liste des réalisateurs récupérée avec succès",
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
-                    )
-            ),
-            @APIResponse(
-                    responseCode = "204",
-                    description = "Aucun réalisateur correspondant aux critères"
-            ),
-            @APIResponse(
-                    responseCode = "400",
-                    description = "Paramètres de requête invalides (ex: dates incohérentes ou champ de tri non autorisé)"
-            )
-    })
-    public Uni<Response> getDirectors(@BeanParam PersonQueryParamsDTO queryParams) {
-        queryParams.isInvalidDateRange(); // Vérification de la cohérence des dates
-
-        String finalSort = Optional.ofNullable(queryParams.getSort()).orElse(Person.DEFAULT_SORT);
-        queryParams.validateSortField(finalSort, Person.ALLOWED_SORT_FIELDS);
-
-        CriteriaDTO criteriaDTO = CriteriaDTO.build(queryParams, PersonType.DIRECTOR);
-
-        return
-                personService.getLightPersons(Page.of(queryParams.getPageIndex(), queryParams.getSize()), finalSort, queryParams.validateSortDirection(), criteriaDTO)
-                        .flatMap(personDTOList ->
-                                personService.countPersons(criteriaDTO).map(total ->
-                                        personDTOList.isEmpty()
-                                                ? Response.noContent().header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                                : Response.ok(personDTOList).header(CustomHttpHeaders.X_TOTAL_COUNT, total).build()
-                                )
-                        )
-                ;
-    }
-
-    @GET
     @Path("/assistant-directors")
     @Operation(
             summary = "Récupère la liste paginée des assistants réalisateurs",
@@ -369,7 +381,10 @@ public class PersonResource {
                     description = "Liste des assistants réalisateurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -405,8 +420,9 @@ public class PersonResource {
     @Path("/screenwriters")
     @Operation(
             summary = "Récupère la liste paginée des scénaristes",
-            description = "Permet de récupérer une liste paginée des personnes de type SCREENWRITER. " +
-                    "Les résultats peuvent être filtrés selon les critères de recherche et triés selon les paramètres fournis."
+            description = """
+                    Permet de récupérer une liste paginée des personnes de type SCREENWRITER.
+                    Les résultats peuvent être filtrés selon les critères de recherche et triés selon les paramètres fournis."""
     )
     @APIResponses(value = {
             @APIResponse(
@@ -414,7 +430,10 @@ public class PersonResource {
                     description = "Liste des scénaristes récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -464,7 +483,10 @@ public class PersonResource {
                     description = "Liste des producteurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -510,7 +532,10 @@ public class PersonResource {
                     description = "Liste des compositeurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -556,7 +581,10 @@ public class PersonResource {
                     description = "Liste des musiciens récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -602,7 +630,10 @@ public class PersonResource {
                     description = "Liste des photographes récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -648,7 +679,10 @@ public class PersonResource {
                     description = "Liste des costumiers récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -694,7 +728,10 @@ public class PersonResource {
                     description = "Liste des décorateurs de plateau récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -740,7 +777,10 @@ public class PersonResource {
                     description = "Liste des monteurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -786,7 +826,10 @@ public class PersonResource {
                     description = "Liste des directeurs de casting récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -832,7 +875,10 @@ public class PersonResource {
                     description = "Liste des artistes récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -878,7 +924,10 @@ public class PersonResource {
                     description = "Liste des ingénieurs du son récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -924,7 +973,10 @@ public class PersonResource {
                     description = "Liste des maquilleurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -970,7 +1022,10 @@ public class PersonResource {
                     description = "Liste des superviseurs des effets visuels récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1016,7 +1071,10 @@ public class PersonResource {
                     description = "Liste des superviseurs des effets spéciaux récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1062,7 +1120,10 @@ public class PersonResource {
                     description = "Liste des coiffeurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1108,7 +1169,10 @@ public class PersonResource {
                     description = "Liste des cascadeurs récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = LitePersonDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = LitePersonDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1154,7 +1218,10 @@ public class PersonResource {
                     description = "Liste des films récupérée avec succès",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = MovieDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = MovieDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1209,7 +1276,10 @@ public class PersonResource {
                     description = "Photo récupérée avec succès",
                     content = @Content(
                             mediaType = "image/jpeg",
-                            schema = @Schema(type = SchemaType.STRING, format = "binary")
+                            schema = @Schema(
+                                    type = SchemaType.STRING,
+                                    format = "binary"
+                            )
                     )
             ),
             @APIResponse(
@@ -1260,7 +1330,10 @@ public class PersonResource {
                     description = "Liste des pays récupérée avec succès",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CountryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1304,7 +1377,10 @@ public class PersonResource {
                     description = "Liste des pays des films récupérée avec succès",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CountryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1355,7 +1431,10 @@ public class PersonResource {
                     description = "Liste des catégories des films récupérée avec succès",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CategoryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CategoryDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1403,7 +1482,10 @@ public class PersonResource {
                     description = "Liste des récompenses récupérée avec succès",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CeremonyAwardsDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CeremonyAwardsDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1540,7 +1622,10 @@ public class PersonResource {
                     description = "Liste des pays mise à jour avec succès",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CountryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1589,7 +1674,10 @@ public class PersonResource {
                     description = "Liste des pays mise à jour avec succès",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CountryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
                     )
             ),
             @APIResponse(
@@ -1638,7 +1726,10 @@ public class PersonResource {
                     description = "Pays retiré avec succès, liste mise à jour",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CountryDTO.class, type = SchemaType.ARRAY)
+                            schema = @Schema(
+                                    type = SchemaType.ARRAY,
+                                    implementation = CountryDTO.class
+                            )
                     )
             ),
             @APIResponse(
