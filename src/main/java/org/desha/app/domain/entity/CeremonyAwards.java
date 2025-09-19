@@ -65,10 +65,8 @@ public class CeremonyAwards extends PanacheEntityBase {
     public void addAwards(List<AwardDTO> awardDTOList, Map<Long, Person> personMap) {
         awardDTOList.stream()
                 .filter(awardDTO -> Objects.isNull(awardDTO.getId()))
-                .forEach(awardDTO -> {
-                    Award newAward = Award.createAward(awardDTO, this, personMap);
-                    awards.add(newAward);
-                });
+                .map(awardDTO -> Award.createAward(awardDTO, this, personMap))
+                .forEach(award -> awards.add(award));
     }
 
     public void updateAwards(List<AwardDTO> awardDTOList, Map<Long, Person> personMap) {

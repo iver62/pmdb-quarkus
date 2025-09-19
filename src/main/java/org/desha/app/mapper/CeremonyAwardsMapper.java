@@ -17,10 +17,13 @@ import java.util.Set;
 public interface CeremonyAwardsMapper {
 
     @Mapping(target = "awards", source = "awards", qualifiedByName = "toAwardDTO")
-    CeremonyAwardsDTO ceremonyAwardsToCeremonyAwardsDTO(CeremonyAwards entity);
+    CeremonyAwardsDTO toDTO(CeremonyAwards entity);
 
     List<CeremonyAwardsDTO> toDTOList(List<CeremonyAwards> ceremonyAwardsList);
 
     @Mapping(target = "movie", source = "movie", ignore = true)
     Set<CeremonyAwardsDTO> toDTOSet(List<CeremonyAwards> ceremonyAwardsSet);
+
+    @Mapping(target = "movie", source = "movie", ignore = true)
+    Set<CeremonyAwardsDTO> toDTOSet(Set<CeremonyAwards> ceremonyAwardsSet);
 }
