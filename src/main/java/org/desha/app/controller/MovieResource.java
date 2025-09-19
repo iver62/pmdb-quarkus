@@ -1417,7 +1417,7 @@ public class MovieResource {
     @Operation(
             summary = "Supprime une cérémonie d'un film",
             description = """
-                    Permet de supprimer des récompenses groupées en cérémonie associées à un film en utilisant l'identifiant 
+                    Permet de supprimer des récompenses groupées en cérémonie associées à un film en utilisant l'identifiant
                     du film et l'identifiant de la cérémonie."""
     )
     @APIResponses(value = {

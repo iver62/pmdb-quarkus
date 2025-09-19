@@ -3657,7 +3657,7 @@ public class MovieTechnicianResource {
      * <p>
      * Cette méthode effectue les étapes suivantes :
      * <ul>
-     *     <li>Appelle {@link PersonService#prepareAndPersistPerson(LitePersonDTO, PersonType)} (Person, PersonType)} pour valider et persister la personne
+     *     <li>Appelle {@link PersonService#prepareAndPersistPerson(LitePersonDTO, PersonType)} pour valider et persister la personne
      *     avec le type de rôle fourni.</li>
      *     <li>Crée un technicien de film spécifique en utilisant {@code technicianFactory} avec le film et la personne persistée.</li>
      *     <li>Attribue le rôle défini dans le DTO au technicien créé.</li>

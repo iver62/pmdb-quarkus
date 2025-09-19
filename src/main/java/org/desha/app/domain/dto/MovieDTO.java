@@ -94,22 +94,4 @@ public class MovieDTO {
                 ;
     }
 
-    public static MovieDTO build(Movie movie) {
-        return
-                MovieDTO.builder()
-                        .id(movie.getId())
-                        .title(movie.getTitle())
-                        .originalTitle(movie.getOriginalTitle())
-                        .synopsis(movie.getSynopsis())
-                        .releaseDate(movie.getReleaseDate())
-                        .runningTime(movie.getRunningTime())
-                        .budget(BudgetDTO.build(movie.getBudget(), movie.getBudgetCurrency()))
-                        .boxOffice(BoxOfficeDTO.build(movie.getBoxOffice(), movie.getBoxOfficeCurrency()))
-                        .posterFileName(movie.getPosterFileName())
-                        .creationDate(movie.getCreationDate())
-                        .lastUpdate(movie.getLastUpdate())
-                        .build()
-                ;
-    }
-
 }

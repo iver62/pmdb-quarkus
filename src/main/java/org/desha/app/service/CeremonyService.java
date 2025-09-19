@@ -135,14 +135,14 @@ public class CeremonyService {
      *
      * @param ceremonyDTO Les données de la cérémonie à rechercher ou créer. Ne peut pas être {@code null}.
      * @return Un {@link Uni} contenant la {@link Ceremony} trouvée ou créée.
-     * @throws IllegalArgumentException si l'identifiant est fourni mais aucune cérémonie correspondante n’est trouvée.
+     * @throws NotFoundException si l'identifiant est fourni mais aucune cérémonie correspondante n’est trouvée.
      */
     public Uni<Ceremony> findOrCreateCeremony(CeremonyDTO ceremonyDTO) {
         return
                 Objects.nonNull(ceremonyDTO.getId())
                         ?
                         ceremonyRepository.findById(ceremonyDTO.getId())
-                                .onItem().ifNull().failWith(() -> new IllegalArgumentException(Messages.NOT_FOUND_CEREMONY))
+                                .onItem().ifNull().failWith(() -> new NotFoundException(Messages.NOT_FOUND_CEREMONY))
                         :
                         ceremonyRepository.persist(ceremonyMapper.ceremonyDTOtoCeremony(ceremonyDTO))
                 ;

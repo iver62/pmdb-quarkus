@@ -149,12 +149,12 @@ public class CategoryService {
     public Uni<List<Category>> getAll() {
         return
                 categoryRepository.listAll()
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
-                                    }
-                                    log.error("Erreur lors de la récupération des catégories: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des catégories: ", throwable);
+                                    return new WebApplicationException(
+                                            "Impossible de récupérer les catégories",
+                                            Response.Status.INTERNAL_SERVER_ERROR
+                                    );
                                 }
                         )
                 ;
@@ -177,12 +177,12 @@ public class CategoryService {
                 categoryRepository
                         .findCategories(page, sort, direction, term)
                         .map(categoryMapper::toDTOList)
-                        .onFailure().transform(e -> {
-                                    if (e instanceof WebApplicationException) {
-                                        return e;
-                                    }
-                                    log.error("Erreur lors de la récupération des catégories: {}", e.getMessage());
-                                    return new WebApplicationException("Erreur lors de la récupération des catégories", Response.Status.INTERNAL_SERVER_ERROR);
+                        .onFailure().transform(throwable -> {
+                                    log.error("Erreur lors de la récupération des catégories: ", throwable);
+                                    return new WebApplicationException(
+                                            "Impossible de récupérer les catégories",
+                                            Response.Status.INTERNAL_SERVER_ERROR
+                                    );
                                 }
                         )
                 ;

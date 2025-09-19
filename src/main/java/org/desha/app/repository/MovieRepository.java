@@ -229,7 +229,7 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     /**
      * Recherche une liste de films avec le nombre de récompenses associées, selon des critères et un tri donnés.
      * <p>
-     * Chaque film retourné contient également le nombre de récompenses (`awardsNumber`) calculé à partir
+     * Chaque film retourné contient également le nombre de récompenses ('awardsNumber') calculé à partir
      * de la table 'MovieAwardsNumber'. Si aucun enregistrement n'existe pour un film, le nombre de récompenses
      * est considéré comme 0.
      *
@@ -265,9 +265,8 @@ public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
     /**
      * Recherche une liste de films avec le nombre de récompenses associées, selon des critères et un tri donnés.
      * <p>
-     * Chaque film retourné contient également le nombre de récompenses (`awardsNumber`) calculé à partir
-     * de la table {@code MovieAwardsNumber}. Si aucun enregistrement n'existe pour un film, le nombre de récompenses
-     * est considéré comme 0.
+     * Chaque film retourné contient également le nombre de récompenses ('awardsNumber') calculé à partir de la table
+     * {@code MovieAwardsNumber}. Si aucun enregistrement n'existe pour un film, le nombre de récompenses est considéré comme 0.
      * <p>
      * Contrairement à la version paginée, cette méthode retourne l'ensemble des résultats correspondant aux critères.
      *

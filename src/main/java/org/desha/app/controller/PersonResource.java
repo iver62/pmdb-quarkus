@@ -1560,7 +1560,7 @@ public class PersonResource {
     @Operation(
             summary = "Met à jour une personne existante",
             description = """
-                    Permet de mettre à jour les informations d'une personne existante, y compris sa photo. Seuls les utilisateurs 
+                    Permet de mettre à jour les informations d'une personne existante, y compris sa photo. Seuls les utilisateurs
                     avec le rôle 'user' ou 'admin' peuvent effectuer cette opération."""
     )
     @APIResponses(value = {
@@ -1717,7 +1717,7 @@ public class PersonResource {
     @Operation(
             summary = "Supprime un pays associé à une personne",
             description = """
-                    Permet de retirer un pays spécifique de la liste des pays associés à une personne donnée. Seuls les utilisateurs 
+                    Permet de retirer un pays spécifique de la liste des pays associés à une personne donnée. Seuls les utilisateurs
                     avec le rôle 'user' ou 'admin' peuvent effectuer cette opération."""
     )
     @APIResponses(value = {

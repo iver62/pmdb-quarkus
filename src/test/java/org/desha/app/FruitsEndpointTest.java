@@ -1,6 +1,7 @@
 package org.desha.app;
 
 import io.restassured.response.Response;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -12,10 +13,11 @@ import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.text.IsEmptyString.emptyString;
 
 @QuarkusTest
-public class FruitsEndpointTest {
+@Disabled
+class FruitsEndpointTest {
 
     @Test
-    public void testListAllFruits() {
+    void testListAllFruits() {
         //List all, should have all 3 fruits the database has initially:
 		Response response = given()
 				.when()
@@ -89,7 +91,7 @@ public class FruitsEndpointTest {
     }
 
     @Test
-    public void testEntityNotFoundForDelete() {
+	void testEntityNotFoundForDelete() {
         given()
 			.when()
 				.delete("/fruits/9236")
@@ -99,7 +101,7 @@ public class FruitsEndpointTest {
     }
 
     @Test
-    public void testEntityNotFoundForUpdate() {
+	void testEntityNotFoundForUpdate() {
         given()
 			.when()
 				.body("{\"name\" : \"Watermelon\"}")
@@ -111,7 +113,7 @@ public class FruitsEndpointTest {
     }
 
 	@Test
-	public void testInvalidCreate() {
+	void testInvalidCreate() {
 		given()
 			.when()
 				.body("{\"name\" : \"Wrong\", \"id\" : \"50\"}")

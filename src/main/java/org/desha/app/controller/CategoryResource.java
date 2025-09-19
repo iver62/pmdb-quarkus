@@ -96,7 +96,10 @@ public class CategoryResource {
             @APIResponse(
                     responseCode = "200",
                     description = "Catégorie trouvée",
-                    content = @Content(schema = @Schema(implementation = CategoryDTO.class))
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = CategoryDTO.class)
+                    )
             ),
             @APIResponse(
                     responseCode = "400",
@@ -174,7 +177,7 @@ public class CategoryResource {
     @Operation(
             summary = "Récupérer les films par catégorie avec pagination, tri et recherche",
             description = """
-                    Retourne la liste des films par catégorie avec prise en charge de la pagination, du tri et 
+                    Retourne la liste des films par catégorie avec prise en charge de la pagination, du tri et
                     de la recherche par titre du film."""
     )
     @APIResponses(value = {

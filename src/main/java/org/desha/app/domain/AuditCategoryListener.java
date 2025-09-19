@@ -16,9 +16,9 @@ public class AuditCategoryListener {
     @PreRemove
     private void beforeAnyUpdate(Category category) {
         if (Objects.isNull(category.getId())) {
-            log.info("[CATEGORY AUDIT] About to add the category " + category.getName());
+            log.info("[CATEGORY AUDIT] About to add the category {}", category.getName());
         } else {
-            log.info("[CATEGORY AUDIT] About to update/delete category: " + category.getId());
+            log.info("[CATEGORY AUDIT] About to update/delete category: {}", category.getId());
         }
     }
 
