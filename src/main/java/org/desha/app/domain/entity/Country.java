@@ -5,13 +5,11 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.CountryDTO;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Slf4j
 @Entity
 @Getter
 @Setter

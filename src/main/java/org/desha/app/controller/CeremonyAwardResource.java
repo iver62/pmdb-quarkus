@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.AwardDTO;
 import org.desha.app.domain.dto.CeremonyAwardsDTO;
 import org.desha.app.service.CeremonyAwardsService;
@@ -27,7 +26,6 @@ import java.util.Objects;
 
 @Path("ceremony-awards")
 @ApplicationScoped
-@Slf4j
 @RolesAllowed({"user", "admin"})
 @APIResponses(value = {
         @APIResponse(

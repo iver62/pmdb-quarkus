@@ -43,9 +43,20 @@ import static jakarta.ws.rs.core.Response.Status.CREATED;
 @Slf4j
 @Path("/persons")
 @ApplicationScoped
-@APIResponse(responseCode = "401", description = "Utilisateur non authentifié")
-@APIResponse(responseCode = "403", description = "Accès interdit")
-@APIResponse(responseCode = "500", description = "Erreur interne du serveur")
+@APIResponses(value = {
+        @APIResponse(
+                responseCode = "401",
+                description = "Utilisateur non authentifié"
+        ),
+        @APIResponse(
+                responseCode = "403",
+                description = "Accès interdit"
+        ),
+        @APIResponse(
+                responseCode = "500",
+                description = "Erreur interne du serveur"
+        )
+})
 @Tag(name = "Personnes", description = "Opérations liées aux personnes")
 public class PersonResource {
 

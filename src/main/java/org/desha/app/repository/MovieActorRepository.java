@@ -6,12 +6,10 @@ import io.quarkus.panache.common.Parameters;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.entity.MovieActor;
 
 import java.util.List;
 
-@Slf4j
 @ApplicationScoped
 public class MovieActorRepository implements PanacheRepositoryBase<MovieActor, Long> {
 

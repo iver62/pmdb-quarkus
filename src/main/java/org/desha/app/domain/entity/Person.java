@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.PersonDTO;
 import org.desha.app.domain.enums.PersonType;
@@ -20,7 +19,6 @@ import java.util.*;
 @Getter
 @Setter
 @Builder
-@Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Person extends PanacheEntityBase {
 

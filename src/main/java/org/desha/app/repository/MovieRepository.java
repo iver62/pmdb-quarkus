@@ -7,7 +7,6 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.dto.CriteriaDTO;
 import org.desha.app.domain.entity.Movie;
@@ -23,7 +22,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-@Slf4j
 @ApplicationScoped
 public class MovieRepository implements PanacheRepositoryBase<Movie, Long> {
 

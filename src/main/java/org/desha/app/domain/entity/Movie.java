@@ -7,7 +7,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 import org.desha.app.domain.dto.MovieActorDTO;
 import org.desha.app.domain.dto.MovieDTO;
 import org.desha.app.domain.dto.MovieTechnicianDTO;
@@ -26,7 +25,6 @@ import java.util.function.Function;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "film", uniqueConstraints = {@UniqueConstraint(columnNames = {"titre", "titre_original"})})
-@Slf4j
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Movie extends PanacheEntityBase {
 

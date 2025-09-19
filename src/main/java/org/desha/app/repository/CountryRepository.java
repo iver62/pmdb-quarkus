@@ -7,7 +7,6 @@ import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.entity.Country;
 import org.desha.app.domain.entity.Person;
@@ -16,7 +15,6 @@ import org.desha.app.helper.MovieRepositoryHelper;
 import java.util.List;
 
 @ApplicationScoped
-@Slf4j
 public class CountryRepository implements PanacheRepository<Country> {
 
     private static final String NOM_EN_GB = "nomEnGb";

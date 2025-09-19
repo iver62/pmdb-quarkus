@@ -5,7 +5,6 @@ import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.desha.app.domain.AuditCategoryListener;
 import org.desha.app.domain.dto.CategoryDTO;
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Slf4j
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
